@@ -74,7 +74,12 @@
     "emptyState": "欢迎使用 Kubby！请先添加一个媒体库。",
     "homeTab": "首页",
     "favoritesTab": "收藏",
-    "noFavorites": "暂无收藏"
+    "noFavorites": "暂无收藏",
+    "scanLibrary": "扫描媒体库",
+    "refreshMetadata": "刷新元数据",
+    "editLibrary": "编辑",
+    "deleteLibrary": "删除",
+    "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。"
   },
   "settings": {
     "settings": "设置",
@@ -133,7 +138,15 @@
     "youMayAlsoLike": "猜你喜欢",
     "favorites": "收藏",
     "noFavorites": "此媒体库暂无收藏",
-    "selectLibrary": "请从首页选择一个媒体库"
+    "selectLibrary": "请从首页选择一个媒体库",
+    "play": "播放",
+    "editMetadata": "编辑元数据",
+    "deleteMovie": "删除",
+    "confirmDeleteMovie": "确定要删除这部电影吗？此操作无法撤销。",
+    "mediaInfo": "媒体信息",
+    "refreshMetadata": "刷新元数据",
+    "watched": "已观看",
+    "favorite": "收藏"
   },
   "search": {
     "search": "搜索",

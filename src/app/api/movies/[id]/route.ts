@@ -5,6 +5,31 @@ import { movies, moviePeople, people, userMovieData } from "@/lib/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
+// DELETE /api/movies/[id]
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  try {
+    const movie = db.select().from(movies).where(eq(movies.id, id)).get();
+    if (!movie) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    db.delete(movies).where(eq(movies.id, id)).run();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete movie error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 // GET /api/movies/[id]
 export async function GET(
   _request: NextRequest,

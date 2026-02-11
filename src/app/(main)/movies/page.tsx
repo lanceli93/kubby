@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -23,6 +23,7 @@ interface Movie {
   posterPath?: string | null;
   communityRating?: number | null;
   isFavorite?: boolean;
+  isWatched?: boolean;
   genres?: string[];
 }
 
@@ -32,6 +33,50 @@ export default function MovieBrowsePage() {
       <MovieBrowseContent />
     </Suspense>
   );
+}
+
+function useMovieMutations() {
+  const queryClient = useQueryClient();
+
+  const toggleFavorite = useMutation({
+    mutationFn: ({ id, current }: { id: string; current: boolean }) =>
+      fetch(`/api/movies/${id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !current }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+    },
+  });
+
+  const toggleWatched = useMutation({
+    mutationFn: ({ id, current }: { id: string; current: boolean }) =>
+      fetch(`/api/movies/${id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPlayed: !current }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+    },
+  });
+
+  const deleteMovie = useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/movies/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+    },
+  });
+
+  return {
+    handleToggleFavorite: (id: string, current: boolean) =>
+      toggleFavorite.mutate({ id, current }),
+    handleToggleWatched: (id: string, current: boolean) =>
+      toggleWatched.mutate({ id, current }),
+    handleDeleteMovie: (id: string) => deleteMovie.mutate(id),
+  };
 }
 
 function MovieBrowseContent() {
@@ -91,6 +136,8 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const [sort, setSort] = useState("dateAdded");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+    useMovieMutations();
 
   const sortOptions = [
     { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
@@ -184,6 +231,15 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             year={movie.year}
             posterPath={movie.posterPath}
             rating={movie.communityRating}
+            isFavorite={movie.isFavorite}
+            isWatched={movie.isWatched}
+            onToggleFavorite={() =>
+              handleToggleFavorite(movie.id, !!movie.isFavorite)
+            }
+            onToggleWatched={() =>
+              handleToggleWatched(movie.id, !!movie.isWatched)
+            }
+            onDelete={() => handleDeleteMovie(movie.id)}
           />
         ))}
       </div>
@@ -199,6 +255,8 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 
 function FavoritesTabContent({ libraryId }: { libraryId: string }) {
   const t = useTranslations("movies");
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+    useMovieMutations();
 
   const { data: favorites = [] } = useQuery<Movie[]>({
     queryKey: ["movies", "favorites", libraryId],
@@ -227,6 +285,14 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
               posterPath={movie.posterPath}
               rating={movie.communityRating}
               isFavorite
+              isWatched={movie.isWatched}
+              onToggleFavorite={() =>
+                handleToggleFavorite(movie.id, true)
+              }
+              onToggleWatched={() =>
+                handleToggleWatched(movie.id, !!movie.isWatched)
+              }
+              onDelete={() => handleDeleteMovie(movie.id)}
             />
           ))}
         </div>
@@ -247,6 +313,9 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
         `/api/movies?libraryId=${libraryId}&includeGenres=true&limit=5000`
       ).then((r) => r.json()),
   });
+
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+    useMovieMutations();
 
   const genreGroups = useMemo(() => {
     const map = new Map<string, Movie[]>();
@@ -286,6 +355,14 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
                 posterPath={movie.posterPath}
                 rating={movie.communityRating}
                 isFavorite={movie.isFavorite}
+                isWatched={movie.isWatched}
+                onToggleFavorite={() =>
+                  handleToggleFavorite(movie.id, !!movie.isFavorite)
+                }
+                onToggleWatched={() =>
+                  handleToggleWatched(movie.id, !!movie.isWatched)
+                }
+                onDelete={() => handleDeleteMovie(movie.id)}
               />
             ))}
           </ScrollRow>

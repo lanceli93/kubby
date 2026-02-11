@@ -74,7 +74,12 @@
     "emptyState": "Welcome to Kubby! Add a media library to get started.",
     "homeTab": "Home",
     "favoritesTab": "Favorites",
-    "noFavorites": "No favorites yet"
+    "noFavorites": "No favorites yet",
+    "scanLibrary": "Scan Library",
+    "refreshMetadata": "Refresh Metadata",
+    "editLibrary": "Edit",
+    "deleteLibrary": "Delete",
+    "confirmDeleteLibrary": "Are you sure you want to delete this library? All movies in it will be removed."
   },
   "settings": {
     "settings": "Settings",
@@ -133,7 +138,15 @@
     "youMayAlsoLike": "You May Also Like",
     "favorites": "Favorites",
     "noFavorites": "No favorites in this library",
-    "selectLibrary": "Please select a library from the home page"
+    "selectLibrary": "Please select a library from the home page",
+    "play": "Play",
+    "editMetadata": "Edit Metadata",
+    "deleteMovie": "Delete",
+    "confirmDeleteMovie": "Are you sure you want to delete this movie? This action cannot be undone.",
+    "mediaInfo": "Media Info",
+    "refreshMetadata": "Refresh Metadata",
+    "watched": "Watched",
+    "favorite": "Favorite"
   },
   "search": {
     "search": "Search",
