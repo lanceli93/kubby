@@ -71,7 +71,10 @@
     "recentlyAdded": "Recently Added",
     "favorites": "Favorites",
     "mediaLibraries": "Media Libraries",
-    "emptyState": "Welcome to Kubby! Add a media library to get started."
+    "emptyState": "Welcome to Kubby! Add a media library to get started.",
+    "homeTab": "Home",
+    "favoritesTab": "Favorites",
+    "noFavorites": "No favorites yet"
   },
   "settings": {
     "settings": "Settings",
@@ -127,7 +130,10 @@
     "runtime": "Runtime",
     "moviesCount": "{count} movies",
     "cast": "Cast",
-    "youMayAlsoLike": "You May Also Like"
+    "youMayAlsoLike": "You May Also Like",
+    "favorites": "Favorites",
+    "noFavorites": "No favorites in this library",
+    "selectLibrary": "Please select a library from the home page"
   },
   "search": {
     "search": "Search",

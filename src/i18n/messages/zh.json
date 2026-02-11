@@ -71,7 +71,10 @@
     "recentlyAdded": "最近添加",
     "favorites": "收藏",
     "mediaLibraries": "媒体库",
-    "emptyState": "欢迎使用 Kubby！请先添加一个媒体库。"
+    "emptyState": "欢迎使用 Kubby！请先添加一个媒体库。",
+    "homeTab": "首页",
+    "favoritesTab": "收藏",
+    "noFavorites": "暂无收藏"
   },
   "settings": {
     "settings": "设置",
@@ -127,7 +130,10 @@
     "runtime": "时长",
     "moviesCount": "{count} 部电影",
     "cast": "演员",
-    "youMayAlsoLike": "猜你喜欢"
+    "youMayAlsoLike": "猜你喜欢",
+    "favorites": "收藏",
+    "noFavorites": "此媒体库暂无收藏",
+    "selectLibrary": "请从首页选择一个媒体库"
   },
   "search": {
     "search": "搜索",

@@ -82,7 +82,12 @@ export async function GET(request: NextRequest) {
             eq(userMovieData.userId, userId)
           )
         )
-        .where(eq(userMovieData.isFavorite, true))
+        .where(
+          and(
+            eq(userMovieData.isFavorite, true),
+            ...(libraryId ? [eq(movies.mediaLibraryId, libraryId)] : [])
+          )
+        )
         .orderBy(desc(movies.dateAdded))
         .limit(limit)
         .all();
@@ -104,6 +109,10 @@ export async function GET(request: NextRequest) {
     }
     if (search) {
       query = query.where(like(movies.title, `%${search}%`));
+    }
+    const genre = searchParams.get("genre");
+    if (genre) {
+      query = query.where(like(movies.genres, `%"${genre}"%`));
     }
     if (exclude) {
       query = query.where(sql`${movies.id} != ${exclude}`);
@@ -130,6 +139,7 @@ export async function GET(request: NextRequest) {
     }
 
     const results = query.limit(limit).all();
+    const includeGenres = searchParams.get("includeGenres") === "true";
 
     // Resolve relative paths to absolute
     return NextResponse.json(
@@ -137,6 +147,7 @@ export async function GET(request: NextRequest) {
         ...r,
         posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
         fanartPath: r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
+        ...(includeGenres && r.genres ? { genres: JSON.parse(r.genres) } : {}),
       }))
     );
   } catch (error) {

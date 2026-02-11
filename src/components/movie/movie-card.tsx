@@ -27,10 +27,11 @@ export function MovieCard({
   return (
     <Link
       href={`/movies/${id}`}
-      className="group relative flex-shrink-0 overflow-hidden rounded-lg transition-transform hover:scale-[1.03] hover:brightness-110"
-      style={{ width: 180, height: 270 }}
+      className="group flex-shrink-0 transition-transform hover:scale-[1.03]"
+      style={{ width: 180 }}
     >
-      <div className="relative h-full w-full bg-[var(--surface)]">
+      {/* Poster */}
+      <div className="relative w-full overflow-hidden rounded-lg bg-[var(--surface)]" style={{ height: 270 }}>
         {posterPath ? (
           <Image
             src={resolveImageSrc(posterPath)}
@@ -44,17 +45,6 @@ export function MovieCard({
             No Poster
           </div>
         )}
-
-        {/* Bottom gradient overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/90 to-transparent" />
-
-        {/* Title */}
-        <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
-          <p className="truncate text-sm font-medium text-white">{title}</p>
-          {year && (
-            <p className="text-xs text-[#8888a0]">{year}</p>
-          )}
-        </div>
 
         {/* Rating badge */}
         {rating != null && rating > 0 && (
@@ -81,6 +71,14 @@ export function MovieCard({
               style={{ width: `${progress}%` }}
             />
           </div>
+        )}
+      </div>
+
+      {/* Title & year below poster */}
+      <div className="mt-1.5 px-0.5">
+        <p className="truncate text-sm font-medium text-foreground">{title}</p>
+        {year && (
+          <p className="text-xs text-muted-foreground">{year}</p>
         )}
       </div>
     </Link>

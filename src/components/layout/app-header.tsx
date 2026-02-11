@@ -1,61 +1,77 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Search, ArrowLeft, House } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useQuery } from "@tanstack/react-query";
+
+interface Library {
+  id: string;
+  name: string;
+}
 
 export function AppHeader() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const t = useTranslations("nav");
 
-  const navItems = [
-    { label: t("home"), href: "/" },
-    { label: t("movies"), href: "/movies" },
-    ...(session?.user?.isAdmin
-      ? [{ label: t("dashboard"), href: "/dashboard" }]
-      : []),
-  ];
+  const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
+  const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
+  const libraryId = searchParams.get("libraryId");
 
-  const initials = session?.user?.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
+  const { data: library } = useQuery<Library>({
+    queryKey: ["library", libraryId],
+    queryFn: () => fetch(`/api/libraries/${libraryId}`).then((r) => r.json()),
+    enabled: !!isLibraryPage && !!libraryId,
+  });
+
+  const initials =
+    session?.user?.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
 
   return (
-    <header className="flex h-16 w-full items-center justify-between border-b border-white/[0.08] bg-[var(--header)] px-8">
-      <div className="flex items-center gap-8">
-        <Link href="/" className="text-[22px] font-bold text-foreground">
-          Kubby
-        </Link>
-        <nav className="flex items-center gap-6">
-          {navItems.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm ${
-                  isActive
-                    ? "font-semibold text-foreground"
-                    : "font-normal text-muted-foreground hover:text-foreground"
-                } transition-colors`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+    <header
+      className={`flex h-16 w-full items-center justify-between px-8 ${
+        isMovieDetail
+          ? "absolute top-0 left-0 z-30 bg-transparent"
+          : "bg-[var(--header)]"
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        {isLibraryPage ? (
+          <>
+            <Link
+              href="/"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <House className="h-5 w-5" />
+            </Link>
+            <span className="text-xl font-semibold text-foreground">
+              {library?.name || ""}
+            </span>
+          </>
+        ) : (
+          <Link href="/" className="text-[22px] font-bold text-foreground">
+            Kubby
+          </Link>
+        )}
       </div>
       <div className="flex items-center gap-4">
-        <Link href="/search" className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          href="/search"
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
           <Search className="h-5 w-5" />
         </Link>
         <Link

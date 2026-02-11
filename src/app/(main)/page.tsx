@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
 import { LibraryCard } from "@/components/library/library-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
 
 interface Movie {
@@ -79,53 +80,96 @@ export default function HomePage() {
   const { data: favorites = [] } = useQuery<Movie[]>({
     queryKey: ["movies", "favorites"],
     queryFn: () =>
-      fetch("/api/movies?filter=favorites").then((r) => r.json()),
+      fetch("/api/movies?filter=favorites&limit=500").then((r) => r.json()),
   });
 
   return (
-    <div className="flex flex-col gap-10 px-12 py-8">
-      {/* Media Libraries */}
-      {libraries.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold text-foreground">
-            {t("mediaLibraries")}
-          </h2>
-          <ScrollRow>
-            {libraries.map((lib) => (
-              <LibraryCard
-                key={lib.id}
-                id={lib.id}
-                name={lib.name}
-                type={lib.type}
-                movieCount={lib.movieCount}
-              />
-            ))}
-          </ScrollRow>
-        </section>
-      )}
+    <div className="flex flex-col">
+      <Tabs defaultValue="home">
+        <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
+          <TabsList variant="line">
+            <TabsTrigger value="home">{t("homeTab")}</TabsTrigger>
+            <TabsTrigger value="favorites">{t("favoritesTab")}</TabsTrigger>
+          </TabsList>
+        </div>
 
-      {/* Continue Watching */}
-      <MovieRow
-        title={t("continueWatching")}
-        movies={continueWatching}
-        showProgress
-      />
+        <TabsContent value="home">
+          <div className="flex flex-col gap-10 px-12 py-8">
+            {/* Media Libraries */}
+            {libraries.length > 0 && (
+              <section className="flex flex-col gap-4">
+                <h2 className="text-xl font-semibold text-foreground">
+                  {t("mediaLibraries")}
+                </h2>
+                <ScrollRow>
+                  {libraries.map((lib) => (
+                    <LibraryCard
+                      key={lib.id}
+                      id={lib.id}
+                      name={lib.name}
+                      type={lib.type}
+                      movieCount={lib.movieCount}
+                    />
+                  ))}
+                </ScrollRow>
+              </section>
+            )}
 
-      {/* Recently Added */}
-      <MovieRow title={t("recentlyAdded")} movies={recentlyAdded} />
+            {/* Continue Watching */}
+            <MovieRow
+              title={t("continueWatching")}
+              movies={continueWatching}
+              showProgress
+            />
 
-      {/* Favorites */}
-      <MovieRow title={t("favorites")} movies={favorites} />
+            {/* Recently Added */}
+            <MovieRow title={t("recentlyAdded")} movies={recentlyAdded} />
 
-      {/* Empty state */}
-      {libraries.length === 0 &&
-        recentlyAdded.length === 0 && (
-          <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
-            <p className="text-lg text-muted-foreground">
-              {t("emptyState")}
-            </p>
+            {/* Favorites */}
+            <MovieRow title={t("favorites")} movies={favorites} />
+
+            {/* Empty state */}
+            {libraries.length === 0 &&
+              recentlyAdded.length === 0 && (
+                <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
+                  <p className="text-lg text-muted-foreground">
+                    {t("emptyState")}
+                  </p>
+                </div>
+              )}
           </div>
-        )}
+        </TabsContent>
+
+        <TabsContent value="favorites">
+          <div className="px-12 py-8">
+            {favorites.length > 0 ? (
+              <div
+                className="grid gap-6"
+                style={{
+                  gridTemplateColumns: "repeat(auto-fill, 180px)",
+                  justifyContent: "center",
+                }}
+              >
+                {favorites.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    id={movie.id}
+                    title={movie.title}
+                    year={movie.year}
+                    posterPath={movie.posterPath}
+                    rating={movie.communityRating}
+                    isFavorite={movie.isFavorite}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-64 items-center justify-center text-muted-foreground">
+                {t("noFavorites")}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

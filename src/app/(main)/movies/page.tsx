@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useState, useRef, useEffect, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
+import { ScrollRow } from "@/components/ui/scroll-row";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
 import {
   ChevronDown,
-  Folder,
   ArrowDownAZ,
   CalendarPlus,
   Calendar,
@@ -21,12 +22,8 @@ interface Movie {
   year?: number;
   posterPath?: string | null;
   communityRating?: number | null;
-}
-
-interface Library {
-  id: string;
-  name: string;
-  movieCount?: number;
+  isFavorite?: boolean;
+  genres?: string[];
 }
 
 export default function MovieBrowsePage() {
@@ -39,11 +36,58 @@ export default function MovieBrowsePage() {
 
 function MovieBrowseContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const libraryId = searchParams.get("libraryId") || "";
   const t = useTranslations("movies");
 
-  const [genre, setGenre] = useState("all");
-  const [year, setYear] = useState("all");
+  // If no libraryId, redirect to home
+  if (!libraryId) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center gap-4 text-center px-12">
+        <p className="text-lg text-muted-foreground">
+          {t("selectLibrary")}
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          {t("allMovies")}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <Tabs defaultValue="movies">
+        <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
+          <TabsList variant="line">
+            <TabsTrigger value="movies">{t("movies")}</TabsTrigger>
+            <TabsTrigger value="favorites">{t("favorites")}</TabsTrigger>
+            <TabsTrigger value="genres">{t("genres")}</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <div className="flex-1 overflow-auto px-12 py-6">
+          <TabsContent value="movies">
+            <MoviesTabContent libraryId={libraryId} />
+          </TabsContent>
+
+          <TabsContent value="favorites">
+            <FavoritesTabContent libraryId={libraryId} />
+          </TabsContent>
+
+          <TabsContent value="genres">
+            <GenresTabContent libraryId={libraryId} />
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
+  );
+}
+
+function MoviesTabContent({ libraryId }: { libraryId: string }) {
+  const t = useTranslations("movies");
   const [sort, setSort] = useState("dateAdded");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -56,7 +100,6 @@ function MovieBrowseContent() {
     { value: "runtime", label: t("runtime"), icon: Timer },
   ];
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
@@ -67,19 +110,11 @@ function MovieBrowseContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const { data: library } = useQuery<Library>({
-    queryKey: ["library", libraryId],
-    queryFn: () => fetch(`/api/libraries/${libraryId}`).then((r) => r.json()),
-    enabled: !!libraryId,
-  });
-
   const { data: movies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", { libraryId, genre, year, sort }],
+    queryKey: ["movies", { libraryId, sort }],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (libraryId) params.set("libraryId", libraryId);
-      if (genre !== "all") params.set("genre", genre);
-      if (year !== "all") params.set("year", year);
+      params.set("libraryId", libraryId);
       params.set("sort", sort);
       return fetch(`/api/movies?${params}`).then((r) => r.json());
     },
@@ -89,23 +124,9 @@ function MovieBrowseContent() {
     sortOptions.find((o) => o.value === sort)?.label || t("dateAdded");
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Filter/Sort Toolbar */}
-      <div className="flex h-12 items-center justify-between bg-[#0d0d14] px-12">
-        <div className="flex items-center gap-3">
-          {/* Genre filter */}
-          <button className="flex items-center gap-1.5 rounded-md border border-white/[0.08] px-3 py-1.5 text-[13px] text-muted-foreground hover:border-white/20">
-            {t("allGenres")}
-            <ChevronDown className="h-3.5 w-3.5 text-[#666680]" />
-          </button>
-          {/* Year filter */}
-          <button className="flex items-center gap-1.5 rounded-md border border-white/[0.08] px-3 py-1.5 text-[13px] text-muted-foreground hover:border-white/20">
-            {t("allYears")}
-            <ChevronDown className="h-3.5 w-3.5 text-[#666680]" />
-          </button>
-        </div>
-
-        {/* Sort dropdown */}
+    <div className="pt-4">
+      {/* Sort Toolbar */}
+      <div className="mb-4 flex items-center justify-end">
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setShowSortDropdown(!showSortDropdown)}
@@ -148,22 +169,56 @@ function MovieBrowseContent() {
       </div>
 
       {/* Movie Grid */}
-      <div className="flex-1 overflow-auto px-12 py-6">
-        {/* Library header */}
-        {library && (
-          <div className="mb-4 flex items-center gap-3">
-            <Folder className="h-[22px] w-[22px] text-primary" />
-            <h1 className="text-[22px] font-bold text-foreground">
-              {library.name}
-            </h1>
-            <span className="text-sm text-[#666680]">
-              {t("moviesCount", { count: library.movieCount ?? movies.length })}
-            </span>
-          </div>
-        )}
+      <div
+        className="grid gap-6"
+        style={{
+          gridTemplateColumns: "repeat(auto-fill, 180px)",
+          justifyContent: "center",
+        }}
+      >
+        {movies.map((movie) => (
+          <MovieCard
+            key={movie.id}
+            id={movie.id}
+            title={movie.title}
+            year={movie.year}
+            posterPath={movie.posterPath}
+            rating={movie.communityRating}
+          />
+        ))}
+      </div>
 
-        <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fill, 180px)", justifyContent: "center" }}>
-          {movies.map((movie) => (
+      {movies.length === 0 && (
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          {t("noMovies")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FavoritesTabContent({ libraryId }: { libraryId: string }) {
+  const t = useTranslations("movies");
+
+  const { data: favorites = [] } = useQuery<Movie[]>({
+    queryKey: ["movies", "favorites", libraryId],
+    queryFn: () =>
+      fetch(
+        `/api/movies?filter=favorites&libraryId=${libraryId}&limit=500`
+      ).then((r) => r.json()),
+  });
+
+  return (
+    <div className="pt-4">
+      {favorites.length > 0 ? (
+        <div
+          className="grid gap-6"
+          style={{
+            gridTemplateColumns: "repeat(auto-fill, 180px)",
+            justifyContent: "center",
+          }}
+        >
+          {favorites.map((movie) => (
             <MovieCard
               key={movie.id}
               id={movie.id}
@@ -171,16 +226,71 @@ function MovieBrowseContent() {
               year={movie.year}
               posterPath={movie.posterPath}
               rating={movie.communityRating}
+              isFavorite
             />
           ))}
         </div>
+      ) : (
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          {t("noFavorites")}
+        </div>
+      )}
+    </div>
+  );
+}
 
-        {movies.length === 0 && (
-          <div className="flex h-64 items-center justify-center text-muted-foreground">
-            {t("noMovies")}
-          </div>
-        )}
+function GenresTabContent({ libraryId }: { libraryId: string }) {
+  const { data: allMovies = [] } = useQuery<Movie[]>({
+    queryKey: ["movies", "genres-view", libraryId],
+    queryFn: () =>
+      fetch(
+        `/api/movies?libraryId=${libraryId}&includeGenres=true&limit=5000`
+      ).then((r) => r.json()),
+  });
+
+  const genreGroups = useMemo(() => {
+    const map = new Map<string, Movie[]>();
+    for (const movie of allMovies) {
+      if (movie.genres && Array.isArray(movie.genres)) {
+        for (const genre of movie.genres) {
+          if (!map.has(genre)) {
+            map.set(genre, []);
+          }
+          map.get(genre)!.push(movie);
+        }
+      }
+    }
+    // Sort genres alphabetically
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [allMovies]);
+
+  if (genreGroups.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center pt-4 text-muted-foreground">
+        No genres found
       </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8 pt-4">
+      {genreGroups.map(([genre, movies]) => (
+        <section key={genre} className="flex flex-col gap-3">
+          <ScrollRow title={genre}>
+            {movies.map((movie) => (
+              <MovieCard
+                key={movie.id}
+                id={movie.id}
+                title={movie.title}
+                year={movie.year}
+                posterPath={movie.posterPath}
+                rating={movie.communityRating}
+                isFavorite={movie.isFavorite}
+              />
+            ))}
+          </ScrollRow>
+        </section>
+      ))}
     </div>
   );
 }

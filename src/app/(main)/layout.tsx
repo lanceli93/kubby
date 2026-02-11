@@ -10,9 +10,9 @@ export default function MainLayout({
   return (
     <SessionProvider>
       <QueryProvider>
-        <div className="flex h-full flex-col">
+        <div className="relative flex h-full flex-col">
           <AppHeader />
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-auto [scrollbar-gutter:stable]">{children}</main>
         </div>
       </QueryProvider>
     </SessionProvider>
