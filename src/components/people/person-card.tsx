@@ -28,10 +28,14 @@ export function PersonCard({
   return (
     <Link
       href={`/people/${id}`}
-      className="group flex-shrink-0 overflow-hidden rounded-lg transition-transform hover:scale-[1.03]"
-      style={{ width, height }}
+      className="group flex-shrink-0 transition-transform hover:scale-[1.03]"
+      style={{ width }}
     >
-      <div className="relative h-full w-full bg-[var(--surface)]">
+      {/* Photo */}
+      <div
+        className="relative overflow-hidden rounded-lg bg-[var(--surface)]"
+        style={{ width, height }}
+      >
         {photoPath ? (
           <Image
             src={resolveImageSrc(photoPath)}
@@ -45,17 +49,14 @@ export function PersonCard({
             {name[0]?.toUpperCase()}
           </div>
         )}
+      </div>
 
-        {/* Bottom gradient overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
-
-        {/* Name & role */}
-        <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
-          <p className="truncate text-sm font-medium text-white">{name}</p>
-          {role && (
-            <p className="truncate text-xs text-[#8888a0]">{role}</p>
-          )}
-        </div>
+      {/* Name & role below poster */}
+      <div className="mt-1.5 px-0.5">
+        <p className="truncate text-sm font-medium text-foreground">{name}</p>
+        {role && (
+          <p className="truncate text-xs text-muted-foreground">{role}</p>
+        )}
       </div>
     </Link>
   );

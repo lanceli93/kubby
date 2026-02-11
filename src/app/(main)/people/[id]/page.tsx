@@ -73,14 +73,6 @@ export default function PersonDetailPage() {
                 {person.name[0]?.toUpperCase()}
               </div>
             )}
-            {/* Bottom gradient */}
-            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/90 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 px-4 pb-3">
-              <p className="text-lg font-semibold text-white">{person.name}</p>
-              <p className="text-sm capitalize text-[#8888a0]">
-                {person.type}
-              </p>
-            </div>
           </div>
 
           <div className="flex flex-col gap-2">
