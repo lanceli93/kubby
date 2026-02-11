@@ -162,7 +162,7 @@ function MovieBrowseContent() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fill, 180px)", justifyContent: "center" }}>
           {movies.map((movie) => (
             <MovieCard
               key={movie.id}

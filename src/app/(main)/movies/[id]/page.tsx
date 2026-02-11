@@ -105,7 +105,7 @@ export default function MovieDetailPage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section with Fanart — Jellyfin style */}
-      <div className="relative min-h-[600px] w-full overflow-hidden">
+      <div className="relative min-h-[650px] w-full overflow-hidden">
         {/* Fanart Background */}
         {movie.fanartPath && (
           <Image
@@ -124,15 +124,15 @@ export default function MovieDetailPage() {
 
         {/* Content row: poster + movie info */}
         <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-10">
-          {/* Poster — 300×450 (2:3) */}
-          <div className="relative h-[450px] w-[300px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          {/* Poster — 350×525 (2:3) */}
+          <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (
               <Image
                 src={resolveImageSrc(movie.posterPath)}
                 alt={movie.title}
                 fill
                 className="object-cover"
-                sizes="300px"
+                sizes="350px"
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
@@ -247,9 +247,8 @@ export default function MovieDetailPage() {
 
       {/* Cast Section */}
       {movie.cast.length > 0 && (
-        <section className="flex flex-col gap-5 px-20">
-          <h2 className="text-xl font-semibold text-foreground">Cast</h2>
-          <ScrollRow>
+        <section className="px-20 mt-[10px]">
+          <ScrollRow title="Cast">
             {movie.cast.map((person) => (
               <PersonCard
                 key={person.id}
