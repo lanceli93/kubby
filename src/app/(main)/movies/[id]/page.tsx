@@ -115,10 +115,10 @@ export default function MovieDetailPage() {
           />
         )}
 
-        {/* Bottom-only gradient — keeps fanart visible */}
+        {/* Bottom gradient — fade to page background */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
-        {/* Subtle left gradient for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+        {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-black/20" />
 
         {/* Content row: poster + movie info */}
         <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-10">

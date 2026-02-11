@@ -26,7 +26,7 @@ export function MovieCard({
   return (
     <Link
       href={`/movies/${id}`}
-      className="group relative flex-shrink-0 overflow-hidden rounded-xl transition-transform hover:scale-[1.03] hover:brightness-110"
+      className="group relative flex-shrink-0 overflow-hidden rounded-lg transition-transform hover:scale-[1.03] hover:brightness-110"
       style={{ width: 180, height: 270 }}
     >
       <div className="relative h-full w-full bg-[var(--surface)]">

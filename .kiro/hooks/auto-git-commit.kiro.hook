@@ -4,7 +4,7 @@
   "description": "When the agent finishes working, check if there are more than 20 lines of code changes or more than 2 files changed. If so, automatically stage and commit the changes with a descriptive commit message.",
   "version": "1",
   "when": {
-    "type": "agentStop"
+    "type": "userTriggered"
   },
   "then": {
     "type": "askAgent",

@@ -27,7 +27,7 @@ export function PersonCard({
   return (
     <Link
       href={`/people/${id}`}
-      className="group flex-shrink-0 overflow-hidden rounded-xl transition-transform hover:scale-[1.03]"
+      className="group flex-shrink-0 overflow-hidden rounded-lg transition-transform hover:scale-[1.03]"
       style={{ width, height }}
     >
       <div className="relative h-full w-full bg-[var(--surface)]">

@@ -17,7 +17,7 @@ export function LibraryCard({ id, name, type, movieCount }: LibraryCardProps) {
   return (
     <Link
       href={`/movies?libraryId=${id}`}
-      className="group relative flex-shrink-0 overflow-hidden rounded-xl transition-transform hover:scale-[1.02]"
+      className="group relative flex-shrink-0 overflow-hidden rounded-lg transition-transform hover:scale-[1.02]"
       style={{ width: 320, height: 180 }}
     >
       <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[var(--surface)] transition-colors group-hover:bg-[#1f1f38]">
