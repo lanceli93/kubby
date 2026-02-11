@@ -64,7 +64,7 @@ export function MovieCard({
       style={{ width: 180 }}
     >
       {/* Poster */}
-      <div className="relative w-full overflow-hidden rounded-md bg-[var(--surface)]" style={{ height: 270 }}>
+      <div className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)]" style={{ height: 270 }}>
         {posterPath ? (
           <Image
             src={resolveImageSrc(posterPath)}

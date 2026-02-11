@@ -33,7 +33,7 @@ export function PersonCard({
     >
       {/* Photo */}
       <div
-        className="relative overflow-hidden rounded-md bg-[var(--surface)]"
+        className="relative overflow-hidden rounded-[4px] bg-[var(--surface)]"
         style={{ width, height }}
       >
         {photoPath ? (
