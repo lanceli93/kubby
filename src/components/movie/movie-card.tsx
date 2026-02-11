@@ -154,7 +154,7 @@ export function MovieCard({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-48"
+                className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
