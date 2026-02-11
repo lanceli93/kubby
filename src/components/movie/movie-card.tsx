@@ -89,13 +89,6 @@ export function MovieCard({
           </div>
         )}
 
-        {/* Favorite indicator (static, shown when not hovering or always) */}
-        {isFavorite && (
-          <div className="absolute left-2 top-2 group-hover:opacity-0 transition-opacity">
-            <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-          </div>
-        )}
-
         {/* Progress bar */}
         {showProgress && progress != null && (
           <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/20 z-10">
