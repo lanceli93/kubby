@@ -3,6 +3,7 @@ import "next-auth";
 declare module "next-auth" {
   interface User {
     isAdmin?: boolean;
+    locale?: string;
   }
 
   interface Session {
@@ -11,6 +12,7 @@ declare module "next-auth" {
       name: string;
       email: string;
       isAdmin: boolean;
+      locale: string;
     };
   }
 }
@@ -19,5 +21,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     isAdmin: boolean;
+    locale: string;
   }
 }

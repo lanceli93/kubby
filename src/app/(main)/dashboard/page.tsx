@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Film, Folder, Users, HardDrive, RefreshCw, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface DashboardStats {
   totalMovies: number;
@@ -38,6 +39,8 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  const t = useTranslations("dashboard");
+
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch("/api/dashboard/stats").then((r) => r.json()),
@@ -53,22 +56,22 @@ export default function DashboardPage() {
       {/* Stats */}
       <div className="flex gap-4">
         <StatCard
-          label="Total Movies"
+          label={t("totalMovies")}
           value={stats?.totalMovies ?? 0}
           icon={Film}
         />
         <StatCard
-          label="Media Libraries"
+          label={t("mediaLibraries")}
           value={stats?.totalLibraries ?? 0}
           icon={Folder}
         />
         <StatCard
-          label="Users"
+          label={t("users")}
           value={stats?.totalUsers ?? 0}
           icon={Users}
         />
         <StatCard
-          label="Disk Usage"
+          label={t("diskUsage")}
           value={stats?.diskUsage ?? "—"}
           icon={HardDrive}
         />
@@ -77,12 +80,12 @@ export default function DashboardPage() {
       {/* Recent Activity */}
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-foreground">
-          Recent Activity
+          {t("recentActivity")}
         </h2>
         <div className="rounded-xl border border-white/[0.03] bg-card">
           {activities.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">
-              No recent activity
+              {t("noRecentActivity")}
             </p>
           ) : (
             activities.map((activity) => (
@@ -103,26 +106,26 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-foreground">
-          Quick Actions
+          {t("quickActions")}
         </h2>
         <div className="flex gap-3">
           <button className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.04]">
             <RefreshCw className="h-4 w-4" />
-            Scan All Libraries
+            {t("scanAllLibraries")}
           </button>
           <Link
             href="/dashboard/libraries"
             className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.04]"
           >
             <Plus className="h-4 w-4" />
-            Add Library
+            {t("addLibrary")}
           </Link>
           <Link
             href="/dashboard/users"
             className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.04]"
           >
             <UserPlus className="h-4 w-4" />
-            Add User
+            {t("addUser")}
           </Link>
         </div>
       </div>

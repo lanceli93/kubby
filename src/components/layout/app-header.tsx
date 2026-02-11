@@ -4,16 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 
 export function AppHeader() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const t = useTranslations("nav");
 
   const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Movies", href: "/movies" },
+    { label: t("home"), href: "/" },
+    { label: t("movies"), href: "/movies" },
     ...(session?.user?.isAdmin
-      ? [{ label: "Dashboard", href: "/dashboard" }]
+      ? [{ label: t("dashboard"), href: "/dashboard" }]
       : []),
   ];
 

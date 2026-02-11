@@ -7,6 +7,7 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   displayName: text("display_name"),
   isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
+  locale: text("locale").default("en"),
   createdAt: text("created_at").notNull().default("(datetime('now'))"),
 });
 

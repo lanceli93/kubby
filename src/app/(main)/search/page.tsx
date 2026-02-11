@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { PersonCard } from "@/components/people/person-card";
+import { useTranslations } from "next-intl";
 
 interface Movie {
   id: string;
@@ -41,6 +42,7 @@ function SearchContent() {
   const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState(initialQuery);
   const [submitted, setSubmitted] = useState(!!initialQuery);
+  const t = useTranslations("search");
 
   const { data: results } = useQuery<SearchResults>({
     queryKey: ["search", query],
@@ -75,7 +77,7 @@ function SearchContent() {
               setQuery(e.target.value);
               if (!e.target.value.trim()) setSubmitted(false);
             }}
-            placeholder="Search movies, actors..."
+            placeholder={t("searchPlaceholder")}
             className="h-14 w-full rounded-xl border border-white/[0.08] bg-[var(--surface)] pl-12 pr-4 text-lg text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             autoFocus
           />
@@ -89,7 +91,7 @@ function SearchContent() {
           {results.movies.length > 0 && (
             <section className="flex flex-col gap-4">
               <h2 className="text-xl font-semibold text-foreground">
-                Movies ({results.movies.length})
+                {t("moviesCount", { count: results.movies.length })}
               </h2>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {results.movies.map((movie) => (
@@ -110,7 +112,7 @@ function SearchContent() {
           {results.people.length > 0 && (
             <section className="flex flex-col gap-4">
               <h2 className="text-xl font-semibold text-foreground">
-                People ({results.people.length})
+                {t("peopleCount", { count: results.people.length })}
               </h2>
               <div className="flex flex-wrap gap-4">
                 {results.people.map((person) => (
@@ -131,7 +133,7 @@ function SearchContent() {
 
       {submitted && query && !hasResults && results && (
         <div className="flex h-48 items-center justify-center text-muted-foreground">
-          No results found for &ldquo;{query}&rdquo;
+          {t("noResults", { query })}
         </div>
       )}
     </div>

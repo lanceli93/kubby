@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import nodePath from "path";
 import { db } from "@/lib/db";
 import { people, moviePeople, movies } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -24,6 +25,7 @@ export async function GET(
         year: movies.year,
         posterPath: movies.posterPath,
         fanartPath: movies.fanartPath,
+        folderPath: movies.folderPath,
         communityRating: movies.communityRating,
         role: moviePeople.role,
       })
@@ -33,13 +35,19 @@ export async function GET(
       .orderBy(desc(movies.year))
       .all();
 
-    // Use first movie's fanart as person backdrop
-    const fanartPath = filmography.find((m) => m.fanartPath)?.fanartPath || null;
+    // Resolve paths and find fanart for person backdrop
+    const resolvedFilms = filmography.map((m) => ({
+      ...m,
+      posterPath: m.posterPath ? nodePath.join(m.folderPath, m.posterPath) : null,
+      fanartPath: m.fanartPath ? nodePath.join(m.folderPath, m.fanartPath) : null,
+    }));
+
+    const fanartPath = resolvedFilms.find((m) => m.fanartPath)?.fanartPath || null;
 
     return NextResponse.json({
       ...person,
       fanartPath,
-      movies: filmography,
+      movies: resolvedFilms,
     });
   } catch (error) {
     console.error("Get person error:", error);

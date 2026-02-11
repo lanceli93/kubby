@@ -4,6 +4,7 @@ import { Suspense, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
+import { useTranslations } from "next-intl";
 import {
   ChevronDown,
   Folder,
@@ -28,14 +29,6 @@ interface Library {
   movieCount?: number;
 }
 
-const sortOptions = [
-  { value: "title", label: "Title (A\u2013Z)", icon: ArrowDownAZ },
-  { value: "dateAdded", label: "Date Added", icon: CalendarPlus },
-  { value: "releaseDate", label: "Release Date", icon: Calendar },
-  { value: "rating", label: "Rating", icon: Star },
-  { value: "runtime", label: "Runtime", icon: Timer },
-];
-
 export default function MovieBrowsePage() {
   return (
     <Suspense>
@@ -47,12 +40,21 @@ export default function MovieBrowsePage() {
 function MovieBrowseContent() {
   const searchParams = useSearchParams();
   const libraryId = searchParams.get("libraryId") || "";
+  const t = useTranslations("movies");
 
   const [genre, setGenre] = useState("all");
   const [year, setYear] = useState("all");
   const [sort, setSort] = useState("dateAdded");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+
+  const sortOptions = [
+    { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
+    { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
+    { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
+    { value: "rating", label: t("rating"), icon: Star },
+    { value: "runtime", label: t("runtime"), icon: Timer },
+  ];
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -84,7 +86,7 @@ function MovieBrowseContent() {
   });
 
   const currentSortLabel =
-    sortOptions.find((o) => o.value === sort)?.label || "Recently Added";
+    sortOptions.find((o) => o.value === sort)?.label || t("dateAdded");
 
   return (
     <div className="flex h-full flex-col">
@@ -93,12 +95,12 @@ function MovieBrowseContent() {
         <div className="flex items-center gap-3">
           {/* Genre filter */}
           <button className="flex items-center gap-1.5 rounded-md border border-white/[0.08] px-3 py-1.5 text-[13px] text-muted-foreground hover:border-white/20">
-            All Genres
+            {t("allGenres")}
             <ChevronDown className="h-3.5 w-3.5 text-[#666680]" />
           </button>
           {/* Year filter */}
           <button className="flex items-center gap-1.5 rounded-md border border-white/[0.08] px-3 py-1.5 text-[13px] text-muted-foreground hover:border-white/20">
-            All Years
+            {t("allYears")}
             <ChevronDown className="h-3.5 w-3.5 text-[#666680]" />
           </button>
         </div>
@@ -155,7 +157,7 @@ function MovieBrowseContent() {
               {library.name}
             </h1>
             <span className="text-sm text-[#666680]">
-              {library.movieCount ?? movies.length} movies
+              {t("moviesCount", { count: library.movieCount ?? movies.length })}
             </span>
           </div>
         )}
@@ -175,7 +177,7 @@ function MovieBrowseContent() {
 
         {movies.length === 0 && (
           <div className="flex h-64 items-center justify-center text-muted-foreground">
-            No movies found
+            {t("noMovies")}
           </div>
         )}
       </div>

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
 import { LibraryCard } from "@/components/library/library-card";
+import { useTranslations } from "next-intl";
 
 interface Movie {
   id: string;
@@ -55,6 +56,8 @@ function MovieRow({
 }
 
 export default function HomePage() {
+  const t = useTranslations("home");
+
   const { data: libraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
@@ -84,7 +87,7 @@ export default function HomePage() {
       {libraries.length > 0 && (
         <section className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold text-foreground">
-            Media Libraries
+            {t("mediaLibraries")}
           </h2>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {libraries.map((lib) => (
@@ -102,23 +105,23 @@ export default function HomePage() {
 
       {/* Continue Watching */}
       <MovieRow
-        title="Continue Watching"
+        title={t("continueWatching")}
         movies={continueWatching}
         showProgress
       />
 
       {/* Recently Added */}
-      <MovieRow title="Recently Added" movies={recentlyAdded} />
+      <MovieRow title={t("recentlyAdded")} movies={recentlyAdded} />
 
       {/* Favorites */}
-      <MovieRow title="Favorites" movies={favorites} />
+      <MovieRow title={t("favorites")} movies={favorites} />
 
       {/* Empty state */}
       {libraries.length === 0 &&
         recentlyAdded.length === 0 && (
           <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
             <p className="text-lg text-muted-foreground">
-              Welcome to Kubby! Add a media library to get started.
+              {t("emptyState")}
             </p>
           </div>
         )}

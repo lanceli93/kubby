@@ -2,12 +2,12 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { count } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { LoginForm } from "./login-form";
+import { SetupWizard } from "./setup-wizard";
 
-export default function LoginPage() {
+export default function SetupPage() {
   const result = db.select({ count: count() }).from(users).get();
-  if (result && result.count === 0) {
-    redirect("/setup");
+  if (result && result.count > 0) {
+    redirect("/");
   }
-  return <LoginForm />;
+  return <SetupWizard />;
 }

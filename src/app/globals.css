@@ -127,6 +127,6 @@
   }
 
   .font-primary {
-    font-family: var(--font-inter), "Inter", sans-serif;
+    font-family: var(--font-inter), "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   }
 }

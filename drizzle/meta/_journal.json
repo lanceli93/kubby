@@ -8,6 +8,13 @@
       "when": 1770739129087,
       "tag": "0000_gray_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1770805701246,
+      "tag": "0001_daffy_harpoon",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Auto Git Commit on Large Changes",
+  "description": "When the agent finishes working, check if there are more than 20 lines of code changes or more than 2 files changed. If so, automatically stage and commit the changes with a descriptive commit message.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check the current git diff using `git diff --stat` and `git diff --numstat`. If the total number of changed lines exceeds 20 OR the number of changed files exceeds 2, then:\n1. Stage all changes with `git add -A`\n2. Generate a concise, descriptive commit message in English summarizing what was changed\n3. Commit with `git commit -m \"<message>\"`\n\nIf the changes are small (20 lines or fewer AND 2 files or fewer), do nothing and skip the commit."
+  }
+}

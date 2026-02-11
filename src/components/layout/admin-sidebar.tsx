@@ -3,20 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Folder, Users } from "lucide-react";
-
-const sidebarItems = [
-  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Media Libraries", href: "/dashboard/libraries", icon: Folder },
-  { label: "Users", href: "/dashboard/users", icon: Users },
-];
+import { useTranslations } from "next-intl";
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const t = useTranslations("dashboard");
+
+  const sidebarItems = [
+    { label: t("overview"), href: "/dashboard", icon: LayoutDashboard },
+    { label: t("mediaLibraries"), href: "/dashboard/libraries", icon: Folder },
+    { label: t("users"), href: "/dashboard/users", icon: Users },
+  ];
 
   return (
     <aside className="flex w-60 flex-col gap-1 border-r border-white/[0.04] bg-[var(--header)] py-6">
       <span className="px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
-        Administration
+        {t("administration")}
       </span>
       {sidebarItems.map((item) => {
         const isActive = item.href === "/dashboard"

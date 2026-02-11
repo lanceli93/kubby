@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, RefreshCw, Trash2, Folder } from "lucide-react";
+import { FolderPicker } from "@/components/library/folder-picker";
 
 interface Library {
   id: string;
@@ -23,6 +24,7 @@ interface Library {
 export default function LibrariesPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [name, setName] = useState("");
   const [folderPath, setFolderPath] = useState("");
   const [type, setType] = useState("movie");
@@ -130,12 +132,18 @@ export default function LibrariesPage() {
                   />
                   <button
                     type="button"
-                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04]"
+                    onClick={() => setFolderPickerOpen(true)}
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
                   >
                     <Folder className="h-4 w-4" />
                   </button>
                 </div>
               </div>
+              <FolderPicker
+                open={folderPickerOpen}
+                onOpenChange={setFolderPickerOpen}
+                onSelect={(path) => setFolderPath(path)}
+              />
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"

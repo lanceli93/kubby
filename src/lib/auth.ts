@@ -33,6 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.displayName || user.username,
           email: user.username,
           isAdmin: user.isAdmin,
+          locale: user.locale ?? undefined,
         };
       },
     }),

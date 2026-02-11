@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Film, Folder } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface LibraryCardProps {
   id: string;
@@ -9,6 +12,8 @@ interface LibraryCardProps {
 }
 
 export function LibraryCard({ id, name, type, movieCount }: LibraryCardProps) {
+  const t = useTranslations("movies");
+
   return (
     <Link
       href={`/movies?libraryId=${id}`}
@@ -27,7 +32,7 @@ export function LibraryCard({ id, name, type, movieCount }: LibraryCardProps) {
           <p className="text-base font-semibold text-foreground">{name}</p>
           {movieCount != null && (
             <p className="text-xs text-muted-foreground">
-              {movieCount} {type === "movie" ? "movies" : "items"}
+              {t("moviesCount", { count: movieCount })}
             </p>
           )}
         </div>

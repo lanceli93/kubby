@@ -21,6 +21,7 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin;
+        token.locale = (user as { locale?: string }).locale || "en";
       }
       return token;
     },
@@ -28,6 +29,7 @@ export const authConfig: NextAuthConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as { isAdmin?: boolean }).isAdmin = token.isAdmin as boolean;
+        (session.user as { locale?: string }).locale = token.locale as string;
       }
       return session;
     },
@@ -35,7 +37,7 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!auth?.user;
       const pathname = nextUrl.pathname;
 
-      const publicPaths = ["/login", "/register"];
+      const publicPaths = ["/login", "/register", "/api/users", "/api/auth", "/setup", "/api/setup", "/api/filesystem"];
       const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
       if (isPublic) return true;
