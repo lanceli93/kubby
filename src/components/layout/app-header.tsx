@@ -6,6 +6,28 @@ import { Search, ArrowLeft, House } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 
+function KubbyLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 28 28"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      {/* Rounded square frame */}
+      <rect x="2" y="2" width="24" height="24" rx="6" stroke="#3b82f6" strokeWidth="2.2" />
+      {/* Letter K */}
+      <path
+        d="M10 8v12M10 14l8-6M10 14l8 6"
+        stroke="#3b82f6"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 interface Library {
   id: string;
   name: string;
@@ -18,6 +40,7 @@ export function AppHeader() {
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
   const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
+  const isPlayerPage = /^\/movies\/[^/]+\/play$/.test(pathname);
   const libraryId = searchParams.get("libraryId");
 
   const { data: library } = useQuery<Library>({
@@ -34,9 +57,11 @@ export function AppHeader() {
       .toUpperCase()
       .slice(0, 2) || "U";
 
+  if (isPlayerPage) return null;
+
   return (
     <header
-      className={`flex h-16 w-full items-center justify-between px-8 ${
+      className={`flex h-12 w-full items-center justify-between px-8 ${
         isMovieDetail
           ? "absolute top-0 left-0 z-30 bg-transparent"
           : "bg-[var(--header)]"
@@ -62,7 +87,8 @@ export function AppHeader() {
             </span>
           </>
         ) : (
-          <Link href="/" className="text-[22px] font-bold text-foreground">
+          <Link href="/" className="flex items-center gap-2 text-[22px] font-bold text-foreground">
+            <KubbyLogo className="h-7 w-7" />
             Kubby
           </Link>
         )}
