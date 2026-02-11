@@ -406,7 +406,7 @@ uniqueid(tmdb/imdb)
 | `/register` | 注册 | 同登录风格, 4 字段 + 管理员提示, i18n |
 | `/` | 首页 | 媒体库卡片(16:9) + 横向滚动行 |
 | `/movies` | 电影浏览 | 过滤工具栏 + 浮动排序下拉 + 响应式网格 |
-| `/movies/[id]` | 电影详情 | fanart 渐变 hero + poster + 元数据 + 演员卡片 + 推荐 |
+| `/movies/[id]` | 电影详情 | Jellyfin 风格: fanart 充分可见(仅底部渐变) + 左侧海报(300×450) + 右侧 text-shadow 信息面板(标题/元数据行/小型按钮行/Overview/Metadata 纵向列表) + 演员卡片 + 推荐 |
 | `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 隐藏控制栏 |
 | `/people/[id]` | 演员详情 | fanart 渐变 + 大卡片 + 参演作品网格 |
 | `/search` | 搜索 | 搜索框 + 电影结果 + 演员结果 |

@@ -103,8 +103,12 @@ export async function scanLibrary(libraryId: string) {
     }
 
     // Find poster and fanart (relative to movie dir)
-    const posterFile = findFileByPattern(movieDir, "poster", IMAGE_EXTENSIONS);
-    const fanartFile = findFileByPattern(movieDir, "fanart", IMAGE_EXTENSIONS);
+    const posterFile = findFileByPattern(movieDir, "poster", IMAGE_EXTENSIONS)
+      || findFileByPattern(movieDir, "folder", IMAGE_EXTENSIONS)
+      || findFileByPattern(movieDir, "cover", IMAGE_EXTENSIONS);
+    const fanartFile = findFileByPattern(movieDir, "fanart", IMAGE_EXTENSIONS)
+      || findFileByPattern(movieDir, "landscape", IMAGE_EXTENSIONS)
+      || findFileByPattern(movieDir, "backdrop", IMAGE_EXTENSIONS);
 
     const posterRelative = posterFile ? path.relative(movieDir, posterFile) : null;
     const fanartRelative = fanartFile ? path.relative(movieDir, fanartFile) : null;

@@ -102,8 +102,8 @@ export default function MovieDetailPage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section with Fanart */}
-      <div className="relative h-[500px] w-full overflow-hidden">
+      {/* Hero Section with Fanart — Jellyfin style */}
+      <div className="relative min-h-[600px] w-full overflow-hidden">
         {/* Fanart Background */}
         {movie.fanartPath && (
           <Image
@@ -115,20 +115,22 @@ export default function MovieDetailPage() {
           />
         )}
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
+        {/* Bottom-only gradient — keeps fanart visible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+        {/* Subtle left gradient for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
 
         {/* Content row: poster + movie info */}
-        <div className="absolute inset-x-0 top-10 flex gap-9 px-20">
-          {/* Poster */}
-          <div className="relative h-[360px] w-60 flex-shrink-0 overflow-hidden rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+        <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-10">
+          {/* Poster — 300×450 (2:3) */}
+          <div className="relative h-[450px] w-[300px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (
               <Image
                 src={`/api/images/${encodeURIComponent(movie.posterPath)}`}
                 alt={movie.title}
                 fill
                 className="object-cover"
-                sizes="240px"
+                sizes="300px"
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
@@ -137,99 +139,106 @@ export default function MovieDetailPage() {
             )}
           </div>
 
-          {/* Movie Info */}
-          <div className="flex flex-col gap-3.5">
-            <h1 className="text-[32px] font-bold text-foreground">
+          {/* Movie Info — no glass, text-shadow for readability */}
+          <div className="flex min-w-0 flex-1 flex-col gap-3 py-2 [text-shadow:0_1px_8px_rgba(0,0,0,0.8)]">
+            <h1 className="text-4xl font-bold text-white">
               {movie.title}
             </h1>
 
             {movie.originalTitle && movie.originalTitle !== movie.title && (
-              <p className="text-sm text-[#666680]">{movie.originalTitle}</p>
+              <p className="text-sm text-white/60">{movie.originalTitle}</p>
             )}
 
-            {/* Meta line */}
-            <div className="flex items-center gap-2.5 text-sm">
-              {movie.year && (
-                <span className="text-muted-foreground">{movie.year}</span>
-              )}
+            {/* Meta line: Year · Runtime · Rating · ★ Score */}
+            <div className="flex items-center gap-2.5 text-sm text-white/70">
+              {movie.year && <span>{movie.year}</span>}
               {movie.runtimeMinutes && (
                 <>
-                  <span className="text-[#555568]">&middot;</span>
-                  <span className="text-muted-foreground">
-                    {formatRuntime(movie.runtimeMinutes)}
-                  </span>
+                  <span className="text-white/40">&middot;</span>
+                  <span>{formatRuntime(movie.runtimeMinutes)}</span>
                 </>
               )}
               {movie.officialRating && (
                 <>
-                  <span className="text-[#555568]">&middot;</span>
-                  <span className="text-muted-foreground">
-                    {movie.officialRating}
-                  </span>
+                  <span className="text-white/40">&middot;</span>
+                  <span>{movie.officialRating}</span>
                 </>
               )}
               {movie.communityRating != null && movie.communityRating > 0 && (
                 <>
-                  <span className="text-[#555568]">&middot;</span>
-                  <span className="text-sm font-semibold text-[var(--gold)]">
+                  <span className="text-white/40">&middot;</span>
+                  <span className="font-semibold text-[var(--gold)]">
                     ★ {movie.communityRating.toFixed(1)}
                   </span>
                 </>
               )}
             </div>
 
-            {/* Genre tags */}
-            {genres.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {genres.map((g) => (
-                  <span
-                    key={g}
-                    className="rounded-md border border-white/[0.12] px-3 py-1.5 text-xs text-muted-foreground"
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-3">
+            {/* Action buttons — Jellyfin-style uniform small buttons */}
+            <div className="flex items-center gap-2 pt-1">
               <Link
                 href={`/movies/${movie.id}/play`}
-                className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                className="flex items-center gap-1.5 rounded-md bg-white/90 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-white"
               >
-                <Play className="h-[18px] w-[18px]" />
+                <Play className="h-4 w-4 fill-black" />
                 Play
               </Link>
               <button
-                onClick={() => toggleFavorite.mutate()}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.12] transition-colors hover:bg-white/[0.04] ${
-                  movie.userData?.isFavorite ? "text-red-500" : "text-muted-foreground"
+                onClick={() => toggleWatched.mutate()}
+                className={`flex h-9 w-9 items-center justify-center rounded-md border border-white/20 transition-colors hover:bg-white/10 ${
+                  movie.userData?.isPlayed ? "text-green-400" : "text-white/70"
                 }`}
+                title="Mark as watched"
               >
-                <Heart
-                  className={`h-5 w-5 ${movie.userData?.isFavorite ? "fill-red-500" : ""}`}
-                />
+                <CheckCircle className="h-4.5 w-4.5" />
               </button>
               <button
-                onClick={() => toggleWatched.mutate()}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.12] transition-colors hover:bg-white/[0.04] ${
-                  movie.userData?.isPlayed ? "text-green-500" : "text-muted-foreground"
+                onClick={() => toggleFavorite.mutate()}
+                className={`flex h-9 w-9 items-center justify-center rounded-md border border-white/20 transition-colors hover:bg-white/10 ${
+                  movie.userData?.isFavorite ? "text-red-400" : "text-white/70"
                 }`}
+                title="Favorite"
               >
-                <CheckCircle className="h-5 w-5" />
+                <Heart
+                  className={`h-4.5 w-4.5 ${movie.userData?.isFavorite ? "fill-red-400" : ""}`}
+                />
               </button>
             </div>
 
-            {/* Separator */}
-            <div className="h-px w-full bg-white/[0.06]" />
-
             {/* Overview */}
             {movie.overview && (
-              <p className="max-w-[800px] text-[15px] leading-relaxed text-[#a0a0b8]">
+              <p className="max-w-[700px] text-[15px] leading-relaxed text-white/80">
                 {movie.overview}
               </p>
             )}
+
+            {/* Metadata list — vertical label: value pairs */}
+            <div className="flex flex-col gap-1.5 pt-1 text-sm">
+              {genres.length > 0 && (
+                <div>
+                  <span className="text-white/50">Genres: </span>
+                  <span className="text-white/90">{genres.join(", ")}</span>
+                </div>
+              )}
+              {movie.directors.length > 0 && (
+                <div>
+                  <span className="text-white/50">Director: </span>
+                  <span className="text-white/90">{movie.directors.map((d) => d.name).join(", ")}</span>
+                </div>
+              )}
+              {studios.length > 0 && (
+                <div>
+                  <span className="text-white/50">Studio: </span>
+                  <span className="text-white/90">{studios.join(", ")}</span>
+                </div>
+              )}
+              {movie.country && (
+                <div>
+                  <span className="text-white/50">Country: </span>
+                  <span className="text-white/90">{movie.country}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -253,41 +262,16 @@ export default function MovieDetailPage() {
         </section>
       )}
 
-      {/* Additional Info */}
-      <section className="flex flex-col gap-3 px-20 py-6">
-        <div className="h-px w-full bg-white/[0.03]" />
-
-        {movie.directors.length > 0 && (
-          <div className="flex gap-2 text-sm">
-            <span className="text-[#666680]">Director:</span>
-            <span className="text-[#d0d0e0]">
-              {movie.directors.map((d) => d.name).join(", ")}
-            </span>
-          </div>
-        )}
-
-        {studios.length > 0 && (
-          <div className="flex gap-2 text-sm">
-            <span className="text-[#666680]">Studio:</span>
-            <span className="text-[#d0d0e0]">{studios.join(", ")}</span>
-          </div>
-        )}
-
-        {movie.country && (
-          <div className="flex gap-2 text-sm">
-            <span className="text-[#666680]">Country:</span>
-            <span className="text-[#d0d0e0]">{movie.country}</span>
-          </div>
-        )}
-
-        {(movie.tmdbId || movie.imdbId) && (
+      {/* External IDs */}
+      {(movie.tmdbId || movie.imdbId) && (
+        <div className="px-20 py-4">
           <p className="text-xs text-[#555568]">
             {movie.tmdbId && `TMDb: ${movie.tmdbId}`}
             {movie.tmdbId && movie.imdbId && " · "}
             {movie.imdbId && `IMDb: ${movie.imdbId}`}
           </p>
-        )}
-      </section>
+        </div>
+      )}
 
       {/* Recommended Movies */}
       {recommended.length > 0 && (
