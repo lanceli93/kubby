@@ -112,7 +112,9 @@ kubby/
 │   │   │   └── index.ts                            # DB 连接单例 (WAL + FK)
 │   │   ├── scanner/
 │   │   │   ├── index.ts                            # 媒体库扫描器 (目录遍历+DB写入)
-│   │   │   └── nfo-parser.ts                       # NFO XML 解析器
+│   │   │   ├── nfo-parser.ts                       # NFO XML 解析器
+│   │   │   └── nfo-writer.ts                       # NFO 回写 (追加 <actor> 元素)
+│   │   ├── tmdb.ts                                 # TMDb API 客户端 (credits 查询 + 图片下载)
 │   │   └── utils.ts                                # shadcn/ui cn() 工具函数
 │   ├── providers/
 │   │   ├── query-provider.tsx                      # TanStack React Query Provider
@@ -124,7 +126,9 @@ kubby/
 ├── drizzle/                                        # 迁移文件
 ├── drizzle.config.ts                               # Drizzle Kit 配置
 ├── web-design.pen                                  # Pencil MCP 设计稿 (16个页面, 含 Setup Wizard 4页)
-├── .env.local                                      # AUTH_SECRET + AUTH_TRUST_HOST
+├── scripts/
+│   └── enrich-nfo.ts                               # 独立脚本: TMDb 演员数据 → 下载头像 → 回写 NFO
+├── .env.local                                      # AUTH_SECRET + AUTH_TRUST_HOST (+ 可选 TMDB_API_KEY)
 └── next.config.ts                                  # serverExternalPackages, images, next-intl 插件包裹
 ```
 
@@ -545,7 +549,7 @@ Step 4: POST /api/setup/complete → 显示完成 → 跳转 /login
 - 视频直接播放, 无转码 (依赖浏览器原生编解码支持)
 - 搜索仅支持标题模糊匹配, 无全文搜索
 - 无字幕支持
-- 无远程元数据抓取 (依赖本地 NFO)
+- 无远程元数据抓取 (依赖本地 NFO, 可用 `scripts/enrich-nfo.ts` 一次性从 TMDb 补充演员数据到 NFO)
 - Dashboard 活动日志为占位实现
 - i18n 目前仅覆盖 auth/setup/settings 页面, 其余页面待增量翻译
 
@@ -567,4 +571,5 @@ npm run build            # 生产构建
 npx drizzle-kit generate # 生成迁移文件
 npx drizzle-kit push     # 推送 schema 到数据库
 npx drizzle-kit studio   # 打开 Drizzle Studio (数据库 GUI)
+TMDB_API_KEY=xxx npx tsx scripts/enrich-nfo.ts <媒体库路径>  # 从 TMDb 补充演员数据到 NFO
 ```

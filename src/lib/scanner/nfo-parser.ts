@@ -44,7 +44,7 @@ export function parseNfo(xml: string): NfoData {
     order: a.order !== undefined ? Number(a.order) : undefined,
   }));
 
-  // Extract unique IDs
+  // Extract unique IDs: support both <uniqueid type="tmdb"> and <tmdbid> formats
   let tmdbId: string | undefined;
   let imdbId: string | undefined;
   const uniqueIds = ensureArray(movie.uniqueid);
@@ -55,6 +55,9 @@ export function parseNfo(xml: string): NfoData {
       if (idObj["@_type"] === "imdb") imdbId = String(idObj["#text"] || "");
     }
   }
+  // Fallback: direct <tmdbid> / <imdbid> elements (Jellyfin format)
+  if (!tmdbId && movie.tmdbid) tmdbId = String(movie.tmdbid);
+  if (!imdbId && movie.imdbid) imdbId = String(movie.imdbid);
 
   return {
     title: String(movie.title || "Unknown"),
