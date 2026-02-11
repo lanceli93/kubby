@@ -53,16 +53,16 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
               <button
                 onClick={() => scroll("left")}
                 disabled={!canScrollLeft}
-                className="flex h-7 w-7 items-center justify-center rounded bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10"
+                className="text-white transition-colors hover:text-white/80 disabled:text-white/20"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={() => scroll("right")}
                 disabled={!canScrollRight}
-                className="flex h-7 w-7 items-center justify-center rounded bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-white/10"
+                className="text-white transition-colors hover:text-white/80 disabled:text-white/20"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               </button>
             </div>
           )}

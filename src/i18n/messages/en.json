@@ -125,7 +125,9 @@
     "dateAdded": "Date Added",
     "releaseDate": "Release Date",
     "runtime": "Runtime",
-    "moviesCount": "{count} movies"
+    "moviesCount": "{count} movies",
+    "cast": "Cast",
+    "youMayAlsoLike": "You May Also Like"
   },
   "search": {
     "search": "Search",

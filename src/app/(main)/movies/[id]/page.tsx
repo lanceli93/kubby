@@ -9,6 +9,7 @@ import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { useTranslations } from "next-intl";
 
 interface MovieDetail {
   id: string;
@@ -53,6 +54,7 @@ export default function MovieDetailPage() {
   const params = useParams();
   const movieId = params.id as string;
   const queryClient = useQueryClient();
+  const t = useTranslations("movies");
 
   const { data: movie } = useQuery<MovieDetail>({
     queryKey: ["movie", movieId],
@@ -248,7 +250,7 @@ export default function MovieDetailPage() {
       {/* Cast Section */}
       {movie.cast.length > 0 && (
         <section className="px-20 mt-[10px]">
-          <ScrollRow title="Cast">
+          <ScrollRow title={t("cast")}>
             {movie.cast.map((person) => (
               <PersonCard
                 key={person.id}
@@ -263,22 +265,11 @@ export default function MovieDetailPage() {
         </section>
       )}
 
-      {/* External IDs */}
-      {(movie.tmdbId || movie.imdbId) && (
-        <div className="px-20 py-4">
-          <p className="text-xs text-[#555568]">
-            {movie.tmdbId && `TMDb: ${movie.tmdbId}`}
-            {movie.tmdbId && movie.imdbId && " · "}
-            {movie.imdbId && `IMDb: ${movie.imdbId}`}
-          </p>
-        </div>
-      )}
-
       {/* Recommended Movies */}
       {recommended.length > 0 && (
         <section className="flex flex-col gap-4 px-20 pb-12 pt-4">
           <h2 className="text-xl font-semibold text-foreground">
-            You May Also Like
+            {t("youMayAlsoLike")}
           </h2>
           <ScrollRow>
             {recommended.map((m) => (
