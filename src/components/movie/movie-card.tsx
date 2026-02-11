@@ -214,7 +214,7 @@ export function MovieCard({
       </div>
 
       {/* Title & year below poster */}
-      <div className="mt-1.5 px-0.5">
+      <div className="mt-1.5 px-0.5 text-center">
         <p className="truncate text-sm font-medium text-foreground">{title}</p>
         {year && (
           <p className="text-xs text-muted-foreground">{year}</p>

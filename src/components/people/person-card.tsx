@@ -52,7 +52,7 @@ export function PersonCard({
       </div>
 
       {/* Name & role below poster */}
-      <div className="mt-1.5 px-0.5">
+      <div className="mt-1.5 px-0.5 text-center">
         <p className="truncate text-sm font-medium text-foreground">{name}</p>
         {role && (
           <p className="truncate text-xs text-muted-foreground">{role}</p>
