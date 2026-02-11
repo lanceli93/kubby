@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { MovieCard } from "@/components/movie/movie-card";
+import { resolveImageSrc } from "@/lib/image-utils";
 
 interface PersonDetail {
   id: string;
@@ -45,7 +46,7 @@ export default function PersonDetailPage() {
         {/* Fanart background (use first movie's fanart if available) */}
         {person.fanartPath && (
           <Image
-            src={`/api/images/${encodeURIComponent(person.fanartPath)}`}
+            src={resolveImageSrc(person.fanartPath)}
             alt=""
             fill
             className="object-cover"
@@ -61,7 +62,7 @@ export default function PersonDetailPage() {
           <div className="relative h-[340px] w-60 flex-shrink-0 overflow-hidden rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {person.photoPath ? (
               <Image
-                src={`/api/images/${encodeURIComponent(person.photoPath)}`}
+                src={resolveImageSrc(person.photoPath)}
                 alt={person.name}
                 fill
                 className="object-cover"

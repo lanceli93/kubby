@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { resolveImageSrc } from "@/lib/image-utils";
 
 interface PersonCardProps {
   id: string;
@@ -33,7 +34,7 @@ export function PersonCard({
       <div className="relative h-full w-full bg-[var(--surface)]">
         {photoPath ? (
           <Image
-            src={`/api/images/${encodeURIComponent(photoPath)}`}
+            src={resolveImageSrc(photoPath)}
             alt={name}
             fill
             className="object-cover"

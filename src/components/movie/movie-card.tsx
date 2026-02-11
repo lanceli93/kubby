@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Star, Heart } from "lucide-react";
+import { resolveImageSrc } from "@/lib/image-utils";
 
 interface MovieCardProps {
   id: string;
@@ -32,7 +33,7 @@ export function MovieCard({
       <div className="relative h-full w-full bg-[var(--surface)]">
         {posterPath ? (
           <Image
-            src={`/api/images/${encodeURIComponent(posterPath)}`}
+            src={resolveImageSrc(posterPath)}
             alt={title}
             fill
             className="object-cover"

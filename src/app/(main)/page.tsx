@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
 import { LibraryCard } from "@/components/library/library-card";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslations } from "next-intl";
 
 interface Movie {
@@ -36,7 +37,7 @@ function MovieRow({
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      <ScrollRow>
         {movies.map((movie) => (
           <MovieCard
             key={movie.id}
@@ -50,7 +51,7 @@ function MovieRow({
             showProgress={showProgress}
           />
         ))}
-      </div>
+      </ScrollRow>
     </section>
   );
 }
@@ -89,7 +90,7 @@ export default function HomePage() {
           <h2 className="text-xl font-semibold text-foreground">
             {t("mediaLibraries")}
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <ScrollRow>
             {libraries.map((lib) => (
               <LibraryCard
                 key={lib.id}
@@ -99,7 +100,7 @@ export default function HomePage() {
                 movieCount={lib.movieCount}
               />
             ))}
-          </div>
+          </ScrollRow>
         </section>
       )}
 

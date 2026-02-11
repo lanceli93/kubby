@@ -7,6 +7,8 @@ import Link from "next/link";
 import { Play, Heart, CheckCircle } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
+import { ScrollRow } from "@/components/ui/scroll-row";
+import { resolveImageSrc } from "@/lib/image-utils";
 
 interface MovieDetail {
   id: string;
@@ -107,7 +109,7 @@ export default function MovieDetailPage() {
         {/* Fanart Background */}
         {movie.fanartPath && (
           <Image
-            src={`/api/images/${encodeURIComponent(movie.fanartPath)}`}
+            src={resolveImageSrc(movie.fanartPath)}
             alt=""
             fill
             className="object-cover"
@@ -126,7 +128,7 @@ export default function MovieDetailPage() {
           <div className="relative h-[450px] w-[300px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (
               <Image
-                src={`/api/images/${encodeURIComponent(movie.posterPath)}`}
+                src={resolveImageSrc(movie.posterPath)}
                 alt={movie.title}
                 fill
                 className="object-cover"
@@ -247,7 +249,7 @@ export default function MovieDetailPage() {
       {movie.cast.length > 0 && (
         <section className="flex flex-col gap-5 px-20">
           <h2 className="text-xl font-semibold text-foreground">Cast</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <ScrollRow>
             {movie.cast.map((person) => (
               <PersonCard
                 key={person.id}
@@ -258,7 +260,7 @@ export default function MovieDetailPage() {
                 size="sm"
               />
             ))}
-          </div>
+          </ScrollRow>
         </section>
       )}
 
@@ -279,7 +281,7 @@ export default function MovieDetailPage() {
           <h2 className="text-xl font-semibold text-foreground">
             You May Also Like
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <ScrollRow>
             {recommended.map((m) => (
               <MovieCard
                 key={m.id}
@@ -290,7 +292,7 @@ export default function MovieDetailPage() {
                 rating={m.communityRating}
               />
             ))}
-          </div>
+          </ScrollRow>
         </section>
       )}
     </div>

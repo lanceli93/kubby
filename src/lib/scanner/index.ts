@@ -53,7 +53,16 @@ function getOrCreatePerson(
     )
     .get();
 
-  if (existing) return existing.id;
+  if (existing) {
+    // Update photoPath if we now have one and the existing record doesn't
+    if (photoPath && !existing.photoPath) {
+      db.update(people)
+        .set({ photoPath })
+        .where(eq(people.id, existing.id))
+        .run();
+    }
+    return existing.id;
+  }
 
   const id = uuidv4();
   db.insert(people)
