@@ -40,6 +40,7 @@ export function AppHeader() {
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
   const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
+  const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
   const isPlayerPage = /^\/movies\/[^/]+\/play$/.test(pathname);
   const libraryId = searchParams.get("libraryId");
 
@@ -62,7 +63,7 @@ export function AppHeader() {
   return (
     <header
       className={`flex h-12 w-full items-center justify-between px-8 ${
-        isMovieDetail
+        isMovieDetail || isPersonDetail
           ? "absolute top-0 left-0 z-30 bg-transparent"
           : "bg-[var(--header)]"
       }`}
