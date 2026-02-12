@@ -43,10 +43,8 @@ function MovieRow({
   if (movies.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-      <ScrollRow>
-        {movies.map((movie) => (
+    <ScrollRow title={title}>
+      {movies.map((movie) => (
           <MovieCard
             key={movie.id}
             id={movie.id}
@@ -68,7 +66,6 @@ function MovieRow({
           />
         ))}
       </ScrollRow>
-    </section>
   );
 }
 
@@ -175,24 +172,19 @@ export default function HomePage() {
           <div className="flex flex-col gap-10 px-12 py-8">
             {/* Media Libraries */}
             {libraries.length > 0 && (
-              <section className="flex flex-col gap-4">
-                <h2 className="text-xl font-semibold text-foreground">
-                  {t("mediaLibraries")}
-                </h2>
-                <ScrollRow>
-                  {libraries.map((lib) => (
-                    <LibraryCard
-                      key={lib.id}
-                      id={lib.id}
-                      name={lib.name}
-                      type={lib.type}
-                      movieCount={lib.movieCount}
-                      onScan={() => scanLibrary.mutate(lib.id)}
-                      onDelete={() => deleteLibrary.mutate(lib.id)}
-                    />
-                  ))}
-                </ScrollRow>
-              </section>
+              <ScrollRow title={t("mediaLibraries")}>
+                {libraries.map((lib) => (
+                  <LibraryCard
+                    key={lib.id}
+                    id={lib.id}
+                    name={lib.name}
+                    type={lib.type}
+                    movieCount={lib.movieCount}
+                    onScan={() => scanLibrary.mutate(lib.id)}
+                    onDelete={() => deleteLibrary.mutate(lib.id)}
+                  />
+                ))}
+              </ScrollRow>
             )}
 
             {/* Continue Watching */}
