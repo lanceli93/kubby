@@ -239,7 +239,7 @@ export default function HomePage() {
           <div className="px-12 py-8">
             {favorites.length > 0 ? (
               <div
-                className="grid gap-6"
+                className="grid gap-4"
                 style={{
                   gridTemplateColumns: "repeat(auto-fill, 180px)",
                   justifyContent: "center",

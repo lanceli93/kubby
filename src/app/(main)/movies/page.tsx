@@ -217,7 +217,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 
       {/* Movie Grid */}
       <div
-        className="grid gap-6"
+        className="grid gap-4"
         style={{
           gridTemplateColumns: "repeat(auto-fill, 180px)",
           justifyContent: "center",
@@ -270,7 +270,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
     <div className="pt-4">
       {favorites.length > 0 ? (
         <div
-          className="grid gap-6"
+          className="grid gap-4"
           style={{
             gridTemplateColumns: "repeat(auto-fill, 180px)",
             justifyContent: "center",
