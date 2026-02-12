@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Search, ArrowLeft, House } from "lucide-react";
+import { Search, ArrowLeft, House, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { NavSidebar } from "@/components/layout/nav-sidebar";
 
 function KubbyLogo({ className }: { className?: string }) {
   return (
@@ -34,6 +36,7 @@ interface Library {
 }
 
 export function AppHeader() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -69,6 +72,12 @@ export function AppHeader() {
       }`}
     >
       <div className="flex items-center gap-4">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
         {isLibraryPage ? (
           <>
             <Link
@@ -108,6 +117,7 @@ export function AppHeader() {
           {initials}
         </Link>
       </div>
+      <NavSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
     </header>
   );
 }

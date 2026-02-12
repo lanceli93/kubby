@@ -64,7 +64,11 @@
     "movies": "Movies",
     "dashboard": "Dashboard",
     "search": "Search",
-    "settings": "Settings"
+    "settings": "Settings",
+    "media": "Media",
+    "administration": "Administration",
+    "metadataManager": "Metadata Manager",
+    "user": "User"
   },
   "home": {
     "continueWatching": "Continue Watching",

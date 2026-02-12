@@ -64,7 +64,11 @@
     "movies": "电影",
     "dashboard": "仪表盘",
     "search": "搜索",
-    "settings": "设置"
+    "settings": "设置",
+    "media": "媒体",
+    "administration": "管理",
+    "metadataManager": "元数据管理",
+    "user": "用户"
   },
   "home": {
     "continueWatching": "继续观看",
