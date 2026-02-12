@@ -122,7 +122,7 @@ function MovieBrowseContent() {
           </TabsList>
         </div>
 
-        <div className="flex-1 overflow-auto px-12 py-6">
+        <div className="flex-1 overflow-auto px-12">
           <TabsContent value="movies">
             <MoviesTabContent libraryId={libraryId} />
           </TabsContent>
@@ -220,7 +220,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   return (
     <div>
       {/* Centered Sort & Filter Toolbar */}
-      <div className="mb-3 flex items-center justify-center gap-6">
+      <div className="py-[18px] flex items-center justify-center gap-6">
         {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
@@ -472,7 +472,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
   });
 
   return (
-    <div className="pt-4">
+    <div className="py-6">
       {favorites.length > 0 ? (
         <div
           className="grid gap-4"
@@ -547,7 +547,7 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-8 pt-4">
+    <div className="flex flex-col gap-8 py-6">
       {genreGroups.map(([genre, movies]) => (
         <section key={genre} className="flex flex-col gap-3">
           <ScrollRow title={genre}>
