@@ -220,7 +220,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   return (
     <div>
       {/* Centered Sort & Filter Toolbar */}
-      <div className="mb-6 flex items-center justify-center gap-6">
+      <div className="mb-3 flex items-center justify-center gap-6">
         {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
