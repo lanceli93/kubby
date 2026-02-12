@@ -152,7 +152,12 @@
     "mediaInfo": "Media Info",
     "refreshMetadata": "Refresh Metadata",
     "watched": "Watched",
-    "favorite": "Favorite"
+    "favorite": "Favorite",
+    "sortOrder": "Sort Order",
+    "ascending": "Ascending",
+    "descending": "Descending",
+    "filter": "Filter",
+    "clearFilters": "Clear All"
   },
   "search": {
     "search": "Search",

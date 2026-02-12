@@ -152,7 +152,12 @@
     "mediaInfo": "媒体信息",
     "refreshMetadata": "刷新元数据",
     "watched": "已观看",
-    "favorite": "收藏"
+    "favorite": "收藏",
+    "sortOrder": "排序方向",
+    "ascending": "升序",
+    "descending": "降序",
+    "filter": "筛选",
+    "clearFilters": "清除全部"
   },
   "search": {
     "search": "搜索",

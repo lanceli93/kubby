@@ -8,12 +8,16 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
 import {
-  ChevronDown,
   ArrowDownAZ,
   CalendarPlus,
   Calendar,
   Star,
   Timer,
+  ArrowUpDown,
+  Filter,
+  ChevronDown,
+  ChevronRight,
+  X,
 } from "lucide-react";
 
 interface Movie {
@@ -25,6 +29,11 @@ interface Movie {
   isFavorite?: boolean;
   isWatched?: boolean;
   genres?: string[];
+}
+
+interface FiltersData {
+  genres: string[];
+  years: number[];
 }
 
 export default function MovieBrowsePage() {
@@ -134,57 +143,99 @@ function MovieBrowseContent() {
 function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const t = useTranslations("movies");
   const [sort, setSort] = useState("dateAdded");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = useState<number[]>([]);
+  const [genresExpanded, setGenresExpanded] = useState(true);
+  const [yearsExpanded, setYearsExpanded] = useState(true);
   const sortRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
   const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
     useMovieMutations();
 
   const sortOptions = [
     { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
+    { value: "rating", label: t("rating"), icon: Star },
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
-    { value: "rating", label: t("rating"), icon: Star },
     { value: "runtime", label: t("runtime"), icon: Timer },
   ];
 
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
         setShowSortDropdown(false);
+      }
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilterDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch available filters
+  const { data: filters } = useQuery<FiltersData>({
+    queryKey: ["filters", libraryId],
+    queryFn: () =>
+      fetch(`/api/libraries/${libraryId}/filters`).then((r) => r.json()),
+    enabled: !!libraryId,
+  });
+
   const { data: movies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", { libraryId, sort }],
+    queryKey: ["movies", { libraryId, sort, sortOrder, selectedGenres, selectedYears }],
     queryFn: () => {
       const params = new URLSearchParams();
       params.set("libraryId", libraryId);
       params.set("sort", sort);
+      params.set("sortOrder", sortOrder);
+      if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
+      if (selectedYears.length > 0) params.set("years", selectedYears.join(","));
       return fetch(`/api/movies?${params}`).then((r) => r.json());
     },
   });
 
-  const currentSortLabel =
-    sortOptions.find((o) => o.value === sort)?.label || t("dateAdded");
+  const activeFilterCount = selectedGenres.length + selectedYears.length;
+
+  const toggleGenre = (genre: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+    );
+  };
+
+  const toggleYear = (year: number) => {
+    setSelectedYears((prev) =>
+      prev.includes(year) ? prev.filter((y) => y !== year) : [...prev, year]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedGenres([]);
+    setSelectedYears([]);
+  };
 
   return (
     <div className="pt-4">
-      {/* Sort Toolbar */}
-      <div className="mb-4 flex items-center justify-end">
+      {/* Centered Sort & Filter Toolbar */}
+      <div className="mb-6 flex items-center justify-center gap-4">
+        {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
-            onClick={() => setShowSortDropdown(!showSortDropdown)}
-            className="flex items-center gap-1.5 rounded-md border border-white/[0.08] px-3 py-1.5 text-[13px] text-muted-foreground hover:border-white/20"
+            onClick={() => {
+              setShowSortDropdown(!showSortDropdown);
+              setShowFilterDropdown(false);
+            }}
+            className="flex items-center gap-2 rounded-md border border-white/[0.08] px-4 py-2 text-[13px] text-muted-foreground transition-colors hover:border-white/20 hover:text-foreground"
           >
-            {currentSortLabel}
-            <ChevronDown className="h-3.5 w-3.5 text-[#666680]" />
+            <ArrowUpDown className="h-4 w-4" />
+            {t("sortBy")}
           </button>
 
           {showSortDropdown && (
-            <div className="absolute right-0 top-full z-50 mt-1 w-[220px] rounded-[10px] border border-white/[0.08] bg-card py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-card py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
                 const isActive = sort === option.value;
@@ -193,7 +244,6 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                     key={option.value}
                     onClick={() => {
                       setSort(option.value);
-                      setShowSortDropdown(false);
                     }}
                     className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
                       isActive
@@ -210,6 +260,161 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                   </button>
                 );
               })}
+              <div className="my-1.5 border-t border-white/[0.06]" />
+              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {t("sortOrder")}
+              </p>
+              <button
+                onClick={() => setSortOrder("asc")}
+                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                  sortOrder === "asc"
+                    ? "bg-primary/[0.08] text-foreground"
+                    : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                }`}
+              >
+                <span className={`h-3 w-3 rounded-full border-2 ${sortOrder === "asc" ? "border-primary bg-primary" : "border-[#666680]"}`} />
+                {t("ascending")}
+              </button>
+              <button
+                onClick={() => setSortOrder("desc")}
+                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                  sortOrder === "desc"
+                    ? "bg-primary/[0.08] text-foreground"
+                    : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                }`}
+              >
+                <span className={`h-3 w-3 rounded-full border-2 ${sortOrder === "desc" ? "border-primary bg-primary" : "border-[#666680]"}`} />
+                {t("descending")}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Filter button */}
+        <div className="relative" ref={filterRef}>
+          <button
+            onClick={() => {
+              setShowFilterDropdown(!showFilterDropdown);
+              setShowSortDropdown(false);
+            }}
+            className="flex items-center gap-2 rounded-md border border-white/[0.08] px-4 py-2 text-[13px] text-muted-foreground transition-colors hover:border-white/20 hover:text-foreground"
+          >
+            <Filter className="h-4 w-4" />
+            {t("filter")}
+            {activeFilterCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          {showFilterDropdown && (
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-card py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+              {/* Clear all */}
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-red-400 transition-colors hover:bg-white/[0.04]"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {t("clearFilters")}
+                </button>
+              )}
+
+              {/* Genres section */}
+              {filters && filters.genres.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setGenresExpanded(!genresExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {genresExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    {t("genres")}
+                  </button>
+                  {genresExpanded &&
+                    filters.genres.map((genre) => {
+                      const checked = selectedGenres.includes(genre);
+                      return (
+                        <button
+                          key={genre}
+                          onClick={() => toggleGenre(genre)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                            checked
+                              ? "text-foreground"
+                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              checked
+                                ? "border-primary bg-primary text-white"
+                                : "border-[#666680]"
+                            }`}
+                          >
+                            {checked && (
+                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          {genre}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+
+              {/* Years section */}
+              {filters && filters.years.length > 0 && (
+                <>
+                  <div className="my-1.5 border-t border-white/[0.06]" />
+                  <button
+                    onClick={() => setYearsExpanded(!yearsExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {yearsExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    {t("year")}
+                  </button>
+                  {yearsExpanded &&
+                    filters.years.map((year) => {
+                      const checked = selectedYears.includes(year);
+                      return (
+                        <button
+                          key={year}
+                          onClick={() => toggleYear(year)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                            checked
+                              ? "text-foreground"
+                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              checked
+                                ? "border-primary bg-primary text-white"
+                                : "border-[#666680]"
+                            }`}
+                          >
+                            {checked && (
+                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          {year}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
             </div>
           )}
         </div>

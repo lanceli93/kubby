@@ -114,27 +114,46 @@ export async function GET(request: NextRequest) {
     if (genre) {
       query = query.where(like(movies.genres, `%"${genre}"%`));
     }
+    // Multi-genre filter (OR logic): movie matches ANY selected genre
+    const genres = searchParams.get("genres");
+    if (genres) {
+      const genreList = genres.split(",").map((g) => g.trim()).filter(Boolean);
+      if (genreList.length > 0) {
+        const conditions = genreList.map((g) => like(movies.genres, `%"${g}"%`));
+        query = query.where(sql`(${sql.join(conditions, sql` OR `)})`);
+      }
+    }
+    // Multi-year filter
+    const years = searchParams.get("years");
+    if (years) {
+      const yearList = years.split(",").map((y) => parseInt(y.trim(), 10)).filter((y) => !isNaN(y));
+      if (yearList.length > 0) {
+        query = query.where(sql`${movies.year} IN (${sql.join(yearList.map((y) => sql`${y}`), sql`, `)})`);
+      }
+    }
     if (exclude) {
       query = query.where(sql`${movies.id} != ${exclude}`);
     }
 
     // Sort
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const orderFn = sortOrder === "asc" ? asc : desc;
     switch (sort) {
       case "title":
-        query = query.orderBy(asc(movies.title));
+        query = query.orderBy(sortOrder === "asc" ? asc(movies.title) : desc(movies.title));
         break;
       case "releaseDate":
-        query = query.orderBy(desc(movies.year));
+        query = query.orderBy(orderFn(movies.year));
         break;
       case "rating":
-        query = query.orderBy(desc(movies.communityRating));
+        query = query.orderBy(orderFn(movies.communityRating));
         break;
       case "runtime":
-        query = query.orderBy(desc(movies.runtimeMinutes));
+        query = query.orderBy(orderFn(movies.runtimeMinutes));
         break;
       case "dateAdded":
       default:
-        query = query.orderBy(desc(movies.dateAdded));
+        query = query.orderBy(orderFn(movies.dateAdded));
         break;
     }
 
