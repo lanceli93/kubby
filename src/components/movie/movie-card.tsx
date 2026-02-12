@@ -98,7 +98,7 @@ export function MovieCard({
               router.push(`/movies/${id}/play`);
             }}
             aria-label={t("play")}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-125 hover:bg-primary/80 hover:text-white"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white"
           >
             <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
           </button>

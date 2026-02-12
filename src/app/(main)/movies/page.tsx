@@ -228,7 +228,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-2 rounded-md border border-white/[0.08] px-4 py-2 text-[13px] text-muted-foreground transition-colors hover:border-white/20 hover:text-foreground"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowUpDown className="h-4 w-4" />
             {t("sortBy")}
@@ -297,7 +297,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-2 rounded-md border border-white/[0.08] px-4 py-2 text-[13px] text-muted-foreground transition-colors hover:border-white/20 hover:text-foreground"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
           >
             <Filter className="h-4 w-4" />
             {t("filter")}
