@@ -235,7 +235,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
           </button>
 
           {showSortDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-card py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
                 const isActive = sort === option.value;
@@ -309,7 +309,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
           </button>
 
           {showFilterDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-card py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
               {/* Clear all */}
               {activeFilterCount > 0 && (
                 <button
