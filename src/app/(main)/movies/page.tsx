@@ -220,7 +220,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   return (
     <div>
       {/* Centered Sort & Filter Toolbar */}
-      <div className="mb-4 flex items-center justify-center gap-4">
+      <div className="mb-6 flex items-center justify-center gap-6">
         {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
@@ -228,9 +228,9 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <ArrowUpDown className="h-4 w-4" />
+            <ArrowUpDown className="h-5 w-5" />
             {t("sortBy")}
           </button>
 
@@ -297,9 +297,9 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Filter className="h-4 w-4" />
+            <Filter className="h-5 w-5" />
             {t("filter")}
             {activeFilterCount > 0 && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
