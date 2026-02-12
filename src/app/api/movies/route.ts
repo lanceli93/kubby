@@ -101,26 +101,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Standard movie list query
-    let query = db.select().from(movies).$dynamic();
+    // Standard movie list query — left join user data when logged in
+    const conditions = [];
 
     if (libraryId) {
-      query = query.where(eq(movies.mediaLibraryId, libraryId));
+      conditions.push(eq(movies.mediaLibraryId, libraryId));
     }
     if (search) {
-      query = query.where(like(movies.title, `%${search}%`));
+      conditions.push(like(movies.title, `%${search}%`));
     }
     const genre = searchParams.get("genre");
     if (genre) {
-      query = query.where(like(movies.genres, `%"${genre}"%`));
+      conditions.push(like(movies.genres, `%"${genre}"%`));
     }
     // Multi-genre filter (OR logic): movie matches ANY selected genre
     const genres = searchParams.get("genres");
     if (genres) {
       const genreList = genres.split(",").map((g) => g.trim()).filter(Boolean);
       if (genreList.length > 0) {
-        const conditions = genreList.map((g) => like(movies.genres, `%"${g}"%`));
-        query = query.where(sql`(${sql.join(conditions, sql` OR `)})`);
+        const genreConditions = genreList.map((g) => like(movies.genres, `%"${g}"%`));
+        conditions.push(sql`(${sql.join(genreConditions, sql` OR `)})`);
       }
     }
     // Multi-year filter
@@ -128,37 +128,81 @@ export async function GET(request: NextRequest) {
     if (years) {
       const yearList = years.split(",").map((y) => parseInt(y.trim(), 10)).filter((y) => !isNaN(y));
       if (yearList.length > 0) {
-        query = query.where(sql`${movies.year} IN (${sql.join(yearList.map((y) => sql`${y}`), sql`, `)})`);
+        conditions.push(sql`${movies.year} IN (${sql.join(yearList.map((y) => sql`${y}`), sql`, `)})`);
       }
     }
     if (exclude) {
-      query = query.where(sql`${movies.id} != ${exclude}`);
+      conditions.push(sql`${movies.id} != ${exclude}`);
     }
 
     // Sort
     const sortOrder = searchParams.get("sortOrder") || "desc";
     const orderFn = sortOrder === "asc" ? asc : desc;
+    let orderClause;
     switch (sort) {
       case "title":
-        query = query.orderBy(sortOrder === "asc" ? asc(movies.title) : desc(movies.title));
+        orderClause = sortOrder === "asc" ? asc(movies.title) : desc(movies.title);
         break;
       case "releaseDate":
-        query = query.orderBy(orderFn(movies.year));
+        orderClause = orderFn(movies.year);
         break;
       case "rating":
-        query = query.orderBy(orderFn(movies.communityRating));
+        orderClause = orderFn(movies.communityRating);
         break;
       case "runtime":
-        query = query.orderBy(orderFn(movies.runtimeMinutes));
+        orderClause = orderFn(movies.runtimeMinutes);
         break;
       case "dateAdded":
       default:
-        query = query.orderBy(orderFn(movies.dateAdded));
+        orderClause = orderFn(movies.dateAdded);
         break;
     }
 
-    const results = query.limit(limit).all();
     const includeGenres = searchParams.get("includeGenres") === "true";
+
+    // Build query with user data left join
+    let baseQuery = db
+      .select({
+        id: movies.id,
+        title: movies.title,
+        originalTitle: movies.originalTitle,
+        sortName: movies.sortName,
+        overview: movies.overview,
+        tagline: movies.tagline,
+        filePath: movies.filePath,
+        folderPath: movies.folderPath,
+        posterPath: movies.posterPath,
+        fanartPath: movies.fanartPath,
+        communityRating: movies.communityRating,
+        officialRating: movies.officialRating,
+        runtimeMinutes: movies.runtimeMinutes,
+        premiereDate: movies.premiereDate,
+        year: movies.year,
+        genres: movies.genres,
+        studios: movies.studios,
+        country: movies.country,
+        tmdbId: movies.tmdbId,
+        imdbId: movies.imdbId,
+        mediaLibraryId: movies.mediaLibraryId,
+        dateAdded: movies.dateAdded,
+        isFavorite: userMovieData.isFavorite,
+        isWatched: userMovieData.isPlayed,
+      })
+      .from(movies)
+      .leftJoin(
+        userMovieData,
+        and(
+          eq(userMovieData.movieId, movies.id),
+          userId ? eq(userMovieData.userId, userId) : sql`0`
+        )
+      )
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      baseQuery = baseQuery.where(and(...conditions));
+    }
+
+    const results = baseQuery.orderBy(orderClause).limit(limit).all();
 
     // Resolve relative paths to absolute
     return NextResponse.json(
@@ -167,6 +211,8 @@ export async function GET(request: NextRequest) {
         posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
         fanartPath: r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
         ...(includeGenres && r.genres ? { genres: JSON.parse(r.genres) } : {}),
+        isFavorite: r.isFavorite ?? false,
+        isWatched: r.isWatched ?? false,
       }))
     );
   } catch (error) {
