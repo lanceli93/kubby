@@ -23,6 +23,7 @@ interface Library {
   name: string;
   type: string;
   movieCount?: number;
+  coverImage?: string | null;
 }
 
 function MovieRow({
@@ -180,6 +181,7 @@ export default function HomePage() {
                     name={lib.name}
                     type={lib.type}
                     movieCount={lib.movieCount}
+                    coverImage={lib.coverImage}
                     onScan={() => scanLibrary.mutate(lib.id)}
                     onDelete={() => deleteLibrary.mutate(lib.id)}
                   />

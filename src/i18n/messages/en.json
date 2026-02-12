@@ -78,6 +78,8 @@
     "scanLibrary": "Scan Library",
     "refreshMetadata": "Refresh Metadata",
     "editLibrary": "Edit",
+    "editMetadata": "Edit Metadata",
+    "editImage": "Edit Image",
     "deleteLibrary": "Delete",
     "confirmDeleteLibrary": "Are you sure you want to delete this library? All movies in it will be removed."
   },

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload } from "lucide-react";
+import Image from "next/image";
+import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon } from "lucide-react";
+import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
@@ -25,11 +27,12 @@ interface LibraryCardProps {
   name: string;
   type: string;
   movieCount?: number;
+  coverImage?: string | null;
   onScan?: () => void;
   onDelete?: () => void;
 }
 
-export function LibraryCard({ id, name, type, movieCount, onScan, onDelete }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, movieCount, coverImage, onScan, onDelete }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
@@ -38,89 +41,114 @@ export function LibraryCard({ id, name, type, movieCount, onScan, onDelete }: Li
   return (
     <Link
       href={`/movies?libraryId=${id}`}
-      className="group relative flex-shrink-0 overflow-hidden rounded-lg transition-transform hover:scale-[1.02]"
-      style={{ width: 320, height: 180 }}
+      className="group flex-shrink-0 transition-transform hover:scale-[1.03]"
+      style={{ width: 320 }}
     >
-      <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[var(--surface)] transition-colors group-hover:bg-[#1f1f38]">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          {type === "movie" ? (
-            <Film className="h-6 w-6 text-primary" />
-          ) : (
-            <Folder className="h-6 w-6 text-primary" />
-          )}
-        </div>
-        <div className="text-center">
-          <p className="text-base font-semibold text-foreground">{name}</p>
-          {movieCount != null && (
-            <p className="text-xs text-muted-foreground">
-              {t("moviesCount", { count: movieCount })}
-            </p>
-          )}
-        </div>
-      </div>
+      {/* Cover image area */}
+      <div className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)]" style={{ height: 180 }}>
+        {coverImage ? (
+          <Image
+            src={resolveImageSrc(coverImage)}
+            alt={name}
+            fill
+            className="object-cover"
+            sizes="320px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              {type === "movie" ? (
+                <Film className="h-6 w-6 text-primary" />
+              ) : (
+                <Folder className="h-6 w-6 text-primary" />
+              )}
+            </div>
+          </div>
+        )}
 
-      {/* Hover: ⋯ menu button */}
-      <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
+        {/* Hover: ⋯ menu button */}
+        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white/80 transition-colors hover:bg-black/70"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
               }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white/80 transition-colors hover:bg-black/70"
             >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onScan?.();
-              }}
-            >
-              <HardDriveDownload className="h-4 w-4" />
-              {tHome("scanLibrary")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                alert("Refresh metadata — coming soon");
-              }}
-            >
-              <RefreshCw className="h-4 w-4" />
-              {tHome("refreshMetadata")}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                alert("Edit library — coming soon");
-              }}
-            >
-              <Pencil className="h-4 w-4" />
-              {tHome("editLibrary")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteOpen(true);
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-              {tHome("deleteLibrary")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onScan?.();
+                }}
+              >
+                <HardDriveDownload className="h-4 w-4" />
+                {tHome("scanLibrary")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  alert("Refresh metadata — coming soon");
+                }}
+              >
+                <RefreshCw className="h-4 w-4" />
+                {tHome("refreshMetadata")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  alert("Edit metadata — coming soon");
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+                {tHome("editMetadata")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  alert("Edit image — coming soon");
+                }}
+              >
+                <ImageIcon className="h-4 w-4" />
+                {tHome("editImage")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteOpen(true);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                {tHome("deleteLibrary")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Name & count below card */}
+      <div className="mt-1.5 px-0.5 text-center">
+        <p className="truncate text-sm font-medium text-foreground">{name}</p>
+        {movieCount != null && (
+          <p className="text-xs text-muted-foreground">
+            {t("moviesCount", { count: movieCount })}
+          </p>
+        )}
       </div>
 
       {/* Delete confirmation dialog */}

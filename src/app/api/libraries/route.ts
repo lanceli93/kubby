@@ -16,6 +16,7 @@ export async function GET() {
         lastScannedAt: mediaLibraries.lastScannedAt,
         createdAt: mediaLibraries.createdAt,
         movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = ${mediaLibraries.id})`,
+        coverImage: sql<string | null>`(SELECT folder_path || '/' || fanart_path FROM movies WHERE media_library_id = ${mediaLibraries.id} AND fanart_path IS NOT NULL ORDER BY RANDOM() LIMIT 1)`,
       })
       .from(mediaLibraries)
       .all();
