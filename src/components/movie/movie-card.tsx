@@ -89,6 +89,21 @@ export function MovieCard({
           </div>
         )}
 
+        {/* Centered play button on hover */}
+        <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(`/movies/${id}/play`);
+            }}
+            aria-label={t("play")}
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-125 hover:bg-primary hover:text-white"
+          >
+            <Play className="h-6 w-6 fill-current" />
+          </button>
+        </div>
+
         {/* Progress bar */}
         {showProgress && progress != null && (
           <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/20 z-10">
