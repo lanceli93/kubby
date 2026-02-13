@@ -2,9 +2,10 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
-import { movies, people, moviePeople, mediaLibraries } from "@/lib/db/schema";
+import { movies, people, moviePeople, mediaLibraries, settings } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { parseNfo } from "./nfo-parser";
+import { scrapeMovie } from "@/lib/scraper";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
@@ -85,6 +86,15 @@ export async function scanLibrary(libraryId: string) {
     throw new Error(`Library path does not exist: ${libraryPath}`);
   }
 
+  // Load scraper config if enabled
+  let apiKey: string | null = null;
+  if (library.scraperEnabled) {
+    const row = db.select().from(settings).where(eq(settings.key, "tmdb_api_key")).get();
+    apiKey = row?.value ?? null;
+  }
+
+  const metadataDir = path.join(process.cwd(), "data", "metadata", "people");
+
   const entries = fs.readdirSync(libraryPath, { withFileTypes: true });
   let scannedCount = 0;
 
@@ -94,7 +104,22 @@ export async function scanLibrary(libraryId: string) {
     const movieDir = path.join(libraryPath, entry.name);
 
     // Find NFO file
-    const nfoPath = path.join(movieDir, "movie.nfo");
+    let nfoPath = path.join(movieDir, "movie.nfo");
+
+    // If no NFO and scraper is enabled, try to scrape from TMDB
+    if (!fs.existsSync(nfoPath) && library.scraperEnabled && apiKey) {
+      try {
+        const result = await scrapeMovie(movieDir, apiKey, metadataDir);
+        if (result.success) {
+          console.log(`Scraped metadata for: ${result.title}`);
+        } else {
+          console.warn(`Scraper skipped ${entry.name}: ${result.error}`);
+        }
+      } catch (e) {
+        console.warn(`Scraper error for ${entry.name}:`, e);
+      }
+    }
+
     if (!fs.existsSync(nfoPath)) continue;
 
     // Find video file

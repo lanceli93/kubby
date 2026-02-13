@@ -11,12 +11,19 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at").notNull().default("(datetime('now'))"),
 });
 
+// ─── Settings (key-value) ──────────────────────────────────────
+export const settings = sqliteTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
 // ─── Media Libraries ────────────────────────────────────────────
 export const mediaLibraries = sqliteTable("media_libraries", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   type: text("type", { enum: ["movie", "tvshow", "music", "book", "photo"] }).notNull().default("movie"),
   folderPath: text("folder_path").notNull(),
+  scraperEnabled: integer("scraper_enabled", { mode: "boolean" }).notNull().default(false),
   lastScannedAt: text("last_scanned_at"),
   createdAt: text("created_at").notNull().default("(datetime('now'))"),
 });

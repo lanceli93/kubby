@@ -124,7 +124,17 @@
     "quickActions": "Quick Actions",
     "scanAllLibraries": "Scan All Libraries",
     "addLibrary": "Add Library",
-    "addUser": "Add User"
+    "addUser": "Add User",
+    "scraperSettings": "Scraper",
+    "metadataProviders": "Metadata Providers",
+    "tmdbApiKey": "TMDB API Key",
+    "tmdbApiKeyHelp": "Get your free API key at themoviedb.org",
+    "apiKeySaved": "API key saved",
+    "apiKeyInvalid": "Invalid API key",
+    "enableScraper": "Enable metadata scraper",
+    "scraperApiKeyMissing": "TMDB API key not configured",
+    "configureApiKey": "Configure",
+    "scraping": "Scraping metadata..."
   },
   "movies": {
     "movies": "Movies",

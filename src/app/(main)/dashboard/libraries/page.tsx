@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, RefreshCw, Trash2, Folder } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
+import Link from "next/link";
 
 interface Library {
   id: string;
@@ -28,24 +29,35 @@ export default function LibrariesPage() {
   const [name, setName] = useState("");
   const [folderPath, setFolderPath] = useState("");
   const [type, setType] = useState("movie");
+  const [scraperEnabled, setScraperEnabled] = useState(false);
+  const [tmdbConfigured, setTmdbConfigured] = useState(false);
 
   const { data: libraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
   });
 
+  // Check if TMDB API key is configured when dialog opens
+  const checkTmdbKey = () => {
+    fetch("/api/settings/scraper")
+      .then((r) => r.json())
+      .then((data) => setTmdbConfigured(data.configured))
+      .catch(() => setTmdbConfigured(false));
+  };
+
   const createLibrary = useMutation({
     mutationFn: () =>
       fetch("/api/libraries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, folderPath }),
+        body: JSON.stringify({ name, type, folderPath, scraperEnabled }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       setOpen(false);
       setName("");
       setFolderPath("");
+      setScraperEnabled(false);
     },
   });
 
@@ -68,7 +80,7 @@ export default function LibrariesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Media Libraries</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) checkTmdbKey(); }}>
           <DialogTrigger asChild>
             <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
               <Plus className="h-4 w-4" />
@@ -144,6 +156,28 @@ export default function LibrariesPage() {
                 onOpenChange={setFolderPickerOpen}
                 onSelect={(path) => setFolderPath(path)}
               />
+              <div className="flex flex-col gap-1.5">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={scraperEnabled}
+                    onChange={(e) => setScraperEnabled(e.target.checked)}
+                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                  />
+                  <span className="text-sm text-foreground">Enable metadata scraper</span>
+                </label>
+                {scraperEnabled && !tmdbConfigured && (
+                  <div className="ml-6 flex items-center gap-2 text-xs text-yellow-400">
+                    <span>TMDB API key not configured.</span>
+                    <Link
+                      href="/dashboard/scraper"
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Configure
+                    </Link>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"

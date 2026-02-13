@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w185";
+const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
+
+export const TMDB_POSTER_SIZE = "w500";
+export const TMDB_BACKDROP_SIZE = "w1280";
+export const TMDB_PROFILE_SIZE = "w185";
 
 export interface TmdbCastMember {
   id: number;
@@ -37,8 +41,79 @@ export async function fetchMovieCredits(
   return res.json();
 }
 
-export function getImageUrl(profilePath: string): string {
-  return `${TMDB_IMAGE_BASE}${profilePath}`;
+export function getImageUrl(profilePath: string, size: string = TMDB_PROFILE_SIZE): string {
+  return `${TMDB_IMAGE_BASE}/${size}${profilePath}`;
+}
+
+// ─── Search & Details ──────────────────────────────────────────
+
+export interface TmdbSearchResult {
+  id: number;
+  title: string;
+  release_date: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+}
+
+export interface TmdbMovieDetails {
+  id: number;
+  title: string;
+  original_title: string;
+  overview: string;
+  tagline: string;
+  vote_average: number;
+  runtime: number;
+  release_date: string;
+  genres: { id: number; name: string }[];
+  production_companies: { id: number; name: string }[];
+  production_countries: { iso_3166_1: string; name: string }[];
+  imdb_id: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  credits: TmdbCredits;
+}
+
+export async function searchMovie(
+  query: string,
+  year: number | undefined,
+  apiKey: string
+): Promise<TmdbSearchResult[]> {
+  let url = `${TMDB_BASE_URL}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+  if (year) url += `&year=${year}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`TMDb search error: ${res.status} ${res.statusText}`);
+  const data = await res.json();
+  return data.results ?? [];
+}
+
+export async function getMovieDetails(
+  tmdbId: number,
+  apiKey: string
+): Promise<TmdbMovieDetails> {
+  const url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${apiKey}&append_to_response=credits`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`TMDb details error: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export async function validateApiKey(apiKey: string): Promise<boolean> {
+  try {
+    const url = `${TMDB_BASE_URL}/configuration?api_key=${apiKey}`;
+    const res = await fetch(url);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function downloadTmdbImage(
+  tmdbPath: string,
+  destPath: string,
+  size: string
+): Promise<boolean> {
+  const url = getImageUrl(tmdbPath, size);
+  return downloadImage(url, destPath);
 }
 
 export async function downloadImage(

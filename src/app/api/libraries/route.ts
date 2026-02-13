@@ -15,9 +15,10 @@ export async function GET() {
         name: mediaLibraries.name,
         type: mediaLibraries.type,
         folderPath: mediaLibraries.folderPath,
+        scraperEnabled: mediaLibraries.scraperEnabled,
         lastScannedAt: mediaLibraries.lastScannedAt,
         createdAt: mediaLibraries.createdAt,
-        movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = ${mediaLibraries.id})`,
+        movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")`,
       })
       .from(mediaLibraries)
       .all();
@@ -58,7 +59,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, type = "movie", folderPath } = body;
+    const { name, type = "movie", folderPath, scraperEnabled = false } = body;
 
     if (!name || !folderPath) {
       return NextResponse.json(
@@ -69,10 +70,10 @@ export async function POST(request: NextRequest) {
 
     const id = uuidv4();
     db.insert(mediaLibraries)
-      .values({ id, name, type, folderPath })
+      .values({ id, name, type, folderPath, scraperEnabled: !!scraperEnabled })
       .run();
 
-    return NextResponse.json({ id, name, type, folderPath }, { status: 201 });
+    return NextResponse.json({ id, name, type, folderPath, scraperEnabled: !!scraperEnabled }, { status: 201 });
   } catch (error) {
     console.error("Create library error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

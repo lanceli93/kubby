@@ -124,7 +124,17 @@
     "quickActions": "快速操作",
     "scanAllLibraries": "扫描所有媒体库",
     "addLibrary": "添加媒体库",
-    "addUser": "添加用户"
+    "addUser": "添加用户",
+    "scraperSettings": "刮削器",
+    "metadataProviders": "元数据提供者",
+    "tmdbApiKey": "TMDB API 密钥",
+    "tmdbApiKeyHelp": "在 themoviedb.org 免费获取 API 密钥",
+    "apiKeySaved": "API 密钥已保存",
+    "apiKeyInvalid": "无效的 API 密钥",
+    "enableScraper": "启用元数据刮削",
+    "scraperApiKeyMissing": "未配置 TMDB API 密钥",
+    "configureApiKey": "去配置",
+    "scraping": "正在刮削元数据..."
   },
   "movies": {
     "movies": "电影",
