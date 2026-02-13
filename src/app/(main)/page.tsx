@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
 import { LibraryCard } from "@/components/library/library-card";
@@ -147,6 +148,41 @@ export default function HomePage() {
     },
   });
 
+  const uploadCover = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return fetch(`/api/libraries/${id}/cover`, {
+        method: "POST",
+        body: formData,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+    },
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingLibraryIdRef = useRef<string | null>(null);
+
+  const handleEditImage = useCallback((libraryId: string) => {
+    pendingLibraryIdRef.current = libraryId;
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      const id = pendingLibraryIdRef.current;
+      if (file && id) {
+        uploadCover.mutate({ id, file });
+      }
+      pendingLibraryIdRef.current = null;
+      e.target.value = "";
+    },
+    [uploadCover]
+  );
+
   const handleToggleFavorite = (id: string, current: boolean) => {
     toggleFavorite.mutate({ id, current });
   };
@@ -161,6 +197,13 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
       <Tabs defaultValue="home">
         <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
@@ -184,6 +227,7 @@ export default function HomePage() {
                     coverImage={lib.coverImage}
                     onScan={() => scanLibrary.mutate(lib.id)}
                     onDelete={() => deleteLibrary.mutate(lib.id)}
+                    onEditImage={() => handleEditImage(lib.id)}
                   />
                 ))}
               </ScrollRow>

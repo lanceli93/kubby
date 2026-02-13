@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import path from "path";
 import { db } from "@/lib/db";
 import { mediaLibraries, movies } from "@/lib/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
@@ -20,8 +22,13 @@ export async function GET() {
       .from(mediaLibraries)
       .all();
 
-    // Fetch a random cover image per library (fanart/landscape)
+    // For each library, prefer poster.jpg in the library folder; fall back to random fanart
     const libraries = rows.map((lib) => {
+      const posterPath = path.join(lib.folderPath, "poster.jpg");
+      if (fs.existsSync(posterPath)) {
+        return { ...lib, coverImage: posterPath };
+      }
+
       const cover = db
         .select({
           coverImage: sql<string>`${movies.folderPath} || '/' || ${movies.fanartPath}`,

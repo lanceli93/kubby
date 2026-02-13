@@ -30,9 +30,10 @@ interface LibraryCardProps {
   coverImage?: string | null;
   onScan?: () => void;
   onDelete?: () => void;
+  onEditImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, movieCount, coverImage, onScan, onDelete }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, movieCount, coverImage, onScan, onDelete, onEditImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
@@ -119,7 +120,7 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, onScan, on
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
-                  alert("Edit image — coming soon");
+                  onEditImage?.();
                 }}
               >
                 <ImageIcon className="h-4 w-4" />
