@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { mediaLibraries, movies } from "@/lib/db/schema";
-import { eq, count, sql } from "drizzle-orm";
+import { eq, and, count, sql } from "drizzle-orm";
 
 // GET /api/libraries
 export async function GET() {
   try {
-    const libraries = db
+    const rows = db
       .select({
         id: mediaLibraries.id,
         name: mediaLibraries.name,
@@ -16,10 +16,29 @@ export async function GET() {
         lastScannedAt: mediaLibraries.lastScannedAt,
         createdAt: mediaLibraries.createdAt,
         movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = ${mediaLibraries.id})`,
-        coverImage: sql<string | null>`(SELECT folder_path || '/' || fanart_path FROM movies WHERE media_library_id = ${mediaLibraries.id} AND fanart_path IS NOT NULL ORDER BY RANDOM() LIMIT 1)`,
       })
       .from(mediaLibraries)
       .all();
+
+    // Fetch a random cover image per library (fanart/landscape)
+    const libraries = rows.map((lib) => {
+      const cover = db
+        .select({
+          coverImage: sql<string>`${movies.folderPath} || '/' || ${movies.fanartPath}`,
+        })
+        .from(movies)
+        .where(
+          and(
+            eq(movies.mediaLibraryId, lib.id),
+            sql`${movies.fanartPath} IS NOT NULL`
+          )
+        )
+        .orderBy(sql`RANDOM()`)
+        .limit(1)
+        .get();
+
+      return { ...lib, coverImage: cover?.coverImage ?? null };
+    });
 
     return NextResponse.json(libraries);
   } catch (error) {
