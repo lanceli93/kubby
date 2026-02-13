@@ -84,6 +84,7 @@
     "editLibrary": "编辑",
     "editMetadata": "编辑元数据",
     "editImage": "编辑封面",
+    "removeImage": "移除封面",
     "deleteLibrary": "删除",
     "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。"
   },

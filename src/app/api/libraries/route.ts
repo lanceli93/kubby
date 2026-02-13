@@ -26,7 +26,7 @@ export async function GET() {
     const libraries = rows.map((lib) => {
       const posterPath = path.join(lib.folderPath, "poster.jpg");
       if (fs.existsSync(posterPath)) {
-        return { ...lib, coverImage: posterPath };
+        return { ...lib, coverImage: posterPath, hasCustomCover: true };
       }
 
       const cover = db
@@ -44,7 +44,7 @@ export async function GET() {
         .limit(1)
         .get();
 
-      return { ...lib, coverImage: cover?.coverImage ?? null };
+      return { ...lib, coverImage: cover?.coverImage ?? null, hasCustomCover: false };
     });
 
     return NextResponse.json(libraries);

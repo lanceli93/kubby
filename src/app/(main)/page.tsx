@@ -25,6 +25,7 @@ interface Library {
   type: string;
   movieCount?: number;
   coverImage?: string | null;
+  hasCustomCover?: boolean;
 }
 
 function MovieRow({
@@ -183,6 +184,14 @@ export default function HomePage() {
     [uploadCover]
   );
 
+  const removeCover = useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/libraries/${id}/cover`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+    },
+  });
+
   const handleToggleFavorite = (id: string, current: boolean) => {
     toggleFavorite.mutate({ id, current });
   };
@@ -225,9 +234,11 @@ export default function HomePage() {
                     type={lib.type}
                     movieCount={lib.movieCount}
                     coverImage={lib.coverImage}
+                    hasCustomCover={lib.hasCustomCover}
                     onScan={() => scanLibrary.mutate(lib.id)}
                     onDelete={() => deleteLibrary.mutate(lib.id)}
                     onEditImage={() => handleEditImage(lib.id)}
+                    onRemoveImage={() => removeCover.mutate(lib.id)}
                   />
                 ))}
               </ScrollRow>

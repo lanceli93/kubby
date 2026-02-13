@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon } from "lucide-react";
+import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import {
@@ -28,12 +28,14 @@ interface LibraryCardProps {
   type: string;
   movieCount?: number;
   coverImage?: string | null;
+  hasCustomCover?: boolean;
   onScan?: () => void;
   onDelete?: () => void;
   onEditImage?: () => void;
+  onRemoveImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, movieCount, coverImage, onScan, onDelete, onEditImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomCover, onScan, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
@@ -126,6 +128,17 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, onScan, on
                 <ImageIcon className="h-4 w-4" />
                 {tHome("editImage")}
               </DropdownMenuItem>
+              {hasCustomCover && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveImage?.();
+                  }}
+                >
+                  <ImageOff className="h-4 w-4" />
+                  {tHome("removeImage")}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
