@@ -122,7 +122,7 @@ export default function MovieDetailPage() {
         {/* Bottom gradient — fade to page background */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
         {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20" />
 
         {/* Content row: poster + movie info */}
         <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-10">
@@ -267,7 +267,7 @@ export default function MovieDetailPage() {
 
       {/* Recommended Movies */}
       {recommended.length > 0 && (
-        <section className="flex flex-col gap-4 px-20 pb-12 pt-4">
+        <section className={`flex flex-col gap-4 px-20 pb-12 ${movie.cast.length > 0 ? "pt-4" : "mt-[10px]"}`}>
           <h2 className="text-xl font-semibold text-foreground">
             {t("youMayAlsoLike")}
           </h2>
