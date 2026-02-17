@@ -17,7 +17,7 @@ export async function GET(
         type: mediaLibraries.type,
         folderPath: mediaLibraries.folderPath,
         lastScannedAt: mediaLibraries.lastScannedAt,
-        movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = ${mediaLibraries.id})`,
+        movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")`,
       })
       .from(mediaLibraries)
       .where(eq(mediaLibraries.id, id))

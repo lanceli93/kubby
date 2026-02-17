@@ -70,7 +70,7 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
         )}
 
         {/* Hover: ⋯ menu button */}
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
+        <div className="absolute inset-x-0 bottom-0 flex justify-end px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -78,7 +78,7 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white/80 transition-colors hover:bg-black/70"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20 outline-none"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
@@ -157,7 +157,7 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
 
       {/* Name & count below card */}
       <div className="mt-1.5 px-0.5 text-center">
-        <p className="truncate text-sm font-medium text-foreground">{name}</p>
+        <p className="truncate text-base font-semibold text-foreground">{name}</p>
         {movieCount != null && (
           <p className="text-xs text-muted-foreground">
             {t("moviesCount", { count: movieCount })}
