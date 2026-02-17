@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, Info, RefreshCw, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
+import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -56,6 +57,7 @@ export function MovieCard({
   const t = useTranslations("movies");
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
   return (
     <Link
@@ -180,7 +182,7 @@ export function MovieCard({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    alert("Edit metadata — coming soon");
+                    setMetadataOpen(true);
                   }}
                 >
                   <Pencil className="h-4 w-4" />
@@ -228,6 +230,13 @@ export function MovieCard({
           <p className="text-xs text-muted-foreground">{year}</p>
         )}
       </div>
+
+      {/* Metadata editor dialog */}
+      <MovieMetadataEditor
+        movieId={id}
+        open={metadataOpen}
+        onOpenChange={setMetadataOpen}
+      />
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

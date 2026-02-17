@@ -3,6 +3,46 @@ import nodePath from "path";
 import { db } from "@/lib/db";
 import { people, moviePeople, movies } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+
+// PUT /api/people/[id]
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  try {
+    const person = db.select().from(people).where(eq(people.id, id)).get();
+    if (!person) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+
+    const updateData: Record<string, unknown> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.type !== undefined) updateData.type = body.type;
+    if (body.tmdbId !== undefined) updateData.tmdbId = body.tmdbId;
+    if (body.imdbId !== undefined) updateData.imdbId = body.imdbId;
+    if (body.overview !== undefined) updateData.overview = body.overview;
+    if (body.birthDate !== undefined) updateData.birthDate = body.birthDate;
+    if (body.birthYear !== undefined) updateData.birthYear = body.birthYear ? Number(body.birthYear) : null;
+    if (body.placeOfBirth !== undefined) updateData.placeOfBirth = body.placeOfBirth;
+    if (body.deathDate !== undefined) updateData.deathDate = body.deathDate;
+
+    db.update(people).set(updateData).where(eq(people.id, id)).run();
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Update person error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
 
 // GET /api/people/[id]
 export async function GET(

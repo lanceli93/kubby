@@ -66,6 +66,13 @@ export const people = sqliteTable("people", {
   type: text("type", { enum: ["actor", "director", "writer", "producer"] }).notNull(),
   photoPath: text("photo_path"),
   tmdbId: text("tmdb_id"),
+  overview: text("overview"),
+  birthDate: text("birth_date"),
+  birthYear: integer("birth_year"),
+  placeOfBirth: text("place_of_birth"),
+  deathDate: text("death_date"),
+  imdbId: text("imdb_id"),
+  dateAdded: text("date_added").notNull().default("(datetime('now'))"),
 }, (table) => [
   index("idx_people_name").on(table.name),
 ]);

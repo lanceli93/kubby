@@ -1,15 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2 } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 
 interface MovieDetail {
   id: string;
@@ -55,6 +64,8 @@ export default function MovieDetailPage() {
   const movieId = params.id as string;
   const queryClient = useQueryClient();
   const t = useTranslations("movies");
+  const tMeta = useTranslations("metadata");
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
   const { data: movie } = useQuery<MovieDetail>({
     queryKey: ["movie", movieId],
@@ -207,6 +218,52 @@ export default function MovieDetailPage() {
                   className={`h-4.5 w-4.5 ${movie.userData?.isFavorite ? "fill-red-400" : ""}`}
                 />
               </button>
+
+              {/* Three-dot menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  >
+                    <MoreVertical className="h-4.5 w-4.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-52 border-white/10 bg-black/70 backdrop-blur-xl"
+                >
+                  <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
+                    <Pencil className="h-4 w-4" />
+                    {t("editMetadata")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => alert("Edit images — coming soon")}>
+                    <ImageIcon className="h-4 w-4" />
+                    {tMeta("editImages")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => alert("Edit subtitles — coming soon")}>
+                    <Subtitles className="h-4 w-4" />
+                    {tMeta("editSubtitles")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => alert("Identify — coming soon")}>
+                    <Search className="h-4 w-4" />
+                    {tMeta("identify")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => alert("Media info — coming soon")}>
+                    <Info className="h-4 w-4" />
+                    {t("mediaInfo")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => alert("Refresh metadata — coming soon")}>
+                    <RefreshCw className="h-4 w-4" />
+                    {t("refreshMetadata")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={() => alert("Delete media — coming soon")}>
+                    <Trash2 className="h-4 w-4" />
+                    {tMeta("deleteMedia")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Overview */}
@@ -285,6 +342,13 @@ export default function MovieDetailPage() {
           </ScrollRow>
         </section>
       )}
+
+      {/* Metadata editor dialog */}
+      <MovieMetadataEditor
+        movieId={movieId}
+        open={metadataOpen}
+        onOpenChange={setMetadataOpen}
+      />
     </div>
   );
 }

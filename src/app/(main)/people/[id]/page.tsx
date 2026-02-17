@@ -1,10 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import { MoreVertical, Pencil } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { useTranslations } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 
 interface PersonDetail {
   id: string;
@@ -25,6 +35,8 @@ interface PersonDetail {
 export default function PersonDetailPage() {
   const params = useParams();
   const personId = params.id as string;
+  const t = useTranslations("movies");
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
   const { data: person } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
@@ -82,9 +94,31 @@ export default function PersonDetailPage() {
             <h1 className="text-4xl font-bold text-white">
               {person.name}
             </h1>
-            <span className="inline-flex w-fit rounded-md border border-white/20 px-3 py-1 text-sm capitalize text-white/70">
-              {person.type}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex w-fit rounded-md border border-white/20 px-3 py-1 text-sm capitalize text-white/70">
+                {person.type}
+              </span>
+
+              {/* Three-dot menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  >
+                    <MoreVertical className="h-4.5 w-4.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
+                >
+                  <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
+                    <Pencil className="h-4 w-4" />
+                    {t("editMetadata")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
@@ -119,6 +153,13 @@ export default function PersonDetailPage() {
           ))}
         </div>
       </section>
+
+      {/* Metadata editor dialog */}
+      <PersonMetadataEditor
+        personId={personId}
+        open={metadataOpen}
+        onOpenChange={setMetadataOpen}
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface NfoActorEntry {
 export interface NfoMovieData {
   title: string;
   originalTitle?: string;
+  sortTitle?: string;
   overview?: string;
   tagline?: string;
   rating?: number;
@@ -37,7 +38,7 @@ export function writeFullNfo(nfoPath: string, data: NfoMovieData): void {
   let xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<movie>\n`;
   xml += `  <title>${escapeXml(data.title)}</title>\n`;
   if (data.originalTitle) xml += `  <originaltitle>${escapeXml(data.originalTitle)}</originaltitle>\n`;
-  xml += `  <sorttitle>${escapeXml(data.title)}</sorttitle>\n`;
+  xml += `  <sorttitle>${escapeXml(data.sortTitle || data.title)}</sorttitle>\n`;
   if (data.overview) xml += `  <plot>${escapeXml(data.overview)}</plot>\n`;
   if (data.tagline) xml += `  <tagline>${escapeXml(data.tagline)}</tagline>\n`;
   if (data.rating != null) xml += `  <rating>${data.rating}</rating>\n`;
