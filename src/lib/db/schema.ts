@@ -51,6 +51,13 @@ export const movies = sqliteTable("movies", {
   country: text("country"),
   tmdbId: text("tmdb_id"),
   imdbId: text("imdb_id"),
+  videoCodec: text("video_codec"),
+  audioCodec: text("audio_codec"),
+  videoWidth: integer("video_width"),
+  videoHeight: integer("video_height"),
+  audioChannels: integer("audio_channels"),
+  container: text("container"),
+  tags: text("tags"), // JSON array string
   mediaLibraryId: text("media_library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
   dateAdded: text("date_added").notNull().default("(datetime('now'))"),
 }, (table) => [

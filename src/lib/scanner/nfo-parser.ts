@@ -18,6 +18,12 @@ export interface NfoData {
   directors: string[];
   tmdbId?: string;
   imdbId?: string;
+  videoCodec?: string;
+  audioCodec?: string;
+  videoWidth?: number;
+  videoHeight?: number;
+  audioChannels?: number;
+  tags: string[];
 }
 
 function ensureArray<T>(value: T | T[] | undefined): T[] {
@@ -59,6 +65,13 @@ export function parseNfo(xml: string): NfoData {
   if (!tmdbId && movie.tmdbid) tmdbId = String(movie.tmdbid);
   if (!imdbId && movie.imdbid) imdbId = String(movie.imdbid);
 
+  // Extract fileinfo stream details
+  const streamDetails = movie.fileinfo?.streamdetails;
+  const videoStream = streamDetails?.video;
+  const audioStream = streamDetails?.audio;
+  // If there are multiple audio streams, take the first one
+  const firstAudio = Array.isArray(audioStream) ? audioStream[0] : audioStream;
+
   return {
     title: String(movie.title || "Unknown"),
     originalTitle: movie.originaltitle ? String(movie.originaltitle) : undefined,
@@ -77,5 +90,11 @@ export function parseNfo(xml: string): NfoData {
     directors: ensureArray(movie.director).map(String),
     tmdbId,
     imdbId,
+    videoCodec: videoStream?.codec ? String(videoStream.codec) : undefined,
+    audioCodec: firstAudio?.codec ? String(firstAudio.codec) : undefined,
+    videoWidth: videoStream?.width ? parseInt(String(videoStream.width), 10) : undefined,
+    videoHeight: videoStream?.height ? parseInt(String(videoStream.height), 10) : undefined,
+    audioChannels: firstAudio?.channels ? parseInt(String(firstAudio.channels), 10) : undefined,
+    tags: ensureArray(movie.tag).map(String),
   };
 }

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { movies, people, moviePeople, mediaLibraries, settings } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { parseNfo } from "./nfo-parser";
+import { probeVideo } from "./probe";
 import { scrapeMovie } from "@/lib/scraper";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v"];
@@ -147,6 +148,17 @@ export async function scanLibrary(libraryId: string) {
     const posterRelative = posterFile ? path.relative(movieDir, posterFile) : null;
     const fanartRelative = fanartFile ? path.relative(movieDir, fanartFile) : null;
 
+    // Probe video file with ffprobe for media info
+    const probeResult = await probeVideo(videoFile);
+
+    // ffprobe data takes priority over NFO data (more accurate)
+    const videoCodec = probeResult?.videoCodec || nfoData.videoCodec || null;
+    const audioCodec = probeResult?.audioCodec || nfoData.audioCodec || null;
+    const videoWidth = probeResult?.videoWidth || nfoData.videoWidth || null;
+    const videoHeight = probeResult?.videoHeight || nfoData.videoHeight || null;
+    const audioChannels = probeResult?.audioChannels || nfoData.audioChannels || null;
+    const container = probeResult?.container || path.extname(videoFile).toLowerCase().replace(".", "") || null;
+
     // Check if movie already exists by folder path (idempotent)
     const existingMovie = db
       .select()
@@ -178,6 +190,13 @@ export async function scanLibrary(libraryId: string) {
       country: nfoData.country || null,
       tmdbId: nfoData.tmdbId || null,
       imdbId: nfoData.imdbId || null,
+      videoCodec,
+      audioCodec,
+      videoWidth,
+      videoHeight,
+      audioChannels,
+      container,
+      tags: JSON.stringify(nfoData.tags),
       mediaLibraryId: libraryId,
     };
 

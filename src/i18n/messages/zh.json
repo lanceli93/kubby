@@ -168,7 +168,11 @@
     "ascending": "升序",
     "descending": "降序",
     "filter": "筛选",
-    "clearFilters": "清除全部"
+    "clearFilters": "清除全部",
+    "tags": "标签",
+    "videoInfo": "视频信息",
+    "resolution": "分辨率",
+    "codec": "编解码器"
   },
   "search": {
     "search": "搜索",

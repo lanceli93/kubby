@@ -67,6 +67,13 @@ export async function PUT(
     if (body.imdbId !== undefined) updateData.imdbId = body.imdbId;
     if (body.genres !== undefined) updateData.genres = JSON.stringify(body.genres);
     if (body.studios !== undefined) updateData.studios = JSON.stringify(body.studios);
+    if (body.videoCodec !== undefined) updateData.videoCodec = body.videoCodec;
+    if (body.audioCodec !== undefined) updateData.audioCodec = body.audioCodec;
+    if (body.videoWidth !== undefined) updateData.videoWidth = body.videoWidth ? Number(body.videoWidth) : null;
+    if (body.videoHeight !== undefined) updateData.videoHeight = body.videoHeight ? Number(body.videoHeight) : null;
+    if (body.audioChannels !== undefined) updateData.audioChannels = body.audioChannels ? Number(body.audioChannels) : null;
+    if (body.container !== undefined) updateData.container = body.container;
+    if (body.tags !== undefined) updateData.tags = JSON.stringify(body.tags);
 
     db.update(movies).set(updateData).where(eq(movies.id, id)).run();
 
@@ -120,6 +127,12 @@ export async function PUT(
           order: c.sortOrder || 0,
         })),
         directors: directors.map((d) => d.name),
+        videoCodec: updated.videoCodec || undefined,
+        audioCodec: updated.audioCodec || undefined,
+        videoWidth: updated.videoWidth || undefined,
+        videoHeight: updated.videoHeight || undefined,
+        audioChannels: updated.audioChannels || undefined,
+        tags: updated.tags ? JSON.parse(updated.tags) : undefined,
       };
       writeFullNfo(nfoFullPath, nfoData);
     }
@@ -204,6 +217,7 @@ export async function GET(
       fanartPath,
       genres: movie.genres ? JSON.parse(movie.genres) : [],
       studios: movie.studios ? JSON.parse(movie.studios) : [],
+      tags: movie.tags ? JSON.parse(movie.tags) : [],
       cast,
       directors,
       userData: userData

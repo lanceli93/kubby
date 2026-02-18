@@ -168,7 +168,11 @@
     "ascending": "Ascending",
     "descending": "Descending",
     "filter": "Filter",
-    "clearFilters": "Clear All"
+    "clearFilters": "Clear All",
+    "tags": "Tags",
+    "videoInfo": "Video Info",
+    "resolution": "Resolution",
+    "codec": "Codec"
   },
   "search": {
     "search": "Search",

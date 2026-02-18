@@ -26,6 +26,12 @@ export interface NfoMovieData {
   imdbId?: string;
   actors?: NfoActorEntry[];
   directors?: string[];
+  videoCodec?: string;
+  audioCodec?: string;
+  videoWidth?: number;
+  videoHeight?: number;
+  audioChannels?: number;
+  tags?: string[];
 }
 
 /**
@@ -65,6 +71,26 @@ export function writeFullNfo(nfoPath: string, data: NfoMovieData): void {
   }
   for (const director of data.directors ?? []) {
     xml += `  <director>${escapeXml(director)}</director>\n`;
+  }
+  for (const tag of data.tags ?? []) {
+    xml += `  <tag>${escapeXml(tag)}</tag>\n`;
+  }
+  if (data.videoCodec || data.audioCodec) {
+    xml += `  <fileinfo>\n    <streamdetails>\n`;
+    if (data.videoCodec || data.videoWidth || data.videoHeight) {
+      xml += `      <video>\n`;
+      if (data.videoCodec) xml += `        <codec>${escapeXml(data.videoCodec)}</codec>\n`;
+      if (data.videoWidth) xml += `        <width>${data.videoWidth}</width>\n`;
+      if (data.videoHeight) xml += `        <height>${data.videoHeight}</height>\n`;
+      xml += `      </video>\n`;
+    }
+    if (data.audioCodec || data.audioChannels) {
+      xml += `      <audio>\n`;
+      if (data.audioCodec) xml += `        <codec>${escapeXml(data.audioCodec)}</codec>\n`;
+      if (data.audioChannels) xml += `        <channels>${data.audioChannels}</channels>\n`;
+      xml += `      </audio>\n`;
+    }
+    xml += `    </streamdetails>\n  </fileinfo>\n`;
   }
   xml += `</movie>\n`;
 

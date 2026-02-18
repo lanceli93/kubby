@@ -36,6 +36,13 @@ interface MovieDetail {
   fanartPath?: string | null;
   tmdbId?: string;
   imdbId?: string;
+  videoCodec?: string | null;
+  audioCodec?: string | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
+  audioChannels?: number | null;
+  container?: string | null;
+  tags?: string[];
   cast: { id: string; name: string; role?: string; photoPath?: string | null }[];
   directors: { id: string; name: string }[];
   userData?: {
@@ -57,6 +64,26 @@ function formatRuntime(minutes: number) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}h ${m}m`;
+}
+
+function getResolutionLabel(width?: number | null, height?: number | null): string | null {
+  if (!width && !height) return null;
+  const w = width || 0;
+  const h = height || 0;
+  if (w >= 3840 || h >= 2160) return "4K";
+  if (w >= 1920 || h >= 1080) return "1080P";
+  if (w >= 1280 || h >= 720) return "720P";
+  if (w >= 720 || h >= 480) return "480P";
+  return `${h}P`;
+}
+
+function formatChannels(channels?: number | null): string | null {
+  if (!channels) return null;
+  if (channels === 8) return "7.1";
+  if (channels === 6) return "5.1";
+  if (channels === 2) return "Stereo";
+  if (channels === 1) return "Mono";
+  return `${channels}ch`;
 }
 
 export default function MovieDetailPage() {
@@ -189,6 +216,37 @@ export default function MovieDetailPage() {
               )}
             </div>
 
+            {/* Video info badges */}
+            {(movie.videoCodec || movie.audioCodec || movie.videoWidth || movie.container) && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {getResolutionLabel(movie.videoWidth, movie.videoHeight) && (
+                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                    {getResolutionLabel(movie.videoWidth, movie.videoHeight)}
+                  </span>
+                )}
+                {movie.videoCodec && (
+                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                    {movie.videoCodec}
+                  </span>
+                )}
+                {movie.audioCodec && (
+                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                    {movie.audioCodec}
+                  </span>
+                )}
+                {formatChannels(movie.audioChannels) && (
+                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                    {formatChannels(movie.audioChannels)}
+                  </span>
+                )}
+                {movie.container && (
+                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                    {movie.container}
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Action buttons — Jellyfin-style uniform small buttons */}
             <div className="flex items-center gap-2 pt-1">
               <Link
@@ -297,6 +355,19 @@ export default function MovieDetailPage() {
                 <div>
                   <span className="text-white/50">Country: </span>
                   <span className="text-white/90">{movie.country}</span>
+                </div>
+              )}
+              {movie.tags && movie.tags.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-white/50">{t("tags")}: </span>
+                  {movie.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
