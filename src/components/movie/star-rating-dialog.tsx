@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Star, Minus, Plus, X } from "lucide-react";
+import { Star, Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -135,17 +135,24 @@ export function StarRatingDialog({
           <div className="flex w-full items-center justify-between pt-1">
             <button
               onClick={handleClear}
-              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-white/50 transition-colors hover:text-white/80"
+              className="rounded-md px-3 py-1.5 text-sm text-red-400/70 transition-colors hover:text-red-400"
             >
-              <X className="h-3.5 w-3.5" />
-              {tCommon("cancel")}
+              {t("clearRating")}
             </button>
-            <button
-              onClick={handleSave}
-              className="rounded-md bg-primary px-5 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              {tCommon("save")}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onOpenChange(false)}
+                className="rounded-md px-3 py-1.5 text-sm text-white/50 transition-colors hover:text-white/80"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                onClick={handleSave}
+                className="rounded-md bg-primary px-5 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                {tCommon("save")}
+              </button>
+            </div>
           </div>
         </div>
       </DialogContent>
