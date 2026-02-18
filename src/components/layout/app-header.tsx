@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Search, ArrowLeft, House, Menu } from "lucide-react";
+import { Search, ArrowLeft, House, Menu, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { NavSidebar } from "@/components/layout/nav-sidebar";
@@ -63,10 +63,12 @@ export function AppHeader() {
 
   if (isPlayerPage) return null;
 
+  const isTransparent = isMovieDetail || isPersonDetail;
+
   return (
     <header
       className={`flex h-12 w-full items-center justify-between px-8 ${
-        isMovieDetail || isPersonDetail
+        isTransparent
           ? "absolute top-0 left-0 z-30 bg-transparent"
           : "bg-[var(--header)]"
       }`}
@@ -74,7 +76,11 @@ export function AppHeader() {
       <div className="flex items-center gap-4">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className={`transition-colors ${
+            isTransparent
+              ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -106,15 +112,23 @@ export function AppHeader() {
       <div className="flex items-center gap-4">
         <Link
           href="/search"
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className={`transition-colors ${
+            isTransparent
+              ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
           <Search className="h-5 w-5" />
         </Link>
         <Link
           href="/settings"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-[13px] font-semibold text-primary-foreground"
+          className={`transition-colors ${
+            isTransparent
+              ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
         >
-          {initials}
+          <User className="h-5 w-5" />
         </Link>
       </div>
       <NavSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
