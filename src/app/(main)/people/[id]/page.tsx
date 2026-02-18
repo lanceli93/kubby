@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { MoreVertical, Pencil, ExternalLink, Star } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
+import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { getTier, getTierColor, getTierBorderColor } from "@/lib/tier";
 
 interface PersonDetail {
@@ -68,12 +69,23 @@ export default function PersonDetailPage() {
   const personId = params.id as string;
   const t = useTranslations("movies");
   const tPerson = useTranslations("person");
+  const queryClient = useQueryClient();
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [ratingOpen, setRatingOpen] = useState(false);
 
   const { data: person } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
     queryFn: () => fetch(`/api/people/${personId}`).then((r) => r.json()),
   });
+
+  const savePersonalRating = async (rating: number | null) => {
+    await fetch(`/api/people/${personId}/user-data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ personalRating: rating }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["person", personId] });
+  };
 
   if (!person) {
     return (
@@ -132,16 +144,26 @@ export default function PersonDetailPage() {
               </span>
 
               {/* Personal rating + tier */}
-              {person.userData?.personalRating != null && person.userData.personalRating > 0 && (
+              {person.userData?.personalRating != null && person.userData.personalRating > 0 ? (
                 <>
-                  <span className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)]">
+                  <button
+                    onClick={() => setRatingOpen(true)}
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
+                  >
                     <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
                     {person.userData.personalRating.toFixed(1)}
-                  </span>
+                  </button>
                   <span className={`inline-flex h-7 items-center rounded-md border px-2.5 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))}`}>
                     {getTier(person.userData.personalRating)}
                   </span>
                 </>
+              ) : (
+                <button
+                  onClick={() => setRatingOpen(true)}
+                  className="inline-flex h-7 items-center justify-center rounded-md border border-white/20 px-2 text-white/40 transition-colors hover:text-[var(--gold)] cursor-pointer"
+                >
+                  <Star className="h-3.5 w-3.5" />
+                </button>
               )}
 
               {/* Three-dot menu */}
@@ -274,6 +296,14 @@ export default function PersonDetailPage() {
         personId={personId}
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
+      />
+
+      {/* Personal rating dialog */}
+      <StarRatingDialog
+        open={ratingOpen}
+        onOpenChange={setRatingOpen}
+        value={person.userData?.personalRating ?? null}
+        onSave={savePersonalRating}
       />
     </div>
   );
