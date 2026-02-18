@@ -175,7 +175,8 @@
     "searchPlaceholder": "搜索电影、人物...",
     "noResults": "没有找到与 \"{query}\" 相关的结果",
     "moviesCount": "电影 ({count})",
-    "peopleCount": "人物 ({count})"
+    "peopleCount": "人物 ({count})",
+    "suggestions": "建议"
   },
   "person": {
     "born": "出生",

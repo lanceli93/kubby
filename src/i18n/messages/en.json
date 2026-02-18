@@ -175,7 +175,8 @@
     "searchPlaceholder": "Search movies, people...",
     "noResults": "No results found for \"{query}\"",
     "moviesCount": "Movies ({count})",
-    "peopleCount": "People ({count})"
+    "peopleCount": "People ({count})",
+    "suggestions": "Suggestions"
   },
   "person": {
     "born": "Born",

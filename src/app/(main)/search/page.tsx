@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Search } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { PersonCard } from "@/components/people/person-card";
@@ -74,24 +75,58 @@ function SearchContent() {
     enabled: debouncedQuery.length > 0,
   });
 
+  // Fetch random movies for suggestions when search is empty
+  const { data: allMovies } = useQuery<Movie[]>({
+    queryKey: ["movies", "suggestions"],
+    queryFn: () => fetch("/api/movies?limit=100").then((r) => r.json()),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Pick random subset, stable until page remount
+  const suggestions = useMemo(() => {
+    if (!allMovies || allMovies.length === 0) return [];
+    const shuffled = [...allMovies].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(20, shuffled.length));
+  }, [allMovies]);
+
   const hasMovies = results && results.movies?.length > 0;
   const hasPeople = results && results.people?.length > 0;
   const hasResults = hasMovies || hasPeople;
 
   return (
-    <div className="flex flex-col gap-6 px-12 py-6">
-      {/* Search bar — full width, Jellyfin style */}
-      <div className="relative w-full">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+    <div className="flex flex-col gap-6 px-12 pt-12 pb-6">
+      {/* Search bar — Jellyfin style: icon outside, centered */}
+      <div className="flex items-center justify-center gap-3 pt-8">
+        <Search className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="h-12 w-full rounded-lg border border-white/[0.08] bg-[var(--surface)] pl-12 pr-4 text-lg text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          className="h-10 w-[800px] rounded-sm border border-white/[0.08] bg-[var(--surface)] px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           autoFocus
         />
       </div>
+
+      {/* Suggestions — shown when search is empty */}
+      {!debouncedQuery && suggestions.length > 0 && (
+        <div className="flex flex-col items-center gap-4 pt-2">
+          <h3 className="text-2xl font-medium text-white/70">
+            {t("suggestions")}
+          </h3>
+          <div className="flex flex-col items-center gap-3">
+            {suggestions.map((movie) => (
+              <Link
+                key={movie.id}
+                href={`/movies/${movie.id}`}
+                className="text-sm font-semibold text-primary transition-colors hover:text-primary hover:underline"
+              >
+                {movie.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Results */}
       {debouncedQuery && hasResults && (
