@@ -177,6 +177,15 @@
     "moviesCount": "电影 ({count})",
     "peopleCount": "人物 ({count})"
   },
+  "person": {
+    "born": "出生",
+    "died": "逝世",
+    "birthPlace": "出生地",
+    "ageYearsOld": "{age} 岁",
+    "agedYears": "享年 {age} 岁",
+    "filmography": "作品",
+    "moviesCount": "{count} 部电影"
+  },
   "metadata": {
     "editMetadata": "编辑元数据",
     "general": "常规",

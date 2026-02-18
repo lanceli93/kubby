@@ -118,7 +118,7 @@ export default function MovieDetailPage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section with Fanart — Jellyfin style */}
-      <div className="relative min-h-[650px] w-full overflow-hidden">
+      <div className="relative min-h-[750px] w-full overflow-hidden">
         {/* Fanart Background */}
         {movie.fanartPath && (
           <Image
@@ -136,7 +136,7 @@ export default function MovieDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20" />
 
         {/* Content row: poster + movie info */}
-        <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-10">
+        <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16">
           {/* Poster — 350×525 (2:3) */}
           <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (

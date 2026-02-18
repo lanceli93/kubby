@@ -177,6 +177,15 @@
     "moviesCount": "Movies ({count})",
     "peopleCount": "People ({count})"
   },
+  "person": {
+    "born": "Born",
+    "died": "Died",
+    "birthPlace": "Birth place",
+    "ageYearsOld": "{age} years old",
+    "agedYears": "aged {age}",
+    "filmography": "Filmography",
+    "moviesCount": "{count} movies"
+  },
   "metadata": {
     "editMetadata": "Edit Metadata",
     "general": "General",

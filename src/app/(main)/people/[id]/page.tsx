@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil } from "lucide-react";
+import { MoreVertical, Pencil, ExternalLink } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -22,6 +22,13 @@ interface PersonDetail {
   type: string;
   photoPath?: string | null;
   fanartPath?: string | null;
+  overview?: string | null;
+  birthDate?: string | null;
+  birthYear?: number | null;
+  placeOfBirth?: string | null;
+  deathDate?: string | null;
+  tmdbId?: string | null;
+  imdbId?: string | null;
   movies: {
     id: string;
     title: string;
@@ -32,10 +39,30 @@ interface PersonDetail {
   }[];
 }
 
+function computeAge(birthDate: string, deathDate?: string | null): number | null {
+  const birth = new Date(birthDate);
+  if (isNaN(birth.getTime())) return null;
+  const end = deathDate ? new Date(deathDate) : new Date();
+  if (isNaN(end.getTime())) return null;
+  let age = end.getFullYear() - birth.getFullYear();
+  const monthDiff = end.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
 export default function PersonDetailPage() {
   const params = useParams();
   const personId = params.id as string;
   const t = useTranslations("movies");
+  const tPerson = useTranslations("person");
   const [metadataOpen, setMetadataOpen] = useState(false);
 
   const { data: person } = useQuery<PersonDetail>({
@@ -54,7 +81,7 @@ export default function PersonDetailPage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section with Fanart — matches movie detail layout */}
-      <div className="relative min-h-[650px] w-full overflow-hidden">
+      <div className="relative min-h-[750px] w-full overflow-hidden">
         {/* Fanart Background */}
         {person.fanartPath && (
           <Image
@@ -72,7 +99,7 @@ export default function PersonDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20" />
 
         {/* Content row: poster + person info */}
-        <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-10">
+        <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16">
           {/* Poster — 350×525 (2:3), same as movie detail */}
           <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {person.photoPath ? (
@@ -119,6 +146,75 @@ export default function PersonDetailPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
+            {/* Overview / Biography */}
+            {person.overview && (
+              <p className="max-w-[700px] text-[15px] leading-relaxed text-white/80">
+                {person.overview}
+              </p>
+            )}
+
+            {/* Metadata list */}
+            <div className="flex flex-col gap-1.5 pt-1 text-sm">
+              {person.birthDate && (
+                <div>
+                  <span className="text-white/50">{tPerson("born")}: </span>
+                  <span className="text-white/90">
+                    {formatDate(person.birthDate)}
+                    {(() => {
+                      const age = computeAge(person.birthDate!, person.deathDate);
+                      return age != null && !person.deathDate
+                        ? ` (${tPerson("ageYearsOld", { age })})`
+                        : "";
+                    })()}
+                  </span>
+                </div>
+              )}
+              {person.deathDate && (
+                <div>
+                  <span className="text-white/50">{tPerson("died")}: </span>
+                  <span className="text-white/90">
+                    {formatDate(person.deathDate)}
+                    {(() => {
+                      const age = person.birthDate ? computeAge(person.birthDate, person.deathDate) : null;
+                      return age != null ? ` (${tPerson("agedYears", { age })})` : "";
+                    })()}
+                  </span>
+                </div>
+              )}
+              {person.placeOfBirth && (
+                <div>
+                  <span className="text-white/50">{tPerson("birthPlace")}: </span>
+                  <span className="text-white/90">{person.placeOfBirth}</span>
+                </div>
+              )}
+            </div>
+
+            {/* External links */}
+            {(person.imdbId || person.tmdbId) && (
+              <div className="flex items-center gap-3 pt-1">
+                {person.imdbId && (
+                  <a
+                    href={`https://www.imdb.com/name/${person.imdbId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-[var(--gold)] hover:underline"
+                  >
+                    IMDb <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+                {person.tmdbId && (
+                  <a
+                    href={`https://www.themoviedb.org/person/${person.tmdbId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-sky-400 hover:underline"
+                  >
+                    TMDB <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
