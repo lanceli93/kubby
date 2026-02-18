@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface MovieDetail {
   id: string;
@@ -51,6 +52,7 @@ interface MovieDetail {
     isFavorite: boolean;
     playbackPositionSeconds: number;
     personalRating?: number | null;
+    dimensionRatings?: Record<string, number> | null;
   };
 }
 
@@ -97,6 +99,8 @@ export default function MovieDetailPage() {
   const tMeta = useTranslations("metadata");
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
+  const { data: prefs } = useUserPreferences();
+  const movieDimensions = prefs?.movieRatingDimensions ?? [];
 
   const { data: movie } = useQuery<MovieDetail>({
     queryKey: ["movie", movieId],
@@ -119,11 +123,11 @@ export default function MovieDetailPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie", movieId] }),
   });
 
-  const savePersonalRating = async (rating: number | null) => {
+  const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
     await fetch(`/api/movies/${movieId}/user-data`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ personalRating: rating }),
+      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
     });
     queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
   };
@@ -457,6 +461,8 @@ export default function MovieDetailPage() {
         onOpenChange={setRatingOpen}
         value={movie.userData?.personalRating ?? null}
         onSave={savePersonalRating}
+        dimensions={movieDimensions}
+        dimensionRatings={movie.userData?.dimensionRatings}
       />
     </div>
   );

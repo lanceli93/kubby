@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface MovieMetadataEditorProps {
   movieId: string;
@@ -46,6 +47,7 @@ interface MovieData {
     playbackPositionSeconds: number;
     playCount: number;
     personalRating?: number | null;
+    dimensionRatings?: Record<string, number> | null;
   };
 }
 
@@ -53,6 +55,8 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   const queryClient = useQueryClient();
   const t = useTranslations("metadata");
   const tCommon = useTranslations("common");
+  const { data: prefs } = useUserPreferences();
+  const movieDimensions = prefs?.movieRatingDimensions ?? [];
 
   const { data: movie } = useQuery<MovieData>({
     queryKey: ["movie", movieId],
@@ -83,6 +87,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   const [genreInput, setGenreInput] = useState("");
   const [studioInput, setStudioInput] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [dimensionRatings, setDimensionRatings] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (movie) {
@@ -105,6 +110,9 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         imdbId: movie.imdbId || "",
         personalRating: movie.userData?.personalRating?.toString() || "",
       });
+      if (movie.userData?.dimensionRatings) {
+        setDimensionRatings(movie.userData.dimensionRatings);
+      }
     }
   }, [movie]);
 
@@ -125,12 +133,27 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   });
 
   const handleSave = async () => {
+    // Compute personal rating: if dimensions configured, use average of dimension values
+    let personalRating: number | null = form.personalRating ? Number(form.personalRating) : null;
+    let dimRatingsToSend: Record<string, number> | null = null;
+
+    if (movieDimensions.length > 0) {
+      const values = Object.values(dimensionRatings).filter((v) => v > 0);
+      if (values.length > 0) {
+        personalRating = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
+      } else {
+        personalRating = null;
+      }
+      dimRatingsToSend = dimensionRatings;
+    }
+
     // Save personal rating via user-data API first (must complete before query invalidation)
     await fetch(`/api/movies/${movieId}/user-data`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        personalRating: form.personalRating ? Number(form.personalRating) : null,
+        personalRating,
+        dimensionRatings: dimRatingsToSend,
       }),
     });
 
@@ -418,19 +441,54 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
           </TabsContent>
 
           <TabsContent value="personal" className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label>{t("personalRating")}</Label>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                max="10"
-                value={form.personalRating}
-                onChange={(e) => setForm((f) => ({ ...f, personalRating: e.target.value }))}
-                placeholder="0 – 10"
-              />
-              <p className="text-xs text-muted-foreground">{t("personalRatingDesc")}</p>
-            </div>
+            {movieDimensions.length > 0 ? (
+              <>
+                {/* Per-dimension inputs */}
+                {movieDimensions.map((dim) => (
+                  <div key={dim} className="space-y-2">
+                    <Label>{dim}</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      value={dimensionRatings[dim]?.toString() || ""}
+                      onChange={(e) => {
+                        const val = e.target.value ? Number(e.target.value) : 0;
+                        setDimensionRatings((prev) => ({ ...prev, [dim]: val }));
+                      }}
+                      placeholder="0 – 10"
+                    />
+                  </div>
+                ))}
+                {/* Computed average display */}
+                <div className="space-y-2 border-t border-white/10 pt-4">
+                  <Label>{t("personalRating")}</Label>
+                  <p className="text-lg font-bold text-[var(--gold)]">
+                    {(() => {
+                      const values = Object.values(dimensionRatings).filter((v) => v > 0);
+                      if (values.length === 0) return "—";
+                      return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+                    })()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{t("personalRatingDesc")}</p>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <Label>{t("personalRating")}</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="10"
+                  value={form.personalRating}
+                  onChange={(e) => setForm((f) => ({ ...f, personalRating: e.target.value }))}
+                  placeholder="0 – 10"
+                />
+                <p className="text-xs text-muted-foreground">{t("personalRatingDesc")}</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 

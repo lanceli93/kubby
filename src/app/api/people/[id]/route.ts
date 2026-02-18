@@ -105,7 +105,10 @@ export async function GET(
       fanartPath,
       movies: resolvedFilms,
       userData: userData
-        ? { personalRating: userData.personalRating }
+        ? {
+            personalRating: userData.personalRating,
+            dimensionRatings: userData.dimensionRatings ? JSON.parse(userData.dimensionRatings) : null,
+          }
         : null,
     });
   } catch (error) {

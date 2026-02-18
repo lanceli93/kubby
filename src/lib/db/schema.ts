@@ -106,6 +106,7 @@ export const userMovieData = sqliteTable("user_movie_data", {
   isPlayed: integer("is_played", { mode: "boolean" }).default(false),
   isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
   personalRating: real("personal_rating"),
+  dimensionRatings: text("dimension_ratings"), // JSON object, e.g. {"剧情": 9.5, "特效": 8.0}
   lastPlayedAt: text("last_played_at"),
 }, (table) => [
   uniqueIndex("idx_umd_user_movie").on(table.userId, table.movieId),
@@ -117,6 +118,17 @@ export const userPersonData = sqliteTable("user_person_data", {
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
   personalRating: real("personal_rating"),
+  dimensionRatings: text("dimension_ratings"), // JSON object, e.g. {"样貌": 9.5, "身材": 8.0}
 }, (table) => [
   uniqueIndex("idx_upd_user_person").on(table.userId, table.personId),
 ]);
+
+// ─── User Preferences ─────────────────────────────────────────
+export const userPreferences = sqliteTable("user_preferences", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  movieRatingDimensions: text("movie_rating_dimensions"), // JSON array, e.g. '["剧情","特效"]'
+  personRatingDimensions: text("person_rating_dimensions"), // JSON array, e.g. '["样貌","身材","演技"]'
+  showMovieRatingBadge: integer("show_movie_rating_badge", { mode: "boolean" }).notNull().default(true),
+  showPersonTierBadge: integer("show_person_tier_badge", { mode: "boolean" }).notNull().default(true),
+});

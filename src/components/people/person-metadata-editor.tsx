@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface PersonMetadataEditorProps {
   personId: string;
@@ -36,6 +37,7 @@ interface PersonData {
   deathDate?: string;
   userData?: {
     personalRating?: number | null;
+    dimensionRatings?: Record<string, number> | null;
   };
 }
 
@@ -43,6 +45,8 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
   const queryClient = useQueryClient();
   const t = useTranslations("metadata");
   const tCommon = useTranslations("common");
+  const { data: prefs } = useUserPreferences();
+  const personDimensions = prefs?.personRatingDimensions ?? [];
 
   const { data: person } = useQuery<PersonData>({
     queryKey: ["person", personId],
@@ -64,6 +68,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
   });
 
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [dimensionRatings, setDimensionRatings] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (person) {
@@ -79,6 +84,9 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
         imdbId: person.imdbId || "",
         personalRating: person.userData?.personalRating?.toString() || "",
       });
+      if (person.userData?.dimensionRatings) {
+        setDimensionRatings(person.userData.dimensionRatings);
+      }
     }
   }, [person]);
 
@@ -99,12 +107,27 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
   });
 
   const handleSave = async () => {
+    // Compute personal rating: if dimensions configured, use average of dimension values
+    let personalRating: number | null = form.personalRating ? Number(form.personalRating) : null;
+    let dimRatingsToSend: Record<string, number> | null = null;
+
+    if (personDimensions.length > 0) {
+      const values = Object.values(dimensionRatings).filter((v) => v > 0);
+      if (values.length > 0) {
+        personalRating = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
+      } else {
+        personalRating = null;
+      }
+      dimRatingsToSend = dimensionRatings;
+    }
+
     // Save personal rating via user-data API first
     await fetch(`/api/people/${personId}/user-data`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        personalRating: form.personalRating ? Number(form.personalRating) : null,
+        personalRating,
+        dimensionRatings: dimRatingsToSend,
       }),
     });
 
@@ -241,98 +264,187 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
           </TabsContent>
 
           <TabsContent value="personal" className="space-y-6 pt-4">
-            {/* Personal Rating with star UI */}
-            <div className="space-y-3">
-              <Label>{t("personalRating")}</Label>
-              <div className="flex flex-col items-center gap-3">
-                {/* Stars */}
-                <div
-                  className="flex items-center gap-0.5"
-                  onMouseLeave={() => setHoverRating(null)}
-                >
-                  {[0, 1, 2, 3, 4].map((starIndex) => {
-                    const starValue = (starIndex + 1) * 2;
-                    const halfValue = starValue - 1;
-                    const current = displayRating ?? 0;
-
-                    let fill: "full" | "half" | "empty" = "empty";
-                    if (current >= starValue) fill = "full";
-                    else if (current >= halfValue) fill = "half";
-
-                    return (
+            {personDimensions.length > 0 ? (
+              <>
+                {/* Per-dimension inputs */}
+                {personDimensions.map((dim) => (
+                  <div key={dim} className="space-y-2">
+                    <Label>{dim}</Label>
+                    <div className="flex items-center gap-3">
                       <div
-                        key={starIndex}
-                        className="relative h-8 w-8 cursor-pointer"
-                        onMouseMove={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const isLeft = e.clientX - rect.left < rect.width / 2;
-                          setHoverRating(isLeft ? halfValue : starValue);
-                        }}
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const isLeft = e.clientX - rect.left < rect.width / 2;
-                          handleStarClick(starIndex, isLeft);
-                        }}
+                        className="flex items-center gap-0.5"
+                        onMouseLeave={() => setHoverRating(null)}
                       >
-                        <Star className="absolute inset-0 h-8 w-8 text-white/20" />
-                        {fill !== "empty" && (
-                          <div
-                            className="absolute inset-0 overflow-hidden"
-                            style={{ width: fill === "full" ? "100%" : "50%" }}
-                          >
-                            <Star className="h-8 w-8 fill-[var(--gold)] text-[var(--gold)]" />
-                          </div>
-                        )}
+                        {[0, 1, 2, 3, 4].map((starIndex) => {
+                          const starValue = (starIndex + 1) * 2;
+                          const halfValue = starValue - 1;
+                          const current = dimensionRatings[dim] ?? 0;
+
+                          let fill: "full" | "half" | "empty" = "empty";
+                          if (current >= starValue) fill = "full";
+                          else if (current >= halfValue) fill = "half";
+
+                          return (
+                            <div
+                              key={starIndex}
+                              className="relative h-6 w-6 cursor-pointer"
+                              onMouseMove={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const isLeft = e.clientX - rect.left < rect.width / 2;
+                                // Just visual hover, not shared across dims
+                                void isLeft;
+                              }}
+                              onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const isLeft = e.clientX - rect.left < rect.width / 2;
+                                const newRating = (starIndex + 1) * 2 - (isLeft ? 1 : 0);
+                                setDimensionRatings((prev) => ({ ...prev, [dim]: newRating }));
+                              }}
+                            >
+                              <Star className="absolute inset-0 h-6 w-6 text-white/20" />
+                              {fill !== "empty" && (
+                                <div
+                                  className="absolute inset-0 overflow-hidden"
+                                  style={{ width: fill === "full" ? "100%" : "50%" }}
+                                >
+                                  <Star className="h-6 w-6 fill-[var(--gold)] text-[var(--gold)]" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <span className="min-w-[2.5rem] text-center text-sm font-bold text-[var(--gold)] tabular-nums">
+                        {dimensionRatings[dim] ? dimensionRatings[dim].toFixed(1) : "—"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Computed average + tier */}
+                <div className="space-y-3 border-t border-white/10 pt-4">
+                  <Label>{t("personalRating")}</Label>
+                  <p className="text-lg font-bold text-[var(--gold)]">
+                    {(() => {
+                      const values = Object.values(dimensionRatings).filter((v) => v > 0);
+                      if (values.length === 0) return "—";
+                      return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+                    })()}
+                  </p>
+                </div>
+
+                {/* Auto-calculated tier */}
+                <div className="space-y-3">
+                  <Label>{t("personalTier")}</Label>
+                  {(() => {
+                    const values = Object.values(dimensionRatings).filter((v) => v > 0);
+                    if (values.length === 0) return <p className="text-sm text-muted-foreground">{t("tierNoRating")}</p>;
+                    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                    const tier = getTier(avg);
+                    return (
+                      <div className="flex items-center gap-3">
+                        <span className={`rounded-md border px-3 py-1.5 text-lg font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}>
+                          {tier}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{t("tierAutoCalculated")}</span>
                       </div>
                     );
-                  })}
+                  })()}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Original single rating with star UI */}
+                <div className="space-y-3">
+                  <Label>{t("personalRating")}</Label>
+                  <div className="flex flex-col items-center gap-3">
+                    <div
+                      className="flex items-center gap-0.5"
+                      onMouseLeave={() => setHoverRating(null)}
+                    >
+                      {[0, 1, 2, 3, 4].map((starIndex) => {
+                        const starValue = (starIndex + 1) * 2;
+                        const halfValue = starValue - 1;
+                        const current = displayRating ?? 0;
+
+                        let fill: "full" | "half" | "empty" = "empty";
+                        if (current >= starValue) fill = "full";
+                        else if (current >= halfValue) fill = "half";
+
+                        return (
+                          <div
+                            key={starIndex}
+                            className="relative h-8 w-8 cursor-pointer"
+                            onMouseMove={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const isLeft = e.clientX - rect.left < rect.width / 2;
+                              setHoverRating(isLeft ? halfValue : starValue);
+                            }}
+                            onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const isLeft = e.clientX - rect.left < rect.width / 2;
+                              handleStarClick(starIndex, isLeft);
+                            }}
+                          >
+                            <Star className="absolute inset-0 h-8 w-8 text-white/20" />
+                            {fill !== "empty" && (
+                              <div
+                                className="absolute inset-0 overflow-hidden"
+                                style={{ width: fill === "full" ? "100%" : "50%" }}
+                              >
+                                <Star className="h-8 w-8 fill-[var(--gold)] text-[var(--gold)]" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleFine(-0.1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
+                      >
+                        −
+                      </button>
+                      <span className="min-w-[3rem] text-center text-xl font-bold text-[var(--gold)] tabular-nums">
+                        {ratingNum != null && ratingNum > 0 ? ratingNum.toFixed(1) : "—"}
+                      </span>
+                      <button
+                        onClick={() => handleFine(0.1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {ratingNum != null && ratingNum > 0 && (
+                      <button
+                        onClick={() => setForm((f) => ({ ...f, personalRating: "" }))}
+                        className="text-xs text-white/40 hover:text-white/70"
+                      >
+                        {t("clearRating")}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {/* Numeric display + fine controls */}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleFine(-0.1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
-                  >
-                    −
-                  </button>
-                  <span className="min-w-[3rem] text-center text-xl font-bold text-[var(--gold)] tabular-nums">
-                    {ratingNum != null && ratingNum > 0 ? ratingNum.toFixed(1) : "—"}
-                  </span>
-                  <button
-                    onClick={() => handleFine(0.1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
-                  >
-                    +
-                  </button>
+                {/* Auto-calculated tier */}
+                <div className="space-y-3">
+                  <Label>{t("personalTier")}</Label>
+                  {currentTier ? (
+                    <div className="flex items-center gap-3">
+                      <span className={`rounded-md border px-3 py-1.5 text-lg font-black tracking-wider ${getTierColor(currentTier)} ${getTierBorderColor(currentTier)} ${getTierGlow(currentTier)}`}>
+                        {currentTier}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{t("tierAutoCalculated")}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t("tierNoRating")}</p>
+                  )}
                 </div>
-
-                {/* Clear button */}
-                {ratingNum != null && ratingNum > 0 && (
-                  <button
-                    onClick={() => setForm((f) => ({ ...f, personalRating: "" }))}
-                    className="text-xs text-white/40 hover:text-white/70"
-                  >
-                    {t("clearRating")}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Auto-calculated tier */}
-            <div className="space-y-3">
-              <Label>{t("personalTier")}</Label>
-              {currentTier ? (
-                <div className="flex items-center gap-3">
-                  <span className={`rounded-md border px-3 py-1.5 text-lg font-black tracking-wider ${getTierColor(currentTier)} ${getTierBorderColor(currentTier)} ${getTierGlow(currentTier)}`}>
-                    {currentTier}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{t("tierAutoCalculated")}</span>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t("tierNoRating")}</p>
-              )}
-            </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
 

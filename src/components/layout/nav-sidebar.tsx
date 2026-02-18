@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, LayoutDashboard, Database, Settings, LogOut, X } from "lucide-react";
+import { Home, Film, LayoutDashboard, Database, Settings, LogOut, X, SlidersHorizontal } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
@@ -34,6 +34,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
 
   const mediaItems = [
     { href: "/movies", label: tNav("movies"), icon: Film, matchPrefix: true },
+    { href: "/personal-metadata", label: tNav("personalMetadata"), icon: SlidersHorizontal },
   ];
 
   const adminItems = [

@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface PersonCardProps {
   id: string;
@@ -27,6 +30,8 @@ export function PersonCard({
   size = "sm",
 }: PersonCardProps) {
   const { width, height } = sizeConfig[size];
+  const { data: prefs } = useUserPreferences();
+  const showTierBadge = prefs?.showPersonTierBadge !== false;
 
   return (
     <Link
@@ -54,7 +59,7 @@ export function PersonCard({
         )}
 
         {/* Tier badge */}
-        {personalRating != null && personalRating > 0 && (() => {
+        {showTierBadge && personalRating != null && personalRating > 0 && (() => {
           const tier = getTier(personalRating);
           return (
             <div className={`absolute right-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}>

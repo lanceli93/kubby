@@ -28,7 +28,14 @@ export async function GET(
       )
       .get();
 
-    return NextResponse.json(data || { personalRating: null });
+    const result = data
+      ? {
+          ...data,
+          dimensionRatings: data.dimensionRatings ? JSON.parse(data.dimensionRatings) : null,
+        }
+      : { personalRating: null, dimensionRatings: null };
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Get person user data error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -65,6 +72,8 @@ export async function PUT(
       const updateData: Record<string, unknown> = {};
       if (body.personalRating !== undefined)
         updateData.personalRating = body.personalRating;
+      if (body.dimensionRatings !== undefined)
+        updateData.dimensionRatings = body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null;
 
       db.update(userPersonData)
         .set(updateData)
@@ -77,6 +86,7 @@ export async function PUT(
           userId,
           personId,
           personalRating: body.personalRating ?? null,
+          dimensionRatings: body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null,
         })
         .run();
     }

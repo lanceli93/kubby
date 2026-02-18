@@ -1,0 +1,237 @@
+"use client";
+
+import { useState, useEffect, KeyboardEvent } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import type { UserPreferences } from "@/hooks/use-user-preferences";
+
+export default function PersonalMetadataPage() {
+  const t = useTranslations("personalMetadata");
+  const tCommon = useTranslations("common");
+  const queryClient = useQueryClient();
+
+  const { data: prefs } = useQuery<UserPreferences>({
+    queryKey: ["userPreferences"],
+    queryFn: () =>
+      fetch("/api/settings/personal-metadata").then((r) => r.json()),
+  });
+
+  const [movieDims, setMovieDims] = useState<string[]>([]);
+  const [personDims, setPersonDims] = useState<string[]>([]);
+  const [showMovieBadge, setShowMovieBadge] = useState(true);
+  const [showPersonBadge, setShowPersonBadge] = useState(true);
+  const [movieInput, setMovieInput] = useState("");
+  const [personInput, setPersonInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    if (prefs) {
+      setMovieDims(prefs.movieRatingDimensions || []);
+      setPersonDims(prefs.personRatingDimensions || []);
+      setShowMovieBadge(prefs.showMovieRatingBadge);
+      setShowPersonBadge(prefs.showPersonTierBadge);
+    }
+  }, [prefs]);
+
+  const handleMovieDimKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && movieInput.trim()) {
+      e.preventDefault();
+      if (movieDims.length >= 10) return;
+      if (!movieDims.includes(movieInput.trim())) {
+        setMovieDims((d) => [...d, movieInput.trim()]);
+      }
+      setMovieInput("");
+    }
+  };
+
+  const handlePersonDimKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && personInput.trim()) {
+      e.preventDefault();
+      if (personDims.length >= 10) return;
+      if (!personDims.includes(personInput.trim())) {
+        setPersonDims((d) => [...d, personInput.trim()]);
+      }
+      setPersonInput("");
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMsg("");
+    try {
+      const res = await fetch("/api/settings/personal-metadata", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieRatingDimensions: movieDims,
+          personRatingDimensions: personDims,
+          showMovieRatingBadge: showMovieBadge,
+          showPersonTierBadge: showPersonBadge,
+        }),
+      });
+      if (res.ok) {
+        setMsg(t("saved"));
+        queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+      } else {
+        setMsg(t("failedToSave"));
+      }
+    } catch {
+      setMsg(t("failedToSave"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-6 py-8">
+      <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+
+      {/* Movie Rating Dimensions */}
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.03] bg-card p-7">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("movieRatingDimensions")}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {t("movieRatingDimensionsDesc")}
+        </p>
+        <div className="flex flex-wrap gap-1.5 mb-1">
+          {movieDims.map((dim) => (
+            <span
+              key={dim}
+              className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+            >
+              {dim}
+              <button
+                type="button"
+                onClick={() => setMovieDims((d) => d.filter((x) => x !== dim))}
+                className="text-primary/60 hover:text-primary"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+        <input
+          value={movieInput}
+          onChange={(e) => setMovieInput(e.target.value)}
+          onKeyDown={handleMovieDimKeyDown}
+          placeholder={t("addDimensionPlaceholder")}
+          disabled={movieDims.length >= 10}
+          className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+        />
+        {movieDims.length >= 10 && (
+          <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
+        )}
+      </div>
+
+      {/* Person Rating Dimensions */}
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.03] bg-card p-7">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("personRatingDimensions")}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {t("personRatingDimensionsDesc")}
+        </p>
+        <div className="flex flex-wrap gap-1.5 mb-1">
+          {personDims.map((dim) => (
+            <span
+              key={dim}
+              className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+            >
+              {dim}
+              <button
+                type="button"
+                onClick={() => setPersonDims((d) => d.filter((x) => x !== dim))}
+                className="text-primary/60 hover:text-primary"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+        <input
+          value={personInput}
+          onChange={(e) => setPersonInput(e.target.value)}
+          onKeyDown={handlePersonDimKeyDown}
+          placeholder={t("addDimensionPlaceholder")}
+          disabled={personDims.length >= 10}
+          className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+        />
+        {personDims.length >= 10 && (
+          <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
+        )}
+      </div>
+
+      {/* Card Badge Settings */}
+      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.03] bg-card p-7">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("cardBadgeSettings")}
+        </h2>
+
+        {/* Movie rating badge toggle */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {t("showMovieRatingBadge")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("showMovieRatingBadgeDesc")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowMovieBadge(!showMovieBadge)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              showMovieBadge ? "bg-primary" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                showMovieBadge ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Person tier badge toggle */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {t("showPersonTierBadge")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("showPersonTierBadgeDesc")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowPersonBadge(!showPersonBadge)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              showPersonBadge ? "bg-primary" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                showPersonBadge ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Save button + message */}
+      {msg && (
+        <p className={`text-sm ${msg === t("saved") ? "text-green-500" : "text-destructive"}`}>
+          {msg}
+        </p>
+      )}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="rounded-lg bg-primary px-8 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+      >
+        {saving ? tCommon("loading") : tCommon("save")}
+      </button>
+    </div>
+  );
+}

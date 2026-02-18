@@ -238,6 +238,7 @@ export async function GET(
             playbackPositionSeconds: userData.playbackPositionSeconds,
             playCount: userData.playCount,
             personalRating: userData.personalRating,
+            dimensionRatings: userData.dimensionRatings ? JSON.parse(userData.dimensionRatings) : null,
           }
         : null,
     });

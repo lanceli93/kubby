@@ -17,6 +17,7 @@ import {
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface PersonDetail {
   id: string;
@@ -33,6 +34,7 @@ interface PersonDetail {
   imdbId?: string | null;
   userData?: {
     personalRating?: number | null;
+    dimensionRatings?: Record<string, number> | null;
   };
   movies: {
     id: string;
@@ -72,17 +74,19 @@ export default function PersonDetailPage() {
   const queryClient = useQueryClient();
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
+  const { data: prefs } = useUserPreferences();
+  const personDimensions = prefs?.personRatingDimensions ?? [];
 
   const { data: person } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
     queryFn: () => fetch(`/api/people/${personId}`).then((r) => r.json()),
   });
 
-  const savePersonalRating = async (rating: number | null) => {
+  const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
     await fetch(`/api/people/${personId}/user-data`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ personalRating: rating }),
+      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
     });
     queryClient.invalidateQueries({ queryKey: ["person", personId] });
   };
@@ -304,6 +308,8 @@ export default function PersonDetailPage() {
         onOpenChange={setRatingOpen}
         value={person.userData?.personalRating ?? null}
         onSave={savePersonalRating}
+        dimensions={personDimensions}
+        dimensionRatings={person.userData?.dimensionRatings}
       />
     </div>
   );

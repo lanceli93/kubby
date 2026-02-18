@@ -14,7 +14,92 @@ interface StarRatingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   value: number | null;
-  onSave: (rating: number | null) => void;
+  onSave: (rating: number | null, dimensionRatings?: Record<string, number> | null) => void;
+  dimensions?: string[];
+  dimensionRatings?: Record<string, number> | null;
+}
+
+function StarRow({
+  rating,
+  hoverRating,
+  onStarClick,
+  onHover,
+  onLeave,
+  onFine,
+  starSize = "h-9 w-9",
+}: {
+  rating: number | null;
+  hoverRating: number | null;
+  onStarClick: (starIndex: number, isHalf: boolean) => void;
+  onHover: (val: number) => void;
+  onLeave: () => void;
+  onFine: (delta: number) => void;
+  starSize?: string;
+}) {
+  const displayRating = hoverRating ?? rating;
+
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="flex items-center gap-0.5"
+        onMouseLeave={onLeave}
+      >
+        {[0, 1, 2, 3, 4].map((starIndex) => {
+          const starValue = (starIndex + 1) * 2;
+          const halfValue = starValue - 1;
+          const current = displayRating ?? 0;
+
+          let fill: "full" | "half" | "empty" = "empty";
+          if (current >= starValue) fill = "full";
+          else if (current >= halfValue) fill = "half";
+
+          return (
+            <div
+              key={starIndex}
+              className={`relative ${starSize} cursor-pointer`}
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const isLeft = e.clientX - rect.left < rect.width / 2;
+                onHover(isLeft ? halfValue : starValue);
+              }}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const isLeft = e.clientX - rect.left < rect.width / 2;
+                onStarClick(starIndex, isLeft);
+              }}
+            >
+              <Star className={`absolute inset-0 ${starSize} text-white/20`} />
+              {fill !== "empty" && (
+                <div
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: fill === "full" ? "100%" : "50%" }}
+                >
+                  <Star className={`${starSize} fill-[var(--gold)] text-[var(--gold)]`} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => onFine(-0.1)}
+          className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+        >
+          <Minus className="h-3 w-3" />
+        </button>
+        <span className="min-w-[2.5rem] text-center text-sm font-bold text-[var(--gold)] tabular-nums">
+          {rating != null ? rating.toFixed(1) : "—"}
+        </span>
+        <button
+          onClick={() => onFine(0.1)}
+          className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function StarRatingDialog({
@@ -22,20 +107,42 @@ export function StarRatingDialog({
   onOpenChange,
   value,
   onSave,
+  dimensions,
+  dimensionRatings: initialDimensionRatings,
 }: StarRatingDialogProps) {
   const t = useTranslations("metadata");
   const tCommon = useTranslations("common");
+  const tPm = useTranslations("personalMetadata");
   const [rating, setRating] = useState<number | null>(value);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [dimRatings, setDimRatings] = useState<Record<string, number>>({});
+  const [dimHovers, setDimHovers] = useState<Record<string, number | null>>({});
+
+  const hasDimensions = dimensions && dimensions.length > 0;
 
   useEffect(() => {
-    if (open) setRating(value);
-  }, [open, value]);
+    if (open) {
+      setRating(value);
+      if (hasDimensions && initialDimensionRatings) {
+        setDimRatings(initialDimensionRatings);
+      } else {
+        setDimRatings({});
+      }
+      setDimHovers({});
+    }
+  }, [open, value, hasDimensions, initialDimensionRatings]);
+
+  // Compute average from dimension ratings
+  const computeAverage = (ratings: Record<string, number>): number | null => {
+    const values = Object.values(ratings).filter((v) => v > 0);
+    if (values.length === 0) return null;
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    return Math.round(avg * 10) / 10;
+  };
 
   const displayRating = hoverRating ?? rating;
 
   const handleStarClick = (starIndex: number, isHalf: boolean) => {
-    // starIndex is 0-4, each star = 2 points
     const newRating = (starIndex + 1) * 2 - (isHalf ? 1 : 0);
     setRating(newRating);
   };
@@ -48,88 +155,146 @@ export function StarRatingDialog({
     });
   };
 
+  const handleDimStarClick = (dim: string, starIndex: number, isHalf: boolean) => {
+    const newRating = (starIndex + 1) * 2 - (isHalf ? 1 : 0);
+    setDimRatings((prev) => {
+      const updated = { ...prev, [dim]: newRating };
+      // Update overall rating as average
+      const avg = computeAverage(updated);
+      if (avg !== null) setRating(avg);
+      return updated;
+    });
+  };
+
+  const handleDimFine = (dim: string, delta: number) => {
+    setDimRatings((prev) => {
+      const base = prev[dim] ?? 0;
+      const next = Math.max(0, Math.min(10, Math.round((base + delta) * 10) / 10));
+      const updated = { ...prev, [dim]: next };
+      const avg = computeAverage(updated);
+      if (avg !== null) setRating(avg);
+      return updated;
+    });
+  };
+
   const handleSave = () => {
-    onSave(rating);
+    if (hasDimensions) {
+      const avg = computeAverage(dimRatings);
+      onSave(avg, dimRatings);
+    } else {
+      onSave(rating);
+    }
     onOpenChange(false);
   };
 
   const handleClear = () => {
-    onSave(null);
+    onSave(null, hasDimensions ? null : undefined);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[340px]">
+      <DialogContent className={`!bg-black/40 border-white/[0.06] backdrop-blur-xl ${hasDimensions ? "sm:max-w-[480px]" : "sm:max-w-[340px]"}`}>
         <DialogHeader>
           <DialogTitle>{t("personalRating")}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col items-center gap-4 py-2">
-          {/* Stars row */}
-          <div
-            className="flex items-center gap-0.5"
-            onMouseLeave={() => setHoverRating(null)}
-          >
-            {[0, 1, 2, 3, 4].map((starIndex) => {
-              const starValue = (starIndex + 1) * 2; // Full star value (2, 4, 6, 8, 10)
-              const halfValue = starValue - 1; // Half star value (1, 3, 5, 7, 9)
-              const current = displayRating ?? 0;
+        <div className="flex flex-col gap-4 py-2">
+          {hasDimensions ? (
+            <>
+              {/* Dimension rows */}
+              <div className="flex flex-col gap-3">
+                {dimensions.map((dim) => (
+                  <div key={dim} className="flex items-center gap-3">
+                    <span className="min-w-[4rem] text-sm text-white/70 truncate">{dim}</span>
+                    <StarRow
+                      rating={dimRatings[dim] ?? null}
+                      hoverRating={dimHovers[dim] ?? null}
+                      onStarClick={(si, ih) => handleDimStarClick(dim, si, ih)}
+                      onHover={(val) => setDimHovers((prev) => ({ ...prev, [dim]: val }))}
+                      onLeave={() => setDimHovers((prev) => ({ ...prev, [dim]: null }))}
+                      onFine={(delta) => handleDimFine(dim, delta)}
+                      starSize="h-6 w-6"
+                    />
+                  </div>
+                ))}
+              </div>
 
-              // Determine fill: full, half, or empty
-              let fill: "full" | "half" | "empty" = "empty";
-              if (current >= starValue) fill = "full";
-              else if (current >= halfValue) fill = "half";
-
-              return (
+              {/* Computed average */}
+              <div className="flex items-center justify-center gap-2 border-t border-white/10 pt-3">
+                <span className="text-sm text-white/50">{tPm("overall")}:</span>
+                <span className="text-xl font-bold text-[var(--gold)] tabular-nums">
+                  {rating != null ? rating.toFixed(1) : "—"}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Original single-rating UI */}
+              <div className="flex flex-col items-center gap-4">
                 <div
-                  key={starIndex}
-                  className="relative h-9 w-9 cursor-pointer"
-                  onMouseMove={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const isLeft = e.clientX - rect.left < rect.width / 2;
-                    setHoverRating(isLeft ? halfValue : starValue);
-                  }}
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const isLeft = e.clientX - rect.left < rect.width / 2;
-                    handleStarClick(starIndex, isLeft);
-                  }}
+                  className="flex items-center gap-0.5"
+                  onMouseLeave={() => setHoverRating(null)}
                 >
-                  {/* Empty star background */}
-                  <Star className="absolute inset-0 h-9 w-9 text-white/20" />
-                  {/* Filled portion */}
-                  {fill !== "empty" && (
-                    <div
-                      className="absolute inset-0 overflow-hidden"
-                      style={{ width: fill === "full" ? "100%" : "50%" }}
-                    >
-                      <Star className="h-9 w-9 fill-[var(--gold)] text-[var(--gold)]" />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  {[0, 1, 2, 3, 4].map((starIndex) => {
+                    const starValue = (starIndex + 1) * 2;
+                    const halfValue = starValue - 1;
+                    const current = displayRating ?? 0;
 
-          {/* Numeric display + fine controls */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleFine(-0.1)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
-            >
-              <Minus className="h-3.5 w-3.5" />
-            </button>
-            <span className="min-w-[3.5rem] text-center text-2xl font-bold text-[var(--gold)] tabular-nums">
-              {rating != null ? rating.toFixed(1) : "—"}
-            </span>
-            <button
-              onClick={() => handleFine(0.1)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-          </div>
+                    let fill: "full" | "half" | "empty" = "empty";
+                    if (current >= starValue) fill = "full";
+                    else if (current >= halfValue) fill = "half";
+
+                    return (
+                      <div
+                        key={starIndex}
+                        className="relative h-9 w-9 cursor-pointer"
+                        onMouseMove={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const isLeft = e.clientX - rect.left < rect.width / 2;
+                          setHoverRating(isLeft ? halfValue : starValue);
+                        }}
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const isLeft = e.clientX - rect.left < rect.width / 2;
+                          handleStarClick(starIndex, isLeft);
+                        }}
+                      >
+                        <Star className="absolute inset-0 h-9 w-9 text-white/20" />
+                        {fill !== "empty" && (
+                          <div
+                            className="absolute inset-0 overflow-hidden"
+                            style={{ width: fill === "full" ? "100%" : "50%" }}
+                          >
+                            <Star className="h-9 w-9 fill-[var(--gold)] text-[var(--gold)]" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Numeric display + fine controls */}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleFine(-0.1)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="min-w-[3.5rem] text-center text-2xl font-bold text-[var(--gold)] tabular-nums">
+                    {rating != null ? rating.toFixed(1) : "—"}
+                  </span>
+                  <button
+                    onClick={() => handleFine(0.1)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Actions */}
           <div className="flex w-full items-center justify-between pt-1">

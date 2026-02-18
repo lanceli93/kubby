@@ -8,6 +8,7 @@ import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, Info, RefreshCw
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -60,6 +61,8 @@ export function MovieCard({
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const { data: prefs } = useUserPreferences();
+  const showRatingBadge = prefs?.showMovieRatingBadge !== false;
 
   return (
     <Link
@@ -84,7 +87,7 @@ export function MovieCard({
         )}
 
         {/* Rating badge — prefer personal rating over community rating */}
-        {personalRating != null && personalRating > 0 ? (
+        {showRatingBadge && personalRating != null && personalRating > 0 ? (
           <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
             <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
             <span className="text-[11px] font-medium text-[var(--gold)]">
