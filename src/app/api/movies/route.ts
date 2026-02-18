@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { db } from "@/lib/db";
-import { movies, userMovieData } from "@/lib/db/schema";
+import { movies, userMovieData, people, moviePeople } from "@/lib/db/schema";
 import { eq, desc, asc, like, sql, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
@@ -205,16 +205,37 @@ export async function GET(request: NextRequest) {
     const results = baseQuery.orderBy(orderClause).limit(limit).all();
 
     // Resolve relative paths to absolute
-    return NextResponse.json(
-      results.map((r) => ({
-        ...r,
-        posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
-        fanartPath: r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
-        ...(includeGenres && r.genres ? { genres: JSON.parse(r.genres) } : {}),
-        isFavorite: r.isFavorite ?? false,
-        isWatched: r.isWatched ?? false,
-      }))
-    );
+    const movieResults = results.map((r) => ({
+      ...r,
+      posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
+      fanartPath: r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
+      ...(includeGenres && r.genres ? { genres: JSON.parse(r.genres) } : {}),
+      isFavorite: r.isFavorite ?? false,
+      isWatched: r.isWatched ?? false,
+    }));
+
+    // If includepeople=true and there's a search query, also search people
+    const includePeople = searchParams.get("includepeople") === "true";
+    if (includePeople && search) {
+      const peopleResults = db
+        .select({
+          id: people.id,
+          name: people.name,
+          type: people.type,
+          photoPath: people.photoPath,
+        })
+        .from(people)
+        .where(like(people.name, `%${search}%`))
+        .limit(20)
+        .all();
+
+      return NextResponse.json({
+        movies: movieResults,
+        people: peopleResults,
+      });
+    }
+
+    return NextResponse.json(movieResults);
   } catch (error) {
     console.error("List movies error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

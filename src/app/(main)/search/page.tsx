@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { PersonCard } from "@/components/people/person-card";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslations } from "next-intl";
 
 interface Movie {
@@ -36,64 +37,71 @@ export default function SearchPage() {
   );
 }
 
+function useDebounce(value: string, delay: number) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState(initialQuery);
-  const [submitted, setSubmitted] = useState(!!initialQuery);
+  const debouncedQuery = useDebounce(query, 300);
   const t = useTranslations("search");
 
+  // Update URL when debounced query changes
+  useEffect(() => {
+    if (debouncedQuery) {
+      router.replace(`/search?q=${encodeURIComponent(debouncedQuery)}`, {
+        scroll: false,
+      });
+    } else {
+      router.replace("/search", { scroll: false });
+    }
+  }, [debouncedQuery, router]);
+
   const { data: results } = useQuery<SearchResults>({
-    queryKey: ["search", query],
+    queryKey: ["search", debouncedQuery],
     queryFn: () =>
-      fetch(`/api/movies?search=${encodeURIComponent(query)}&includepeople=true`).then(
-        (r) => r.json()
-      ),
-    enabled: submitted && query.length > 0,
+      fetch(
+        `/api/movies?search=${encodeURIComponent(debouncedQuery)}&includepeople=true`
+      ).then((r) => r.json()),
+    enabled: debouncedQuery.length > 0,
   });
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (query.trim()) {
-      setSubmitted(true);
-      router.replace(`/search?q=${encodeURIComponent(query.trim())}`);
-    }
-  }
-
-  const hasResults =
-    results && (results.movies?.length > 0 || results.people?.length > 0);
+  const hasMovies = results && results.movies?.length > 0;
+  const hasPeople = results && results.people?.length > 0;
+  const hasResults = hasMovies || hasPeople;
 
   return (
-    <div className="flex flex-col gap-8 px-12 py-8">
-      {/* Search bar */}
-      <form onSubmit={handleSubmit} className="flex justify-center pt-8">
-        <div className="relative w-full max-w-2xl">
-          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              if (!e.target.value.trim()) setSubmitted(false);
-            }}
-            placeholder={t("searchPlaceholder")}
-            className="h-14 w-full rounded-xl border border-white/[0.08] bg-[var(--surface)] pl-12 pr-4 text-lg text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-            autoFocus
-          />
-        </div>
-      </form>
+    <div className="flex flex-col gap-6 px-12 py-6">
+      {/* Search bar — full width, Jellyfin style */}
+      <div className="relative w-full">
+        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("searchPlaceholder")}
+          className="h-12 w-full rounded-lg border border-white/[0.08] bg-[var(--surface)] pl-12 pr-4 text-lg text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          autoFocus
+        />
+      </div>
 
       {/* Results */}
-      {submitted && hasResults && (
-        <>
+      {debouncedQuery && hasResults && (
+        <div className="flex flex-col gap-6">
           {/* Movies */}
-          {results.movies.length > 0 && (
-            <section className="flex flex-col gap-4">
-              <h2 className="text-xl font-semibold text-foreground">
-                {t("moviesCount", { count: results.movies.length })}
-              </h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {hasMovies && (
+            <section>
+              <ScrollRow
+                title={t("moviesCount", { count: results.movies.length })}
+              >
                 {results.movies.map((movie) => (
                   <MovieCard
                     key={movie.id}
@@ -104,17 +112,16 @@ function SearchContent() {
                     rating={movie.communityRating}
                   />
                 ))}
-              </div>
+              </ScrollRow>
             </section>
           )}
 
           {/* People */}
-          {results.people.length > 0 && (
-            <section className="flex flex-col gap-4">
-              <h2 className="text-xl font-semibold text-foreground">
-                {t("peopleCount", { count: results.people.length })}
-              </h2>
-              <div className="flex flex-wrap gap-4">
+          {hasPeople && (
+            <section>
+              <ScrollRow
+                title={t("peopleCount", { count: results.people.length })}
+              >
                 {results.people.map((person) => (
                   <PersonCard
                     key={person.id}
@@ -125,15 +132,16 @@ function SearchContent() {
                     size="md"
                   />
                 ))}
-              </div>
+              </ScrollRow>
             </section>
           )}
-        </>
+        </div>
       )}
 
-      {submitted && query && !hasResults && results && (
+      {/* No results */}
+      {debouncedQuery && !hasResults && results && (
         <div className="flex h-48 items-center justify-center text-muted-foreground">
-          {t("noResults", { query })}
+          {t("noResults", { query: debouncedQuery })}
         </div>
       )}
     </div>
