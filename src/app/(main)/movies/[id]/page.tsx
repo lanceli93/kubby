@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
+import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 
 interface MovieDetail {
   id: string;
@@ -95,6 +96,7 @@ export default function MovieDetailPage() {
   const t = useTranslations("movies");
   const tMeta = useTranslations("metadata");
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [ratingOpen, setRatingOpen] = useState(false);
 
   const { data: movie } = useQuery<MovieDetail>({
     queryKey: ["movie", movieId],
@@ -116,6 +118,15 @@ export default function MovieDetailPage() {
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie", movieId] }),
   });
+
+  const savePersonalRating = async (rating: number | null) => {
+    await fetch(`/api/movies/${movieId}/user-data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ personalRating: rating }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+  };
 
   const toggleWatched = useMutation({
     mutationFn: () =>
@@ -221,13 +232,22 @@ export default function MovieDetailPage() {
                   </span>
                 </>
               )}
-              {movie.userData?.personalRating != null && movie.userData.personalRating > 0 && (
-                <>
-                  <span className="text-white/40">&middot;</span>
-                  <span className="font-semibold text-[var(--gold)]">
-                    ★ {movie.userData.personalRating.toFixed(1)}
-                  </span>
-                </>
+              <span className="text-white/40">&middot;</span>
+              {movie.userData?.personalRating != null && movie.userData.personalRating > 0 ? (
+                <button
+                  onClick={() => setRatingOpen(true)}
+                  className="font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
+                >
+                  ★ {movie.userData.personalRating.toFixed(1)}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setRatingOpen(true)}
+                  className="text-white/40 transition-colors hover:text-[var(--gold)] cursor-pointer"
+                  title={t("setRating")}
+                >
+                  ★
+                </button>
               )}
             </div>
 
@@ -428,6 +448,14 @@ export default function MovieDetailPage() {
         movieId={movieId}
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
+      />
+
+      {/* Personal rating dialog */}
+      <StarRatingDialog
+        open={ratingOpen}
+        onOpenChange={setRatingOpen}
+        value={movie.userData?.personalRating ?? null}
+        onSave={savePersonalRating}
       />
     </div>
   );
