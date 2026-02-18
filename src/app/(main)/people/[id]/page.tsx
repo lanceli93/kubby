@@ -127,18 +127,18 @@ export default function PersonDetailPage() {
               {person.name}
             </h1>
             <div className="flex items-center gap-2">
-              <span className="inline-flex w-fit rounded-md border border-white/20 px-3 py-1 text-sm capitalize text-white/70">
+              <span className="inline-flex h-7 items-center rounded-md border border-white/20 px-3 text-sm capitalize text-white/70">
                 {person.type}
               </span>
 
               {/* Personal rating + tier */}
               {person.userData?.personalRating != null && person.userData.personalRating > 0 && (
                 <>
-                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 py-1 text-sm font-semibold text-[var(--gold)]">
+                  <span className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)]">
                     <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
                     {person.userData.personalRating.toFixed(1)}
                   </span>
-                  <span className={`rounded-md border px-2.5 py-1 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))}`}>
+                  <span className={`inline-flex h-7 items-center rounded-md border px-2.5 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))}`}>
                     {getTier(person.userData.personalRating)}
                   </span>
                 </>
@@ -148,9 +148,9 @@ export default function PersonDetailPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex items-center justify-center rounded-md border border-white/20 px-2 py-1 text-white/70 transition-colors hover:bg-white/10"
+                    className="inline-flex h-7 items-center justify-center rounded-md border border-white/20 px-2 text-white/70 transition-colors hover:bg-white/10"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
