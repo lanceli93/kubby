@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import { db } from "@/lib/db";
-import { people, moviePeople, movies } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 // PUT /api/people/[id]
@@ -84,10 +84,29 @@ export async function GET(
 
     const fanartPath = resolvedFilms.find((m) => m.fanartPath)?.fanartPath || null;
 
+    // Get user data if authenticated
+    let userData = null;
+    const session = await auth();
+    if (session?.user?.id) {
+      userData = db
+        .select()
+        .from(userPersonData)
+        .where(
+          and(
+            eq(userPersonData.userId, session.user.id),
+            eq(userPersonData.personId, id)
+          )
+        )
+        .get() || null;
+    }
+
     return NextResponse.json({
       ...person,
       fanartPath,
       movies: resolvedFilms,
+      userData: userData
+        ? { personalRating: userData.personalRating }
+        : null,
     });
   } catch (error) {
     console.error("Get person error:", error);

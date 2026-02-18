@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ExternalLink } from "lucide-react";
+import { MoreVertical, Pencil, ExternalLink, Star } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
+import { getTier, getTierColor, getTierBorderColor } from "@/lib/tier";
 
 interface PersonDetail {
   id: string;
@@ -29,6 +30,9 @@ interface PersonDetail {
   deathDate?: string | null;
   tmdbId?: string | null;
   imdbId?: string | null;
+  userData?: {
+    personalRating?: number | null;
+  };
   movies: {
     id: string;
     title: string;
@@ -126,6 +130,19 @@ export default function PersonDetailPage() {
               <span className="inline-flex w-fit rounded-md border border-white/20 px-3 py-1 text-sm capitalize text-white/70">
                 {person.type}
               </span>
+
+              {/* Personal rating + tier */}
+              {person.userData?.personalRating != null && person.userData.personalRating > 0 && (
+                <>
+                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 py-1 text-sm font-semibold text-[var(--gold)]">
+                    <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
+                    {person.userData.personalRating.toFixed(1)}
+                  </span>
+                  <span className={`rounded-md border px-2.5 py-1 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))}`}>
+                    {getTier(person.userData.personalRating)}
+                  </span>
+                </>
+              )}
 
               {/* Three-dot menu */}
               <DropdownMenu>

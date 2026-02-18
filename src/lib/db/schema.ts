@@ -110,3 +110,13 @@ export const userMovieData = sqliteTable("user_movie_data", {
 }, (table) => [
   uniqueIndex("idx_umd_user_movie").on(table.userId, table.movieId),
 ]);
+
+// ─── User Person Data ──────────────────────────────────────────
+export const userPersonData = sqliteTable("user_person_data", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+  personalRating: real("personal_rating"),
+}, (table) => [
+  uniqueIndex("idx_upd_user_person").on(table.userId, table.personId),
+]);
