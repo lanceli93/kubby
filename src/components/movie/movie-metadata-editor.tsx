@@ -124,9 +124,9 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     },
   });
 
-  const handleSave = () => {
-    // Save personal rating via user-data API
-    fetch(`/api/movies/${movieId}/user-data`, {
+  const handleSave = async () => {
+    // Save personal rating via user-data API first (must complete before query invalidation)
+    await fetch(`/api/movies/${movieId}/user-data`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
