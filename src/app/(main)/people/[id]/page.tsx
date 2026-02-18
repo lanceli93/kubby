@@ -148,9 +148,9 @@ export default function PersonDetailPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                    className="flex items-center justify-center rounded-md border border-white/20 px-2 py-1 text-white/70 transition-colors hover:bg-white/10"
                   >
-                    <MoreVertical className="h-4.5 w-4.5" />
+                    <MoreVertical className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
