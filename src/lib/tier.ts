@@ -22,11 +22,16 @@ export function getTierColor(tier: Tier): string {
 
 export function getTierBorderColor(tier: Tier): string {
   switch (tier) {
-    case "SSS": return "border-amber-300/50";
+    case "SSS": return "border-amber-300/70";
     case "SS": return "border-orange-400/50";
     case "S": return "border-red-400/50";
     case "A": return "border-purple-400/50";
     case "B": return "border-blue-400/50";
     case "C": return "border-gray-400/50";
   }
+}
+
+export function getTierGlow(tier: Tier): string {
+  if (tier === "SSS") return "shadow-[0_0_8px_rgba(252,211,77,0.6),0_0_20px_rgba(252,211,77,0.3)]";
+  return "";
 }

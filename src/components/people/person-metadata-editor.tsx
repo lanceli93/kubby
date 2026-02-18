@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { getTier, getTierColor, getTierBorderColor } from "@/lib/tier";
+import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 
 interface PersonMetadataEditorProps {
   personId: string;
@@ -324,7 +324,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
               <Label>{t("personalTier")}</Label>
               {currentTier ? (
                 <div className="flex items-center gap-3">
-                  <span className={`rounded-md border px-3 py-1.5 text-lg font-black tracking-wider ${getTierColor(currentTier)} ${getTierBorderColor(currentTier)}`}>
+                  <span className={`rounded-md border px-3 py-1.5 text-lg font-black tracking-wider ${getTierColor(currentTier)} ${getTierBorderColor(currentTier)} ${getTierGlow(currentTier)}`}>
                     {currentTier}
                   </span>
                   <span className="text-xs text-muted-foreground">{t("tierAutoCalculated")}</span>

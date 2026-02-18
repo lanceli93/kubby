@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
-import { getTier, getTierColor, getTierBorderColor } from "@/lib/tier";
+import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 
 interface PersonDetail {
   id: string;
@@ -153,7 +153,7 @@ export default function PersonDetailPage() {
                     <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
                     {person.userData.personalRating.toFixed(1)}
                   </button>
-                  <span className={`inline-flex h-7 items-center rounded-md border px-2.5 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))}`}>
+                  <span className={`inline-flex h-7 items-center rounded-md border px-2.5 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))} ${getTierGlow(getTier(person.userData.personalRating))}`}>
                     {getTier(person.userData.personalRating)}
                   </span>
                 </>
