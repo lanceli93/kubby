@@ -141,6 +141,10 @@ export default function MovieDetailPage() {
     typeof movie.studios === "string"
       ? JSON.parse(movie.studios)
       : movie.studios || [];
+  const tags: string[] =
+    typeof movie.tags === "string"
+      ? JSON.parse(movie.tags)
+      : movie.tags || [];
 
   return (
     <div className="flex flex-col">
@@ -333,6 +337,12 @@ export default function MovieDetailPage() {
 
             {/* Metadata list — vertical label: value pairs */}
             <div className="flex flex-col gap-1.5 pt-1 text-sm">
+              {tags.length > 0 && (
+                <div>
+                  <span className="text-white/50">{t("tags")}: </span>
+                  <span className="text-white/90">{tags.join(", ")}</span>
+                </div>
+              )}
               {genres.length > 0 && (
                 <div>
                   <span className="text-white/50">Genres: </span>
@@ -355,19 +365,6 @@ export default function MovieDetailPage() {
                 <div>
                   <span className="text-white/50">Country: </span>
                   <span className="text-white/90">{movie.country}</span>
-                </div>
-              )}
-              {movie.tags && movie.tags.length > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-white/50">{t("tags")}: </span>
-                  {movie.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80"
-                    >
-                      {tag}
-                    </span>
-                  ))}
                 </div>
               )}
             </div>
