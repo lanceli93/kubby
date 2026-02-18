@@ -105,6 +105,7 @@ export const userMovieData = sqliteTable("user_movie_data", {
   playCount: integer("play_count").default(0),
   isPlayed: integer("is_played", { mode: "boolean" }).default(false),
   isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
+  personalRating: real("personal_rating"),
   lastPlayedAt: text("last_played_at"),
 }, (table) => [
   uniqueIndex("idx_umd_user_movie").on(table.userId, table.movieId),

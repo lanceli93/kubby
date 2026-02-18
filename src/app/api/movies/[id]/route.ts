@@ -226,6 +226,7 @@ export async function GET(
             isFavorite: userData.isFavorite,
             playbackPositionSeconds: userData.playbackPositionSeconds,
             playCount: userData.playCount,
+            personalRating: userData.personalRating,
           }
         : null,
     });

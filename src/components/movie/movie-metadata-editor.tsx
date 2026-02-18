@@ -40,6 +40,13 @@ interface MovieData {
   tags?: string[];
   tmdbId?: string;
   imdbId?: string;
+  userData?: {
+    isPlayed: boolean;
+    isFavorite: boolean;
+    playbackPositionSeconds: number;
+    playCount: number;
+    personalRating?: number | null;
+  };
 }
 
 export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetadataEditorProps) {
@@ -70,6 +77,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     tags: [] as string[],
     tmdbId: "",
     imdbId: "",
+    personalRating: "",
   });
 
   const [genreInput, setGenreInput] = useState("");
@@ -95,6 +103,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         tags: movie.tags || [],
         tmdbId: movie.tmdbId || "",
         imdbId: movie.imdbId || "",
+        personalRating: movie.userData?.personalRating?.toString() || "",
       });
     }
   }, [movie]);
@@ -116,6 +125,15 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   });
 
   const handleSave = () => {
+    // Save personal rating via user-data API
+    fetch(`/api/movies/${movieId}/user-data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        personalRating: form.personalRating ? Number(form.personalRating) : null,
+      }),
+    });
+
     mutation.mutate({
       title: form.title,
       originalTitle: form.originalTitle || null,
@@ -188,7 +206,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         <Tabs defaultValue="general">
           <TabsList>
             <TabsTrigger value="general">{t("general")}</TabsTrigger>
-            <TabsTrigger value="external">{t("externalIds")}</TabsTrigger>
+            <TabsTrigger value="personal">{t("personal")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-4 pt-4">
@@ -376,22 +394,42 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                 placeholder={t("addTagPlaceholder")}
               />
             </div>
+
+            {/* External IDs section */}
+            <div className="pt-2">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">{t("externalIds")}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>TMDB ID</Label>
+                  <Input
+                    value={form.tmdbId}
+                    onChange={(e) => setForm((f) => ({ ...f, tmdbId: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>IMDB ID</Label>
+                  <Input
+                    value={form.imdbId}
+                    onChange={(e) => setForm((f) => ({ ...f, imdbId: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
-          <TabsContent value="external" className="space-y-4 pt-4">
+          <TabsContent value="personal" className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label>TMDB ID</Label>
+              <Label>{t("personalRating")}</Label>
               <Input
-                value={form.tmdbId}
-                onChange={(e) => setForm((f) => ({ ...f, tmdbId: e.target.value }))}
+                type="number"
+                step="0.1"
+                min="0"
+                max="10"
+                value={form.personalRating}
+                onChange={(e) => setForm((f) => ({ ...f, personalRating: e.target.value }))}
+                placeholder="0 – 10"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>IMDB ID</Label>
-              <Input
-                value={form.imdbId}
-                onChange={(e) => setForm((f) => ({ ...f, imdbId: e.target.value }))}
-              />
+              <p className="text-xs text-muted-foreground">{t("personalRatingDesc")}</p>
             </div>
           </TabsContent>
         </Tabs>

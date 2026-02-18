@@ -33,6 +33,7 @@ export async function GET(
       playCount: 0,
       isPlayed: false,
       isFavorite: false,
+      personalRating: null,
     });
   } catch (error) {
     console.error("Get user data error:", error);
@@ -76,6 +77,8 @@ export async function PUT(
         updateData.isFavorite = body.isFavorite;
       if (body.playCount !== undefined)
         updateData.playCount = body.playCount;
+      if (body.personalRating !== undefined)
+        updateData.personalRating = body.personalRating;
       if (body.isPlayed === true)
         updateData.lastPlayedAt = new Date().toISOString();
 
@@ -93,6 +96,7 @@ export async function PUT(
           playCount: body.playCount || 0,
           isPlayed: body.isPlayed || false,
           isFavorite: body.isFavorite || false,
+          personalRating: body.personalRating ?? null,
           lastPlayedAt: body.isPlayed ? new Date().toISOString() : null,
         })
         .run();
