@@ -57,7 +57,7 @@ export function PersonCard({
         {personalRating != null && personalRating > 0 && (() => {
           const tier = getTier(personalRating);
           return (
-            <div className={`absolute right-1.5 top-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)}`}>
+            <div className={`absolute right-1.5 top-1.5 rounded border px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)}`}>
               {tier}
             </div>
           );
