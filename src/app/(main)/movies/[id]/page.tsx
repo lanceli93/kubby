@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2 } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -49,6 +49,7 @@ interface MovieDetail {
     isPlayed: boolean;
     isFavorite: boolean;
     playbackPositionSeconds: number;
+    personalRating?: number | null;
   };
 }
 
@@ -215,6 +216,15 @@ export default function MovieDetailPage() {
                   <span className="text-white/40">&middot;</span>
                   <span className="font-semibold text-[var(--gold)]">
                     ★ {movie.communityRating.toFixed(1)}
+                  </span>
+                </>
+              )}
+              {movie.userData?.personalRating != null && movie.userData.personalRating > 0 && (
+                <>
+                  <span className="text-white/40">&middot;</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-purple-400">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {movie.userData.personalRating.toFixed(1)}
                   </span>
                 </>
               )}
