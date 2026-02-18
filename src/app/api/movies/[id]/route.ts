@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import { db } from "@/lib/db";
-import { movies, moviePeople, people, userMovieData } from "@/lib/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { movies, moviePeople, people, userMovieData, userPersonData } from "@/lib/db/schema";
+import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
 
@@ -157,7 +157,11 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Get cast (actors)
+    // Get user session early (needed for user-specific data)
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    // Get cast (actors) with personal rating
     const cast = db
       .select({
         id: people.id,
@@ -165,9 +169,17 @@ export async function GET(
         role: moviePeople.role,
         photoPath: people.photoPath,
         sortOrder: moviePeople.sortOrder,
+        personalRating: userPersonData.personalRating,
       })
       .from(moviePeople)
       .innerJoin(people, eq(moviePeople.personId, people.id))
+      .leftJoin(
+        userPersonData,
+        and(
+          eq(userPersonData.personId, people.id),
+          userId ? eq(userPersonData.userId, userId) : sql`0`
+        )
+      )
       .where(
         and(eq(moviePeople.movieId, id), eq(people.type, "actor"))
       )
@@ -187,16 +199,15 @@ export async function GET(
       )
       .all();
 
-    // Get user data if authenticated
+    // Get user movie data if authenticated
     let userData = null;
-    const session = await auth();
-    if (session?.user?.id) {
+    if (userId) {
       userData = db
         .select()
         .from(userMovieData)
         .where(
           and(
-            eq(userMovieData.userId, session.user.id),
+            eq(userMovieData.userId, userId),
             eq(userMovieData.movieId, id)
           )
         )

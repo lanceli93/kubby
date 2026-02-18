@@ -44,7 +44,7 @@ interface MovieDetail {
   audioChannels?: number | null;
   container?: string | null;
   tags?: string[];
-  cast: { id: string; name: string; role?: string; photoPath?: string | null }[];
+  cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null }[];
   directors: { id: string; name: string }[];
   userData?: {
     isPlayed: boolean;
@@ -414,6 +414,7 @@ export default function MovieDetailPage() {
                 name={person.name}
                 role={person.role}
                 photoPath={person.photoPath}
+                personalRating={person.personalRating}
                 size="sm"
               />
             ))}

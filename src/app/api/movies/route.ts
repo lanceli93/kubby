@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { db } from "@/lib/db";
-import { movies, userMovieData, people, moviePeople } from "@/lib/db/schema";
+import { movies, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
 import { eq, desc, asc, like, sql, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
@@ -226,8 +226,16 @@ export async function GET(request: NextRequest) {
           name: people.name,
           type: people.type,
           photoPath: people.photoPath,
+          personalRating: userPersonData.personalRating,
         })
         .from(people)
+        .leftJoin(
+          userPersonData,
+          and(
+            eq(userPersonData.personId, people.id),
+            userId ? eq(userPersonData.userId, userId) : sql`0`
+          )
+        )
         .where(like(people.name, `%${search}%`))
         .limit(20)
         .all();

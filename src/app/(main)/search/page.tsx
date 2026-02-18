@@ -24,6 +24,7 @@ interface Person {
   name: string;
   type: string;
   photoPath?: string | null;
+  personalRating?: number | null;
 }
 
 interface SearchResults {
@@ -166,6 +167,7 @@ function SearchContent() {
                     name={person.name}
                     role={person.type}
                     photoPath={person.photoPath}
+                    personalRating={person.personalRating}
                     size="md"
                   />
                 ))}
