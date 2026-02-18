@@ -37,6 +37,7 @@ interface MovieData {
   country?: string;
   genres?: string[];
   studios?: string[];
+  tags?: string[];
   tmdbId?: string;
   imdbId?: string;
 }
@@ -66,12 +67,14 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     country: "",
     genres: [] as string[],
     studios: [] as string[],
+    tags: [] as string[],
     tmdbId: "",
     imdbId: "",
   });
 
   const [genreInput, setGenreInput] = useState("");
   const [studioInput, setStudioInput] = useState("");
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     if (movie) {
@@ -89,6 +92,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         country: movie.country || "",
         genres: movie.genres || [],
         studios: movie.studios || [],
+        tags: movie.tags || [],
         tmdbId: movie.tmdbId || "",
         imdbId: movie.imdbId || "",
       });
@@ -126,6 +130,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
       country: form.country || null,
       genres: form.genres,
       studios: form.studios,
+      tags: form.tags,
       tmdbId: form.tmdbId || null,
       imdbId: form.imdbId || null,
     });
@@ -159,9 +164,23 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     setForm((f) => ({ ...f, studios: f.studios.filter((s) => s !== studio) }));
   };
 
+  const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && tagInput.trim()) {
+      e.preventDefault();
+      if (!form.tags.includes(tagInput.trim())) {
+        setForm((f) => ({ ...f, tags: [...f.tags, tagInput.trim()] }));
+      }
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setForm((f) => ({ ...f, tags: f.tags.filter((t) => t !== tag) }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/[0.06] bg-card sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="border-white/[0.06] bg-black/70 backdrop-blur-xl sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("editMetadata")}</DialogTitle>
         </DialogHeader>
@@ -327,6 +346,34 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                 onChange={(e) => setStudioInput(e.target.value)}
                 onKeyDown={handleStudioKeyDown}
                 placeholder={t("addStudioPlaceholder")}
+              />
+            </div>
+
+            {/* Tags input */}
+            <div className="space-y-2">
+              <Label>{t("tags")}</Label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {form.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="text-primary/60 hover:text-primary"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                placeholder={t("addTagPlaceholder")}
               />
             </div>
           </TabsContent>

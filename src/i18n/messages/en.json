@@ -211,6 +211,8 @@
     "studios": "Studios",
     "addGenrePlaceholder": "Type and press Enter to add",
     "addStudioPlaceholder": "Type and press Enter to add",
+    "tags": "Tags",
+    "addTagPlaceholder": "Type and press Enter to add",
     "name": "Name",
     "type": "Type",
     "actor": "Actor",

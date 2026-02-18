@@ -211,6 +211,8 @@
     "studios": "制片公司",
     "addGenrePlaceholder": "输入后按回车添加",
     "addStudioPlaceholder": "输入后按回车添加",
+    "tags": "标签",
+    "addTagPlaceholder": "输入后按回车添加",
     "name": "姓名",
     "type": "类型",
     "actor": "演员",
