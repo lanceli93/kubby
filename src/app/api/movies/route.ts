@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
           posterPath: movies.posterPath,
           folderPath: movies.folderPath,
           communityRating: movies.communityRating,
+          personalRating: userMovieData.personalRating,
           playbackPositionSeconds: userMovieData.playbackPositionSeconds,
           runtimeMinutes: movies.runtimeMinutes,
           isFavorite: userMovieData.isFavorite,
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest) {
           posterPath: movies.posterPath,
           folderPath: movies.folderPath,
           communityRating: movies.communityRating,
+          personalRating: userMovieData.personalRating,
           isFavorite: userMovieData.isFavorite,
         })
         .from(movies)
@@ -187,6 +189,7 @@ export async function GET(request: NextRequest) {
         dateAdded: movies.dateAdded,
         isFavorite: userMovieData.isFavorite,
         isWatched: userMovieData.isPlayed,
+        personalRating: userMovieData.personalRating,
       })
       .from(movies)
       .leftJoin(

@@ -16,6 +16,7 @@ interface Movie {
   year?: number;
   posterPath?: string | null;
   communityRating?: number | null;
+  personalRating?: number | null;
 }
 
 interface Person {
@@ -96,7 +97,7 @@ function SearchContent() {
   return (
     <div className="flex flex-col gap-6 px-12 pt-12 pb-6">
       {/* Search bar — Jellyfin style: icon outside, centered */}
-      <div className="flex items-center justify-center gap-3 pt-8">
+      <div className="flex items-center justify-center gap-3 pt-10">
         <Search className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
         <input
           type="text"
@@ -145,6 +146,7 @@ function SearchContent() {
                     year={movie.year}
                     posterPath={movie.posterPath}
                     rating={movie.communityRating}
+                    personalRating={movie.personalRating}
                   />
                 ))}
               </ScrollRow>

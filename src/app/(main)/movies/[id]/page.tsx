@@ -59,6 +59,7 @@ interface RecommendedMovie {
   year?: number;
   posterPath?: string | null;
   communityRating?: number | null;
+  personalRating?: number | null;
 }
 
 function formatRuntime(minutes: number) {
@@ -214,17 +215,17 @@ export default function MovieDetailPage() {
               {movie.communityRating != null && movie.communityRating > 0 && (
                 <>
                   <span className="text-white/40">&middot;</span>
-                  <span className="font-semibold text-[var(--gold)]">
-                    ★ {movie.communityRating.toFixed(1)}
+                  <span className="inline-flex items-center gap-1 font-semibold text-purple-400">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {movie.communityRating.toFixed(1)}
                   </span>
                 </>
               )}
               {movie.userData?.personalRating != null && movie.userData.personalRating > 0 && (
                 <>
                   <span className="text-white/40">&middot;</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-purple-400">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {movie.userData.personalRating.toFixed(1)}
+                  <span className="font-semibold text-[var(--gold)]">
+                    ★ {movie.userData.personalRating.toFixed(1)}
                   </span>
                 </>
               )}
@@ -415,6 +416,7 @@ export default function MovieDetailPage() {
                 year={m.year}
                 posterPath={m.posterPath}
                 rating={m.communityRating}
+                personalRating={m.personalRating}
               />
             ))}
           </ScrollRow>

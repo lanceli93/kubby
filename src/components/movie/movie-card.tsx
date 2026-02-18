@@ -30,6 +30,7 @@ interface MovieCardProps {
   year?: number;
   posterPath?: string | null;
   rating?: number | null;
+  personalRating?: number | null;
   isFavorite?: boolean;
   isWatched?: boolean;
   progress?: number; // 0-100
@@ -45,6 +46,7 @@ export function MovieCard({
   year,
   posterPath,
   rating,
+  personalRating,
   isFavorite,
   isWatched,
   progress,
@@ -81,15 +83,22 @@ export function MovieCard({
           </div>
         )}
 
-        {/* Rating badge */}
-        {rating != null && rating > 0 && (
+        {/* Rating badge — prefer personal rating over community rating */}
+        {personalRating != null && personalRating > 0 ? (
           <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
             <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
             <span className="text-[11px] font-medium text-[var(--gold)]">
+              {personalRating.toFixed(1)}
+            </span>
+          </div>
+        ) : rating != null && rating > 0 ? (
+          <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+            <Star className="h-3 w-3 fill-white/50 text-white/50" />
+            <span className="text-[11px] font-medium text-white/60">
               {rating.toFixed(1)}
             </span>
           </div>
-        )}
+        ) : null}
 
         {/* Centered play button on hover */}
         <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

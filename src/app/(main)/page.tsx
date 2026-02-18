@@ -14,6 +14,7 @@ interface Movie {
   year?: number;
   posterPath?: string | null;
   communityRating?: number | null;
+  personalRating?: number | null;
   isFavorite?: boolean;
   isWatched?: boolean;
   progress?: number;
@@ -55,6 +56,7 @@ function MovieRow({
             year={movie.year}
             posterPath={movie.posterPath}
             rating={movie.communityRating}
+            personalRating={movie.personalRating}
             isFavorite={movie.isFavorite}
             isWatched={movie.isWatched}
             progress={movie.progress}
@@ -302,6 +304,7 @@ export default function HomePage() {
                     year={movie.year}
                     posterPath={movie.posterPath}
                     rating={movie.communityRating}
+                    personalRating={movie.personalRating}
                     isFavorite={movie.isFavorite}
                     isWatched={movie.isWatched}
                     onToggleFavorite={() =>

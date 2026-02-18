@@ -35,6 +35,7 @@ interface PersonDetail {
     year?: number;
     posterPath?: string | null;
     communityRating?: number | null;
+    personalRating?: number | null;
     role?: string;
   }[];
 }
@@ -239,6 +240,7 @@ export default function PersonDetailPage() {
                 year={movie.year}
                 posterPath={movie.posterPath}
                 rating={movie.communityRating}
+                personalRating={movie.personalRating}
               />
               {movie.role && (
                 <p className="truncate px-1 text-xs text-muted-foreground">

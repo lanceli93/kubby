@@ -26,6 +26,7 @@ interface Movie {
   year?: number;
   posterPath?: string | null;
   communityRating?: number | null;
+  personalRating?: number | null;
   isFavorite?: boolean;
   isWatched?: boolean;
   genres?: string[];
@@ -436,6 +437,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             year={movie.year}
             posterPath={movie.posterPath}
             rating={movie.communityRating}
+            personalRating={movie.personalRating}
             isFavorite={movie.isFavorite}
             isWatched={movie.isWatched}
             onToggleFavorite={() =>
@@ -489,6 +491,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
               year={movie.year}
               posterPath={movie.posterPath}
               rating={movie.communityRating}
+            personalRating={movie.personalRating}
               isFavorite
               isWatched={movie.isWatched}
               onToggleFavorite={() =>
@@ -559,6 +562,7 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
                 year={movie.year}
                 posterPath={movie.posterPath}
                 rating={movie.communityRating}
+            personalRating={movie.personalRating}
                 isFavorite={movie.isFavorite}
                 isWatched={movie.isWatched}
                 onToggleFavorite={() =>
