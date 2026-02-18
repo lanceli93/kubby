@@ -60,7 +60,7 @@ export function StarRatingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/70 border-white/[0.06] backdrop-blur-xl sm:max-w-[340px]">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[340px]">
         <DialogHeader>
           <DialogTitle>{t("personalRating")}</DialogTitle>
         </DialogHeader>
