@@ -198,7 +198,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/[0.06] bg-black/70 backdrop-blur-xl sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="!bg-black/70 border-white/[0.06] backdrop-blur-xl sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("editMetadata")}</DialogTitle>
         </DialogHeader>
