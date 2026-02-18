@@ -11,7 +11,7 @@ export function getTier(rating: number): Tier {
 
 export function getTierColor(tier: Tier): string {
   switch (tier) {
-    case "SSS": return "text-yellow-400";
+    case "SSS": return "text-amber-300";
     case "SS": return "text-orange-400";
     case "S": return "text-red-400";
     case "A": return "text-purple-400";
@@ -22,7 +22,7 @@ export function getTierColor(tier: Tier): string {
 
 export function getTierBorderColor(tier: Tier): string {
   switch (tier) {
-    case "SSS": return "border-yellow-400/70";
+    case "SSS": return "border-amber-300/70";
     case "SS": return "border-orange-400/50";
     case "S": return "border-red-400/50";
     case "A": return "border-purple-400/50";
@@ -32,6 +32,6 @@ export function getTierBorderColor(tier: Tier): string {
 }
 
 export function getTierGlow(tier: Tier): string {
-  if (tier === "SSS") return "[text-shadow:0_0_6px_rgba(250,204,21,0.8),0_0_16px_rgba(250,204,21,0.5),0_0_30px_rgba(250,204,21,0.3)]";
+  if (tier === "SSS") return "[text-shadow:0_0_6px_rgba(252,211,77,0.8),0_0_16px_rgba(252,211,77,0.5),0_0_30px_rgba(252,211,77,0.3)]";
   return "";
 }
