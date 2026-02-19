@@ -273,6 +273,54 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | show_movie_rating_badge | integer (bool) | 是否在电影卡片显示个人评分, 默认 true |
 | show_person_tier_badge | integer (bool) | 是否在人物卡片显示评级标记, 默认 true |
 
+### 自定义评分维度：设计决策
+
+#### 需求
+
+用户可自定义多个评分维度（如电影的"剧情"、"特效"，人物的"样貌"、"演技"），每个维度独立打分，`personal_rating` 为各维度的平均值。维度定义按用户存储，不同用户可配置不同维度。
+
+#### 方案选型
+
+| | JSON 列 (当前方案) | EAV 表 | 动态字段 |
+|---|---|---|---|
+| 实现方式 | `dimension_ratings TEXT` 存 JSON 对象 | 独立表，每维度一行 (target_id, dimension_name, value) | ALTER TABLE 动态加列 |
+| 读写复杂度 | 一次读写整个对象 | 多行 INSERT/SELECT | 需要 DDL 操作 |
+| 按维度查询/排序 | `json_extract()` | SQL 原生 WHERE/ORDER BY | SQL 原生 |
+| Schema 变更 | 无需迁移 | 无需迁移 | 每次用户改配置都需 DDL |
+| 适用场景 | 维度少、主要整体读写 | 需频繁按维度聚合分析 | 不适用于用户级自定义 |
+
+**选择 JSON 列的理由：**
+
+1. **读写模式匹配** — 评分场景以整体读写为主（打开弹窗读取所有维度 → 修改 → 整体保存），而非逐维度操作
+2. **用户级自定义** — 每个用户维度不同，动态字段方案不可行；EAV 的多行操作在此场景下过度设计
+3. **数据量可控** — 个人媒体库通常数百到数千条记录，维度上限 10 个，JSON 解析开销可忽略
+4. **未来按维度排序可行** — SQLite 原生支持 `json_extract()`，可直接用于 ORDER BY：
+
+```sql
+SELECT m.*, json_extract(umd.dimension_ratings, '$.剧情') AS plot_score
+FROM movies m
+JOIN user_movie_data umd ON umd.movie_id = m.id
+WHERE umd.user_id = ? AND plot_score IS NOT NULL
+ORDER BY plot_score DESC;
+```
+
+若未来数据量增长需要优化，可对 JSON 路径建表达式索引：
+
+```sql
+CREATE INDEX idx_dim_plot ON user_movie_data(json_extract(dimension_ratings, '$.剧情'));
+```
+
+#### 数据流
+
+```
+user_preferences.movie_rating_dimensions = '["剧情","特效"]'   ← 维度定义
+                        ↓ (前端读取维度列表，渲染评分 UI)
+user_movie_data.dimension_ratings = '{"剧情":9.5,"特效":8.0}' ← 各维度评分
+user_movie_data.personal_rating = 8.8                          ← 应用层计算平均值
+```
+
+`personal_rating` 作为冗余字段始终保持与维度平均值同步，确保无维度配置的场景（卡片排序、徽章显示）无需解析 JSON。
+
 ---
 
 ## API 端点
