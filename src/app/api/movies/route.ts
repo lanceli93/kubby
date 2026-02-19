@@ -141,6 +141,15 @@ export async function GET(request: NextRequest) {
         conditions.push(sql`(${sql.join(genreConditions, sql` OR `)})`);
       }
     }
+    // Multi-tag filter (OR logic): movie matches ANY selected tag
+    const tags = searchParams.get("tags");
+    if (tags) {
+      const tagList = tags.split(",").map((t) => t.trim()).filter(Boolean);
+      if (tagList.length > 0) {
+        const tagConditions = tagList.map((t) => like(movies.tags, `%"${t}"%`));
+        conditions.push(sql`(${sql.join(tagConditions, sql` OR `)})`);
+      }
+    }
     // Multi-year filter
     const years = searchParams.get("years");
     if (years) {

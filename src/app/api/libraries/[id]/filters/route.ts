@@ -14,6 +14,7 @@ export async function GET(
     const rows = db
       .select({
         genres: movies.genres,
+        tags: movies.tags,
         year: movies.year,
       })
       .from(movies)
@@ -35,6 +36,21 @@ export async function GET(
       }
     }
 
+    // Collect unique tags
+    const tagSet = new Set<string>();
+    for (const row of rows) {
+      if (row.tags) {
+        try {
+          const parsed = JSON.parse(row.tags);
+          if (Array.isArray(parsed)) {
+            for (const t of parsed) tagSet.add(t);
+          }
+        } catch {
+          // skip malformed JSON
+        }
+      }
+    }
+
     // Collect unique years
     const yearSet = new Set<number>();
     for (const row of rows) {
@@ -43,6 +59,7 @@ export async function GET(
 
     return NextResponse.json({
       genres: Array.from(genreSet).sort((a, b) => a.localeCompare(b)),
+      tags: Array.from(tagSet).sort((a, b) => a.localeCompare(b)),
       years: Array.from(yearSet).sort((a, b) => b - a),
     });
   } catch (error) {

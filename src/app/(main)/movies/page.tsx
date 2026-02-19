@@ -36,6 +36,7 @@ interface Movie {
 
 interface FiltersData {
   genres: string[];
+  tags: string[];
   years: number[];
 }
 
@@ -156,9 +157,13 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const [selectedGenres, setSelectedGenres] = useState<string[]>(() =>
     urlGenre ? [urlGenre] : []
   );
+  const [selectedTags, setSelectedTags] = useState<string[]>(() =>
+    urlTag ? [urlTag] : []
+  );
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
-  const [genresExpanded, setGenresExpanded] = useState(true);
-  const [yearsExpanded, setYearsExpanded] = useState(true);
+  const [genresExpanded, setGenresExpanded] = useState(false);
+  const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [yearsExpanded, setYearsExpanded] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
@@ -195,25 +200,32 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   });
 
   const { data: movies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", { libraryId, sort, sortOrder, selectedGenres, selectedYears, urlTag, urlStudio }],
+    queryKey: ["movies", { libraryId, sort, sortOrder, selectedGenres, selectedTags, selectedYears, urlTag, urlStudio }],
     queryFn: () => {
       const params = new URLSearchParams();
       params.set("libraryId", libraryId);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
       if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
+      if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
       if (selectedYears.length > 0) params.set("years", selectedYears.join(","));
-      if (urlTag) params.set("tag", urlTag);
+      if (urlTag && selectedTags.length === 0) params.set("tag", urlTag);
       if (urlStudio) params.set("studio", urlStudio);
       return fetch(`/api/movies?${params}`).then((r) => r.json());
     },
   });
 
-  const activeFilterCount = selectedGenres.length + selectedYears.length;
+  const activeFilterCount = selectedGenres.length + selectedTags.length + selectedYears.length;
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres((prev) =>
       prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+    );
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
@@ -225,6 +237,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 
   const clearFilters = () => {
     setSelectedGenres([]);
+    setSelectedTags([]);
     setSelectedYears([]);
   };
 
@@ -373,6 +386,54 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                             )}
                           </span>
                           {genre}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+
+              {/* Tags section */}
+              {filters && filters.tags.length > 0 && (
+                <>
+                  <div className="my-1.5 border-t border-white/[0.06]" />
+                  <button
+                    onClick={() => setTagsExpanded(!tagsExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {tagsExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    {t("tags")}
+                  </button>
+                  {tagsExpanded &&
+                    filters.tags.map((tag) => {
+                      const checked = selectedTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                            checked
+                              ? "text-foreground"
+                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              checked
+                                ? "border-primary bg-primary text-white"
+                                : "border-[#666680]"
+                            }`}
+                          >
+                            {checked && (
+                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          {tag}
                         </button>
                       );
                     })}
