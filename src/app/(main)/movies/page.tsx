@@ -392,54 +392,6 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                 </>
               )}
 
-              {/* Tags section */}
-              {filters && filters.tags.length > 0 && (
-                <>
-                  <div className="my-1.5 border-t border-white/[0.06]" />
-                  <button
-                    onClick={() => setTagsExpanded(!tagsExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
-                  >
-                    {tagsExpanded ? (
-                      <ChevronDown className="h-3 w-3" />
-                    ) : (
-                      <ChevronRight className="h-3 w-3" />
-                    )}
-                    {t("tags")}
-                  </button>
-                  {tagsExpanded &&
-                    filters.tags.map((tag) => {
-                      const checked = selectedTags.includes(tag);
-                      return (
-                        <button
-                          key={tag}
-                          onClick={() => toggleTag(tag)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
-                            checked
-                              ? "text-foreground"
-                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-4 w-4 items-center justify-center rounded border ${
-                              checked
-                                ? "border-primary bg-primary text-white"
-                                : "border-[#666680]"
-                            }`}
-                          >
-                            {checked && (
-                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </span>
-                          {tag}
-                        </button>
-                      );
-                    })}
-                </>
-              )}
-
               {/* Years section */}
               {filters && filters.years.length > 0 && (
                 <>
@@ -482,6 +434,54 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                             )}
                           </span>
                           {year}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+
+              {/* Tags section */}
+              {filters && filters.tags.length > 0 && (
+                <>
+                  <div className="my-1.5 border-t border-white/[0.06]" />
+                  <button
+                    onClick={() => setTagsExpanded(!tagsExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {tagsExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    {t("tags")}
+                  </button>
+                  {tagsExpanded &&
+                    filters.tags.map((tag) => {
+                      const checked = selectedTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                            checked
+                              ? "text-foreground"
+                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              checked
+                                ? "border-primary bg-primary text-white"
+                                : "border-[#666680]"
+                            }`}
+                          >
+                            {checked && (
+                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          {tag}
                         </button>
                       );
                     })}
