@@ -310,6 +310,7 @@ export default function PersonDetailPage() {
         onSave={savePersonalRating}
         dimensions={personDimensions}
         dimensionRatings={person.userData?.dimensionRatings}
+        showTier
       />
     </div>
   );

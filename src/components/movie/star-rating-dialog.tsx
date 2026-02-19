@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 
 interface StarRatingDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface StarRatingDialogProps {
   onSave: (rating: number | null, dimensionRatings?: Record<string, number> | null) => void;
   dimensions?: string[];
   dimensionRatings?: Record<string, number> | null;
+  showTier?: boolean;
 }
 
 function StarRow({
@@ -109,6 +111,7 @@ export function StarRatingDialog({
   onSave,
   dimensions,
   dimensionRatings: initialDimensionRatings,
+  showTier,
 }: StarRatingDialogProps) {
   const t = useTranslations("metadata");
   const tCommon = useTranslations("common");
@@ -226,6 +229,14 @@ export function StarRatingDialog({
                 <span className="text-xl font-bold text-[var(--gold)] tabular-nums">
                   {rating != null ? rating.toFixed(1) : "—"}
                 </span>
+                {showTier && rating != null && rating > 0 && (() => {
+                  const tier = getTier(rating);
+                  return (
+                    <span className={`rounded-md border px-2 py-0.5 text-sm font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}>
+                      {tier}
+                    </span>
+                  );
+                })()}
               </div>
             </>
           ) : (
@@ -292,6 +303,14 @@ export function StarRatingDialog({
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                 </div>
+                {showTier && rating != null && rating > 0 && (() => {
+                  const tier = getTier(rating);
+                  return (
+                    <span className={`rounded-md border px-2.5 py-1 text-base font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}>
+                      {tier}
+                    </span>
+                  );
+                })()}
               </div>
             </>
           )}
