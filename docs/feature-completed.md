@@ -187,3 +187,22 @@
 ### i18n (EN + ZH)
 - New `nav.personalMetadata` key
 - New `personalMetadata` namespace with 14 keys: title, movieRatingDimensions, movieRatingDimensionsDesc, personRatingDimensions, personRatingDimensionsDesc, addDimensionPlaceholder, cardBadgeSettings, showMovieRatingBadge, showMovieRatingBadgeDesc, showPersonTierBadge, showPersonTierBadgeDesc, saved, failedToSave, maxDimensions, overall
+
+## 2026-02-19: Cast Editing & Actor Age at Release
+
+### Cast editing in movie metadata editor
+- New "Cast" tab in `MovieMetadataEditor` dialog between General and Personal tabs
+- Each cast entry row: Name (text input), Type (select: actor/director/writer/producer), Role (text input), X remove button
+- "Add Person" button with dashed border at bottom of list
+- `PUT /api/movies/[id]` updated: when `cast` array provided, deletes existing `moviePeople` rows and re-inserts with proper sort order
+- Person lookup: finds existing person by name+type, creates new record if not found
+- `GET /api/movies/[id]` now returns `allPeople` array (all people for the movie, not filtered by type) for the editor
+
+### Actor age at film release on person cards
+- `GET /api/movies/[id]` cast query now includes `birthDate` from people table
+- `PersonCard` component: new optional `age` prop displayed as third line below role
+- `computeAgeAtRelease()` helper on movie detail page: calculates age from birthDate and premiereDate (or year as fallback with July 1 midpoint)
+- Age hidden when birthDate or release date is missing
+
+### i18n (EN + ZH)
+- New `metadata` keys: cast (演职人员), role (角色), addCast (添加人员)

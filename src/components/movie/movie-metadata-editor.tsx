@@ -23,6 +23,12 @@ interface MovieMetadataEditorProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface CastEntry {
+  name: string;
+  type: "actor" | "director" | "writer" | "producer";
+  role: string;
+}
+
 interface MovieData {
   id: string;
   title: string;
@@ -41,6 +47,7 @@ interface MovieData {
   tags?: string[];
   tmdbId?: string;
   imdbId?: string;
+  allPeople?: { id: string; name: string; type: string; role?: string; sortOrder?: number }[];
   userData?: {
     isPlayed: boolean;
     isFavorite: boolean;
@@ -84,6 +91,8 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     personalRating: "",
   });
 
+  const [castEntries, setCastEntries] = useState<CastEntry[]>([]);
+
   const [genreInput, setGenreInput] = useState("");
   const [studioInput, setStudioInput] = useState("");
   const [tagInput, setTagInput] = useState("");
@@ -126,6 +135,15 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         imdbId: movie.imdbId || "",
         personalRating: movie.userData?.personalRating?.toString() || "",
       });
+      if (movie.allPeople) {
+        setCastEntries(
+          movie.allPeople.map((p) => ({
+            name: p.name,
+            type: (p.type as CastEntry["type"]) || "actor",
+            role: p.role || "",
+          }))
+        );
+      }
       if (movie.userData?.dimensionRatings) {
         setDimensionRatings(movie.userData.dimensionRatings);
       }
@@ -190,6 +208,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
       tags: form.tags,
       tmdbId: form.tmdbId || null,
       imdbId: form.imdbId || null,
+      cast: castEntries,
     });
   };
 
@@ -245,6 +264,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         <Tabs defaultValue="general">
           <TabsList>
             <TabsTrigger value="general">{t("general")}</TabsTrigger>
+            <TabsTrigger value="cast">{t("cast")}</TabsTrigger>
             <TabsTrigger value="personal">{t("personal")}</TabsTrigger>
           </TabsList>
 
@@ -454,6 +474,71 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="cast" className="space-y-4 pt-4">
+            {castEntries.map((entry, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input
+                  className="flex-1"
+                  value={entry.name}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCastEntries((prev) =>
+                      prev.map((c, i) => (i === idx ? { ...c, name: v } : c))
+                    );
+                  }}
+                  placeholder={t("name")}
+                />
+                <select
+                  value={entry.type}
+                  onChange={(e) => {
+                    const v = e.target.value as CastEntry["type"];
+                    setCastEntries((prev) =>
+                      prev.map((c, i) => (i === idx ? { ...c, type: v } : c))
+                    );
+                  }}
+                  className="h-9 w-[120px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
+                >
+                  <option value="actor">{t("actor")}</option>
+                  <option value="director">{t("director")}</option>
+                  <option value="writer">{t("writer")}</option>
+                  <option value="producer">{t("producer")}</option>
+                </select>
+                <Input
+                  className="flex-1"
+                  value={entry.role}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCastEntries((prev) =>
+                      prev.map((c, i) => (i === idx ? { ...c, role: v } : c))
+                    );
+                  }}
+                  placeholder={t("role")}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCastEntries((prev) => prev.filter((_, i) => i !== idx))
+                  }
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                setCastEntries((prev) => [
+                  ...prev,
+                  { name: "", type: "actor", role: "" },
+                ])
+              }
+              className="w-full rounded-md border border-dashed border-white/20 py-2 text-sm text-muted-foreground hover:border-white/40 hover:text-foreground"
+            >
+              {t("addCast")}
+            </button>
           </TabsContent>
 
           <TabsContent value="personal" className="space-y-4 pt-4">

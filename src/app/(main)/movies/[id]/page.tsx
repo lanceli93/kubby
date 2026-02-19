@@ -45,7 +45,8 @@ interface MovieDetail {
   audioChannels?: number | null;
   container?: string | null;
   tags?: string[];
-  cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null }[];
+  premiereDate?: string;
+  cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null; birthDate?: string | null }[];
   directors: { id: string; name: string }[];
   userData?: {
     isPlayed: boolean;
@@ -89,6 +90,29 @@ function formatChannels(channels?: number | null): string | null {
   if (channels === 2) return "Stereo";
   if (channels === 1) return "Mono";
   return `${channels}ch`;
+}
+
+function computeAgeAtRelease(
+  birthDate?: string | null,
+  premiereDate?: string,
+  year?: number
+): number | null {
+  if (!birthDate) return null;
+  let releaseDate: Date | null = null;
+  if (premiereDate) {
+    releaseDate = new Date(premiereDate);
+  } else if (year) {
+    releaseDate = new Date(year, 6, 1); // July 1 midpoint
+  }
+  if (!releaseDate) return null;
+  const birth = new Date(birthDate);
+  if (isNaN(birth.getTime()) || isNaN(releaseDate.getTime())) return null;
+  let age = releaseDate.getFullYear() - birth.getFullYear();
+  const monthDiff = releaseDate.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && releaseDate.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age >= 0 ? age : null;
 }
 
 export default function MovieDetailPage() {
@@ -419,6 +443,7 @@ export default function MovieDetailPage() {
                 role={person.role}
                 photoPath={person.photoPath}
                 personalRating={person.personalRating}
+                age={computeAgeAtRelease(person.birthDate, movie.premiereDate, movie.year)}
                 size="sm"
               />
             ))}

@@ -12,6 +12,7 @@ interface PersonCardProps {
   role?: string;
   photoPath?: string | null;
   personalRating?: number | null;
+  age?: number | null;
   size?: "sm" | "md" | "lg";
 }
 
@@ -27,6 +28,7 @@ export function PersonCard({
   role,
   photoPath,
   personalRating,
+  age,
   size = "sm",
 }: PersonCardProps) {
   const { width, height } = sizeConfig[size];
@@ -74,6 +76,9 @@ export function PersonCard({
         <p className="truncate text-sm font-medium text-foreground">{name}</p>
         {role && (
           <p className="truncate text-xs text-muted-foreground">{role}</p>
+        )}
+        {age != null && (
+          <p className="truncate text-xs text-muted-foreground/70">{age}</p>
         )}
       </div>
     </Link>

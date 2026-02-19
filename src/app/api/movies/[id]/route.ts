@@ -77,6 +77,45 @@ export async function PUT(
 
     db.update(movies).set(updateData).where(eq(movies.id, id)).run();
 
+    // Handle cast updates
+    if (body.cast !== undefined && Array.isArray(body.cast)) {
+      // Delete all existing moviePeople rows for this movie
+      db.delete(moviePeople).where(eq(moviePeople.movieId, id)).run();
+
+      for (let i = 0; i < body.cast.length; i++) {
+        const entry = body.cast[i];
+        const name = (entry.name || "").trim();
+        const type = entry.type || "actor";
+        const role = entry.role || "";
+        if (!name) continue;
+
+        // Find existing person by name + type, or create new
+        let person = db
+          .select()
+          .from(people)
+          .where(and(eq(people.name, name), eq(people.type, type)))
+          .get();
+
+        if (!person) {
+          const personId = crypto.randomUUID();
+          db.insert(people)
+            .values({ id: personId, name, type })
+            .run();
+          person = db.select().from(people).where(eq(people.id, personId)).get()!;
+        }
+
+        db.insert(moviePeople)
+          .values({
+            id: crypto.randomUUID(),
+            movieId: id,
+            personId: person.id,
+            role,
+            sortOrder: i,
+          })
+          .run();
+      }
+    }
+
     // Re-read updated movie
     const updated = db.select().from(movies).where(eq(movies.id, id)).get()!;
 
@@ -161,7 +200,7 @@ export async function GET(
     const session = await auth();
     const userId = session?.user?.id;
 
-    // Get cast (actors) with personal rating
+    // Get cast (actors) with personal rating and birthDate
     const cast = db
       .select({
         id: people.id,
@@ -170,6 +209,7 @@ export async function GET(
         photoPath: people.photoPath,
         sortOrder: moviePeople.sortOrder,
         personalRating: userPersonData.personalRating,
+        birthDate: people.birthDate,
       })
       .from(moviePeople)
       .innerJoin(people, eq(moviePeople.personId, people.id))
@@ -197,6 +237,21 @@ export async function GET(
       .where(
         and(eq(moviePeople.movieId, id), eq(people.type, "director"))
       )
+      .all();
+
+    // Get all people (for metadata editor cast tab)
+    const allPeople = db
+      .select({
+        id: people.id,
+        name: people.name,
+        type: people.type,
+        role: moviePeople.role,
+        sortOrder: moviePeople.sortOrder,
+      })
+      .from(moviePeople)
+      .innerJoin(people, eq(moviePeople.personId, people.id))
+      .where(eq(moviePeople.movieId, id))
+      .orderBy(asc(moviePeople.sortOrder))
       .all();
 
     // Get user movie data if authenticated
@@ -231,6 +286,7 @@ export async function GET(
       tags: movie.tags ? JSON.parse(movie.tags) : [],
       cast,
       directors,
+      allPeople,
       userData: userData
         ? {
             isPlayed: userData.isPlayed,
