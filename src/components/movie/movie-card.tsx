@@ -87,7 +87,7 @@ export function MovieCard({
         )}
 
         {/* Rating badge — prefer personal rating over community rating */}
-        {showRatingBadge && personalRating != null && personalRating > 0 ? (
+        {showRatingBadge && (personalRating != null && personalRating > 0 ? (
           <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
             <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
             <span className="text-[11px] font-medium text-[var(--gold)]">
@@ -101,7 +101,7 @@ export function MovieCard({
               {rating.toFixed(1)}
             </span>
           </div>
-        ) : null}
+        ) : null)}
 
         {/* Centered play button on hover */}
         <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
