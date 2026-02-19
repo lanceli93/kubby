@@ -1,9 +1,9 @@
 export type Tier = "SSS" | "SS" | "S" | "A" | "B" | "C";
 
 export function getTier(rating: number): Tier {
-  if (rating >= 9.8) return "SSS";
-  if (rating >= 9.5) return "SS";
-  if (rating >= 9.0) return "S";
+  if (rating >= 9.5) return "SSS";
+  if (rating >= 9.0) return "SS";
+  if (rating >= 8.5) return "S";
   if (rating >= 8.0) return "A";
   if (rating >= 6.0) return "B";
   return "C";
