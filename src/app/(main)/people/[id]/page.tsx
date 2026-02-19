@@ -43,21 +43,10 @@ interface PersonDetail {
     posterPath?: string | null;
     communityRating?: number | null;
     personalRating?: number | null;
+    videoWidth?: number | null;
+    videoHeight?: number | null;
     role?: string;
   }[];
-}
-
-function computeAge(birthDate: string, deathDate?: string | null): number | null {
-  const birth = new Date(birthDate);
-  if (isNaN(birth.getTime())) return null;
-  const end = deathDate ? new Date(deathDate) : new Date();
-  if (isNaN(end.getTime())) return null;
-  let age = end.getFullYear() - birth.getFullYear();
-  const monthDiff = end.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < birth.getDate())) {
-    age--;
-  }
-  return age;
 }
 
 function formatDate(dateStr: string): string {
@@ -200,17 +189,11 @@ export default function PersonDetailPage() {
 
             {/* Metadata list */}
             <div className="flex flex-col gap-1.5 pt-1 text-sm">
-              {person.birthDate && (
+              {(person.birthDate || person.birthYear) && (
                 <div>
                   <span className="text-white/50">{tPerson("born")}: </span>
                   <span className="text-white/90">
-                    {formatDate(person.birthDate)}
-                    {(() => {
-                      const age = computeAge(person.birthDate!, person.deathDate);
-                      return age != null && !person.deathDate
-                        ? ` (${tPerson("ageYearsOld", { age })})`
-                        : "";
-                    })()}
+                    {person.birthDate ? formatDate(person.birthDate) : person.birthYear}
                   </span>
                 </div>
               )}
@@ -219,10 +202,6 @@ export default function PersonDetailPage() {
                   <span className="text-white/50">{tPerson("died")}: </span>
                   <span className="text-white/90">
                     {formatDate(person.deathDate)}
-                    {(() => {
-                      const age = person.birthDate ? computeAge(person.birthDate, person.deathDate) : null;
-                      return age != null ? ` (${tPerson("agedYears", { age })})` : "";
-                    })()}
                   </span>
                 </div>
               )}
@@ -289,6 +268,8 @@ export default function PersonDetailPage() {
               posterPath={movie.posterPath}
               rating={movie.communityRating}
               personalRating={movie.personalRating}
+              videoWidth={movie.videoWidth}
+              videoHeight={movie.videoHeight}
             />
           ))}
         </div>

@@ -46,7 +46,7 @@ interface MovieDetail {
   container?: string | null;
   tags?: string[];
   premiereDate?: string;
-  cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null; birthDate?: string | null }[];
+  cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null; birthDate?: string | null; birthYear?: number | null }[];
   directors: { id: string; name: string }[];
   userData?: {
     isPlayed: boolean;
@@ -64,6 +64,8 @@ interface RecommendedMovie {
   posterPath?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
 }
 
 function formatRuntime(minutes: number) {
@@ -93,16 +95,25 @@ function formatChannels(channels?: number | null): string | null {
 }
 
 function computeAgeAtRelease(
+  birthYear?: number | null,
   birthDate?: string | null,
   premiereDate?: string,
-  year?: number
+  movieYear?: number
 ): number | null {
+  // Prefer birthYear (simple year subtraction)
+  if (birthYear) {
+    const releaseYear = movieYear || (premiereDate ? new Date(premiereDate).getFullYear() : null);
+    if (!releaseYear) return null;
+    const age = releaseYear - birthYear;
+    return age >= 0 ? age : null;
+  }
+  // Fall back to birthDate for precise calculation
   if (!birthDate) return null;
   let releaseDate: Date | null = null;
   if (premiereDate) {
     releaseDate = new Date(premiereDate);
-  } else if (year) {
-    releaseDate = new Date(year, 6, 1); // July 1 midpoint
+  } else if (movieYear) {
+    releaseDate = new Date(movieYear, 6, 1);
   }
   if (!releaseDate) return null;
   const birth = new Date(birthDate);
@@ -443,7 +454,7 @@ export default function MovieDetailPage() {
                 role={person.role}
                 photoPath={person.photoPath}
                 personalRating={person.personalRating}
-                age={computeAgeAtRelease(person.birthDate, movie.premiereDate, movie.year)}
+                age={computeAgeAtRelease(person.birthYear, person.birthDate, movie.premiereDate, movie.year)}
                 size="sm"
               />
             ))}
@@ -467,6 +478,8 @@ export default function MovieDetailPage() {
                 posterPath={m.posterPath}
                 rating={m.communityRating}
                 personalRating={m.personalRating}
+                videoWidth={m.videoWidth}
+                videoHeight={m.videoHeight}
               />
             ))}
           </ScrollRow>

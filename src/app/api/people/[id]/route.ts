@@ -67,6 +67,8 @@ export async function GET(
         fanartPath: movies.fanartPath,
         folderPath: movies.folderPath,
         communityRating: movies.communityRating,
+        videoWidth: movies.videoWidth,
+        videoHeight: movies.videoHeight,
         role: moviePeople.role,
       })
       .from(moviePeople)

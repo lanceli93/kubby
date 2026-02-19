@@ -17,6 +17,8 @@ interface Movie {
   posterPath?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
 }
 
 interface Person {
@@ -148,6 +150,8 @@ function SearchContent() {
                     posterPath={movie.posterPath}
                     rating={movie.communityRating}
                     personalRating={movie.personalRating}
+                    videoWidth={movie.videoWidth}
+                    videoHeight={movie.videoHeight}
                   />
                 ))}
               </ScrollRow>
