@@ -5,6 +5,7 @@ export interface UserPreferences {
   personRatingDimensions: string[];
   showMovieRatingBadge: boolean;
   showPersonTierBadge: boolean;
+  showResolutionBadge: boolean;
 }
 
 export function useUserPreferences() {

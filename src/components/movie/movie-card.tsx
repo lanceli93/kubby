@@ -81,6 +81,7 @@ export function MovieCard({
   const [metadataOpen, setMetadataOpen] = useState(false);
   const { data: prefs } = useUserPreferences();
   const showRatingBadge = prefs?.showMovieRatingBadge !== false;
+  const showResBadge = prefs?.showResolutionBadge !== false;
 
   return (
     <Link
@@ -105,7 +106,7 @@ export function MovieCard({
         )}
 
         {/* Resolution badge — top-left */}
-        {(() => {
+        {showResBadge && (() => {
           const res = getResolutionLabel(videoWidth, videoHeight);
           return res ? (
             <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">

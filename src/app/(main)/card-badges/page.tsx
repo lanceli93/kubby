@@ -18,6 +18,7 @@ export default function CardBadgesPage() {
   });
 
   const [showMovieBadge, setShowMovieBadge] = useState(true);
+  const [showResolutionBadge, setShowResolutionBadge] = useState(true);
   const [showPersonBadge, setShowPersonBadge] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
@@ -32,6 +33,7 @@ export default function CardBadgesPage() {
   useEffect(() => {
     if (prefs) {
       setShowMovieBadge(prefs.showMovieRatingBadge);
+      setShowResolutionBadge(prefs.showResolutionBadge);
       setShowPersonBadge(prefs.showPersonTierBadge);
     }
   }, [prefs]);
@@ -44,6 +46,7 @@ export default function CardBadgesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           showMovieRatingBadge: showMovieBadge,
+          showResolutionBadge: showResolutionBadge,
           showPersonTierBadge: showPersonBadge,
         }),
       });
@@ -88,6 +91,29 @@ export default function CardBadgesPage() {
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                 showMovieBadge ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {t("showResolutionBadge")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("showResolutionBadgeDesc")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowResolutionBadge(!showResolutionBadge)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              showResolutionBadge ? "bg-primary" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                showResolutionBadge ? "translate-x-6" : "translate-x-1"
               }`}
             />
           </button>

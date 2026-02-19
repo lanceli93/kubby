@@ -25,6 +25,7 @@ export async function GET() {
         personRatingDimensions: [],
         showMovieRatingBadge: true,
         showPersonTierBadge: true,
+        showResolutionBadge: true,
       });
     }
 
@@ -37,6 +38,7 @@ export async function GET() {
         : [],
       showMovieRatingBadge: row.showMovieRatingBadge,
       showPersonTierBadge: row.showPersonTierBadge,
+      showResolutionBadge: row.showResolutionBadge,
     });
   } catch (error) {
     console.error("Get personal metadata settings error:", error);
@@ -88,6 +90,9 @@ export async function PUT(request: NextRequest) {
       showPersonTierBadge: body.showPersonTierBadge !== undefined
         ? body.showPersonTierBadge
         : existing?.showPersonTierBadge ?? true,
+      showResolutionBadge: body.showResolutionBadge !== undefined
+        ? body.showResolutionBadge
+        : existing?.showResolutionBadge ?? true,
     };
 
     if (existing) {
