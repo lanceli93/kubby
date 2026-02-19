@@ -18,7 +18,7 @@ export function getTierColor(tier: Tier): string {
     case "S": return "text-red-400";
     case "A": return "text-purple-400";
     case "B": return "text-blue-400";
-    case "C": return "text-teal-400";
+    case "C": return "text-zinc-300";
     case "D": return "text-gray-400";
     case "E": return "text-gray-500";
   }
@@ -31,7 +31,7 @@ export function getTierBorderColor(tier: Tier): string {
     case "S": return "border-red-400/50";
     case "A": return "border-purple-400/50";
     case "B": return "border-blue-400/50";
-    case "C": return "border-teal-400/50";
+    case "C": return "border-zinc-300/50";
     case "D": return "border-gray-400/50";
     case "E": return "border-gray-500/50";
   }
