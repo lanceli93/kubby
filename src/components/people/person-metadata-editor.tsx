@@ -271,10 +271,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   <div key={dim} className="space-y-2">
                     <Label>{dim}</Label>
                     <div className="flex items-center gap-3">
-                      <div
-                        className="flex items-center gap-0.5"
-                        onMouseLeave={() => setHoverRating(null)}
-                      >
+                      <div className="flex items-center gap-0.5">
                         {[0, 1, 2, 3, 4].map((starIndex) => {
                           const starValue = (starIndex + 1) * 2;
                           const halfValue = starValue - 1;
@@ -288,12 +285,6 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                             <div
                               key={starIndex}
                               className="relative h-6 w-6 cursor-pointer"
-                              onMouseMove={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const isLeft = e.clientX - rect.left < rect.width / 2;
-                                // Just visual hover, not shared across dims
-                                void isLeft;
-                              }}
                               onClick={(e) => {
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 const isLeft = e.clientX - rect.left < rect.width / 2;
@@ -314,9 +305,31 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                           );
                         })}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const base = dimensionRatings[dim] ?? 0;
+                          const next = Math.max(0, Math.round((base - 0.1) * 10) / 10);
+                          setDimensionRatings((prev) => ({ ...prev, [dim]: next }));
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
+                      >
+                        −
+                      </button>
                       <span className="min-w-[2.5rem] text-center text-sm font-bold text-[var(--gold)] tabular-nums">
                         {dimensionRatings[dim] ? dimensionRatings[dim].toFixed(1) : "—"}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const base = dimensionRatings[dim] ?? 0;
+                          const next = Math.min(10, Math.round((base + 0.1) * 10) / 10);
+                          setDimensionRatings((prev) => ({ ...prev, [dim]: next }));
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
                 ))}

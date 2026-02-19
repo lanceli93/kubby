@@ -2,7 +2,7 @@
 
 import { useState, useEffect, KeyboardEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { X, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -447,18 +447,67 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                 {movieDimensions.map((dim) => (
                   <div key={dim} className="space-y-2">
                     <Label>{dim}</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="10"
-                      value={dimensionRatings[dim]?.toString() || ""}
-                      onChange={(e) => {
-                        const val = e.target.value ? Number(e.target.value) : 0;
-                        setDimensionRatings((prev) => ({ ...prev, [dim]: val }));
-                      }}
-                      placeholder="0 – 10"
-                    />
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-0.5">
+                        {[0, 1, 2, 3, 4].map((starIndex) => {
+                          const starValue = (starIndex + 1) * 2;
+                          const halfValue = starValue - 1;
+                          const current = dimensionRatings[dim] ?? 0;
+
+                          let fill: "full" | "half" | "empty" = "empty";
+                          if (current >= starValue) fill = "full";
+                          else if (current >= halfValue) fill = "half";
+
+                          return (
+                            <div
+                              key={starIndex}
+                              className="relative h-6 w-6 cursor-pointer"
+                              onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const isLeft = e.clientX - rect.left < rect.width / 2;
+                                const newRating = (starIndex + 1) * 2 - (isLeft ? 1 : 0);
+                                setDimensionRatings((prev) => ({ ...prev, [dim]: newRating }));
+                              }}
+                            >
+                              <Star className="absolute inset-0 h-6 w-6 text-white/20" />
+                              {fill !== "empty" && (
+                                <div
+                                  className="absolute inset-0 overflow-hidden"
+                                  style={{ width: fill === "full" ? "100%" : "50%" }}
+                                >
+                                  <Star className="h-6 w-6 fill-[var(--gold)] text-[var(--gold)]" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const base = dimensionRatings[dim] ?? 0;
+                          const next = Math.max(0, Math.round((base - 0.1) * 10) / 10);
+                          setDimensionRatings((prev) => ({ ...prev, [dim]: next }));
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
+                      >
+                        −
+                      </button>
+                      <span className="min-w-[2.5rem] text-center text-sm font-bold text-[var(--gold)] tabular-nums">
+                        {dimensionRatings[dim] ? dimensionRatings[dim].toFixed(1) : "—"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const base = dimensionRatings[dim] ?? 0;
+                          const next = Math.min(10, Math.round((base + 0.1) * 10) / 10);
+                          setDimensionRatings((prev) => ({ ...prev, [dim]: next }));
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/70 text-xs transition-colors hover:bg-white/10"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {/* Computed average display */}

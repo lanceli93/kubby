@@ -84,18 +84,18 @@ function StarRow({
       <div className="flex items-center gap-1.5">
         <button
           onClick={() => onFine(-0.1)}
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-xs transition-colors hover:bg-white/10"
         >
-          <Minus className="h-3 w-3" />
+          −
         </button>
         <span className="min-w-[2.5rem] text-center text-sm font-bold text-[var(--gold)] tabular-nums">
           {rating != null ? rating.toFixed(1) : "—"}
         </span>
         <button
           onClick={() => onFine(0.1)}
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-xs transition-colors hover:bg-white/10"
         >
-          <Plus className="h-3 w-3" />
+          +
         </button>
       </div>
     </div>
