@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { X, Check, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
 
@@ -24,7 +24,14 @@ export default function PersonalMetadataPage() {
   const [movieInput, setMovieInput] = useState("");
   const [personInput, setPersonInput] = useState("");
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const showToast = (text: string, success: boolean) => {
+    clearTimeout(toastTimer.current);
+    setToast({ text, success });
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  };
 
   useEffect(() => {
     if (prefs) {
@@ -59,7 +66,6 @@ export default function PersonalMetadataPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    setMsg("");
     try {
       const res = await fetch("/api/settings/personal-metadata", {
         method: "PUT",
@@ -72,13 +78,13 @@ export default function PersonalMetadataPage() {
         }),
       });
       if (res.ok) {
-        setMsg(t("saved"));
+        showToast(t("saved"), true);
         queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
       } else {
-        setMsg(t("failedToSave"));
+        showToast(t("failedToSave"), false);
       }
     } catch {
-      setMsg(t("failedToSave"));
+      showToast(t("failedToSave"), false);
     } finally {
       setSaving(false);
     }
@@ -219,12 +225,7 @@ export default function PersonalMetadataPage() {
         </div>
       </div>
 
-      {/* Save button + message */}
-      {msg && (
-        <p className={`text-sm ${msg === t("saved") ? "text-green-500" : "text-destructive"}`}>
-          {msg}
-        </p>
-      )}
+      {/* Save button */}
       <button
         onClick={handleSave}
         disabled={saving}
@@ -232,6 +233,26 @@ export default function PersonalMetadataPage() {
       >
         {saving ? tCommon("loading") : tCommon("save")}
       </button>
+
+      {/* Toast notification */}
+      <div
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
+          toast
+            ? "translate-y-0 opacity-100"
+            : "translate-y-4 opacity-0 pointer-events-none"
+        } ${
+          toast?.success
+            ? "border-green-500/20 bg-green-500/10 text-green-400"
+            : "border-red-500/20 bg-red-500/10 text-red-400"
+        }`}
+      >
+        {toast?.success ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <AlertCircle className="h-4 w-4" />
+        )}
+        {toast?.text}
+      </div>
     </div>
   );
 }
