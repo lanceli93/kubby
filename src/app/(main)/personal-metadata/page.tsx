@@ -229,14 +229,14 @@ export default function PersonalMetadataPage() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="rounded-lg bg-primary px-8 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        className="w-[720px] rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {saving ? tCommon("loading") : tCommon("save")}
       </button>
 
       {/* Toast notification */}
       <div
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
+        className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
           toast
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0 pointer-events-none"
