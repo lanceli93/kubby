@@ -133,3 +133,57 @@
 
 ### i18n (EN + ZH)
 - New `metadata` namespace with 34 keys: editMetadata, general, externalIds, title, originalTitle, sortTitle, overview, tagline, year, premiereDate, runtime, runtimeMinutes, communityRating, officialRating, country, genres, studios, addGenrePlaceholder, addStudioPlaceholder, name, type, actor, director, writer, producer, biography, birthDate, birthYear, placeOfBirth, deathDate, saving, editImages, editSubtitles, identify, deleteMedia
+
+## 2026-02-19: Personal Metadata Settings & Multi-Dimensional Ratings
+
+### Database schema changes
+- New `user_preferences` table: userId (unique), movieRatingDimensions (JSON), personRatingDimensions (JSON), showMovieRatingBadge (bool), showPersonTierBadge (bool)
+- New `dimension_ratings` (JSON text) column on both `user_movie_data` and `user_person_data` tables
+- Stores per-dimension scores (e.g. `{"剧情": 9.5, "特效": 8.0}`)
+
+### Preferences API (`/api/settings/personal-metadata`)
+- GET: Returns user preferences (dimensions arrays, badge toggles) with defaults
+- PUT: Upserts preferences with validation (max 10 dimensions per type)
+
+### Client-side hook (`src/hooks/use-user-preferences.ts`)
+- `useUserPreferences()` hook with React Query caching (5 min staleTime)
+- Shared across all card/rating components via query key deduplication
+
+### Personal Metadata settings page (`/personal-metadata`)
+- Movie Rating Dimensions section: tag-input (chips + Enter-to-add), max 10
+- Person Rating Dimensions section: same tag-input pattern, max 10
+- Card Badge Settings section: two toggle switches for movie rating badge and person tier badge
+- Save button persists all settings, invalidates cached preferences
+
+### Multi-dimensional star rating dialog
+- When dimensions configured: shows vertically stacked dimension rows, each with 5 smaller stars (h-6 w-6) + fine-tune buttons + numeric display
+- Computed "Overall" average displayed as read-only below dimension rows
+- When no dimensions: existing single-rating behavior unchanged
+- Dialog width adapts: 480px for dimensions mode, 340px for single mode
+
+### Metadata editors updated
+- Movie metadata editor: Personal tab shows per-dimension number inputs when movieRatingDimensions configured
+- Person metadata editor: Personal tab shows per-dimension star rows when personRatingDimensions configured
+- Both compute personalRating as average of dimension values on save
+
+### Card badge visibility
+- MovieCard: respects `showMovieRatingBadge` preference (when false, falls through to community rating)
+- PersonCard: respects `showPersonTierBadge` preference (when false, hides tier badge)
+- PersonCard converted to client component with `"use client"` directive
+
+### Detail pages updated
+- Movie detail page: passes dimensions and dimensionRatings to StarRatingDialog
+- Person detail page: passes dimensions and dimensionRatings to StarRatingDialog
+- Both savePersonalRating functions send dimensionRatings alongside personalRating
+
+### User-data APIs updated
+- Movie and person user-data GET: parse and return dimensionRatings from JSON
+- Movie and person user-data PUT: accept and store dimensionRatings
+- Movie and person detail GET: include dimensionRatings in userData response
+
+### Sidebar navigation
+- Added "Personal Metadata" link (SlidersHorizontal icon) under Media section
+
+### i18n (EN + ZH)
+- New `nav.personalMetadata` key
+- New `personalMetadata` namespace with 14 keys: title, movieRatingDimensions, movieRatingDimensionsDesc, personRatingDimensions, personRatingDimensionsDesc, addDimensionPlaceholder, cardBadgeSettings, showMovieRatingBadge, showMovieRatingBadgeDesc, showPersonTierBadge, showPersonTierBadgeDesc, saved, failedToSave, maxDimensions, overall
