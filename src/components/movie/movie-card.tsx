@@ -25,6 +25,20 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+function getResolutionLabel(width?: number | null, height?: number | null): string | null {
+  if (!width && !height) return null;
+  const w = width || 0;
+  const h = height || 0;
+  if (w >= 7680 || h >= 4320) return "8K";
+  if (w >= 3840 || h >= 2160) return "4K";
+  if (w >= 1920 || h >= 1080) return "1080P";
+  if (w >= 1280 || h >= 720) return "720P";
+  if (w >= 960 || h >= 540) return "540P";
+  if (w >= 720 || h >= 480) return "480P";
+  if (w >= 480 || h >= 360) return "360P";
+  return null;
+}
+
 interface MovieCardProps {
   id: string;
   title: string;
@@ -32,6 +46,8 @@ interface MovieCardProps {
   posterPath?: string | null;
   rating?: number | null;
   personalRating?: number | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
   isFavorite?: boolean;
   isWatched?: boolean;
   progress?: number; // 0-100
@@ -48,6 +64,8 @@ export function MovieCard({
   posterPath,
   rating,
   personalRating,
+  videoWidth,
+  videoHeight,
   isFavorite,
   isWatched,
   progress,
@@ -85,6 +103,16 @@ export function MovieCard({
             No Poster
           </div>
         )}
+
+        {/* Resolution badge — top-left */}
+        {(() => {
+          const res = getResolutionLabel(videoWidth, videoHeight);
+          return res ? (
+            <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
+              {res}
+            </div>
+          ) : null;
+        })()}
 
         {/* Rating badge — prefer personal rating over community rating */}
         {showRatingBadge && (personalRating != null && personalRating > 0 ? (

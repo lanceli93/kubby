@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
           personalRating: userMovieData.personalRating,
           playbackPositionSeconds: userMovieData.playbackPositionSeconds,
           runtimeMinutes: movies.runtimeMinutes,
+          videoWidth: movies.videoWidth,
+          videoHeight: movies.videoHeight,
           isFavorite: userMovieData.isFavorite,
         })
         .from(movies)
@@ -74,6 +76,8 @@ export async function GET(request: NextRequest) {
           folderPath: movies.folderPath,
           communityRating: movies.communityRating,
           personalRating: userMovieData.personalRating,
+          videoWidth: movies.videoWidth,
+          videoHeight: movies.videoHeight,
           isFavorite: userMovieData.isFavorite,
         })
         .from(movies)
@@ -185,6 +189,8 @@ export async function GET(request: NextRequest) {
         country: movies.country,
         tmdbId: movies.tmdbId,
         imdbId: movies.imdbId,
+        videoWidth: movies.videoWidth,
+        videoHeight: movies.videoHeight,
         mediaLibraryId: movies.mediaLibraryId,
         dateAdded: movies.dateAdded,
         isFavorite: userMovieData.isFavorite,

@@ -15,6 +15,8 @@ interface Movie {
   posterPath?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
   isFavorite?: boolean;
   isWatched?: boolean;
   progress?: number;
@@ -57,6 +59,8 @@ function MovieRow({
             posterPath={movie.posterPath}
             rating={movie.communityRating}
             personalRating={movie.personalRating}
+            videoWidth={movie.videoWidth}
+            videoHeight={movie.videoHeight}
             isFavorite={movie.isFavorite}
             isWatched={movie.isWatched}
             progress={movie.progress}
@@ -305,6 +309,8 @@ export default function HomePage() {
                     posterPath={movie.posterPath}
                     rating={movie.communityRating}
                     personalRating={movie.personalRating}
+                    videoWidth={movie.videoWidth}
+                    videoHeight={movie.videoHeight}
                     isFavorite={movie.isFavorite}
                     isWatched={movie.isWatched}
                     onToggleFavorite={() =>
