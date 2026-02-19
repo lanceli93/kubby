@@ -5,6 +5,7 @@ import Image from "next/image";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useTranslations } from "next-intl";
 
 interface PersonCardProps {
   id: string;
@@ -32,6 +33,7 @@ export function PersonCard({
   size = "sm",
 }: PersonCardProps) {
   const { width, height } = sizeConfig[size];
+  const t = useTranslations("person");
   const { data: prefs } = useUserPreferences();
   const showTierBadge = prefs?.showPersonTierBadge !== false;
 
@@ -78,7 +80,7 @@ export function PersonCard({
           <p className="truncate text-xs text-muted-foreground">{role}</p>
         )}
         {age != null && (
-          <p className="truncate text-xs text-muted-foreground/70">{age}</p>
+          <p className="truncate text-xs text-muted-foreground/70">{t("filmedAtAge", { age })}</p>
         )}
       </div>
     </Link>

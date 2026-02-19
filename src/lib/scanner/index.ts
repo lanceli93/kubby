@@ -158,6 +158,9 @@ export async function scanLibrary(libraryId: string) {
     const videoHeight = probeResult?.videoHeight || nfoData.videoHeight || null;
     const audioChannels = probeResult?.audioChannels || nfoData.audioChannels || null;
     const container = probeResult?.container || path.extname(videoFile).toLowerCase().replace(".", "") || null;
+    // Runtime: prefer NFO/TMDB value, fall back to ffprobe duration
+    const runtimeSeconds = probeResult?.durationSeconds || (nfoData.runtimeMinutes ? nfoData.runtimeMinutes * 60 : null);
+    const runtimeMinutes = nfoData.runtimeMinutes || (probeResult?.durationSeconds ? Math.floor(probeResult.durationSeconds / 60) : null);
 
     // Check if movie already exists by folder path (idempotent)
     const existingMovie = db
@@ -182,7 +185,8 @@ export async function scanLibrary(libraryId: string) {
       nfoPath: "movie.nfo",
       communityRating: nfoData.communityRating || null,
       officialRating: nfoData.officialRating || null,
-      runtimeMinutes: nfoData.runtimeMinutes || null,
+      runtimeMinutes: runtimeMinutes,
+      runtimeSeconds: runtimeSeconds,
       premiereDate: nfoData.premiereDate || null,
       year: nfoData.year || null,
       genres: JSON.stringify(nfoData.genres),

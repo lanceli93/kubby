@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
           personalRating: userMovieData.personalRating,
           playbackPositionSeconds: userMovieData.playbackPositionSeconds,
           runtimeMinutes: movies.runtimeMinutes,
+          runtimeSeconds: movies.runtimeSeconds,
           videoWidth: movies.videoWidth,
           videoHeight: movies.videoHeight,
           isFavorite: userMovieData.isFavorite,
@@ -55,14 +56,17 @@ export async function GET(request: NextRequest) {
         .all();
 
       return NextResponse.json(
-        results.map((r) => ({
-          ...r,
-          posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
-          progress:
-            r.runtimeMinutes && r.playbackPositionSeconds
-              ? Math.round((r.playbackPositionSeconds / (r.runtimeMinutes * 60)) * 100)
-              : 0,
-        }))
+        results.map((r) => {
+          const totalSeconds = r.runtimeSeconds || (r.runtimeMinutes ? r.runtimeMinutes * 60 : 0);
+          return {
+            ...r,
+            posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
+            progress:
+              totalSeconds && r.playbackPositionSeconds
+                ? Math.min(100, Math.round((r.playbackPositionSeconds / totalSeconds) * 100))
+                : 0,
+          };
+        })
       );
     }
 

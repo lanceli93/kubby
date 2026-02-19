@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Star } from "lucide-react";
+import { Star, CalendarDays } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -58,8 +58,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     name: "",
     type: "actor",
     overview: "",
-    birthDate: "",
-    birthYear: "",
+    birthInput: "",
     placeOfBirth: "",
     deathDate: "",
     tmdbId: "",
@@ -67,6 +66,8 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     personalRating: "",
   });
 
+  const [birthInputError, setBirthInputError] = useState("");
+  const datePickerRef = useRef<HTMLInputElement>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [dimensionRatings, setDimensionRatings] = useState<Record<string, number>>({});
 
@@ -76,8 +77,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
         name: person.name || "",
         type: person.type || "actor",
         overview: person.overview || "",
-        birthDate: person.birthDate || "",
-        birthYear: person.birthYear?.toString() || "",
+        birthInput: person.birthDate || person.birthYear?.toString() || "",
         placeOfBirth: person.placeOfBirth || "",
         deathDate: person.deathDate || "",
         tmdbId: person.tmdbId || "",
@@ -131,12 +131,29 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
       }),
     });
 
+    // Validate and parse unified birth input
+    let birthDate: string | null = null;
+    let birthYear: number | null = null;
+    const trimmed = form.birthInput.trim();
+    if (trimmed) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        birthDate = trimmed;
+        birthYear = Number(trimmed.slice(0, 4));
+      } else if (/^\d{4}$/.test(trimmed)) {
+        birthYear = Number(trimmed);
+      } else {
+        setBirthInputError(t("birthInputFormatError"));
+        return;
+      }
+    }
+    setBirthInputError("");
+
     mutation.mutate({
       name: form.name,
       type: form.type,
       overview: form.overview || null,
-      birthDate: form.birthDate || null,
-      birthYear: form.birthYear ? Number(form.birthYear) : null,
+      birthDate,
+      birthYear,
       placeOfBirth: form.placeOfBirth || null,
       deathDate: form.deathDate || null,
       tmdbId: form.tmdbId || null,
@@ -205,23 +222,43 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t("birthDate")}</Label>
+            <div className="space-y-2">
+              <Label>{t("birthDate")}</Label>
+              <div className="flex items-center gap-2">
                 <Input
-                  type="date"
-                  value={form.birthDate}
-                  onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
+                  className="flex-1"
+                  value={form.birthInput}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, birthInput: e.target.value }));
+                    setBirthInputError("");
+                  }}
+                  placeholder="1990-05-15 or 1990"
                 />
+                <div className="relative flex-shrink-0">
+                  <input
+                    ref={datePickerRef}
+                    type="date"
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    style={{ colorScheme: "dark" }}
+                    tabIndex={-1}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setForm((f) => ({ ...f, birthInput: e.target.value }));
+                        setBirthInputError("");
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground pointer-events-none"
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t("birthYear")}</Label>
-                <Input
-                  type="number"
-                  value={form.birthYear}
-                  onChange={(e) => setForm((f) => ({ ...f, birthYear: e.target.value }))}
-                />
-              </div>
+              {birthInputError && (
+                <p className="text-xs text-red-400">{birthInputError}</p>
+              )}
             </div>
 
             <div className="space-y-2">

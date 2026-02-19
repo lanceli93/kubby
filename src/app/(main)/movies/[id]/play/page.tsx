@@ -16,7 +16,9 @@ import {
 interface MovieData {
   id: string;
   title: string;
-  playbackPositionSeconds?: number;
+  userData?: {
+    playbackPositionSeconds?: number;
+  };
 }
 
 export default function PlayerPage() {
@@ -57,10 +59,11 @@ export default function PlayerPage() {
 
   // Restore position on load
   useEffect(() => {
-    if (movie?.playbackPositionSeconds && videoRef.current) {
-      videoRef.current.currentTime = movie.playbackPositionSeconds;
+    const pos = movie?.userData?.playbackPositionSeconds;
+    if (pos && videoRef.current) {
+      videoRef.current.currentTime = pos;
     }
-  }, [movie?.playbackPositionSeconds]);
+  }, [movie?.userData?.playbackPositionSeconds]);
 
   // Hide controls after inactivity
   const resetControlsTimer = useCallback(() => {
@@ -107,7 +110,7 @@ export default function PlayerPage() {
   return (
     <div
       ref={containerRef}
-      className="relative h-screen w-screen bg-black"
+      className="relative h-full w-full bg-black overflow-hidden"
       onMouseMove={resetControlsTimer}
       onClick={togglePlay}
     >

@@ -241,7 +241,13 @@ export default function HomePage() {
                     movieCount={lib.movieCount}
                     coverImage={lib.coverImage}
                     hasCustomCover={lib.hasCustomCover}
-                    onScan={() => scanLibrary.mutate(lib.id)}
+                    onScan={async () => {
+                      const res = await fetch(`/api/libraries/${lib.id}/scan`, { method: "POST" });
+                      const data = await res.json();
+                      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+                      queryClient.invalidateQueries({ queryKey: ["movies"] });
+                      return data;
+                    }}
                     onDelete={() => deleteLibrary.mutate(lib.id)}
                     onEditImage={() => handleEditImage(lib.id)}
                     onRemoveImage={() => removeCover.mutate(lib.id)}

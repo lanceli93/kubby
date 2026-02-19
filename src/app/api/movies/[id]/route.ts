@@ -171,6 +171,7 @@ export async function PUT(
         videoWidth: updated.videoWidth || undefined,
         videoHeight: updated.videoHeight || undefined,
         audioChannels: updated.audioChannels || undefined,
+        durationInSeconds: updated.runtimeSeconds || undefined,
         tags: updated.tags ? JSON.parse(updated.tags) : undefined,
       };
       writeFullNfo(nfoFullPath, nfoData);
@@ -210,6 +211,7 @@ export async function GET(
         sortOrder: moviePeople.sortOrder,
         personalRating: userPersonData.personalRating,
         birthDate: people.birthDate,
+        birthYear: people.birthYear,
       })
       .from(moviePeople)
       .innerJoin(people, eq(moviePeople.personId, people.id))

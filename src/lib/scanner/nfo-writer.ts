@@ -31,6 +31,7 @@ export interface NfoMovieData {
   videoWidth?: number;
   videoHeight?: number;
   audioChannels?: number;
+  durationInSeconds?: number;
   tags?: string[];
 }
 
@@ -75,13 +76,14 @@ export function writeFullNfo(nfoPath: string, data: NfoMovieData): void {
   for (const tag of data.tags ?? []) {
     xml += `  <tag>${escapeXml(tag)}</tag>\n`;
   }
-  if (data.videoCodec || data.audioCodec) {
+  if (data.videoCodec || data.audioCodec || data.durationInSeconds) {
     xml += `  <fileinfo>\n    <streamdetails>\n`;
-    if (data.videoCodec || data.videoWidth || data.videoHeight) {
+    if (data.videoCodec || data.videoWidth || data.videoHeight || data.durationInSeconds) {
       xml += `      <video>\n`;
       if (data.videoCodec) xml += `        <codec>${escapeXml(data.videoCodec)}</codec>\n`;
       if (data.videoWidth) xml += `        <width>${data.videoWidth}</width>\n`;
       if (data.videoHeight) xml += `        <height>${data.videoHeight}</height>\n`;
+      if (data.durationInSeconds) xml += `        <durationinseconds>${data.durationInSeconds}</durationinseconds>\n`;
       xml += `      </video>\n`;
     }
     if (data.audioCodec || data.audioChannels) {

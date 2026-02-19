@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2 } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -29,6 +29,7 @@ interface MovieDetail {
   overview?: string;
   year?: number;
   runtimeMinutes?: number;
+  runtimeSeconds?: number;
   communityRating?: number;
   officialRating?: string;
   genres?: string[];
@@ -68,21 +69,30 @@ interface RecommendedMovie {
   videoHeight?: number | null;
 }
 
-function formatRuntime(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}h ${m}m`;
+function formatRuntime(totalSeconds?: number, minutes?: number) {
+  const secs = totalSeconds || (minutes ? minutes * 60 : 0);
+  if (secs <= 0) return null;
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
 
-function getResolutionLabel(width?: number | null, height?: number | null): string | null {
-  if (!width && !height) return null;
+function getResolutionLabel(width?: number | null): string | null {
   const w = width || 0;
-  const h = height || 0;
-  if (w >= 3840 || h >= 2160) return "4K";
-  if (w >= 1920 || h >= 1080) return "1080P";
-  if (w >= 1280 || h >= 720) return "720P";
-  if (w >= 720 || h >= 480) return "480P";
-  return `${h}P`;
+  if (w >= 8000) return "8K";
+  if (w >= 7000) return "7K";
+  if (w >= 6000) return "6K";
+  if (w >= 5000) return "5K";
+  if (w >= 3500) return "4K";
+  if (w >= 3000) return "3K";
+  if (w >= 2500) return "2K";
+  if (w >= 1920) return "FHD";
+  if (w >= 1280) return "HD";
+  if (w > 0) return "SD";
+  return null;
 }
 
 function formatChannels(channels?: number | null): string | null {
@@ -134,6 +144,7 @@ export default function MovieDetailPage() {
   const tMeta = useTranslations("metadata");
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
+  const [fanartMode, setFanartMode] = useState(false);
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
 
@@ -213,13 +224,21 @@ export default function MovieDetailPage() {
           />
         )}
 
+        {/* Fanart fullscreen click-to-dismiss overlay */}
+        {fanartMode && (
+          <div
+            className="absolute inset-0 z-20 cursor-pointer"
+            onClick={() => setFanartMode(false)}
+          />
+        )}
+
         {/* Bottom gradient — fade to page background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+        <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
         {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20" />
+        <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + movie info */}
-        <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16">
+        <div className={`absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-24 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
           {/* Poster — 350×525 (2:3) */}
           <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (
@@ -250,12 +269,6 @@ export default function MovieDetailPage() {
             {/* Meta line: Year · Runtime · Rating · ★ Score */}
             <div className="flex items-center gap-2.5 text-sm text-white/70">
               {movie.year && <span>{movie.year}</span>}
-              {movie.runtimeMinutes && (
-                <>
-                  <span className="text-white/40">&middot;</span>
-                  <span>{formatRuntime(movie.runtimeMinutes)}</span>
-                </>
-              )}
               {movie.officialRating && (
                 <>
                   <span className="text-white/40">&middot;</span>
@@ -291,63 +304,82 @@ export default function MovieDetailPage() {
             </div>
 
             {/* Video info badges */}
-            {(movie.videoCodec || movie.audioCodec || movie.videoWidth || movie.container) && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {getResolutionLabel(movie.videoWidth, movie.videoHeight) && (
-                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
-                    {getResolutionLabel(movie.videoWidth, movie.videoHeight)}
+            {(movie.videoCodec || movie.audioCodec || movie.videoWidth || movie.container || movie.runtimeSeconds || movie.runtimeMinutes) && (
+              <div className="flex flex-wrap items-center gap-2">
+                {getResolutionLabel(movie.videoWidth) && (
+                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                    {getResolutionLabel(movie.videoWidth)}
+                  </span>
+                )}
+                {movie.videoWidth && movie.videoHeight && (
+                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                    {movie.videoWidth} × {movie.videoHeight}
                   </span>
                 )}
                 {movie.videoCodec && (
-                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
                     {movie.videoCodec}
                   </span>
                 )}
                 {movie.audioCodec && (
-                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
                     {movie.audioCodec}
                   </span>
                 )}
                 {formatChannels(movie.audioChannels) && (
-                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
                     {formatChannels(movie.audioChannels)}
                   </span>
                 )}
                 {movie.container && (
-                  <span className="rounded border border-white/30 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white/90">
+                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
                     {movie.container}
+                  </span>
+                )}
+                {(movie.runtimeSeconds || movie.runtimeMinutes) && (
+                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                    {formatRuntime(movie.runtimeSeconds, movie.runtimeMinutes)}
                   </span>
                 )}
               </div>
             )}
 
             {/* Action buttons — Jellyfin-style uniform small buttons */}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-3 pt-1">
               <Link
                 href={`/movies/${movie.id}/play`}
-                className="flex items-center gap-1.5 rounded-md bg-white/90 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-white"
+                className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
               >
-                <Play className="h-4 w-4 fill-black" />
+                <Play className="h-5 w-5 fill-black" />
                 Play
               </Link>
+              {movie.fanartPath && (
+                <button
+                  onClick={() => setFanartMode(true)}
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  title="View fanart"
+                >
+                  <Maximize2 className="h-5 w-5" />
+                </button>
+              )}
               <button
                 onClick={() => toggleWatched.mutate()}
-                className={`flex h-9 w-9 items-center justify-center rounded-md border border-white/20 transition-colors hover:bg-white/10 ${
+                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 ${
                   movie.userData?.isPlayed ? "text-green-400" : "text-white/70"
                 }`}
                 title="Mark as watched"
               >
-                <CheckCircle className="h-4.5 w-4.5" />
+                <CheckCircle className="h-5 w-5" />
               </button>
               <button
                 onClick={() => toggleFavorite.mutate()}
-                className={`flex h-9 w-9 items-center justify-center rounded-md border border-white/20 transition-colors hover:bg-white/10 ${
+                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 ${
                   movie.userData?.isFavorite ? "text-red-400" : "text-white/70"
                 }`}
                 title="Favorite"
               >
                 <Heart
-                  className={`h-4.5 w-4.5 ${movie.userData?.isFavorite ? "fill-red-400" : ""}`}
+                  className={`h-5 w-5 ${movie.userData?.isFavorite ? "fill-red-400" : ""}`}
                 />
               </button>
 
@@ -355,9 +387,9 @@ export default function MovieDetailPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 text-white/70 transition-colors hover:bg-white/10"
                   >
-                    <MoreVertical className="h-4.5 w-4.5" />
+                    <MoreVertical className="h-5 w-5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent

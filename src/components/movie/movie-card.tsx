@@ -25,17 +25,18 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-function getResolutionLabel(width?: number | null, height?: number | null): string | null {
-  if (!width && !height) return null;
+function getResolutionLabel(width?: number | null): string | null {
   const w = width || 0;
-  const h = height || 0;
-  if (w >= 7680 || h >= 4320) return "8K";
-  if (w >= 3840 || h >= 2160) return "4K";
-  if (w >= 1920 || h >= 1080) return "1080P";
-  if (w >= 1280 || h >= 720) return "720P";
-  if (w >= 960 || h >= 540) return "540P";
-  if (w >= 720 || h >= 480) return "480P";
-  if (w >= 480 || h >= 360) return "360P";
+  if (w >= 8000) return "8K";
+  if (w >= 7000) return "7K";
+  if (w >= 6000) return "6K";
+  if (w >= 5000) return "5K";
+  if (w >= 3500) return "4K";
+  if (w >= 3000) return "3K";
+  if (w >= 2500) return "2K";
+  if (w >= 1920) return "FHD";
+  if (w >= 1280) return "HD";
+  if (w > 0) return "SD";
   return null;
 }
 
@@ -107,7 +108,7 @@ export function MovieCard({
 
         {/* Resolution badge — top-left */}
         {showResBadge && (() => {
-          const res = getResolutionLabel(videoWidth, videoHeight);
+          const res = getResolutionLabel(videoWidth);
           return res ? (
             <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
               {res}
@@ -148,11 +149,11 @@ export function MovieCard({
         </div>
 
         {/* Progress bar */}
-        {showProgress && progress != null && (
-          <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/20 z-10">
+        {showProgress && progress != null && progress > 0 && (
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-10">
             <div
               className="h-full bg-primary transition-all"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${Math.max(progress, 2)}%` }}
             />
           </div>
         )}

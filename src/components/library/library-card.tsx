@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff } from "lucide-react";
+import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff, Loader2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import {
@@ -29,7 +29,7 @@ interface LibraryCardProps {
   movieCount?: number;
   coverImage?: string | null;
   hasCustomCover?: boolean;
-  onScan?: () => void;
+  onScan?: () => Promise<{ scannedCount?: number } | void>;
   onDelete?: () => void;
   onEditImage?: () => void;
   onRemoveImage?: () => void;
@@ -40,6 +40,8 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
 
   return (
     <Link
@@ -69,6 +71,14 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
           </div>
         )}
 
+        {/* Scanning overlay */}
+        {scanning && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span className="mt-2 text-xs text-white/80">{tHome("scanning")}</span>
+          </div>
+        )}
+
         {/* Hover: ⋯ menu button */}
         <div className="absolute inset-x-0 bottom-0 flex justify-end px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
           <DropdownMenu>
@@ -92,9 +102,23 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
               }}
             >
               <DropdownMenuItem
-                onClick={(e) => {
+                disabled={scanning}
+                onClick={async (e) => {
                   e.stopPropagation();
-                  onScan?.();
+                  if (scanning) return;
+                  setScanning(true);
+                  setScanResult(null);
+                  try {
+                    const res = await onScan?.();
+                    const count = (res as { scannedCount?: number })?.scannedCount;
+                    setScanResult(tHome("scanComplete", { count: count ?? 0 }));
+                    setTimeout(() => setScanResult(null), 3000);
+                  } catch {
+                    setScanResult(tHome("scanFailed"));
+                    setTimeout(() => setScanResult(null), 3000);
+                  } finally {
+                    setScanning(false);
+                  }
                 }}
               >
                 <HardDriveDownload className="h-4 w-4" />
@@ -158,11 +182,13 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
       {/* Name & count below card */}
       <div className="mt-1.5 px-0.5 text-center">
         <p className="truncate text-base font-semibold text-foreground">{name}</p>
-        {movieCount != null && (
+        {scanResult ? (
+          <p className="text-xs text-primary">{scanResult}</p>
+        ) : movieCount != null ? (
           <p className="text-xs text-muted-foreground">
             {t("moviesCount", { count: movieCount })}
           </p>
-        )}
+        ) : null}
       </div>
 
       {/* Delete confirmation dialog */}

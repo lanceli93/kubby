@@ -44,6 +44,7 @@ export const movies = sqliteTable("movies", {
   communityRating: real("community_rating"),
   officialRating: text("official_rating"),
   runtimeMinutes: integer("runtime_minutes"),
+  runtimeSeconds: integer("runtime_seconds"),
   premiereDate: text("premiere_date"),
   year: integer("year"),
   genres: text("genres"), // JSON array string
