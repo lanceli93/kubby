@@ -46,6 +46,10 @@ export function AppHeader() {
   const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
   const isPlayerPage = /^\/movies\/[^/]+\/play$/.test(pathname);
   const libraryId = searchParams.get("libraryId");
+  const filterGenre = searchParams.get("genre");
+  const filterTag = searchParams.get("tag");
+  const filterStudio = searchParams.get("studio");
+  const filterLabel = filterGenre || filterTag || filterStudio;
 
   const { data: library } = useQuery<Library>({
     queryKey: ["library", libraryId],
@@ -99,7 +103,7 @@ export function AppHeader() {
               <House className="h-5 w-5" />
             </Link>
             <span className="text-xl font-semibold text-foreground">
-              {library?.name || ""}
+              {library?.name || ""}{filterLabel ? ` — ${filterLabel}` : ""}
             </span>
           </>
         ) : (

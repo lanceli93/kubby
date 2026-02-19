@@ -47,6 +47,7 @@ interface MovieDetail {
   container?: string | null;
   tags?: string[];
   premiereDate?: string;
+  mediaLibraryId?: string;
   cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null; birthDate?: string | null; birthYear?: number | null }[];
   directors: { id: string; name: string }[];
   userData?: {
@@ -432,7 +433,7 @@ export default function MovieDetailPage() {
 
             {/* Overview */}
             {movie.overview && (
-              <p className="max-w-[700px] text-[15px] leading-relaxed text-white/80">
+              <p className="max-w-[700px] text-[15px] leading-relaxed text-white/80 line-clamp-4">
                 {movie.overview}
               </p>
             )}
@@ -442,13 +443,37 @@ export default function MovieDetailPage() {
               {tags.length > 0 && (
                 <div>
                   <span className="text-white/50">{t("tags")}: </span>
-                  <span className="text-white/90">{tags.join(", ")}</span>
+                  <span className="text-white/90">
+                    {tags.map((tag, i) => (
+                      <span key={tag}>
+                        {i > 0 && ", "}
+                        <Link
+                          href={`/movies?libraryId=${movie.mediaLibraryId}&tag=${encodeURIComponent(tag)}`}
+                          className="hover:text-white hover:underline transition-colors"
+                        >
+                          {tag}
+                        </Link>
+                      </span>
+                    ))}
+                  </span>
                 </div>
               )}
               {genres.length > 0 && (
                 <div>
                   <span className="text-white/50">Genres: </span>
-                  <span className="text-white/90">{genres.join(", ")}</span>
+                  <span className="text-white/90">
+                    {genres.map((genre, i) => (
+                      <span key={genre}>
+                        {i > 0 && ", "}
+                        <Link
+                          href={`/movies?libraryId=${movie.mediaLibraryId}&genre=${encodeURIComponent(genre)}`}
+                          className="hover:text-white hover:underline transition-colors"
+                        >
+                          {genre}
+                        </Link>
+                      </span>
+                    ))}
+                  </span>
                 </div>
               )}
               {movie.directors.length > 0 && (
@@ -460,7 +485,19 @@ export default function MovieDetailPage() {
               {studios.length > 0 && (
                 <div>
                   <span className="text-white/50">Studio: </span>
-                  <span className="text-white/90">{studios.join(", ")}</span>
+                  <span className="text-white/90">
+                    {studios.map((studio, i) => (
+                      <span key={studio}>
+                        {i > 0 && ", "}
+                        <Link
+                          href={`/movies?libraryId=${movie.mediaLibraryId}&studio=${encodeURIComponent(studio)}`}
+                          className="hover:text-white hover:underline transition-colors"
+                        >
+                          {studio}
+                        </Link>
+                      </span>
+                    ))}
+                  </span>
                 </div>
               )}
               {movie.country && (

@@ -206,3 +206,28 @@
 
 ### i18n (EN + ZH)
 - New `metadata` keys: cast (演职人员), role (角色), addCast (添加人员)
+
+## 2026-02-19: Overview Truncation & Clickable Tags/Genres/Studios
+
+### Overview truncation on movie detail page
+- Added `line-clamp-4` to overview paragraph to limit to 4 lines with "..." overflow
+- Prevents long overviews from misaligning the poster layout
+
+### Clickable tags, genres, and studios
+- Tags, genres, and studios on movie detail page are now `<Link>` components
+- Clicking navigates to `/movies?libraryId=X&genre=Y` (or `&tag=` / `&studio=`)
+- Hover effect: underline + brighter text color
+- Added `mediaLibraryId` to `MovieDetail` interface (already returned by API)
+
+### Filter params support on movies page
+- Movies page reads `genre`, `tag`, `studio` from URL search params
+- `genre` param pre-selects that genre in the filter state
+- `tag` and `studio` params passed directly to the API query
+- Query key includes URL filter params for proper cache invalidation
+
+### API tag/studio filtering
+- `GET /api/movies` now supports `tag` and `studio` query params
+- Uses `like(movies.tags, ...)` and `like(movies.studios, ...)` matching (same pattern as existing `genre` filter)
+
+### Header filter label
+- When on `/movies` with `genre`, `tag`, or `studio` param, the header title shows "Library Name — FilterValue"

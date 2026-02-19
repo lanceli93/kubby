@@ -124,6 +124,14 @@ export async function GET(request: NextRequest) {
     if (genre) {
       conditions.push(like(movies.genres, `%"${genre}"%`));
     }
+    const tag = searchParams.get("tag");
+    if (tag) {
+      conditions.push(like(movies.tags, `%"${tag}"%`));
+    }
+    const studio = searchParams.get("studio");
+    if (studio) {
+      conditions.push(like(movies.studios, `%"${studio}"%`));
+    }
     // Multi-genre filter (OR logic): movie matches ANY selected genre
     const genres = searchParams.get("genres");
     if (genres) {

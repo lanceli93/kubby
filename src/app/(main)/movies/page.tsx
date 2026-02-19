@@ -145,11 +145,17 @@ function MovieBrowseContent() {
 
 function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const t = useTranslations("movies");
+  const searchParams = useSearchParams();
+  const urlGenre = searchParams.get("genre") || "";
+  const urlTag = searchParams.get("tag") || "";
+  const urlStudio = searchParams.get("studio") || "";
   const [sort, setSort] = useState("dateAdded");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(() =>
+    urlGenre ? [urlGenre] : []
+  );
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [genresExpanded, setGenresExpanded] = useState(true);
   const [yearsExpanded, setYearsExpanded] = useState(true);
@@ -189,7 +195,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   });
 
   const { data: movies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", { libraryId, sort, sortOrder, selectedGenres, selectedYears }],
+    queryKey: ["movies", { libraryId, sort, sortOrder, selectedGenres, selectedYears, urlTag, urlStudio }],
     queryFn: () => {
       const params = new URLSearchParams();
       params.set("libraryId", libraryId);
@@ -197,6 +203,8 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
       params.set("sortOrder", sortOrder);
       if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
       if (selectedYears.length > 0) params.set("years", selectedYears.join(","));
+      if (urlTag) params.set("tag", urlTag);
+      if (urlStudio) params.set("studio", urlStudio);
       return fetch(`/api/movies?${params}`).then((r) => r.json());
     },
   });
