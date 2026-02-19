@@ -69,7 +69,8 @@
     "administration": "Administration",
     "metadataManager": "Metadata Manager",
     "user": "User",
-    "personalMetadata": "Personal Metadata"
+    "personalMetadata": "Personal Metadata",
+    "cardBadges": "Card Badges"
   },
   "home": {
     "continueWatching": "Continue Watching",
@@ -239,6 +240,17 @@
     "identify": "Identify",
     "deleteMedia": "Delete Media"
   },
+  "cardBadges": {
+    "title": "Card Badge Settings",
+    "movieCardBadges": "Movie Card Badges",
+    "personCardBadges": "Person Card Badges",
+    "showMovieRatingBadge": "Show personal rating badge",
+    "showMovieRatingBadgeDesc": "Display your personal rating on movie card thumbnails",
+    "showPersonTierBadge": "Show tier badge",
+    "showPersonTierBadgeDesc": "Display the tier badge (SSS, S, A, etc.) on person card thumbnails",
+    "saved": "Settings saved",
+    "failedToSave": "Failed to save settings"
+  },
   "personalMetadata": {
     "title": "Personal Metadata Settings",
     "movieRatingDimensions": "Movie Rating Dimensions",
@@ -246,11 +258,6 @@
     "personRatingDimensions": "Person Rating Dimensions",
     "personRatingDimensionsDesc": "Define custom dimensions (e.g., Appearance, Acting) for multi-dimensional person ratings. The overall rating will be the average.",
     "addDimensionPlaceholder": "Type and press Enter to add",
-    "cardBadgeSettings": "Card Badge Settings",
-    "showMovieRatingBadge": "Show personal rating badge on movie cards",
-    "showMovieRatingBadgeDesc": "When enabled, your personal rating is shown on movie card thumbnails",
-    "showPersonTierBadge": "Show tier badge on person cards",
-    "showPersonTierBadgeDesc": "When enabled, the tier badge (SSS, S, A, etc.) is shown on person card thumbnails",
     "saved": "Settings saved",
     "failedToSave": "Failed to save settings",
     "maxDimensions": "Maximum 10 dimensions",

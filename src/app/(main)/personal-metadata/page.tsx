@@ -19,8 +19,6 @@ export default function PersonalMetadataPage() {
 
   const [movieDims, setMovieDims] = useState<string[]>([]);
   const [personDims, setPersonDims] = useState<string[]>([]);
-  const [showMovieBadge, setShowMovieBadge] = useState(true);
-  const [showPersonBadge, setShowPersonBadge] = useState(true);
   const [movieInput, setMovieInput] = useState("");
   const [personInput, setPersonInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -37,8 +35,6 @@ export default function PersonalMetadataPage() {
     if (prefs) {
       setMovieDims(prefs.movieRatingDimensions || []);
       setPersonDims(prefs.personRatingDimensions || []);
-      setShowMovieBadge(prefs.showMovieRatingBadge);
-      setShowPersonBadge(prefs.showPersonTierBadge);
     }
   }, [prefs]);
 
@@ -73,8 +69,6 @@ export default function PersonalMetadataPage() {
         body: JSON.stringify({
           movieRatingDimensions: movieDims,
           personRatingDimensions: personDims,
-          showMovieRatingBadge: showMovieBadge,
-          showPersonTierBadge: showPersonBadge,
         }),
       });
       if (res.ok) {
@@ -168,61 +162,6 @@ export default function PersonalMetadataPage() {
         {personDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
         )}
-      </div>
-
-      {/* Card Badge Settings */}
-      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.03] bg-card p-7">
-        <h2 className="text-lg font-semibold text-foreground">
-          {t("cardBadgeSettings")}
-        </h2>
-
-        {/* Movie rating badge toggle */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              {t("showMovieRatingBadge")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t("showMovieRatingBadgeDesc")}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowMovieBadge(!showMovieBadge)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              showMovieBadge ? "bg-primary" : "bg-white/20"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                showMovieBadge ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* Person tier badge toggle */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              {t("showPersonTierBadge")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t("showPersonTierBadgeDesc")}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowPersonBadge(!showPersonBadge)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              showPersonBadge ? "bg-primary" : "bg-white/20"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                showPersonBadge ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
       </div>
 
       {/* Save button */}

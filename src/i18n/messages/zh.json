@@ -69,7 +69,8 @@
     "administration": "管理",
     "metadataManager": "元数据管理",
     "user": "用户",
-    "personalMetadata": "个人元数据"
+    "personalMetadata": "个人元数据",
+    "cardBadges": "卡片标记"
   },
   "home": {
     "continueWatching": "继续观看",
@@ -239,6 +240,17 @@
     "identify": "识别",
     "deleteMedia": "删除媒体"
   },
+  "cardBadges": {
+    "title": "卡片标记设置",
+    "movieCardBadges": "电影卡片标记",
+    "personCardBadges": "人物卡片标记",
+    "showMovieRatingBadge": "显示个人评分标记",
+    "showMovieRatingBadgeDesc": "在电影卡片缩略图上显示你的个人评分",
+    "showPersonTierBadge": "显示评级标记",
+    "showPersonTierBadgeDesc": "在人物卡片缩略图上显示评级标记（SSS、S、A 等）",
+    "saved": "设置已保存",
+    "failedToSave": "保存设置失败"
+  },
   "personalMetadata": {
     "title": "个人元数据设置",
     "movieRatingDimensions": "电影评分维度",
@@ -246,11 +258,6 @@
     "personRatingDimensions": "人物评分维度",
     "personRatingDimensionsDesc": "定义自定义维度（如样貌、演技）进行多维度人物评分。综合评分为各维度平均值。",
     "addDimensionPlaceholder": "输入后按回车添加",
-    "cardBadgeSettings": "卡片标记设置",
-    "showMovieRatingBadge": "在电影卡片上显示个人评分标记",
-    "showMovieRatingBadgeDesc": "开启后，你的个人评分将显示在电影卡片缩略图上",
-    "showPersonTierBadge": "在人物卡片上显示评级标记",
-    "showPersonTierBadgeDesc": "开启后，评级标记（SSS、S、A 等）将显示在人物卡片缩略图上",
     "saved": "设置已保存",
     "failedToSave": "保存设置失败",
     "maxDimensions": "最多 10 个维度",
