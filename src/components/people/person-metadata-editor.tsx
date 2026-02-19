@@ -336,7 +336,18 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
 
                 {/* Computed average + tier */}
                 <div className="space-y-3 border-t border-white/10 pt-4">
-                  <Label>{t("personalRating")}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>{t("personalRating")}</Label>
+                    {Object.values(dimensionRatings).some((v) => v > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => setDimensionRatings({})}
+                        className="text-xs text-red-400/70 hover:text-red-400"
+                      >
+                        {t("clearRating")}
+                      </button>
+                    )}
+                  </div>
                   <p className="text-lg font-bold text-[var(--gold)]">
                     {(() => {
                       const values = Object.values(dimensionRatings).filter((v) => v > 0);
