@@ -346,7 +346,7 @@ export default function MovieDetailPage() {
             )}
 
             {/* Action buttons — Jellyfin-style uniform small buttons */}
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-2 pt-1">
               <Link
                 href={`/movies/${movie.id}/play`}
                 className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
@@ -433,7 +433,7 @@ export default function MovieDetailPage() {
 
             {/* Overview */}
             {movie.overview && (
-              <p className="max-w-[700px] text-[15px] leading-relaxed text-white/80 line-clamp-4">
+              <p className="max-w-[800px] text-[15px] leading-relaxed text-white/80 line-clamp-5">
                 {movie.overview}
               </p>
             )}
