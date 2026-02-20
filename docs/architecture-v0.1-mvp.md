@@ -114,8 +114,9 @@ kubby/
 │   │   ├── db/
 │   │   │   ├── schema.ts                           # Drizzle schema (8 张表, 含 settings + user_preferences)
 │   │   │   └── index.ts                            # DB 连接单例 (WAL + FK)
+│   │   ├── folder-paths.ts                         # 多文件夹路径 parse/serialize 辅助工具 (向后兼容 JSON 数组存储)
 │   │   ├── scanner/
-│   │   │   ├── index.ts                            # 媒体库扫描器 (目录遍历+TMDB刮削+DB写入)
+│   │   │   ├── index.ts                            # 媒体库扫描器 (多路径遍历+TMDB刮削+DB写入)
 │   │   │   ├── nfo-parser.ts                       # NFO XML 解析器
 │   │   │   └── nfo-writer.ts                       # NFO 生成/回写 (完整 NFO 生成 + 追加 actor)
 │   │   ├── scraper/

@@ -271,3 +271,30 @@
 
 ### i18n (EN + ZH)
 - New `home.scanProgress` key: "Scanning {current}/{total}" / "扫描中 {current}/{total}"
+
+## 2026-02-21: Multi-Folder Support per Library + Checkbox Bug Fix
+
+### Multi-folder support
+- New `src/lib/folder-paths.ts`: `parseFolderPaths()` and `serializeFolderPaths()` helpers for backward-compatible JSON array storage in existing `folderPath` column (no DB migration needed)
+- Scanner (`src/lib/scanner/index.ts`): iterates all folder paths, aggregates movie directories across all paths, skips missing paths with warning instead of failing
+- `GET /api/libraries`: returns `folderPaths: string[]` alongside `folderPath`, poster.jpg lookup uses first path
+- `POST /api/libraries`: accepts `folderPaths: string[]` (falls back to single `folderPath` for backward compat)
+- `GET /api/libraries/[id]`: returns `folderPaths` array
+- `PUT /api/libraries/[id]`: accepts `folderPaths: string[]`
+- `POST/DELETE /api/libraries/[id]/cover`: uses first path for poster.jpg location
+- `POST /api/setup/complete`: wraps single `folderPath` in `serializeFolderPaths([folderPath])`
+
+### Multi-path edit UI
+- LibraryCard edit dialog: shows list of existing paths with remove button (disabled when only 1 path), text input + "Add Folder" button to add new paths, Enter key support
+- Dashboard "Add Library" dialog: same multi-path UI with folder picker integration
+- Dashboard library cards: display all paths (one per line, monospace)
+- Home page: passes `folderPaths` array to `LibraryCard` component
+
+### Checkbox bug fix
+- Removed `e.preventDefault()` from edit dialog's `DialogContent` onClick handler
+- Dialog renders via Radix portal (outside `<Link>`), so `preventDefault` was unnecessary and actively blocked native checkbox toggle behavior
+
+### i18n (EN + ZH)
+- New `home.folderPaths`: "Folder Paths" / "文件夹路径"
+- New `home.addFolder`: "Add Folder" / "添加文件夹"
+- New `home.removeFolder`: "Remove Folder" / "移除文件夹"
