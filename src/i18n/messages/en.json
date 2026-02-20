@@ -83,6 +83,7 @@
     "noFavorites": "No favorites yet",
     "scanLibrary": "Scan Library",
     "scanning": "Scanning...",
+    "scanProgress": "Scanning {current}/{total}",
     "scanComplete": "Scanned {count} movies",
     "scanFailed": "Scan failed",
     "refreshMetadata": "Refresh Metadata",

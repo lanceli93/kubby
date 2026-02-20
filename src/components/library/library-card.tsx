@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff, Loader2 } from "lucide-react";
+import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import {
@@ -29,19 +30,64 @@ interface LibraryCardProps {
   movieCount?: number;
   coverImage?: string | null;
   hasCustomCover?: boolean;
-  onScan?: () => Promise<{ scannedCount?: number } | void>;
+  onScanComplete?: () => void;
   onDelete?: () => void;
   onEditImage?: () => void;
   onRemoveImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomCover, onScan, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomCover, onScanComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const startScan = async () => {
+    if (scanning) return;
+    setScanning(true);
+    setScanResult(null);
+    setScanProgress(null);
+    try {
+      const res = await fetch(`/api/libraries/${id}/scan`, { method: "POST" });
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No stream");
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let scannedCount = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const match = line.match(/^data: (.+)$/m);
+          if (!match) continue;
+          const data = JSON.parse(match[1]);
+          if (data.done) {
+            scannedCount = data.scannedCount ?? 0;
+          } else if (data.error) {
+            throw new Error(data.error);
+          } else if (data.total) {
+            setScanProgress({ current: data.current, total: data.total });
+          }
+        }
+      }
+      setScanResult(tHome("scanComplete", { count: scannedCount }));
+      onScanComplete?.();
+      setTimeout(() => setScanResult(null), 3000);
+    } catch {
+      setScanResult(tHome("scanFailed"));
+      setTimeout(() => setScanResult(null), 3000);
+    } finally {
+      setScanning(false);
+      setScanProgress(null);
+    }
+  };
 
   return (
     <Link
@@ -71,11 +117,19 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
           </div>
         )}
 
-        {/* Scanning overlay */}
+        {/* Scanning overlay with progress */}
         {scanning && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="mt-2 text-xs text-white/80">{tHome("scanning")}</span>
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2.5 bg-black/60 px-8">
+            {scanProgress ? (
+              <>
+                <Progress value={(scanProgress.current / scanProgress.total) * 100} className="h-1.5 w-full" />
+                <span className="text-xs text-white/80">
+                  {tHome("scanProgress", { current: scanProgress.current, total: scanProgress.total })}
+                </span>
+              </>
+            ) : (
+              <span className="text-xs text-white/80">{tHome("scanning")}</span>
+            )}
           </div>
         )}
 
@@ -103,22 +157,9 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
             >
               <DropdownMenuItem
                 disabled={scanning}
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.stopPropagation();
-                  if (scanning) return;
-                  setScanning(true);
-                  setScanResult(null);
-                  try {
-                    const res = await onScan?.();
-                    const count = (res as { scannedCount?: number })?.scannedCount;
-                    setScanResult(tHome("scanComplete", { count: count ?? 0 }));
-                    setTimeout(() => setScanResult(null), 3000);
-                  } catch {
-                    setScanResult(tHome("scanFailed"));
-                    setTimeout(() => setScanResult(null), 3000);
-                  } finally {
-                    setScanning(false);
-                  }
+                  startScan();
                 }}
               >
                 <HardDriveDownload className="h-4 w-4" />

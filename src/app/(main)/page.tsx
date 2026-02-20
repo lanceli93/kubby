@@ -137,14 +137,6 @@ export default function HomePage() {
     },
   });
 
-  const scanLibrary = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/libraries/${id}/scan`, { method: "POST" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["libraries"] });
-      queryClient.invalidateQueries({ queryKey: ["movies"] });
-    },
-  });
 
   const deleteLibrary = useMutation({
     mutationFn: (id: string) =>
@@ -241,12 +233,9 @@ export default function HomePage() {
                     movieCount={lib.movieCount}
                     coverImage={lib.coverImage}
                     hasCustomCover={lib.hasCustomCover}
-                    onScan={async () => {
-                      const res = await fetch(`/api/libraries/${lib.id}/scan`, { method: "POST" });
-                      const data = await res.json();
+                    onScanComplete={() => {
                       queryClient.invalidateQueries({ queryKey: ["libraries"] });
                       queryClient.invalidateQueries({ queryKey: ["movies"] });
-                      return data;
                     }}
                     onDelete={() => deleteLibrary.mutate(lib.id)}
                     onEditImage={() => handleEditImage(lib.id)}

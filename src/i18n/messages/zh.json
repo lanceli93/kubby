@@ -83,6 +83,7 @@
     "noFavorites": "暂无收藏",
     "scanLibrary": "扫描媒体库",
     "scanning": "扫描中...",
+    "scanProgress": "扫描中 {current}/{total}",
     "scanComplete": "已扫描 {count} 部影片",
     "scanFailed": "扫描失败",
     "refreshMetadata": "刷新元数据",

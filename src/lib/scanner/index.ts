@@ -73,7 +73,12 @@ function getOrCreatePerson(
   return id;
 }
 
-export async function scanLibrary(libraryId: string) {
+export type ScanProgress = { current: number; total: number; title: string };
+
+export async function scanLibrary(
+  libraryId: string,
+  onProgress?: (progress: ScanProgress) => void
+) {
   const library = db
     .select()
     .from(mediaLibraries)
@@ -97,12 +102,22 @@ export async function scanLibrary(libraryId: string) {
   const metadataDir = path.join(process.cwd(), "data", "metadata", "people");
 
   const entries = fs.readdirSync(libraryPath, { withFileTypes: true });
+  const dirs = entries.filter((e) => e.isDirectory());
   let scannedCount = 0;
+  let lastPctBucket = -1;
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-
+  for (let i = 0; i < dirs.length; i++) {
+    const entry = dirs[i];
     const movieDir = path.join(libraryPath, entry.name);
+
+    // Throttled progress: emit at every 5% boundary, plus first and last
+    if (onProgress) {
+      const curPctBucket = Math.floor(((i + 1) / dirs.length) * 20); // 0-20
+      if (i === 0 || i === dirs.length - 1 || curPctBucket > lastPctBucket) {
+        onProgress({ current: i + 1, total: dirs.length, title: entry.name });
+        lastPctBucket = curPctBucket;
+      }
+    }
 
     // Find NFO file
     let nfoPath = path.join(movieDir, "movie.nfo");

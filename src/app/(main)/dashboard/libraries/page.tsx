@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, RefreshCw, Trash2, Folder } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
 import Link from "next/link";
 
@@ -30,7 +30,8 @@ export default function LibrariesPage() {
   const [folderPath, setFolderPath] = useState("");
   const [type, setType] = useState("movie");
   const [scraperEnabled, setScraperEnabled] = useState(false);
-  const [tmdbConfigured, setTmdbConfigured] = useState(false);
+  const [tmdbConfigured, setTmdbConfigured] = useState<boolean | null>(null);
+  const [scraperError, setScraperError] = useState("");
 
   const { data: libraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
@@ -61,12 +62,43 @@ export default function LibrariesPage() {
     },
   });
 
-  const scanLibrary = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/libraries/${id}/scan`, { method: "POST" }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["libraries"] }),
-  });
+  const [scanningId, setScanningId] = useState<string | null>(null);
+  const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const startScan = async (libId: string) => {
+    if (scanningId) return;
+    setScanningId(libId);
+    setScanProgress(null);
+    try {
+      const res = await fetch(`/api/libraries/${libId}/scan`, { method: "POST" });
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No stream");
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const match = line.match(/^data: (.+)$/m);
+          if (!match) continue;
+          const data = JSON.parse(match[1]);
+          if (data.total) {
+            setScanProgress({ current: data.current, total: data.total });
+          }
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+    } catch (e) {
+      console.error("Scan error:", e);
+    } finally {
+      setScanningId(null);
+      setScanProgress(null);
+    }
+  };
 
   const deleteLibrary = useMutation({
     mutationFn: (id: string) =>
@@ -80,7 +112,7 @@ export default function LibrariesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Media Libraries</h1>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) checkTmdbKey(); }}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) { checkTmdbKey(); setScraperError(""); } }}>
           <DialogTrigger asChild>
             <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
               <Plus className="h-4 w-4" />
@@ -156,28 +188,56 @@ export default function LibrariesPage() {
                 onOpenChange={setFolderPickerOpen}
                 onSelect={(path) => setFolderPath(path)}
               />
-              <div className="flex flex-col gap-1.5">
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={scraperEnabled}
-                    onChange={(e) => setScraperEnabled(e.target.checked)}
-                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
-                  />
-                  <span className="text-sm text-foreground">Enable metadata scraper</span>
+              {/* Metadata downloaders section */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-muted-foreground">
+                  Metadata downloaders (Movies)
                 </label>
-                {scraperEnabled && !tmdbConfigured && (
-                  <div className="ml-6 flex items-center gap-2 text-xs text-yellow-400">
-                    <span>TMDB API key not configured.</span>
+                <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+                  <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={scraperEnabled}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        if (checked && tmdbConfigured === false) {
+                          setScraperError("TMDB API key is not configured. Please set it up in Dashboard > Scraper before enabling.");
+                          return;
+                        }
+                        setScraperEnabled(checked);
+                      }}
+                      className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                    />
+                    <span className="text-sm text-foreground">TheMovieDb</span>
+                  </label>
+                </div>
+                <p className="text-xs text-[#555568]">
+                  Select metadata downloaders to automatically fetch movie info during library scan.
+                </p>
+              </div>
+
+              {/* Scraper error alert */}
+              {scraperError && (
+                <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                  <div className="flex-1">
+                    <p className="text-sm text-destructive">{scraperError}</p>
                     <Link
                       href="/dashboard/scraper"
-                      className="font-medium text-primary hover:underline"
+                      className="mt-1 inline-block text-sm font-medium text-primary hover:underline"
                     >
-                      Configure
+                      Go to Scraper Settings
                     </Link>
                   </div>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setScraperError("")}
+                    className="shrink-0 text-destructive/60 hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -223,12 +283,16 @@ export default function LibrariesPage() {
             </p>
             <div className="flex gap-2 pt-1">
               <button
-                onClick={() => scanLibrary.mutate(lib.id)}
-                disabled={scanLibrary.isPending}
+                onClick={() => startScan(lib.id)}
+                disabled={!!scanningId}
                 className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-2 text-sm text-foreground transition-colors hover:bg-white/[0.04]"
               >
-                <RefreshCw className={`h-3.5 w-3.5 ${scanLibrary.isPending ? "animate-spin" : ""}`} />
-                Scan Now
+                <RefreshCw className={`h-3.5 w-3.5 ${scanningId === lib.id ? "animate-spin" : ""}`} />
+                {scanningId === lib.id && scanProgress
+                  ? `${scanProgress.current}/${scanProgress.total}`
+                  : scanningId === lib.id
+                    ? "Scanning..."
+                    : "Scan Now"}
               </button>
               <button
                 onClick={() => {

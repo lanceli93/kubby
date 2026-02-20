@@ -245,3 +245,29 @@
 
 ### i18n (EN + ZH)
 - New `cardBadges` keys: badgeEnabled, badgeDisabled, viewRules, hideRules, resolutionRulesTitle, tierRulesTitle
+
+## 2026-02-20: Library Scan Progress Display
+
+### SSE streaming progress from scanner
+- `scanLibrary()` now accepts optional `onProgress` callback with `{ current, total, title }` signature
+- Progress is throttled to ~20 events max (every 5% boundary) regardless of library size, plus first and last item
+- Directories are pre-counted for accurate total before scanning begins
+
+### API converted to Server-Sent Events
+- `POST /api/libraries/[id]/scan` now returns `text/event-stream` response
+- Streams `data: {"current":N,"total":M}` events during scan
+- Sends `data: {"done":true,"scannedCount":N}` on completion
+- Sends `data: {"error":"..."}` on failure
+
+### LibraryCard progress bar UI
+- Scanning overlay now shows a `<Progress>` bar with "Scanning 5/120" text
+- Falls back to "Scanning..." text before first progress event arrives
+- SSE fetch + stream parsing handled directly in the component
+- Prop changed from `onScan` to `onScanComplete` (just for query invalidation)
+
+### Dashboard libraries page progress
+- "Scan Now" button shows inline progress text "5/120" during scan
+- Button disables across all libraries while a scan is in progress
+
+### i18n (EN + ZH)
+- New `home.scanProgress` key: "Scanning {current}/{total}" / "扫描中 {current}/{total}"
