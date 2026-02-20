@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Film, Folder, MoreHorizontal, RefreshCw, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff } from "lucide-react";
+import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -27,23 +27,48 @@ interface LibraryCardProps {
   id: string;
   name: string;
   type: string;
+  folderPath?: string;
+  scraperEnabled?: boolean;
   movieCount?: number;
   coverImage?: string | null;
   hasCustomCover?: boolean;
   onScanComplete?: () => void;
+  onEditComplete?: () => void;
   onDelete?: () => void;
   onEditImage?: () => void;
   onRemoveImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomCover, onScanComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, folderPath, scraperEnabled, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState(name);
+  const [editFolderPath, setEditFolderPath] = useState(folderPath ?? "");
+  const [editScraperEnabled, setEditScraperEnabled] = useState(scraperEnabled ?? false);
+  const [editSaving, setEditSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const handleEditSave = async () => {
+    setEditSaving(true);
+    try {
+      await fetch(`/api/libraries/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName, folderPath: editFolderPath, scraperEnabled: editScraperEnabled }),
+      });
+      setEditOpen(false);
+      onEditComplete?.();
+    } catch {
+      // ignore
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const startScan = async () => {
     if (scanning) return;
@@ -170,24 +195,18 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
                 <HardDriveDownload className="h-4 w-4" />
                 {tHome("scanLibrary")}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  alert("Refresh metadata — coming soon");
-                }}
-              >
-                <RefreshCw className="h-4 w-4" />
-                {tHome("refreshMetadata")}
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
-                  alert("Edit metadata — coming soon");
+                  setEditName(name);
+                  setEditFolderPath(folderPath ?? "");
+                  setEditScraperEnabled(scraperEnabled ?? false);
+                  setEditOpen(true);
                 }}
               >
                 <Pencil className="h-4 w-4" />
-                {tHome("editMetadata")}
+                {tHome("editLibrary")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {
@@ -236,6 +255,68 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
           </p>
         ) : null}
       </div>
+
+      {/* Edit library dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent
+          className="border-white/[0.06] bg-card sm:max-w-[440px]"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <DialogHeader>
+            <DialogTitle>{tHome("editLibrary")}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleEditSave(); }}
+            className="flex flex-col gap-4 pt-2"
+          >
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-muted-foreground">{tHome("libraryName")}</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-muted-foreground">{tHome("folderPath")}</label>
+              <input
+                type="text"
+                value={editFolderPath}
+                onChange={(e) => setEditFolderPath(e.target.value)}
+                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                required
+              />
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editScraperEnabled}
+                onChange={(e) => setEditScraperEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-white/[0.06] accent-primary"
+              />
+              <span className="text-sm text-foreground">{tHome("enableScraper")}</span>
+            </label>
+            <DialogFooter>
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditOpen(false); }}
+                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                type="submit"
+                disabled={editSaving}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {editSaving ? tCommon("loading") : tCommon("save")}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

@@ -26,6 +26,8 @@ interface Library {
   id: string;
   name: string;
   type: string;
+  folderPath?: string;
+  scraperEnabled?: boolean;
   movieCount?: number;
   coverImage?: string | null;
   hasCustomCover?: boolean;
@@ -230,12 +232,17 @@ export default function HomePage() {
                     id={lib.id}
                     name={lib.name}
                     type={lib.type}
+                    folderPath={lib.folderPath}
+                    scraperEnabled={lib.scraperEnabled}
                     movieCount={lib.movieCount}
                     coverImage={lib.coverImage}
                     hasCustomCover={lib.hasCustomCover}
                     onScanComplete={() => {
                       queryClient.invalidateQueries({ queryKey: ["libraries"] });
                       queryClient.invalidateQueries({ queryKey: ["movies"] });
+                    }}
+                    onEditComplete={() => {
+                      queryClient.invalidateQueries({ queryKey: ["libraries"] });
                     }}
                     onDelete={() => deleteLibrary.mutate(lib.id)}
                     onEditImage={() => handleEditImage(lib.id)}

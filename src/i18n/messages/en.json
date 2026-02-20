@@ -92,7 +92,10 @@
     "editImage": "Edit Image",
     "removeImage": "Remove Image",
     "deleteLibrary": "Delete",
-    "confirmDeleteLibrary": "Are you sure you want to delete this library? All movies in it will be removed."
+    "confirmDeleteLibrary": "Are you sure you want to delete this library? All movies in it will be removed.",
+    "libraryName": "Library Name",
+    "folderPath": "Folder Path",
+    "enableScraper": "Enable TMDB Scraper"
   },
   "settings": {
     "settings": "Settings",

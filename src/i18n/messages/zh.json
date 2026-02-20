@@ -92,7 +92,10 @@
     "editImage": "编辑封面",
     "removeImage": "移除封面",
     "deleteLibrary": "删除",
-    "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。"
+    "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。",
+    "libraryName": "媒体库名称",
+    "folderPath": "文件夹路径",
+    "enableScraper": "启用 TMDB 刮削"
   },
   "settings": {
     "settings": "设置",

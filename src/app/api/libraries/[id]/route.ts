@@ -34,6 +34,45 @@ export async function GET(
   }
 }
 
+// PUT /api/libraries/[id]
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  try {
+    const body = await request.json();
+    const { name, folderPath, scraperEnabled } = body;
+
+    const existing = db
+      .select()
+      .from(mediaLibraries)
+      .where(eq(mediaLibraries.id, id))
+      .get();
+
+    if (!existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (name !== undefined) updates.name = name;
+    if (folderPath !== undefined) updates.folderPath = folderPath;
+    if (scraperEnabled !== undefined) updates.scraperEnabled = scraperEnabled;
+
+    if (Object.keys(updates).length > 0) {
+      db.update(mediaLibraries)
+        .set(updates)
+        .where(eq(mediaLibraries.id, id))
+        .run();
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Update library error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 // DELETE /api/libraries/[id]
 export async function DELETE(
   _request: NextRequest,
