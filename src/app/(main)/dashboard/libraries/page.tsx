@@ -175,9 +175,8 @@ export default function LibrariesPage() {
                       </span>
                       <button
                         type="button"
-                        disabled={folderPaths.length <= 1}
                         onClick={() => setFolderPaths(folderPaths.filter((_, i) => i !== idx))}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>

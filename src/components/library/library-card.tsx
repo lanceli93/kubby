@@ -276,6 +276,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
               <input
                 type="text"
                 value={editName}
+                onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setEditName(e.target.value)}
                 className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
@@ -291,9 +292,11 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                     </span>
                     <button
                       type="button"
-                      disabled={editFolderPaths.length <= 1}
-                      onClick={() => setEditFolderPaths(editFolderPaths.filter((_, i) => i !== idx))}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditFolderPaths(editFolderPaths.filter((_, i) => i !== idx));
+                      }}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -303,6 +306,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                   <input
                     type="text"
                     value={newFolderPath}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={(e) => setNewFolderPath(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && newFolderPath.trim()) {
@@ -317,7 +321,8 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                   <button
                     type="button"
                     disabled={!newFolderPath.trim()}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (newFolderPath.trim()) {
                         setEditFolderPaths([...editFolderPaths, newFolderPath.trim()]);
                         setNewFolderPath("");
