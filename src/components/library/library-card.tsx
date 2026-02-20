@@ -22,6 +22,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { FolderPicker } from "@/components/library/folder-picker";
 
 interface LibraryCardProps {
   id: string;
@@ -48,6 +49,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
   const [editName, setEditName] = useState(name);
   const [editFolderPaths, setEditFolderPaths] = useState<string[]>(folderPaths ?? []);
   const [newFolderPath, setNewFolderPath] = useState("");
+  const [editFolderPickerOpen, setEditFolderPickerOpen] = useState(false);
   const [editScraperEnabled, setEditScraperEnabled] = useState(scraperEnabled ?? false);
   const [editSaving, setEditSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -286,8 +288,8 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
               <label className="text-[13px] font-medium text-muted-foreground">{tHome("folderPaths")}</label>
               <div className="flex flex-col gap-2">
                 {editFolderPaths.map((p, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <span className="flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2 font-mono text-sm text-foreground">
+                  <div key={idx} className="flex items-center gap-2 min-w-0">
+                    <span className="min-w-0 flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2 font-mono text-sm text-foreground">
                       {p}
                     </span>
                     <button
@@ -316,8 +318,18 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                       }
                     }}
                     placeholder="/path/to/media"
-                    className="h-10 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-10 min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditFolderPickerOpen(true);
+                    }}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                  >
+                    <Folder className="h-4 w-4" />
+                  </button>
                   <button
                     type="button"
                     disabled={!newFolderPath.trim()}
@@ -328,13 +340,20 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                         setNewFolderPath("");
                       }
                     }}
-                    className="flex h-10 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
+                    className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     {tHome("addFolder")}
                   </button>
                 </div>
               </div>
+              <FolderPicker
+                open={editFolderPickerOpen}
+                onOpenChange={setEditFolderPickerOpen}
+                onSelect={(p) => {
+                  setEditFolderPaths([...editFolderPaths, p]);
+                }}
+              />
             </div>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
