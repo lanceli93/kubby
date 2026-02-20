@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff, Plus, X } from "lucide-react";
+import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff, Plus, X, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -51,6 +51,8 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
   const [newFolderPath, setNewFolderPath] = useState("");
   const [editFolderPickerOpen, setEditFolderPickerOpen] = useState(false);
   const [editScraperEnabled, setEditScraperEnabled] = useState(scraperEnabled ?? false);
+  const [editTmdbConfigured, setEditTmdbConfigured] = useState<boolean | null>(null);
+  const [editScraperError, setEditScraperError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
@@ -206,6 +208,8 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                   setEditFolderPaths(folderPaths ?? []);
                   setNewFolderPath("");
                   setEditScraperEnabled(scraperEnabled ?? false);
+                  setEditScraperError("");
+                  fetch("/api/settings/scraper").then((r) => r.json()).then((d) => setEditTmdbConfigured(d.configured)).catch(() => setEditTmdbConfigured(false));
                   setEditOpen(true);
                 }}
               >
@@ -354,15 +358,54 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                 }}
               />
             </div>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={editScraperEnabled}
-                onChange={(e) => setEditScraperEnabled(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] accent-primary"
-              />
-              <span className="text-sm text-foreground">{tHome("enableScraper")}</span>
-            </label>
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                Metadata downloaders (Movies)
+              </label>
+              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editScraperEnabled}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      if (checked && editTmdbConfigured === false) {
+                        setEditScraperError("TMDB API key is not configured. Please set it up in Dashboard > Scraper before enabling.");
+                        return;
+                      }
+                      setEditScraperEnabled(checked);
+                    }}
+                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                  />
+                  <span className="text-sm text-foreground">TheMovieDb</span>
+                </label>
+              </div>
+              <p className="text-xs text-[#555568]">
+                Select metadata downloaders to automatically fetch movie info during library scan.
+              </p>
+            </div>
+            {editScraperError && (
+              <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-destructive">{editScraperError}</p>
+                  <Link
+                    href="/dashboard/scraper"
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1 inline-block text-sm font-medium text-primary hover:underline"
+                  >
+                    Go to Scraper Settings
+                  </Link>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setEditScraperError(""); }}
+                  className="shrink-0 text-destructive/60 hover:text-destructive"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
             <DialogFooter>
               <button
                 type="button"
