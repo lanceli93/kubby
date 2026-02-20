@@ -170,7 +170,7 @@ export default function LibrariesPage() {
                 <div className="flex flex-col gap-2">
                   {folderPaths.map((p, idx) => (
                     <div key={idx} className="flex items-center gap-2 min-w-0">
-                      <span className="min-w-0 flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground">
+                      <span title={p} className="min-w-0 flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground">
                         {p}
                       </span>
                       <button
