@@ -87,7 +87,7 @@
     "scanComplete": "已扫描 {count} 部影片",
     "scanFailed": "扫描失败",
     "refreshMetadata": "刷新元数据",
-    "editLibrary": "编辑",
+    "editLibrary": "编辑媒体库",
     "editMetadata": "编辑元数据",
     "editImage": "编辑封面",
     "removeImage": "移除封面",

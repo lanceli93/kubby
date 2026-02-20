@@ -87,7 +87,7 @@
     "scanComplete": "Scanned {count} movies",
     "scanFailed": "Scan failed",
     "refreshMetadata": "Refresh Metadata",
-    "editLibrary": "Edit",
+    "editLibrary": "Edit Library",
     "editMetadata": "Edit Metadata",
     "editImage": "Edit Image",
     "removeImage": "Remove Image",
