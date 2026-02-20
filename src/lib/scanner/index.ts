@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { parseNfo } from "./nfo-parser";
 import { probeVideo } from "./probe";
 import { scrapeMovie } from "@/lib/scraper";
+import { parseFolderPaths } from "@/lib/folder-paths";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
@@ -87,9 +88,22 @@ export async function scanLibrary(
 
   if (!library) throw new Error("Library not found");
 
-  const libraryPath = library.folderPath;
-  if (!fs.existsSync(libraryPath)) {
-    throw new Error(`Library path does not exist: ${libraryPath}`);
+  const folderPaths = parseFolderPaths(library.folderPath);
+  if (folderPaths.length === 0) {
+    throw new Error("Library has no folder paths configured");
+  }
+
+  // Validate paths — skip missing ones with a warning instead of failing
+  const validPaths = folderPaths.filter((p) => {
+    if (!fs.existsSync(p)) {
+      console.warn(`Library path does not exist, skipping: ${p}`);
+      return false;
+    }
+    return true;
+  });
+
+  if (validPaths.length === 0) {
+    throw new Error(`No valid library paths found. Checked: ${folderPaths.join(", ")}`);
   }
 
   // Load scraper config if enabled
@@ -101,14 +115,23 @@ export async function scanLibrary(
 
   const metadataDir = path.join(process.cwd(), "data", "metadata", "people");
 
-  const entries = fs.readdirSync(libraryPath, { withFileTypes: true });
-  const dirs = entries.filter((e) => e.isDirectory());
+  // Aggregate all movie directories from all valid paths
+  const dirs: { name: string; fullPath: string }[] = [];
+  for (const folderPath of validPaths) {
+    const entries = fs.readdirSync(folderPath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        dirs.push({ name: entry.name, fullPath: path.join(folderPath, entry.name) });
+      }
+    }
+  }
+
   let scannedCount = 0;
   let lastPctBucket = -1;
 
   for (let i = 0; i < dirs.length; i++) {
     const entry = dirs[i];
-    const movieDir = path.join(libraryPath, entry.name);
+    const movieDir = entry.fullPath;
 
     // Throttled progress: emit at every 5% boundary, plus first and last
     if (onProgress) {

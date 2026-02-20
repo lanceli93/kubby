@@ -4,6 +4,7 @@ import { count } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { v4 as uuid } from "uuid";
 import { scanLibrary } from "@/lib/scanner";
+import { serializeFolderPaths } from "@/lib/folder-paths";
 
 export async function POST(request: Request) {
   // Only allow setup when no users exist
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       id: libraryId,
       name: libraryName,
       type: "movie",
-      folderPath,
+      folderPath: serializeFolderPaths([folderPath]),
     }).run();
 
     // Scan in background, don't block the response

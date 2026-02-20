@@ -5,6 +5,7 @@ import path from "path";
 import { db } from "@/lib/db";
 import { mediaLibraries, movies } from "@/lib/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
+import { parseFolderPaths, serializeFolderPaths } from "@/lib/folder-paths";
 
 // GET /api/libraries
 export async function GET() {
@@ -23,9 +24,10 @@ export async function GET() {
       .from(mediaLibraries)
       .all();
 
-    // For each library, prefer poster.jpg in the library folder; fall back to random fanart
+    // For each library, prefer poster.jpg in the first library folder; fall back to random fanart
     const libraries = rows.map((lib) => {
-      const posterPath = path.join(lib.folderPath, "poster.jpg");
+      const folderPaths = parseFolderPaths(lib.folderPath);
+      const posterPath = path.join(folderPaths[0] ?? lib.folderPath, "poster.jpg");
       if (fs.existsSync(posterPath)) {
         return { ...lib, coverImage: posterPath, hasCustomCover: true };
       }
@@ -45,7 +47,7 @@ export async function GET() {
         .limit(1)
         .get();
 
-      return { ...lib, coverImage: cover?.coverImage ?? null, hasCustomCover: false };
+      return { ...lib, folderPaths, coverImage: cover?.coverImage ?? null, hasCustomCover: false };
     });
 
     return NextResponse.json(libraries);
@@ -59,21 +61,25 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, type = "movie", folderPath, scraperEnabled = false } = body;
+    const { name, type = "movie", folderPaths, folderPath, scraperEnabled = false } = body;
 
-    if (!name || !folderPath) {
+    // Accept either folderPaths array or single folderPath (backward compat)
+    const paths: string[] = Array.isArray(folderPaths) ? folderPaths : folderPath ? [folderPath] : [];
+
+    if (!name || paths.length === 0) {
       return NextResponse.json(
-        { error: "Name and folder path are required" },
+        { error: "Name and at least one folder path are required" },
         { status: 400 }
       );
     }
 
     const id = uuidv4();
+    const serialized = serializeFolderPaths(paths);
     db.insert(mediaLibraries)
-      .values({ id, name, type, folderPath, scraperEnabled: !!scraperEnabled })
+      .values({ id, name, type, folderPath: serialized, scraperEnabled: !!scraperEnabled })
       .run();
 
-    return NextResponse.json({ id, name, type, folderPath, scraperEnabled: !!scraperEnabled }, { status: 201 });
+    return NextResponse.json({ id, name, type, folderPath: serialized, folderPaths: paths, scraperEnabled: !!scraperEnabled }, { status: 201 });
   } catch (error) {
     console.error("Create library error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

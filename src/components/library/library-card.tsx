@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff } from "lucide-react";
+import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff, Plus, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -27,7 +27,7 @@ interface LibraryCardProps {
   id: string;
   name: string;
   type: string;
-  folderPath?: string;
+  folderPaths?: string[];
   scraperEnabled?: boolean;
   movieCount?: number;
   coverImage?: string | null;
@@ -39,14 +39,15 @@ interface LibraryCardProps {
   onRemoveImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, folderPath, scraperEnabled, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState(name);
-  const [editFolderPath, setEditFolderPath] = useState(folderPath ?? "");
+  const [editFolderPaths, setEditFolderPaths] = useState<string[]>(folderPaths ?? []);
+  const [newFolderPath, setNewFolderPath] = useState("");
   const [editScraperEnabled, setEditScraperEnabled] = useState(scraperEnabled ?? false);
   const [editSaving, setEditSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -59,7 +60,7 @@ export function LibraryCard({ id, name, type, folderPath, scraperEnabled, movieC
       await fetch(`/api/libraries/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, folderPath: editFolderPath, scraperEnabled: editScraperEnabled }),
+        body: JSON.stringify({ name: editName, folderPaths: editFolderPaths, scraperEnabled: editScraperEnabled }),
       });
       setEditOpen(false);
       onEditComplete?.();
@@ -200,7 +201,8 @@ export function LibraryCard({ id, name, type, folderPath, scraperEnabled, movieC
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditName(name);
-                  setEditFolderPath(folderPath ?? "");
+                  setEditFolderPaths(folderPaths ?? []);
+                  setNewFolderPath("");
                   setEditScraperEnabled(scraperEnabled ?? false);
                   setEditOpen(true);
                 }}
@@ -260,7 +262,7 @@ export function LibraryCard({ id, name, type, folderPath, scraperEnabled, movieC
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent
           className="border-white/[0.06] bg-card sm:max-w-[440px]"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onClick={(e) => { e.stopPropagation(); }}
         >
           <DialogHeader>
             <DialogTitle>{tHome("editLibrary")}</DialogTitle>
@@ -280,14 +282,54 @@ export function LibraryCard({ id, name, type, folderPath, scraperEnabled, movieC
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{tHome("folderPath")}</label>
-              <input
-                type="text"
-                value={editFolderPath}
-                onChange={(e) => setEditFolderPath(e.target.value)}
-                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
-                required
-              />
+              <label className="text-[13px] font-medium text-muted-foreground">{tHome("folderPaths")}</label>
+              <div className="flex flex-col gap-2">
+                {editFolderPaths.map((p, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2 font-mono text-sm text-foreground">
+                      {p}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={editFolderPaths.length <= 1}
+                      onClick={() => setEditFolderPaths(editFolderPaths.filter((_, i) => i !== idx))}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newFolderPath}
+                    onChange={(e) => setNewFolderPath(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newFolderPath.trim()) {
+                        e.preventDefault();
+                        setEditFolderPaths([...editFolderPaths, newFolderPath.trim()]);
+                        setNewFolderPath("");
+                      }
+                    }}
+                    placeholder="/path/to/media"
+                    className="h-10 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={!newFolderPath.trim()}
+                    onClick={() => {
+                      if (newFolderPath.trim()) {
+                        setEditFolderPaths([...editFolderPaths, newFolderPath.trim()]);
+                        setNewFolderPath("");
+                      }
+                    }}
+                    className="flex h-10 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {tHome("addFolder")}
+                  </button>
+                </div>
+              </div>
             </div>
             <label className="flex items-center gap-3 cursor-pointer">
               <input

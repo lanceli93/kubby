@@ -95,7 +95,10 @@
     "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。",
     "libraryName": "媒体库名称",
     "folderPath": "文件夹路径",
-    "enableScraper": "启用 TMDB 刮削"
+    "enableScraper": "启用 TMDB 刮削",
+    "folderPaths": "文件夹路径",
+    "addFolder": "添加文件夹",
+    "removeFolder": "移除文件夹"
   },
   "settings": {
     "settings": "设置",

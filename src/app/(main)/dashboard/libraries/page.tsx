@@ -17,7 +17,7 @@ interface Library {
   id: string;
   name: string;
   type: string;
-  folderPath: string;
+  folderPaths: string[];
   movieCount?: number;
   lastScannedAt?: string;
 }
@@ -27,7 +27,8 @@ export default function LibrariesPage() {
   const [open, setOpen] = useState(false);
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [name, setName] = useState("");
-  const [folderPath, setFolderPath] = useState("");
+  const [folderPaths, setFolderPaths] = useState<string[]>([]);
+  const [newFolderPath, setNewFolderPath] = useState("");
   const [type, setType] = useState("movie");
   const [scraperEnabled, setScraperEnabled] = useState(false);
   const [tmdbConfigured, setTmdbConfigured] = useState<boolean | null>(null);
@@ -51,13 +52,14 @@ export default function LibrariesPage() {
       fetch("/api/libraries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, folderPath, scraperEnabled }),
+        body: JSON.stringify({ name, type, folderPaths, scraperEnabled }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       setOpen(false);
       setName("");
-      setFolderPath("");
+      setFolderPaths([]);
+      setNewFolderPath("");
       setScraperEnabled(false);
     },
   });
@@ -163,30 +165,69 @@ export default function LibrariesPage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-muted-foreground">
-                  Folder Path
+                  Folder Paths
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={folderPath}
-                    onChange={(e) => setFolderPath(e.target.value)}
-                    placeholder="/media/movies"
-                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFolderPickerOpen(true)}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-                  >
-                    <Folder className="h-4 w-4" />
-                  </button>
+                <div className="flex flex-col gap-2">
+                  {folderPaths.map((p, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground">
+                        {p}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={folderPaths.length <= 1}
+                        onClick={() => setFolderPaths(folderPaths.filter((_, i) => i !== idx))}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newFolderPath}
+                      onChange={(e) => setNewFolderPath(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newFolderPath.trim()) {
+                          e.preventDefault();
+                          setFolderPaths([...folderPaths, newFolderPath.trim()]);
+                          setNewFolderPath("");
+                        }
+                      }}
+                      placeholder="/media/movies"
+                      className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFolderPickerOpen(true)}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                    >
+                      <Folder className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!newFolderPath.trim()}
+                      onClick={() => {
+                        if (newFolderPath.trim()) {
+                          setFolderPaths([...folderPaths, newFolderPath.trim()]);
+                          setNewFolderPath("");
+                        }
+                      }}
+                      className="flex h-11 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3.5 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add
+                    </button>
+                  </div>
                 </div>
               </div>
               <FolderPicker
                 open={folderPickerOpen}
                 onOpenChange={setFolderPickerOpen}
-                onSelect={(path) => setFolderPath(path)}
+                onSelect={(p) => {
+                  setFolderPaths([...folderPaths, p]);
+                }}
               />
               {/* Metadata downloaders section */}
               <div className="flex flex-col gap-2">
@@ -274,9 +315,13 @@ export default function LibrariesPage() {
                 {lib.type}
               </span>
             </div>
-            <p className="font-mono text-sm text-muted-foreground">
-              {lib.folderPath}
-            </p>
+            <div className="flex flex-col gap-0.5">
+              {lib.folderPaths.map((p, idx) => (
+                <p key={idx} className="font-mono text-sm text-muted-foreground">
+                  {p}
+                </p>
+              ))}
+            </div>
             <p className="text-sm text-[#666680]">
               {lib.movieCount ?? 0} movies
               {lib.lastScannedAt && ` · Last scanned: ${lib.lastScannedAt}`}

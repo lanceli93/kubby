@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mediaLibraries } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { parseFolderPaths, serializeFolderPaths } from "@/lib/folder-paths";
 
 // GET /api/libraries/[id]
 export async function GET(
@@ -27,7 +28,10 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(library);
+    return NextResponse.json({
+      ...library,
+      folderPaths: parseFolderPaths(library.folderPath),
+    });
   } catch (error) {
     console.error("Get library error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -42,7 +46,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { name, folderPath, scraperEnabled } = body;
+    const { name, folderPaths, folderPath, scraperEnabled } = body;
 
     const existing = db
       .select()
@@ -56,7 +60,11 @@ export async function PUT(
 
     const updates: Record<string, unknown> = {};
     if (name !== undefined) updates.name = name;
-    if (folderPath !== undefined) updates.folderPath = folderPath;
+    if (Array.isArray(folderPaths)) {
+      updates.folderPath = serializeFolderPaths(folderPaths);
+    } else if (folderPath !== undefined) {
+      updates.folderPath = folderPath;
+    }
     if (scraperEnabled !== undefined) updates.scraperEnabled = scraperEnabled;
 
     if (Object.keys(updates).length > 0) {

@@ -4,6 +4,7 @@ import { mediaLibraries } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
+import { parseFolderPaths } from "@/lib/folder-paths";
 
 // POST /api/libraries/[id]/cover — upload a custom cover image
 export async function POST(
@@ -30,7 +31,8 @@ export async function POST(
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const destPath = path.join(library.folderPath, "poster.jpg");
+    const folderPaths = parseFolderPaths(library.folderPath);
+    const destPath = path.join(folderPaths[0] ?? library.folderPath, "poster.jpg");
     fs.writeFileSync(destPath, buffer);
 
     return NextResponse.json({ coverImage: destPath });
@@ -57,7 +59,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Library not found" }, { status: 404 });
     }
 
-    const posterPath = path.join(library.folderPath, "poster.jpg");
+    const folderPaths = parseFolderPaths(library.folderPath);
+    const posterPath = path.join(folderPaths[0] ?? library.folderPath, "poster.jpg");
     if (fs.existsSync(posterPath)) {
       fs.unlinkSync(posterPath);
     }

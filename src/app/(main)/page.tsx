@@ -26,7 +26,7 @@ interface Library {
   id: string;
   name: string;
   type: string;
-  folderPath?: string;
+  folderPaths?: string[];
   scraperEnabled?: boolean;
   movieCount?: number;
   coverImage?: string | null;
@@ -232,7 +232,7 @@ export default function HomePage() {
                     id={lib.id}
                     name={lib.name}
                     type={lib.type}
-                    folderPath={lib.folderPath}
+                    folderPaths={lib.folderPaths}
                     scraperEnabled={lib.scraperEnabled}
                     movieCount={lib.movieCount}
                     coverImage={lib.coverImage}

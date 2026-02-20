@@ -95,7 +95,10 @@
     "confirmDeleteLibrary": "Are you sure you want to delete this library? All movies in it will be removed.",
     "libraryName": "Library Name",
     "folderPath": "Folder Path",
-    "enableScraper": "Enable TMDB Scraper"
+    "enableScraper": "Enable TMDB Scraper",
+    "folderPaths": "Folder Paths",
+    "addFolder": "Add Folder",
+    "removeFolder": "Remove Folder"
   },
   "settings": {
     "settings": "Settings",
