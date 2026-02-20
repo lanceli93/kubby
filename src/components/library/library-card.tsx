@@ -117,6 +117,11 @@ export function LibraryCard({ id, name, type, movieCount, coverImage, hasCustomC
           </div>
         )}
 
+        {/* Library name overlay */}
+        <div className="absolute inset-0 z-[2] flex items-center justify-center bg-black/40 pointer-events-none">
+          <h2 className="text-2xl font-bold text-white drop-shadow-lg px-4 text-center leading-tight">{name}</h2>
+        </div>
+
         {/* Scanning overlay with progress */}
         {scanning && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2.5 bg-black/60 px-8">
