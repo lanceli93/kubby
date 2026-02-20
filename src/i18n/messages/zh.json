@@ -259,7 +259,13 @@
     "showPersonTierBadge": "显示评级标记",
     "showPersonTierBadgeDesc": "在人物卡片缩略图上显示评级标记（SSS、S、A 等）",
     "saved": "设置已保存",
-    "failedToSave": "保存设置失败"
+    "failedToSave": "保存设置失败",
+    "badgeEnabled": "已启用",
+    "badgeDisabled": "已禁用",
+    "viewRules": "查看规则",
+    "hideRules": "隐藏规则",
+    "resolutionRulesTitle": "分辨率由视频宽度决定：",
+    "tierRulesTitle": "评级由个人评分决定："
   },
   "personalMetadata": {
     "title": "个人元数据设置",

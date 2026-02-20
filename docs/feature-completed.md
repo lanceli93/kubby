@@ -231,3 +231,17 @@
 
 ### Header filter label
 - When on `/movies` with `genre`, `tag`, or `studio` param, the header title shows "Library Name — FilterValue"
+
+## 2026-02-20: Card Badge Settings — Preview Cards & Expandable Rule Descriptions
+
+### Badge preview cards
+- Movie Card Preview: abstract poster placeholders (gradient + film icon) at 120×180, showing "Enabled" (with active badges) and "Disabled" (no badges) side by side
+- Person Card Preview: abstract poster placeholders (gradient + user icon) showing "Enabled" (with tier "S" badge) and "Disabled" side by side
+- Previews react to toggle state: toggling resolution/rating/tier off removes that specific badge from the "Enabled" preview in real-time
+
+### Expandable rule descriptions
+- Resolution badge rules: clickable "View rules" chevron expands to show all width→label thresholds (8K through SD) in a two-column grid
+- Tier badge rules: clickable "View rules" chevron expands to show all rating→tier thresholds (SSS through E) with each tier label styled in its actual color from `getTierColor()`
+
+### i18n (EN + ZH)
+- New `cardBadges` keys: badgeEnabled, badgeDisabled, viewRules, hideRules, resolutionRulesTitle, tierRulesTitle
