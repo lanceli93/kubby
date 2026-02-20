@@ -260,8 +260,6 @@
     "showPersonTierBadgeDesc": "Display the tier badge (SSS, S, A, etc.) on person card thumbnails",
     "saved": "Settings saved",
     "failedToSave": "Failed to save settings",
-    "badgeEnabled": "Enabled",
-    "badgeDisabled": "Disabled",
     "viewRules": "View rules",
     "hideRules": "Hide rules",
     "resolutionRulesTitle": "Resolution is determined by video width:",

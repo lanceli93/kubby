@@ -71,35 +71,34 @@ function PosterPlaceholder({
 function MovieCardPreview({
   showResolution,
   showRating,
-  label,
+  resolutionLabel,
+  ratingValue,
 }: {
   showResolution: boolean;
   showRating: boolean;
-  label: string;
+  resolutionLabel: string;
+  ratingValue: number;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="relative" style={{ width: 120, height: 180 }}>
-        <PosterPlaceholder icon="movie" className="h-full w-full" />
+    <div className="relative" style={{ width: 120, height: 180 }}>
+      <PosterPlaceholder icon="movie" className="h-full w-full" />
 
-        {/* Resolution badge — top-left */}
-        {showResolution && (
-          <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
-            FHD
-          </div>
-        )}
+      {/* Resolution badge — top-left */}
+      {showResolution && (
+        <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
+          {resolutionLabel}
+        </div>
+      )}
 
-        {/* Rating badge — top-right */}
-        {showRating && (
-          <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
-            <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
-            <span className="text-[11px] font-medium text-[var(--gold)]">
-              8.5
-            </span>
-          </div>
-        )}
-      </div>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      {/* Rating badge — top-right */}
+      {showRating && (
+        <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+          <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
+          <span className="text-[11px] font-medium text-[var(--gold)]">
+            {ratingValue.toFixed(1)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -107,27 +106,24 @@ function MovieCardPreview({
 /* ── Person card preview ── */
 function PersonCardPreview({
   showTier,
-  label,
+  rating,
 }: {
   showTier: boolean;
-  label: string;
+  rating: number;
 }) {
-  const tier = getTier(8.5); // "S"
+  const tier = getTier(rating);
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="relative" style={{ width: 120, height: 180 }}>
-        <PosterPlaceholder icon="person" className="h-full w-full" />
+    <div className="relative" style={{ width: 120, height: 180 }}>
+      <PosterPlaceholder icon="person" className="h-full w-full" />
 
-        {/* Tier badge — top-right */}
-        {showTier && (
-          <div
-            className={`absolute right-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}
-          >
-            {tier}
-          </div>
-        )}
-      </div>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      {/* Tier badge — top-right */}
+      {showTier && (
+        <div
+          className={`absolute right-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}
+        >
+          {tier}
+        </div>
+      )}
     </div>
   );
 }
@@ -240,12 +236,14 @@ export default function CardBadgesPage() {
           <MovieCardPreview
             showResolution={showResolutionBadge}
             showRating={showMovieBadge}
-            label={t("badgeEnabled")}
+            resolutionLabel="4K"
+            ratingValue={9.5}
           />
           <MovieCardPreview
-            showResolution={false}
-            showRating={false}
-            label={t("badgeDisabled")}
+            showResolution={showResolutionBadge}
+            showRating={showMovieBadge}
+            resolutionLabel="FHD"
+            ratingValue={8.5}
           />
         </div>
 
@@ -334,11 +332,11 @@ export default function CardBadgesPage() {
         <div className="flex items-center justify-center gap-8 rounded-lg border border-white/[0.06] bg-white/[0.02] py-5">
           <PersonCardPreview
             showTier={showPersonBadge}
-            label={t("badgeEnabled")}
+            rating={9.5}
           />
           <PersonCardPreview
-            showTier={false}
-            label={t("badgeDisabled")}
+            showTier={showPersonBadge}
+            rating={8.5}
           />
         </div>
 
