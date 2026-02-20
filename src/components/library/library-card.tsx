@@ -271,7 +271,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
           </DialogHeader>
           <form
             onSubmit={(e) => { e.preventDefault(); handleEditSave(); }}
-            className="flex flex-col gap-4 pt-2"
+            className="flex flex-col gap-4 pt-2 overflow-hidden"
           >
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-muted-foreground">{tHome("libraryName")}</label>
@@ -340,10 +340,9 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                         setNewFolderPath("");
                       }
                     }}
-                    className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
                   >
-                    <Plus className="h-3.5 w-3.5" />
-                    {tHome("addFolder")}
+                    <Plus className="h-4 w-4" />
                   </button>
                 </div>
               </div>

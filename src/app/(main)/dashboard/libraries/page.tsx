@@ -130,7 +130,7 @@ export default function LibrariesPage() {
                 e.preventDefault();
                 createLibrary.mutate();
               }}
-              className="flex flex-col gap-5 pt-4"
+              className="flex flex-col gap-5 pt-4 overflow-hidden"
             >
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-muted-foreground">
