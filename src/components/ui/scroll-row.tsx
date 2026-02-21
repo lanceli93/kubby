@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ScrollRowProps {
   children: ReactNode;
-  title?: string;
+  title?: ReactNode;
 }
 
 export function ScrollRow({ children, title }: ScrollRowProps) {

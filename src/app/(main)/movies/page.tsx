@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useRef, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
@@ -140,9 +141,18 @@ function MovieBrowseContent() {
     );
   }
 
+  // Derive active tab: if URL has genre/tag/studio filter, force "movies" tab
+  const urlHasFilter = searchParams.get("genre") || searchParams.get("tag") || searchParams.get("studio");
+  const [activeTab, setActiveTab] = useState(urlHasFilter ? "movies" : "movies");
+
+  // Switch to "movies" tab when filter params appear in URL
+  useEffect(() => {
+    if (urlHasFilter) setActiveTab("movies");
+  }, [urlHasFilter]);
+
   return (
     <div className="flex h-full flex-col">
-      <Tabs defaultValue="movies" className="flex h-full flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
         <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
             <TabsTrigger value="movies">{t("movies")}</TabsTrigger>
@@ -761,7 +771,7 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
     <div className="flex flex-col gap-8 py-6">
       {genreGroups.map(([genre, movies]) => (
         <section key={genre} className="flex flex-col gap-3">
-          <ScrollRow title={genre}>
+          <ScrollRow title={<Link href={`/movies?libraryId=${libraryId}&genre=${encodeURIComponent(genre)}`} className="hover:text-white hover:underline transition-colors">{genre}</Link>}>
             {movies.map((movie) => (
               <MovieCard
                 key={movie.id}
