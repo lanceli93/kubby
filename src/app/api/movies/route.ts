@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { db } from "@/lib/db";
 import { movies, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
-import { eq, desc, asc, like, sql, and } from "drizzle-orm";
+import { eq, desc, asc, like, sql, and, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 const stampPath = (p: string | null) => {
@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "100", 10);
     const exclude = searchParams.get("exclude");
     const filter = searchParams.get("filter");
+    const offsetParam = searchParams.get("offset");
+    const offset = offsetParam !== null ? parseInt(offsetParam, 10) : null;
 
     const session = await auth();
     const userId = session?.user?.id;
@@ -259,9 +261,13 @@ export async function GET(request: NextRequest) {
       baseQuery = baseQuery.where(and(...conditions));
     }
 
-    const results = rawOrderClause
-      ? baseQuery.orderBy(rawOrderClause).limit(limit).all()
-      : baseQuery.orderBy(orderClause!).limit(limit).all();
+    const pageLimit = offset !== null ? 30 : limit;
+
+    let orderedQuery = rawOrderClause
+      ? baseQuery.orderBy(rawOrderClause)
+      : baseQuery.orderBy(orderClause!);
+
+    const results = orderedQuery.limit(pageLimit).offset(offset ?? 0).all();
 
     // Resolve relative paths to absolute
     const movieResults = results.map((r) => ({
@@ -300,6 +306,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         movies: movieResults,
         people: peopleResults.map((p) => ({ ...p, photoPath: stampPath(p.photoPath) })),
+      });
+    }
+
+    if (offset !== null) {
+      // Build a count query with the same conditions
+      let countQuery = db
+        .select({ total: count() })
+        .from(movies)
+        .leftJoin(
+          userMovieData,
+          and(
+            eq(userMovieData.movieId, movies.id),
+            userId ? eq(userMovieData.userId, userId) : sql`0`
+          )
+        )
+        .$dynamic();
+
+      if (personId) {
+        countQuery = countQuery.innerJoin(
+          moviePeople,
+          and(eq(moviePeople.movieId, movies.id), eq(moviePeople.personId, personId))
+        );
+      }
+
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions));
+      }
+
+      const [{ total: totalCount }] = countQuery.all();
+
+      return NextResponse.json({
+        items: movieResults,
+        totalCount,
+        offset,
+        limit: pageLimit,
+        hasMore: offset + pageLimit < totalCount,
       });
     }
 

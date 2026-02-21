@@ -3,7 +3,6 @@ import fs from "fs";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { getTier } from "@/lib/tier";
 
 const stampPath = (p: string | null) => {
   if (!p) return null;
@@ -23,6 +22,8 @@ export async function GET(request: NextRequest) {
     const tierParam = searchParams.get("tier");
     const sortDimension = searchParams.get("sortDimension");
     const limit = parseInt(searchParams.get("limit") || "200", 10);
+    const offsetParam = searchParams.get("offset");
+    const offset = offsetParam !== null ? parseInt(offsetParam, 10) : null;
 
     if (!libraryId) {
       return NextResponse.json({ error: "libraryId is required" }, { status: 400 });
@@ -52,6 +53,39 @@ export async function GET(request: NextRequest) {
       if (tags.length > 0) {
         const tagConds = tags.map((t) => sql`p.tags LIKE ${'%"' + t + '"%'}`);
         conditions.push(sql`(${sql.join(tagConds, sql` OR `)})`);
+      }
+    }
+
+    // Tier filtering in SQL (when offset-based pagination is used)
+    if (tierParam) {
+      const tiers = tierParam.split(",").map((t) => t.trim()).filter(Boolean);
+      const includeUnrated = tiers.includes("unrated");
+      const tierNames = tiers.filter((t) => t !== "unrated");
+
+      const tierConditions: ReturnType<typeof sql>[] = [];
+
+      for (const tier of tierNames) {
+        switch (tier) {
+          case "SSS": tierConditions.push(sql`upd.personal_rating >= 9.5`); break;
+          case "SS": tierConditions.push(sql`(upd.personal_rating >= 9.0 AND upd.personal_rating < 9.5)`); break;
+          case "S": tierConditions.push(sql`(upd.personal_rating >= 8.5 AND upd.personal_rating < 9.0)`); break;
+          case "A": tierConditions.push(sql`(upd.personal_rating >= 8.0 AND upd.personal_rating < 8.5)`); break;
+          case "B": tierConditions.push(sql`(upd.personal_rating >= 7.0 AND upd.personal_rating < 8.0)`); break;
+          case "C": tierConditions.push(sql`(upd.personal_rating >= 6.0 AND upd.personal_rating < 7.0)`); break;
+          case "D": tierConditions.push(sql`(upd.personal_rating >= 5.0 AND upd.personal_rating < 6.0)`); break;
+          case "E": tierConditions.push(sql`(upd.personal_rating > 0 AND upd.personal_rating < 5.0)`); break;
+        }
+      }
+
+      if (includeUnrated) {
+        tierConditions.push(sql`(upd.personal_rating IS NULL OR upd.personal_rating <= 0)`);
+      }
+
+      if (tierConditions.length > 0) {
+        conditions.push(sql`(${sql.join(tierConditions, sql` OR `)})`);
+      } else {
+        // Tier param provided but no valid tiers matched — return empty
+        conditions.push(sql`0`);
       }
     }
 
@@ -94,6 +128,9 @@ export async function GET(request: NextRequest) {
       ? sql`LEFT JOIN user_person_data upd ON upd.person_id = p.id AND upd.user_id = ${userId}`
       : sql`LEFT JOIN user_person_data upd ON 0`;
 
+    const pageLimit = offset !== null ? 50 : limit;
+    const offsetValue = offset ?? 0;
+
     const results = db.all<{
       id: string;
       name: string;
@@ -120,11 +157,12 @@ export async function GET(request: NextRequest) {
       ${whereClause}
       GROUP BY p.id
       ${orderClause}
-      LIMIT ${limit}
+      LIMIT ${pageLimit}
+      OFFSET ${offsetValue}
     `);
 
-    // Map to camelCase and apply tier filter
-    let filtered = results.map((r) => ({
+    // Map to camelCase
+    const filtered = results.map((r) => ({
       id: r.id,
       name: r.name,
       type: r.type,
@@ -135,18 +173,27 @@ export async function GET(request: NextRequest) {
       movieCount: r.movie_count,
     }));
 
-    if (tierParam) {
-      const tiers = tierParam.split(",").map((t) => t.trim()).filter(Boolean);
-      const includeUnrated = tiers.includes("unrated");
-      const tierNames = tiers.filter((t) => t !== "unrated");
+    if (offset !== null) {
+      // Count query with same conditions
+      const countResult = db.all<{ total: number }>(sql`
+        SELECT COUNT(*) as total FROM (
+          SELECT p.id
+          FROM people p
+          INNER JOIN movie_people mp ON mp.person_id = p.id
+          INNER JOIN movies m ON m.id = mp.movie_id
+          ${userJoin}
+          ${whereClause}
+          GROUP BY p.id
+        )
+      `);
+      const totalCount = countResult[0]?.total ?? 0;
 
-      filtered = filtered.filter((p) => {
-        if (p.personalRating == null || p.personalRating <= 0) {
-          return includeUnrated;
-        }
-        if (tierNames.length === 0) return false;
-        const personTier = getTier(p.personalRating);
-        return tierNames.includes(personTier);
+      return NextResponse.json({
+        items: filtered,
+        totalCount,
+        offset: offsetValue,
+        limit: pageLimit,
+        hasMore: offsetValue + pageLimit < totalCount,
       });
     }
 
