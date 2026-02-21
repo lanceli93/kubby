@@ -177,6 +177,9 @@ export async function GET(request: NextRequest) {
       case "rating":
         orderClause = orderFn(movies.communityRating);
         break;
+      case "personalRating":
+        orderClause = orderFn(userMovieData.personalRating);
+        break;
       case "runtime":
         orderClause = orderFn(movies.runtimeMinutes);
         break;

@@ -20,6 +20,7 @@ import {
   ChevronRight,
   X,
   Hash,
+  UserRound,
 } from "lucide-react";
 
 interface Movie {
@@ -104,10 +105,8 @@ function MovieBrowseContent() {
   // Person filmography mode — no tabs, just a movie grid
   if (personId) {
     return (
-      <div className="flex h-full flex-col">
-        <div className="flex-1 overflow-auto px-12">
+      <div className="px-12">
           <PersonMoviesContent personId={personId} />
-        </div>
       </div>
     );
   }
@@ -130,7 +129,7 @@ function MovieBrowseContent() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       <Tabs defaultValue="movies">
         <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
@@ -141,7 +140,7 @@ function MovieBrowseContent() {
           </TabsList>
         </div>
 
-        <div className="flex-1 overflow-auto px-12">
+        <div className="px-12">
           <TabsContent value="movies">
             <MoviesTabContent libraryId={libraryId} />
           </TabsContent>
@@ -191,6 +190,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const sortOptions = [
     { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
     { value: "rating", label: t("rating"), icon: Star },
+    { value: "personalRating", label: t("personalRating"), icon: UserRound },
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
     { value: "runtime", label: t("runtime"), icon: Timer },
@@ -1102,6 +1102,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
   const sortOptions = [
     { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
     { value: "rating", label: t("rating"), icon: Star },
+    { value: "personalRating", label: t("personalRating"), icon: UserRound },
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
     { value: "runtime", label: t("runtime"), icon: Timer },
