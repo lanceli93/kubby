@@ -22,6 +22,7 @@ import {
   Hash,
   UserRound,
 } from "lucide-react";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface Movie {
   id: string;
@@ -170,8 +171,10 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const urlStudio = searchParams.get("studio") || "";
   const [sort, setSort] = useState("dateAdded");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortDimension, setSortDimension] = useState<string | null>(null);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [personalRatingExpanded, setPersonalRatingExpanded] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(() =>
     urlGenre ? [urlGenre] : []
   );
@@ -186,6 +189,8 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const filterRef = useRef<HTMLDivElement>(null);
   const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
     useMovieMutations();
+  const { data: prefs } = useUserPreferences();
+  const movieDimensions = prefs?.movieRatingDimensions ?? [];
 
   const sortOptions = [
     { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
@@ -219,12 +224,13 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   });
 
   const { data: movies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", { libraryId, sort, sortOrder, selectedGenres, selectedTags, selectedYears, urlTag, urlStudio }],
+    queryKey: ["movies", { libraryId, sort, sortOrder, sortDimension, selectedGenres, selectedTags, selectedYears, urlTag, urlStudio }],
     queryFn: () => {
       const params = new URLSearchParams();
       params.set("libraryId", libraryId);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
+      if (sortDimension) params.set("sortDimension", sortDimension);
       if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
       if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
       if (selectedYears.length > 0) params.set("years", selectedYears.join(","));
@@ -281,12 +287,80 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
-                const isActive = sort === option.value;
+                const isActive = sort === option.value && !sortDimension;
+                const hasDimensions = option.value === "personalRating" && movieDimensions.length > 0;
+                const isGroupActive = option.value === "personalRating" && sort === "personalRating";
+
+                if (hasDimensions) {
+                  return (
+                    <div key={option.value}>
+                      <button
+                        onClick={() => setPersonalRatingExpanded(!personalRatingExpanded)}
+                        className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          isGroupActive
+                            ? "bg-primary/[0.08] text-foreground"
+                            : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <Icon
+                          className={`h-4 w-4 ${
+                            isGroupActive ? "text-primary" : "text-[#666680]"
+                          }`}
+                        />
+                        {option.label}
+                        <span className="ml-auto">
+                          {personalRatingExpanded ? (
+                            <ChevronDown className="h-3 w-3 text-[#666680]" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3 text-[#666680]" />
+                          )}
+                        </span>
+                      </button>
+                      {personalRatingExpanded && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSort("personalRating");
+                              setSortDimension(null);
+                              setSortOrder("desc");
+                            }}
+                            className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                              sort === "personalRating" && !sortDimension
+                                ? "bg-primary/[0.08] text-foreground"
+                                : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                            }`}
+                          >
+                            {t("overall")}
+                          </button>
+                          {movieDimensions.map((dim) => (
+                            <button
+                              key={dim}
+                              onClick={() => {
+                                setSort("personalRating");
+                                setSortDimension(dim);
+                                setSortOrder("desc");
+                              }}
+                              className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                                sort === "personalRating" && sortDimension === dim
+                                  ? "bg-primary/[0.08] text-foreground"
+                                  : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              {dim}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={option.value}
                     onClick={() => {
                       setSort(option.value);
+                      setSortDimension(null);
                     }}
                     className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
                       isActive
@@ -699,8 +773,10 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
   const t = useTranslations("movies");
   const [sort, setSort] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortDimension, setSortDimension] = useState<string | null>(null);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [personalRatingExpanded, setPersonalRatingExpanded] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
@@ -709,6 +785,8 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
   const [tiersExpanded, setTiersExpanded] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
+  const { data: prefs } = useUserPreferences();
+  const personDimensions = prefs?.personRatingDimensions ?? [];
 
   const sortOptions = [
     { value: "name", label: t("nameAZ"), icon: ArrowDownAZ },
@@ -738,12 +816,13 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
   });
 
   const { data: actors = [] } = useQuery<PersonItem[]>({
-    queryKey: ["people", { libraryId, sort, sortOrder, selectedTypes, selectedTags, selectedTiers }],
+    queryKey: ["people", { libraryId, sort, sortOrder, sortDimension, selectedTypes, selectedTags, selectedTiers }],
     queryFn: () => {
       const params = new URLSearchParams();
       params.set("libraryId", libraryId);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
+      if (sortDimension) params.set("sortDimension", sortDimension);
       if (selectedTypes.length > 0) params.set("types", selectedTypes.join(","));
       if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
       if (selectedTiers.length > 0) params.set("tier", selectedTiers.join(","));
@@ -799,12 +878,80 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
             <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
-                const isActive = sort === option.value;
+                const isActive = sort === option.value && !sortDimension;
+                const hasDimensions = option.value === "personalRating" && personDimensions.length > 0;
+                const isGroupActive = option.value === "personalRating" && sort === "personalRating";
+
+                if (hasDimensions) {
+                  return (
+                    <div key={option.value}>
+                      <button
+                        onClick={() => setPersonalRatingExpanded(!personalRatingExpanded)}
+                        className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          isGroupActive
+                            ? "bg-primary/[0.08] text-foreground"
+                            : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <Icon
+                          className={`h-4 w-4 ${
+                            isGroupActive ? "text-primary" : "text-[#666680]"
+                          }`}
+                        />
+                        {option.label}
+                        <span className="ml-auto">
+                          {personalRatingExpanded ? (
+                            <ChevronDown className="h-3 w-3 text-[#666680]" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3 text-[#666680]" />
+                          )}
+                        </span>
+                      </button>
+                      {personalRatingExpanded && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSort("personalRating");
+                              setSortDimension(null);
+                              setSortOrder("desc");
+                            }}
+                            className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                              sort === "personalRating" && !sortDimension
+                                ? "bg-primary/[0.08] text-foreground"
+                                : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                            }`}
+                          >
+                            {t("overall")}
+                          </button>
+                          {personDimensions.map((dim) => (
+                            <button
+                              key={dim}
+                              onClick={() => {
+                                setSort("personalRating");
+                                setSortDimension(dim);
+                                setSortOrder("desc");
+                              }}
+                              className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                                sort === "personalRating" && sortDimension === dim
+                                  ? "bg-primary/[0.08] text-foreground"
+                                  : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              {dim}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={option.value}
                     onClick={() => {
                       setSort(option.value);
+                      setSortDimension(null);
                       setSortOrder(option.value === "name" ? "asc" : "desc");
                     }}
                     className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
@@ -1088,8 +1235,10 @@ function PersonMoviesContent({ personId }: { personId: string }) {
   const t = useTranslations("movies");
   const [sort, setSort] = useState("releaseDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortDimension, setSortDimension] = useState<string | null>(null);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [personalRatingExpanded, setPersonalRatingExpanded] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [genresExpanded, setGenresExpanded] = useState(false);
@@ -1098,6 +1247,8 @@ function PersonMoviesContent({ personId }: { personId: string }) {
   const filterRef = useRef<HTMLDivElement>(null);
   const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
     useMovieMutations();
+  const { data: prefs } = useUserPreferences();
+  const movieDimensions = prefs?.movieRatingDimensions ?? [];
 
   const sortOptions = [
     { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
@@ -1122,9 +1273,17 @@ function PersonMoviesContent({ personId }: { personId: string }) {
   }, []);
 
   const { data: allMovies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", { personId, sort, sortOrder }],
-    queryFn: () =>
-      fetch(`/api/movies?personId=${personId}&sort=${sort}&sortOrder=${sortOrder}&includeGenres=true&limit=500`).then((r) => r.json()),
+    queryKey: ["movies", { personId, sort, sortOrder, sortDimension }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("personId", personId);
+      params.set("sort", sort);
+      params.set("sortOrder", sortOrder);
+      params.set("includeGenres", "true");
+      params.set("limit", "500");
+      if (sortDimension) params.set("sortDimension", sortDimension);
+      return fetch(`/api/movies?${params}`).then((r) => r.json());
+    },
   });
 
   // Compute filter options from loaded movies
@@ -1196,11 +1355,81 @@ function PersonMoviesContent({ personId }: { personId: string }) {
             <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
-                const isActive = sort === option.value;
+                const isActive = sort === option.value && !sortDimension;
+                const hasDimensions = option.value === "personalRating" && movieDimensions.length > 0;
+                const isGroupActive = option.value === "personalRating" && sort === "personalRating";
+
+                if (hasDimensions) {
+                  return (
+                    <div key={option.value}>
+                      <button
+                        onClick={() => setPersonalRatingExpanded(!personalRatingExpanded)}
+                        className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          isGroupActive
+                            ? "bg-primary/[0.08] text-foreground"
+                            : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <Icon
+                          className={`h-4 w-4 ${
+                            isGroupActive ? "text-primary" : "text-[#666680]"
+                          }`}
+                        />
+                        {option.label}
+                        <span className="ml-auto">
+                          {personalRatingExpanded ? (
+                            <ChevronDown className="h-3 w-3 text-[#666680]" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3 text-[#666680]" />
+                          )}
+                        </span>
+                      </button>
+                      {personalRatingExpanded && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSort("personalRating");
+                              setSortDimension(null);
+                              setSortOrder("desc");
+                            }}
+                            className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                              sort === "personalRating" && !sortDimension
+                                ? "bg-primary/[0.08] text-foreground"
+                                : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                            }`}
+                          >
+                            {t("overall")}
+                          </button>
+                          {movieDimensions.map((dim) => (
+                            <button
+                              key={dim}
+                              onClick={() => {
+                                setSort("personalRating");
+                                setSortDimension(dim);
+                                setSortOrder("desc");
+                              }}
+                              className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                                sort === "personalRating" && sortDimension === dim
+                                  ? "bg-primary/[0.08] text-foreground"
+                                  : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              {dim}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={option.value}
-                    onClick={() => setSort(option.value)}
+                    onClick={() => {
+                      setSort(option.value);
+                      setSortDimension(null);
+                    }}
                     className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
                       isActive
                         ? "bg-primary/[0.08] text-foreground"

@@ -196,7 +196,8 @@
     "type": "Type",
     "allTypes": "All Types",
     "unrated": "Unrated",
-    "tier": "Tier"
+    "tier": "Tier",
+    "overall": "Overall"
   },
   "search": {
     "search": "Search",

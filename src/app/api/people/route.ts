@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const typesParam = searchParams.get("types");
     const tagsParam = searchParams.get("tags");
     const tierParam = searchParams.get("tier");
+    const sortDimension = searchParams.get("sortDimension");
     const limit = parseInt(searchParams.get("limit") || "200", 10);
 
     if (!libraryId) {
@@ -54,9 +55,16 @@ export async function GET(request: NextRequest) {
     let orderClause: ReturnType<typeof sql>;
     switch (sort) {
       case "personalRating":
-        orderClause = sortOrder === "asc"
-          ? sql`ORDER BY COALESCE(upd.personal_rating, -1) ASC`
-          : sql`ORDER BY COALESCE(upd.personal_rating, -1) DESC`;
+        if (sortDimension) {
+          const jsonPath = `$."${sortDimension}"`;
+          orderClause = sortOrder === "asc"
+            ? sql`ORDER BY COALESCE(json_extract(upd.dimension_ratings, ${jsonPath}), -1) ASC`
+            : sql`ORDER BY COALESCE(json_extract(upd.dimension_ratings, ${jsonPath}), -1) DESC`;
+        } else {
+          orderClause = sortOrder === "asc"
+            ? sql`ORDER BY COALESCE(upd.personal_rating, -1) ASC`
+            : sql`ORDER BY COALESCE(upd.personal_rating, -1) DESC`;
+        }
         break;
       case "dateAdded":
         orderClause = sortOrder === "asc"

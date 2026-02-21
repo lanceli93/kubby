@@ -196,7 +196,8 @@
     "type": "类型",
     "allTypes": "全部类型",
     "unrated": "未评分",
-    "tier": "评级"
+    "tier": "评级",
+    "overall": "综合"
   },
   "search": {
     "search": "搜索",

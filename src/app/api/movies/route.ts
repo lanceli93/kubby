@@ -165,8 +165,10 @@ export async function GET(request: NextRequest) {
 
     // Sort
     const sortOrder = searchParams.get("sortOrder") || "desc";
+    const sortDimension = searchParams.get("sortDimension");
     const orderFn = sortOrder === "asc" ? asc : desc;
-    let orderClause;
+    let orderClause: ReturnType<typeof asc> | ReturnType<typeof sql> | undefined;
+    let rawOrderClause: ReturnType<typeof sql> | null = null;
     switch (sort) {
       case "title":
         orderClause = sortOrder === "asc" ? asc(movies.title) : desc(movies.title);
@@ -178,7 +180,14 @@ export async function GET(request: NextRequest) {
         orderClause = orderFn(movies.communityRating);
         break;
       case "personalRating":
-        orderClause = orderFn(userMovieData.personalRating);
+        if (sortDimension) {
+          const jsonPath = `$."${sortDimension}"`;
+          rawOrderClause = sortOrder === "asc"
+            ? sql`COALESCE(json_extract(${userMovieData.dimensionRatings}, ${jsonPath}), -1) ASC`
+            : sql`COALESCE(json_extract(${userMovieData.dimensionRatings}, ${jsonPath}), -1) DESC`;
+        } else {
+          orderClause = orderFn(userMovieData.personalRating);
+        }
         break;
       case "runtime":
         orderClause = orderFn(movies.runtimeMinutes);
@@ -243,7 +252,9 @@ export async function GET(request: NextRequest) {
       baseQuery = baseQuery.where(and(...conditions));
     }
 
-    const results = baseQuery.orderBy(orderClause).limit(limit).all();
+    const results = rawOrderClause
+      ? baseQuery.orderBy(rawOrderClause).limit(limit).all()
+      : baseQuery.orderBy(orderClause!).limit(limit).all();
 
     // Resolve relative paths to absolute
     const movieResults = results.map((r) => ({
