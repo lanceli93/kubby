@@ -112,12 +112,12 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
   );
 }
 
-function VideoStreamInfo({ stream, index, t }: { stream: MediaStream; index: number; t: (key: string) => string }) {
+function VideoStreamInfo({ stream, index, total, t }: { stream: MediaStream; index: number; total: number; t: (key: string) => string }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
       <h4 className="text-sm font-medium text-white/70 mb-2">
         {t("stream")} #{index + 1}
-        {stream.isDefault && <span className="ml-2 text-xs text-primary">({t("default")})</span>}
+        {total > 1 && stream.isDefault && <span className="ml-2 text-xs text-primary">({t("default")})</span>}
       </h4>
       <div className="flex flex-col">
         <InfoRow label={t("codec")} value={stream.codec ? `${stream.codec}${stream.codecLongName ? ` (${stream.codecLongName})` : ""}` : null} />
@@ -143,13 +143,13 @@ function VideoStreamInfo({ stream, index, t }: { stream: MediaStream; index: num
   );
 }
 
-function AudioStreamInfo({ stream, index, t }: { stream: MediaStream; index: number; t: (key: string) => string }) {
+function AudioStreamInfo({ stream, index, total, t }: { stream: MediaStream; index: number; total: number; t: (key: string) => string }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
       <h4 className="text-sm font-medium text-white/70 mb-2">
         {t("stream")} #{index + 1}
-        {stream.isDefault && <span className="ml-2 text-xs text-primary">({t("default")})</span>}
-        {stream.isForced && <span className="ml-2 text-xs text-yellow-400">({t("forced")})</span>}
+        {total > 1 && stream.isDefault && <span className="ml-2 text-xs text-primary">({t("default")})</span>}
+        {total > 1 && stream.isForced && <span className="ml-2 text-xs text-yellow-400">({t("forced")})</span>}
       </h4>
       <div className="flex flex-col">
         <InfoRow label={t("codec")} value={stream.codec ? `${stream.codec}${stream.codecLongName ? ` (${stream.codecLongName})` : ""}` : null} />
@@ -165,13 +165,13 @@ function AudioStreamInfo({ stream, index, t }: { stream: MediaStream; index: num
   );
 }
 
-function SubtitleStreamInfo({ stream, index, t }: { stream: MediaStream; index: number; t: (key: string) => string }) {
+function SubtitleStreamInfo({ stream, index, total, t }: { stream: MediaStream; index: number; total: number; t: (key: string) => string }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
       <h4 className="text-sm font-medium text-white/70 mb-2">
         {t("stream")} #{index + 1}
-        {stream.isDefault && <span className="ml-2 text-xs text-primary">({t("default")})</span>}
-        {stream.isForced && <span className="ml-2 text-xs text-yellow-400">({t("forced")})</span>}
+        {total > 1 && stream.isDefault && <span className="ml-2 text-xs text-primary">({t("default")})</span>}
+        {total > 1 && stream.isForced && <span className="ml-2 text-xs text-yellow-400">({t("forced")})</span>}
       </h4>
       <div className="flex flex-col">
         <InfoRow label={t("codec")} value={stream.codec ? `${stream.codec}${stream.codecLongName ? ` (${stream.codecLongName})` : ""}` : null} />
@@ -238,36 +238,36 @@ export function MediaInfoDialog({ movieId, open, onOpenChange }: MediaInfoDialog
                 <TabsList className="w-full">
                   {videoStreams.length > 0 && (
                     <TabsTrigger value="video">
-                      {t("videoTab")} ({videoStreams.length})
+                      {t("videoTab")}{videoStreams.length > 1 ? ` (${videoStreams.length})` : ""}
                     </TabsTrigger>
                   )}
                   {audioStreams.length > 0 && (
                     <TabsTrigger value="audio">
-                      {t("audioTab")} ({audioStreams.length})
+                      {t("audioTab")}{audioStreams.length > 1 ? ` (${audioStreams.length})` : ""}
                     </TabsTrigger>
                   )}
                   {subtitleStreams.length > 0 && (
                     <TabsTrigger value="subtitles">
-                      {t("subtitlesTab")} ({subtitleStreams.length})
+                      {t("subtitlesTab")}{subtitleStreams.length > 1 ? ` (${subtitleStreams.length})` : ""}
                     </TabsTrigger>
                   )}
                 </TabsList>
 
                 <TabsContent value="video" className="flex flex-col gap-3 mt-2">
                   {videoStreams.map((stream, i) => (
-                    <VideoStreamInfo key={stream.streamIndex} stream={stream} index={i} t={t} />
+                    <VideoStreamInfo key={stream.streamIndex} stream={stream} index={i} total={videoStreams.length} t={t} />
                   ))}
                 </TabsContent>
 
                 <TabsContent value="audio" className="flex flex-col gap-3 mt-2">
                   {audioStreams.map((stream, i) => (
-                    <AudioStreamInfo key={stream.streamIndex} stream={stream} index={i} t={t} />
+                    <AudioStreamInfo key={stream.streamIndex} stream={stream} index={i} total={audioStreams.length} t={t} />
                   ))}
                 </TabsContent>
 
                 <TabsContent value="subtitles" className="flex flex-col gap-3 mt-2">
                   {subtitleStreams.map((stream, i) => (
-                    <SubtitleStreamInfo key={stream.streamIndex} stream={stream} index={i} t={t} />
+                    <SubtitleStreamInfo key={stream.streamIndex} stream={stream} index={i} total={subtitleStreams.length} t={t} />
                   ))}
                 </TabsContent>
               </Tabs>
