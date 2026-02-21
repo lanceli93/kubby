@@ -30,7 +30,6 @@ const pending = [
   // 0008: metadata language per library
   "ALTER TABLE `media_libraries` ADD `metadata_language` text",
   // 0009: media streams table + new columns on movies
-  "DROP TABLE IF EXISTS `media_streams`",
   `CREATE TABLE IF NOT EXISTS \`media_streams\` (
     \`id\` text PRIMARY KEY NOT NULL,
     \`movie_id\` text NOT NULL REFERENCES \`movies\`(\`id\`) ON DELETE CASCADE,
