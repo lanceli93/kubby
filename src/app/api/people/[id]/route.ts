@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
+import fs from "fs";
 import { db } from "@/lib/db";
 import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { getPersonDir } from "@/lib/person-utils";
 
 // PUT /api/people/[id]
 export async function PUT(
@@ -85,7 +87,19 @@ export async function GET(
       fanartPath: m.fanartPath ? nodePath.join(m.folderPath, m.fanartPath) : null,
     }));
 
-    const fanartPath = resolvedFilms.find((m) => m.fanartPath)?.fanartPath || null;
+    // Check for person's own fanart first, then fall back to movie fanart
+    const personDir = getPersonDir(person);
+    const ownFanartPath = nodePath.join(personDir, "fanart.jpg");
+    let fanartPath: string | null = null;
+    let fanartSource: "own" | "movie" | null = null;
+
+    if (fs.existsSync(ownFanartPath)) {
+      fanartPath = ownFanartPath;
+      fanartSource = "own";
+    } else {
+      fanartPath = resolvedFilms.find((m) => m.fanartPath)?.fanartPath || null;
+      fanartSource = fanartPath ? "movie" : null;
+    }
 
     // Get user data if authenticated
     let userData = null;
@@ -110,6 +124,7 @@ export async function GET(
       ...person,
       tags: parsedTags,
       fanartPath,
+      fanartSource,
       movies: resolvedFilms,
       userData: userData
         ? {

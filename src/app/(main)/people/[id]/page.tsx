@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
+import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ interface PersonDetail {
   type: string;
   photoPath?: string | null;
   fanartPath?: string | null;
+  fanartSource?: "own" | "movie" | null;
   overview?: string | null;
   birthDate?: string | null;
   birthYear?: number | null;
@@ -69,9 +71,11 @@ export default function PersonDetailPage() {
   const personId = params.id as string;
   const t = useTranslations("movies");
   const tPerson = useTranslations("person");
+  const tMeta = useTranslations("metadata");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
@@ -314,6 +318,10 @@ export default function PersonDetailPage() {
                   <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
                     <Pencil className="h-4 w-4" />
                     {t("editMetadata")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
+                    <ImageIcon className="h-4 w-4" />
+                    {tMeta("editImages")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -566,6 +574,15 @@ export default function PersonDetailPage() {
         personId={personId}
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
+      />
+
+      {/* Image editor dialog */}
+      <ImageEditorDialog
+        open={imageEditorOpen}
+        onOpenChange={setImageEditorOpen}
+        entityType="person"
+        entityId={personId}
+        entityName={person.name}
       />
 
       {/* Personal rating dialog */}

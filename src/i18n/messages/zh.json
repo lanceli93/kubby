@@ -271,6 +271,13 @@
     "birthInputFormatError": "请输入日期 (YYYY-MM-DD) 或年份 (YYYY)",
     "saving": "保存中...",
     "editImages": "编辑图片",
+    "poster": "海报",
+    "fanart": "同人画",
+    "uploadImage": "上传图片",
+    "replaceImage": "替换",
+    "deleteImage": "删除",
+    "noImage": "无图片",
+    "usingMovieFanart": "使用电影背景图",
     "editSubtitles": "编辑字幕",
     "identify": "识别",
     "deleteMedia": "删除媒体"

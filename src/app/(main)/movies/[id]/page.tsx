@@ -21,6 +21,7 @@ import {
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
+import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface MovieDetail {
@@ -146,6 +147,7 @@ export default function MovieDetailPage() {
   const tMeta = useTranslations("metadata");
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
   const [fanartMode, setFanartMode] = useState(false);
   const { data: prefs } = useUserPreferences();
@@ -404,7 +406,7 @@ export default function MovieDetailPage() {
                     <Pencil className="h-4 w-4" />
                     {t("editMetadata")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => alert("Edit images — coming soon")}>
+                  <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
                     <ImageIcon className="h-4 w-4" />
                     {tMeta("editImages")}
                   </DropdownMenuItem>
@@ -570,6 +572,15 @@ export default function MovieDetailPage() {
         movieId={movieId}
         open={mediaInfoOpen}
         onOpenChange={setMediaInfoOpen}
+      />
+
+      {/* Image editor dialog */}
+      <ImageEditorDialog
+        open={imageEditorOpen}
+        onOpenChange={setImageEditorOpen}
+        entityType="movie"
+        entityId={movieId}
+        entityName={movie.title}
       />
 
       {/* Personal rating dialog */}

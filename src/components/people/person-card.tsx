@@ -1,12 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Star, MoreHorizontal, ImageIcon } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useTranslations } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 
 interface PersonCardProps {
   id: string;
@@ -36,9 +44,11 @@ export function PersonCard({
 }: PersonCardProps) {
   const { width, height } = sizeConfig[size];
   const t = useTranslations("person");
+  const tMeta = useTranslations("metadata");
   const { data: prefs } = useUserPreferences();
   const showTierBadge = prefs?.showPersonTierBadge !== false;
   const showRatingBadge = prefs?.showPersonRatingBadge !== false;
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
 
   return (
     <Link
@@ -84,6 +94,41 @@ export function PersonCard({
             </span>
           </div>
         )}
+
+        {/* Hover overlay bar with dropdown */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-end px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImageEditorOpen(true);
+                }}
+              >
+                <ImageIcon className="h-4 w-4" />
+                {tMeta("editImages")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Name & role below poster */}
@@ -96,6 +141,15 @@ export function PersonCard({
           <p className="truncate text-xs text-muted-foreground/70">{t("filmedAtAge", { age })}</p>
         )}
       </div>
+
+      {/* Image editor dialog */}
+      <ImageEditorDialog
+        open={imageEditorOpen}
+        onOpenChange={setImageEditorOpen}
+        entityType="person"
+        entityId={id}
+        entityName={name}
+      />
     </Link>
   );
 }

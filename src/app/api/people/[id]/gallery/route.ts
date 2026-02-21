@@ -5,19 +5,9 @@ import { db } from "@/lib/db";
 import { people } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { sanitizePersonName } from "@/lib/tmdb";
+import { getPersonDir } from "@/lib/person-utils";
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
-const METADATA_DIR = path.join(process.cwd(), "data", "metadata", "people");
-
-function getPersonDir(person: { photoPath: string | null; name: string }): string {
-  if (person.photoPath) {
-    return path.dirname(person.photoPath);
-  }
-  const sanitized = sanitizePersonName(person.name);
-  const firstLetter = sanitized.charAt(0).toUpperCase() || "_";
-  return path.join(METADATA_DIR, firstLetter, sanitized);
-}
 
 // GET /api/people/[id]/gallery — list gallery images
 export async function GET(

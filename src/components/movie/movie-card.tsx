@@ -4,11 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, Info, RefreshCw, Trash2 } from "lucide-react";
+import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, ImageIcon, Info, RefreshCw, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
+import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import {
   DropdownMenu,
@@ -84,9 +85,11 @@ export function MovieCard({
   const router = useRouter();
   const t = useTranslations("movies");
   const tCommon = useTranslations("common");
+  const tMeta = useTranslations("metadata");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const { data: prefs } = useUserPreferences();
   const showRatingBadge = prefs?.showMovieRatingBadge !== false;
   const showResBadge = prefs?.showResolutionBadge !== false;
@@ -240,6 +243,15 @@ export function MovieCard({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
+                    setImageEditorOpen(true);
+                  }}
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  {tMeta("editImages")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setMediaInfoOpen(true);
                   }}
                 >
@@ -292,6 +304,15 @@ export function MovieCard({
         movieId={id}
         open={mediaInfoOpen}
         onOpenChange={setMediaInfoOpen}
+      />
+
+      {/* Image editor dialog */}
+      <ImageEditorDialog
+        open={imageEditorOpen}
+        onOpenChange={setImageEditorOpen}
+        entityType="movie"
+        entityId={id}
+        entityName={title}
       />
 
       {/* Delete confirmation dialog */}
