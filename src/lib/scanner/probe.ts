@@ -5,9 +5,7 @@ export interface ProbeStream {
   streamIndex: number;
   streamType: "video" | "audio" | "subtitle";
   codec: string | null;
-  codecLongName: string | null;
   profile: string | null;
-  level: number | null;
   bitrate: number | null;
   language: string | null;
   title: string | null;
@@ -16,16 +14,8 @@ export interface ProbeStream {
   // Video-specific
   width: number | null;
   height: number | null;
-  displayAspectRatio: string | null;
-  pixelFormat: string | null;
   bitDepth: number | null;
-  colorSpace: string | null;
-  colorPrimaries: string | null;
-  colorTransfer: string | null;
-  colorRange: string | null;
   frameRate: string | null;
-  refFrames: number | null;
-  isInterlaced: boolean;
   hdrType: string | null;
   // Audio-specific
   channels: number | null;
@@ -107,9 +97,7 @@ function parseStream(raw: Record<string, unknown>): ProbeStream | null {
     streamIndex: typeof raw.index === "number" ? raw.index : 0,
     streamType: codecType as "video" | "audio" | "subtitle",
     codec: raw.codec_name ? String(raw.codec_name) : null,
-    codecLongName: raw.codec_long_name ? String(raw.codec_long_name) : null,
     profile: raw.profile && raw.profile !== "unknown" ? String(raw.profile) : null,
-    level: raw.level != null && raw.level !== -99 ? Number(raw.level) : null,
     bitrate: raw.bit_rate ? parseInt(String(raw.bit_rate), 10) : null,
     language: tags.language || null,
     title: tags.title || null,
@@ -118,16 +106,8 @@ function parseStream(raw: Record<string, unknown>): ProbeStream | null {
     // Video
     width: raw.width ? Number(raw.width) : null,
     height: raw.height ? Number(raw.height) : null,
-    displayAspectRatio: raw.display_aspect_ratio ? String(raw.display_aspect_ratio) : null,
-    pixelFormat: raw.pix_fmt ? String(raw.pix_fmt) : null,
     bitDepth: raw.bits_per_raw_sample ? parseInt(String(raw.bits_per_raw_sample), 10) : null,
-    colorSpace: raw.color_space ? String(raw.color_space) : null,
-    colorPrimaries: raw.color_primaries ? String(raw.color_primaries) : null,
-    colorTransfer: raw.color_transfer ? String(raw.color_transfer) : null,
-    colorRange: raw.color_range ? String(raw.color_range) : null,
     frameRate: parseFrameRate(raw.r_frame_rate as string | undefined),
-    refFrames: raw.refs ? Number(raw.refs) : null,
-    isInterlaced: raw.field_order != null && raw.field_order !== "progressive" && raw.field_order !== "unknown",
     hdrType: codecType === "video" ? detectHdrType(raw) : null,
     // Audio
     channels: raw.channels ? Number(raw.channels) : null,

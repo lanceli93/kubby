@@ -20,9 +20,7 @@ interface MediaStream {
   streamIndex: number;
   streamType: "video" | "audio" | "subtitle";
   codec: string | null;
-  codecLongName: string | null;
   profile: string | null;
-  level: number | null;
   bitrate: number | null;
   language: string | null;
   title: string | null;
@@ -30,16 +28,8 @@ interface MediaStream {
   isForced: boolean;
   width: number | null;
   height: number | null;
-  displayAspectRatio: string | null;
-  pixelFormat: string | null;
   bitDepth: number | null;
-  colorSpace: string | null;
-  colorPrimaries: string | null;
-  colorTransfer: string | null;
-  colorRange: string | null;
   frameRate: string | null;
-  refFrames: number | null;
-  isInterlaced: boolean;
   hdrType: string | null;
   channels: number | null;
   channelLayout: string | null;
@@ -120,22 +110,13 @@ function VideoStreamInfo({ stream, index, total, t }: { stream: MediaStream; ind
         {total > 1 && stream.isDefault && <span className="ml-2 text-xs text-primary">({t("default")})</span>}
       </h4>
       <div className="flex flex-col">
-        <InfoRow label={t("codec")} value={stream.codec ? `${stream.codec}${stream.codecLongName ? ` (${stream.codecLongName})` : ""}` : null} />
+        <InfoRow label={t("codec")} value={stream.codec} />
         <InfoRow label={t("profile")} value={stream.profile} />
-        <InfoRow label={t("level")} value={stream.level != null ? String(stream.level) : null} />
         <InfoRow label={t("resolution")} value={stream.width && stream.height ? `${stream.width} × ${stream.height}` : null} />
-        <InfoRow label={t("aspectRatio")} value={stream.displayAspectRatio} />
         <InfoRow label={t("frameRate")} value={stream.frameRate ? `${parseFloat(stream.frameRate).toFixed(3)} fps` : null} />
         <InfoRow label={t("bitrate")} value={formatBitrate(stream.bitrate)} />
         <InfoRow label={t("bitDepth")} value={stream.bitDepth ? `${stream.bitDepth}-bit` : null} />
-        <InfoRow label={t("pixelFormat")} value={stream.pixelFormat} />
         <InfoRow label={t("hdr")} value={stream.hdrType} />
-        <InfoRow label={t("colorSpace")} value={stream.colorSpace} />
-        <InfoRow label={t("colorPrimaries")} value={stream.colorPrimaries} />
-        <InfoRow label={t("colorTransfer")} value={stream.colorTransfer} />
-        <InfoRow label={t("colorRange")} value={stream.colorRange} />
-        <InfoRow label={t("refFrames")} value={stream.refFrames != null ? String(stream.refFrames) : null} />
-        <InfoRow label={t("interlaced")} value={stream.isInterlaced ? t("yes") : null} />
         <InfoRow label={t("language")} value={stream.language} />
         <InfoRow label={t("title2")} value={stream.title} />
       </div>
@@ -152,7 +133,7 @@ function AudioStreamInfo({ stream, index, total, t }: { stream: MediaStream; ind
         {total > 1 && stream.isForced && <span className="ml-2 text-xs text-yellow-400">({t("forced")})</span>}
       </h4>
       <div className="flex flex-col">
-        <InfoRow label={t("codec")} value={stream.codec ? `${stream.codec}${stream.codecLongName ? ` (${stream.codecLongName})` : ""}` : null} />
+        <InfoRow label={t("codec")} value={stream.codec} />
         <InfoRow label={t("profile")} value={stream.profile} />
         <InfoRow label={t("bitrate")} value={formatBitrate(stream.bitrate)} />
         <InfoRow label={t("channels")} value={stream.channels != null ? String(stream.channels) : null} />
@@ -174,7 +155,7 @@ function SubtitleStreamInfo({ stream, index, total, t }: { stream: MediaStream; 
         {total > 1 && stream.isForced && <span className="ml-2 text-xs text-yellow-400">({t("forced")})</span>}
       </h4>
       <div className="flex flex-col">
-        <InfoRow label={t("codec")} value={stream.codec ? `${stream.codec}${stream.codecLongName ? ` (${stream.codecLongName})` : ""}` : null} />
+        <InfoRow label={t("codec")} value={stream.codec} />
         <InfoRow label={t("language")} value={stream.language} />
         <InfoRow label={t("title2")} value={stream.title} />
       </div>

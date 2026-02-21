@@ -190,7 +190,6 @@ export async function PUT(
           bitrate: s.bitrate || undefined,
           bitDepth: s.bitDepth || undefined,
           frameRate: s.frameRate || undefined,
-          displayAspectRatio: s.displayAspectRatio || undefined,
           channels: s.channels || undefined,
           channelLayout: s.channelLayout || undefined,
           language: s.language || undefined,

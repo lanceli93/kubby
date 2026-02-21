@@ -16,7 +16,6 @@ export interface NfoStreamDetail {
   bitrate?: number;
   bitDepth?: number;
   frameRate?: string;
-  displayAspectRatio?: string;
   channels?: number;
   channelLayout?: string;
   language?: string;
@@ -104,7 +103,6 @@ export function writeFullNfo(nfoPath: string, data: NfoMovieData): void {
         if (s.bitrate) xml += `        <bitrate>${s.bitrate}</bitrate>\n`;
         if (s.bitDepth) xml += `        <bitdepth>${s.bitDepth}</bitdepth>\n`;
         if (s.frameRate) xml += `        <framerate>${escapeXml(s.frameRate)}</framerate>\n`;
-        if (s.displayAspectRatio) xml += `        <aspect>${escapeXml(s.displayAspectRatio)}</aspect>\n`;
         if (data.durationInSeconds) xml += `        <durationinseconds>${data.durationInSeconds}</durationinseconds>\n`;
         xml += `      </video>\n`;
       } else if (s.streamType === "audio") {
