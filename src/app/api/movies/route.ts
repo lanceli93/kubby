@@ -261,7 +261,7 @@ export async function GET(request: NextRequest) {
       baseQuery = baseQuery.where(and(...conditions));
     }
 
-    const pageLimit = offset !== null ? 30 : limit;
+    const pageLimit = offset !== null ? 50 : limit;
 
     let orderedQuery = rawOrderClause
       ? baseQuery.orderBy(rawOrderClause)

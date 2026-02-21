@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       ? sql`LEFT JOIN user_person_data upd ON upd.person_id = p.id AND upd.user_id = ${userId}`
       : sql`LEFT JOIN user_person_data upd ON 0`;
 
-    const pageLimit = offset !== null ? 50 : limit;
+    const pageLimit = offset !== null ? 100 : limit;
     const offsetValue = offset ?? 0;
 
     const results = db.all<{
