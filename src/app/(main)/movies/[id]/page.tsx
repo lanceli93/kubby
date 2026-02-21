@@ -211,6 +211,7 @@ export default function MovieDetailPage() {
       : movie.tags || [];
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — Jellyfin style */}
       <div className="relative min-h-[750px] w-full overflow-hidden">
@@ -571,6 +572,7 @@ export default function MovieDetailPage() {
         dimensions={movieDimensions}
         dimensionRatings={movie.userData?.dimensionRatings}
       />
+    </div>
     </div>
   );
 }

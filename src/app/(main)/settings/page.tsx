@@ -69,6 +69,7 @@ export default function SettingsPage() {
     .slice(0, 2) || "U";
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="flex flex-col items-center gap-6 py-8">
       <h1 className="text-2xl font-bold text-foreground">{t("settings")}</h1>
 
@@ -208,6 +209,7 @@ export default function SettingsPage() {
           </span>
         </div>
       </div>
+    </div>
     </div>
   );
 }

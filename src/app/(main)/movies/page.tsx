@@ -105,7 +105,7 @@ function MovieBrowseContent() {
   // Person filmography mode — no tabs, just a movie grid
   if (personId) {
     return (
-      <div className="px-12">
+      <div className="h-full overflow-y-scroll px-12">
           <PersonMoviesContent personId={personId} />
       </div>
     );
@@ -129,8 +129,8 @@ function MovieBrowseContent() {
   }
 
   return (
-    <div className="flex flex-col">
-      <Tabs defaultValue="movies">
+    <div className="flex h-full flex-col">
+      <Tabs defaultValue="movies" className="flex h-full flex-col">
         <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
             <TabsTrigger value="movies">{t("movies")}</TabsTrigger>
@@ -140,7 +140,7 @@ function MovieBrowseContent() {
           </TabsList>
         </div>
 
-        <div className="px-12">
+        <div className="flex-1 overflow-y-scroll px-12">
           <TabsContent value="movies">
             <MoviesTabContent libraryId={libraryId} />
           </TabsContent>

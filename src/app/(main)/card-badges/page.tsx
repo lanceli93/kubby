@@ -240,6 +240,7 @@ export default function CardBadgesPage() {
   };
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="flex flex-col items-center gap-6 py-8">
       <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
 
@@ -467,6 +468,7 @@ export default function CardBadgesPage() {
         )}
         {toast?.text}
       </div>
+    </div>
     </div>
   );
 }

@@ -23,14 +23,14 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className="h-full">
+    <html lang={locale} className="h-full overflow-hidden">
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className={`${inter.variable} font-primary h-full antialiased`}>
+      <body className={`${inter.variable} font-primary h-full overflow-hidden antialiased`}>
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>

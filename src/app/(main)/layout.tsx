@@ -12,7 +12,7 @@ export default function MainLayout({
       <QueryProvider>
         <div className="relative flex h-full flex-col">
           <AppHeader />
-          <main className="flex-1 overflow-auto [scrollbar-gutter:stable]">{children}</main>
+          <main className="flex-1 overflow-hidden">{children}</main>
         </div>
       </QueryProvider>
     </SessionProvider>

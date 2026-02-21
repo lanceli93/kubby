@@ -220,6 +220,7 @@ export default function PersonDetailPage() {
   }
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — matches movie detail layout */}
       <div className="relative min-h-[750px] w-full overflow-hidden">
@@ -556,6 +557,7 @@ export default function PersonDetailPage() {
         dimensionRatings={person.userData?.dimensionRatings}
         showTier
       />
+    </div>
     </div>
   );
 }

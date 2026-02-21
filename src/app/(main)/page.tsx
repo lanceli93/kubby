@@ -205,7 +205,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex h-full flex-col">
       <input
         ref={fileInputRef}
         type="file"
@@ -213,7 +213,7 @@ export default function HomePage() {
         className="hidden"
         onChange={handleFileChange}
       />
-      <Tabs defaultValue="home">
+      <Tabs defaultValue="home" className="flex h-full flex-col">
         <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
             <TabsTrigger value="home">{t("homeTab")}</TabsTrigger>
@@ -221,6 +221,7 @@ export default function HomePage() {
           </TabsList>
         </div>
 
+        <div className="flex-1 overflow-y-scroll">
         <TabsContent value="home">
           <div className="flex flex-col gap-10 px-12 py-8">
             {/* Media Libraries */}
@@ -332,6 +333,7 @@ export default function HomePage() {
             )}
           </div>
         </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

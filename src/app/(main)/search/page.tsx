@@ -98,6 +98,7 @@ function SearchContent() {
   const hasResults = hasMovies || hasPeople;
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="flex flex-col gap-6 px-12 pt-12 pb-6">
       {/* Search bar — Jellyfin style: icon outside, centered */}
       <div className="flex items-center justify-center gap-3 pt-10">
@@ -187,6 +188,7 @@ function SearchContent() {
           {t("noResults", { query: debouncedQuery })}
         </div>
       )}
+    </div>
     </div>
   );
 }
