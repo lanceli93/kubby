@@ -681,12 +681,28 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
   const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
     useMovieMutations();
 
-  const { data: favorites = [] } = useQuery<Movie[]>({
+  const {
+    data: favData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery<PaginatedResponse<Movie>>({
     queryKey: ["movies", "favorites", libraryId],
-    queryFn: () =>
+    queryFn: ({ pageParam }) =>
       fetch(
-        `/api/movies?filter=favorites&libraryId=${libraryId}&limit=500`
+        `/api/movies?filter=favorites&libraryId=${libraryId}&offset=${pageParam}`
       ).then((r) => r.json()),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.offset + lastPage.limit : undefined,
+  });
+
+  const favorites = favData?.pages.flatMap((p) => p.items) ?? [];
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   });
 
   return (
@@ -723,81 +739,112 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
           ))}
         </div>
       ) : (
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
-          {t("noFavorites")}
+        !isLoading && (
+          <div className="flex h-64 items-center justify-center text-muted-foreground">
+            {t("noFavorites")}
+          </div>
+        )
+      )}
+
+      <div ref={sentinelRef} className="h-1" />
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
     </div>
   );
 }
 
+const GENRES_PER_PAGE = 8;
+
 function GenresTabContent({ libraryId }: { libraryId: string }) {
-  const { data: allMovies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", "genres-view", libraryId],
+  const t = useTranslations("movies");
+  const [visibleCount, setVisibleCount] = useState(GENRES_PER_PAGE);
+
+  const { data: filters } = useQuery<FiltersData>({
+    queryKey: ["filters", libraryId],
     queryFn: () =>
-      fetch(
-        `/api/movies?libraryId=${libraryId}&includeGenres=true&limit=5000`
-      ).then((r) => r.json()),
+      fetch(`/api/libraries/${libraryId}/filters`).then((r) => r.json()),
+    enabled: !!libraryId,
   });
 
-  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
-    useMovieMutations();
+  const genres = filters?.genres ?? [];
+  const visibleGenres = genres.slice(0, visibleCount);
+  const hasMore = visibleCount < genres.length;
 
-  const genreGroups = useMemo(() => {
-    const map = new Map<string, Movie[]>();
-    for (const movie of allMovies) {
-      if (movie.genres && Array.isArray(movie.genres)) {
-        for (const genre of movie.genres) {
-          if (!map.has(genre)) {
-            map.set(genre, []);
-          }
-          map.get(genre)!.push(movie);
-        }
-      }
-    }
-    // Sort genres alphabetically
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [allMovies]);
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage: hasMore,
+    isFetchingNextPage: false,
+    fetchNextPage: () => setVisibleCount((c) => c + GENRES_PER_PAGE),
+  });
 
-  if (genreGroups.length === 0) {
+  if (filters && genres.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center pt-4 text-muted-foreground">
-        No genres found
+        {t("noMovies")}
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-8 py-6">
-      {genreGroups.map(([genre, movies]) => (
-        <section key={genre} className="flex flex-col gap-3">
-          <ScrollRow title={<Link href={`/movies?libraryId=${libraryId}&genre=${encodeURIComponent(genre)}`} className="hover:text-white hover:underline transition-colors">{genre}</Link>}>
-            {movies.map((movie) => (
-              <MovieCard
-                key={movie.id}
-                id={movie.id}
-                title={movie.title}
-                year={movie.year}
-                posterPath={movie.posterPath}
-                rating={movie.communityRating}
-                personalRating={movie.personalRating}
-                videoWidth={movie.videoWidth}
-                videoHeight={movie.videoHeight}
-                isFavorite={movie.isFavorite}
-                isWatched={movie.isWatched}
-                onToggleFavorite={() =>
-                  handleToggleFavorite(movie.id, !!movie.isFavorite)
-                }
-                onToggleWatched={() =>
-                  handleToggleWatched(movie.id, !!movie.isWatched)
-                }
-                onDelete={() => handleDeleteMovie(movie.id)}
-              />
-            ))}
-          </ScrollRow>
-        </section>
+      {visibleGenres.map((genre) => (
+        <GenreScrollRow key={genre} genre={genre} libraryId={libraryId} />
       ))}
+      <div ref={sentinelRef} className="h-1" />
     </div>
+  );
+}
+
+function GenreScrollRow({ genre, libraryId }: { genre: string; libraryId: string }) {
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+    useMovieMutations();
+
+  const { data: movies = [] } = useQuery<Movie[]>({
+    queryKey: ["movies", "genre-row", libraryId, genre],
+    queryFn: () =>
+      fetch(
+        `/api/movies?libraryId=${libraryId}&genre=${encodeURIComponent(genre)}&limit=50`
+      ).then((r) => r.json()),
+  });
+
+  return (
+    <section className="flex flex-col gap-3">
+      <ScrollRow
+        title={
+          <Link
+            href={`/movies?libraryId=${libraryId}&genre=${encodeURIComponent(genre)}`}
+            className="hover:text-white hover:underline transition-colors"
+          >
+            {genre}
+          </Link>
+        }
+      >
+        {movies.map((movie) => (
+          <MovieCard
+            key={movie.id}
+            id={movie.id}
+            title={movie.title}
+            year={movie.year}
+            posterPath={movie.posterPath}
+            rating={movie.communityRating}
+            personalRating={movie.personalRating}
+            videoWidth={movie.videoWidth}
+            videoHeight={movie.videoHeight}
+            isFavorite={movie.isFavorite}
+            isWatched={movie.isWatched}
+            onToggleFavorite={() =>
+              handleToggleFavorite(movie.id, !!movie.isFavorite)
+            }
+            onToggleWatched={() =>
+              handleToggleWatched(movie.id, !!movie.isWatched)
+            }
+            onDelete={() => handleDeleteMovie(movie.id)}
+          />
+        ))}
+      </ScrollRow>
+    </section>
   );
 }
 

@@ -79,6 +79,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (filter === "favorites" && userId) {
+      const favConditions = [
+        eq(userMovieData.isFavorite, true),
+        ...(libraryId ? [eq(movies.mediaLibraryId, libraryId)] : []),
+      ];
+
+      const favPageLimit = offset !== null ? 50 : limit;
+
       const results = db
         .select({
           id: movies.id,
@@ -100,23 +107,42 @@ export async function GET(request: NextRequest) {
             eq(userMovieData.userId, userId)
           )
         )
-        .where(
-          and(
-            eq(userMovieData.isFavorite, true),
-            ...(libraryId ? [eq(movies.mediaLibraryId, libraryId)] : [])
-          )
-        )
+        .where(and(...favConditions))
         .orderBy(desc(movies.dateAdded))
-        .limit(limit)
+        .limit(favPageLimit)
+        .offset(offset ?? 0)
         .all();
 
-      return NextResponse.json(
-        results.map((r) => ({
-          ...r,
-          posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
-          isFavorite: true,
-        }))
-      );
+      const favResults = results.map((r) => ({
+        ...r,
+        posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
+        isFavorite: true,
+      }));
+
+      if (offset !== null) {
+        const [{ total: totalCount }] = db
+          .select({ total: count() })
+          .from(movies)
+          .innerJoin(
+            userMovieData,
+            and(
+              eq(userMovieData.movieId, movies.id),
+              eq(userMovieData.userId, userId)
+            )
+          )
+          .where(and(...favConditions))
+          .all();
+
+        return NextResponse.json({
+          items: favResults,
+          totalCount,
+          offset: offset ?? 0,
+          limit: favPageLimit,
+          hasMore: (offset ?? 0) + favPageLimit < totalCount,
+        });
+      }
+
+      return NextResponse.json(favResults);
     }
 
     // Standard movie list query — left join user data when logged in
