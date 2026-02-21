@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
+import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
@@ -144,6 +145,7 @@ export default function MovieDetailPage() {
   const t = useTranslations("movies");
   const tMeta = useTranslations("metadata");
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
   const [fanartMode, setFanartMode] = useState(false);
   const { data: prefs } = useUserPreferences();
@@ -415,7 +417,7 @@ export default function MovieDetailPage() {
                     <Search className="h-4 w-4" />
                     {tMeta("identify")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => alert("Media info — coming soon")}>
+                  <DropdownMenuItem onClick={() => setMediaInfoOpen(true)}>
                     <Info className="h-4 w-4" />
                     {t("mediaInfo")}
                   </DropdownMenuItem>
@@ -561,6 +563,13 @@ export default function MovieDetailPage() {
         movieId={movieId}
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
+      />
+
+      {/* Media info dialog */}
+      <MediaInfoDialog
+        movieId={movieId}
+        open={mediaInfoOpen}
+        onOpenChange={setMediaInfoOpen}
       />
 
       {/* Personal rating dialog */}

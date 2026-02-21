@@ -8,6 +8,21 @@ export interface NfoActorEntry {
   order: number;
 }
 
+export interface NfoStreamDetail {
+  streamType: "video" | "audio" | "subtitle";
+  codec?: string;
+  width?: number;
+  height?: number;
+  bitrate?: number;
+  bitDepth?: number;
+  frameRate?: string;
+  displayAspectRatio?: string;
+  channels?: number;
+  channelLayout?: string;
+  language?: string;
+  sampleRate?: number;
+}
+
 export interface NfoMovieData {
   title: string;
   originalTitle?: string;
@@ -33,6 +48,7 @@ export interface NfoMovieData {
   audioChannels?: number;
   durationInSeconds?: number;
   tags?: string[];
+  streamDetails?: NfoStreamDetail[];
 }
 
 /**
@@ -76,7 +92,39 @@ export function writeFullNfo(nfoPath: string, data: NfoMovieData): void {
   for (const tag of data.tags ?? []) {
     xml += `  <tag>${escapeXml(tag)}</tag>\n`;
   }
-  if (data.videoCodec || data.audioCodec || data.durationInSeconds) {
+  if (data.streamDetails && data.streamDetails.length > 0) {
+    // Rich stream details from probe
+    xml += `  <fileinfo>\n    <streamdetails>\n`;
+    for (const s of data.streamDetails) {
+      if (s.streamType === "video") {
+        xml += `      <video>\n`;
+        if (s.codec) xml += `        <codec>${escapeXml(s.codec)}</codec>\n`;
+        if (s.width) xml += `        <width>${s.width}</width>\n`;
+        if (s.height) xml += `        <height>${s.height}</height>\n`;
+        if (s.bitrate) xml += `        <bitrate>${s.bitrate}</bitrate>\n`;
+        if (s.bitDepth) xml += `        <bitdepth>${s.bitDepth}</bitdepth>\n`;
+        if (s.frameRate) xml += `        <framerate>${escapeXml(s.frameRate)}</framerate>\n`;
+        if (s.displayAspectRatio) xml += `        <aspect>${escapeXml(s.displayAspectRatio)}</aspect>\n`;
+        if (data.durationInSeconds) xml += `        <durationinseconds>${data.durationInSeconds}</durationinseconds>\n`;
+        xml += `      </video>\n`;
+      } else if (s.streamType === "audio") {
+        xml += `      <audio>\n`;
+        if (s.codec) xml += `        <codec>${escapeXml(s.codec)}</codec>\n`;
+        if (s.channels) xml += `        <channels>${s.channels}</channels>\n`;
+        if (s.channelLayout) xml += `        <channellayout>${escapeXml(s.channelLayout)}</channellayout>\n`;
+        if (s.language) xml += `        <language>${escapeXml(s.language)}</language>\n`;
+        if (s.sampleRate) xml += `        <samplingrate>${s.sampleRate}</samplingrate>\n`;
+        xml += `      </audio>\n`;
+      } else if (s.streamType === "subtitle") {
+        xml += `      <subtitle>\n`;
+        if (s.codec) xml += `        <codec>${escapeXml(s.codec)}</codec>\n`;
+        if (s.language) xml += `        <language>${escapeXml(s.language)}</language>\n`;
+        xml += `      </subtitle>\n`;
+      }
+    }
+    xml += `    </streamdetails>\n  </fileinfo>\n`;
+  } else if (data.videoCodec || data.audioCodec || data.durationInSeconds) {
+    // Legacy fallback
     xml += `  <fileinfo>\n    <streamdetails>\n`;
     if (data.videoCodec || data.videoWidth || data.videoHeight || data.durationInSeconds) {
       xml += `      <video>\n`;

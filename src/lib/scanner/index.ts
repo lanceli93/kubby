@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
-import { movies, people, moviePeople, mediaLibraries, settings } from "@/lib/db/schema";
+import { movies, people, moviePeople, mediaLibraries, settings, mediaStreams } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { parseNfo } from "./nfo-parser";
 import { probeVideo } from "./probe";
@@ -282,6 +282,9 @@ export async function scanLibrary(
       videoHeight,
       audioChannels,
       container,
+      totalBitrate: probeResult?.totalBitrate || null,
+      fileSize: probeResult?.fileSize || null,
+      formatName: probeResult?.formatName || null,
       tags: JSON.stringify(nfoData.tags),
       mediaLibraryId: libraryId,
     };
@@ -293,6 +296,44 @@ export async function scanLibrary(
         .run();
     } else {
       db.insert(movies).values(movieData).run();
+    }
+
+    // Clear and re-insert media streams
+    db.delete(mediaStreams).where(eq(mediaStreams.movieId, movieId)).run();
+    if (probeResult?.streams) {
+      for (const stream of probeResult.streams) {
+        db.insert(mediaStreams).values({
+          id: uuidv4(),
+          movieId,
+          streamIndex: stream.streamIndex,
+          streamType: stream.streamType,
+          codec: stream.codec,
+          codecLongName: stream.codecLongName,
+          profile: stream.profile,
+          level: stream.level,
+          bitrate: stream.bitrate,
+          language: stream.language,
+          title: stream.title,
+          isDefault: stream.isDefault,
+          isForced: stream.isForced,
+          width: stream.width,
+          height: stream.height,
+          displayAspectRatio: stream.displayAspectRatio,
+          pixelFormat: stream.pixelFormat,
+          bitDepth: stream.bitDepth,
+          colorSpace: stream.colorSpace,
+          colorPrimaries: stream.colorPrimaries,
+          colorTransfer: stream.colorTransfer,
+          colorRange: stream.colorRange,
+          frameRate: stream.frameRate,
+          refFrames: stream.refFrames,
+          isInterlaced: stream.isInterlaced,
+          hdrType: stream.hdrType,
+          channels: stream.channels,
+          channelLayout: stream.channelLayout,
+          sampleRate: stream.sampleRate,
+        }).run();
+      }
     }
 
     // Clear existing people associations for this movie

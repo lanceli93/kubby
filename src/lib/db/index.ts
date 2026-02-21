@@ -29,6 +29,43 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `show_person_rating_badge` integer NOT NULL DEFAULT 1",
   // 0008: metadata language per library
   "ALTER TABLE `media_libraries` ADD `metadata_language` text",
+  // 0009: media streams table + new columns on movies
+  `CREATE TABLE IF NOT EXISTS \`media_streams\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`movie_id\` text NOT NULL REFERENCES \`movies\`(\`id\`) ON DELETE CASCADE,
+    \`stream_index\` integer NOT NULL,
+    \`stream_type\` text NOT NULL,
+    \`codec\` text,
+    \`codec_long_name\` text,
+    \`profile\` text,
+    \`level\` integer,
+    \`bitrate\` integer,
+    \`language\` text,
+    \`title\` text,
+    \`is_default\` integer,
+    \`is_forced\` integer,
+    \`width\` integer,
+    \`height\` integer,
+    \`display_aspect_ratio\` text,
+    \`pixel_format\` text,
+    \`bit_depth\` integer,
+    \`color_space\` text,
+    \`color_primaries\` text,
+    \`color_transfer\` text,
+    \`color_range\` text,
+    \`frame_rate\` text,
+    \`ref_frames\` integer,
+    \`is_interlaced\` integer,
+    \`hdr_type\` text,
+    \`channels\` integer,
+    \`channel_layout\` text,
+    \`sample_rate\` integer
+  )`,
+  "CREATE INDEX IF NOT EXISTS `idx_ms_movie` ON `media_streams` (`movie_id`)",
+  "CREATE INDEX IF NOT EXISTS `idx_ms_movie_type` ON `media_streams` (`movie_id`, `stream_type`)",
+  "ALTER TABLE `movies` ADD `total_bitrate` integer",
+  "ALTER TABLE `movies` ADD `file_size` integer",
+  "ALTER TABLE `movies` ADD `format_name` text",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

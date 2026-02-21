@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import { db } from "@/lib/db";
-import { movies, moviePeople, people, userMovieData, userPersonData } from "@/lib/db/schema";
+import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams } from "@/lib/db/schema";
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
@@ -143,6 +143,15 @@ export async function PUT(
     // Regenerate NFO file
     if (updated.nfoPath) {
       const nfoFullPath = nodePath.join(updated.folderPath, updated.nfoPath);
+
+      // Fetch media streams for rich NFO fileinfo
+      const streams = db
+        .select()
+        .from(mediaStreams)
+        .where(eq(mediaStreams.movieId, id))
+        .orderBy(asc(mediaStreams.streamIndex))
+        .all();
+
       const nfoData: NfoMovieData = {
         title: updated.title,
         originalTitle: updated.originalTitle || undefined,
@@ -173,6 +182,20 @@ export async function PUT(
         audioChannels: updated.audioChannels || undefined,
         durationInSeconds: updated.runtimeSeconds || undefined,
         tags: updated.tags ? JSON.parse(updated.tags) : undefined,
+        streamDetails: streams.length > 0 ? streams.map((s) => ({
+          streamType: s.streamType as "video" | "audio" | "subtitle",
+          codec: s.codec || undefined,
+          width: s.width || undefined,
+          height: s.height || undefined,
+          bitrate: s.bitrate || undefined,
+          bitDepth: s.bitDepth || undefined,
+          frameRate: s.frameRate || undefined,
+          displayAspectRatio: s.displayAspectRatio || undefined,
+          channels: s.channels || undefined,
+          channelLayout: s.channelLayout || undefined,
+          language: s.language || undefined,
+          sampleRate: s.sampleRate || undefined,
+        })) : undefined,
       };
       writeFullNfo(nfoFullPath, nfoData);
     }

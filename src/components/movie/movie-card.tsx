@@ -8,6 +8,7 @@ import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, Info, RefreshCw
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
+import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import {
   DropdownMenu,
@@ -85,6 +86,7 @@ export function MovieCard({
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const { data: prefs } = useUserPreferences();
   const showRatingBadge = prefs?.showMovieRatingBadge !== false;
   const showResBadge = prefs?.showResolutionBadge !== false;
@@ -238,7 +240,7 @@ export function MovieCard({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    alert("Media info — coming soon");
+                    setMediaInfoOpen(true);
                   }}
                 >
                   <Info className="h-4 w-4" />
@@ -283,6 +285,13 @@ export function MovieCard({
         movieId={id}
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
+      />
+
+      {/* Media info dialog */}
+      <MediaInfoDialog
+        movieId={id}
+        open={mediaInfoOpen}
+        onOpenChange={setMediaInfoOpen}
       />
 
       {/* Delete confirmation dialog */}

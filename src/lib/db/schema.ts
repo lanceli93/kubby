@@ -59,6 +59,9 @@ export const movies = sqliteTable("movies", {
   videoHeight: integer("video_height"),
   audioChannels: integer("audio_channels"),
   container: text("container"),
+  totalBitrate: integer("total_bitrate"),
+  fileSize: integer("file_size"),
+  formatName: text("format_name"),
   tags: text("tags"), // JSON array string
   mediaLibraryId: text("media_library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
   dateAdded: text("date_added").notNull().default("(datetime('now'))"),
@@ -137,3 +140,41 @@ export const userPreferences = sqliteTable("user_preferences", {
   showPersonRatingBadge: integer("show_person_rating_badge", { mode: "boolean" }).notNull().default(true),
   showResolutionBadge: integer("show_resolution_badge", { mode: "boolean" }).notNull().default(true),
 });
+
+// ─── Media Streams ─────────────────────────────────────────────
+export const mediaStreams = sqliteTable("media_streams", {
+  id: text("id").primaryKey(),
+  movieId: text("movie_id").notNull().references(() => movies.id, { onDelete: "cascade" }),
+  streamIndex: integer("stream_index").notNull(),
+  streamType: text("stream_type", { enum: ["video", "audio", "subtitle"] }).notNull(),
+  codec: text("codec"),
+  codecLongName: text("codec_long_name"),
+  profile: text("profile"),
+  level: integer("level"),
+  bitrate: integer("bitrate"),
+  language: text("language"),
+  title: text("title"),
+  isDefault: integer("is_default", { mode: "boolean" }),
+  isForced: integer("is_forced", { mode: "boolean" }),
+  // Video-specific
+  width: integer("width"),
+  height: integer("height"),
+  displayAspectRatio: text("display_aspect_ratio"),
+  pixelFormat: text("pixel_format"),
+  bitDepth: integer("bit_depth"),
+  colorSpace: text("color_space"),
+  colorPrimaries: text("color_primaries"),
+  colorTransfer: text("color_transfer"),
+  colorRange: text("color_range"),
+  frameRate: text("frame_rate"),
+  refFrames: integer("ref_frames"),
+  isInterlaced: integer("is_interlaced", { mode: "boolean" }),
+  hdrType: text("hdr_type"),
+  // Audio-specific
+  channels: integer("channels"),
+  channelLayout: text("channel_layout"),
+  sampleRate: integer("sample_rate"),
+}, (table) => [
+  index("idx_ms_movie").on(table.movieId),
+  index("idx_ms_movie_type").on(table.movieId, table.streamType),
+]);
