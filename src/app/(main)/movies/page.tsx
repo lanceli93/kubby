@@ -735,7 +735,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
       if (selectedTypes.length > 0) params.set("types", selectedTypes.join(","));
       if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
       if (selectedTiers.length > 0) params.set("tier", selectedTiers.join(","));
-      return fetch(`/api/people?${params}`).then((r) => r.json());
+      return fetch(`/api/people?${params}`).then((r) => r.json()).then((d) => Array.isArray(d) ? d : []);
     },
     enabled: !!libraryId,
   });

@@ -1,24 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
-import { eq, like, sql, and, asc, desc } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { getTier, type Tier } from "@/lib/tier";
-
-// Tier to rating range mapping
-function getTierRange(tier: string): [number, number] | null {
-  switch (tier) {
-    case "SSS": return [9.5, 10];
-    case "SS": return [9.0, 9.5];
-    case "S": return [8.5, 9.0];
-    case "A": return [8.0, 8.5];
-    case "B": return [7.0, 8.0];
-    case "C": return [6.0, 7.0];
-    case "D": return [5.0, 6.0];
-    case "E": return [0, 5.0];
-    default: return null;
-  }
-}
+import { getTier } from "@/lib/tier";
 
 // GET /api/people
 export async function GET(request: NextRequest) {
@@ -40,19 +24,18 @@ export async function GET(request: NextRequest) {
     const session = await auth();
     const userId = session?.user?.id;
 
-    // Build query: distinct people linked to movies in this library
-    // We use raw SQL for the aggregation query
+    // Build conditions using raw SQL strings with parameterized values
     const conditions: ReturnType<typeof sql>[] = [];
-    conditions.push(sql`${movies.mediaLibraryId} = ${libraryId}`);
+    conditions.push(sql`m.media_library_id = ${libraryId}`);
 
     if (search) {
-      conditions.push(sql`${people.name} LIKE ${"%" + search + "%"}`);
+      conditions.push(sql`p.name LIKE ${"%" + search + "%"}`);
     }
 
     if (typesParam) {
       const types = typesParam.split(",").map((t) => t.trim()).filter(Boolean);
       if (types.length > 0) {
-        const typeConds = types.map((t) => sql`${people.type} = ${t}`);
+        const typeConds = types.map((t) => sql`p.type = ${t}`);
         conditions.push(sql`(${sql.join(typeConds, sql` OR `)})`);
       }
     }
@@ -60,14 +43,12 @@ export async function GET(request: NextRequest) {
     if (tagsParam) {
       const tags = tagsParam.split(",").map((t) => t.trim()).filter(Boolean);
       if (tags.length > 0) {
-        const tagConds = tags.map((t) => sql`${people.tags} LIKE ${"%" + JSON.stringify(t).slice(0, -1) + "%"}`);
+        const tagConds = tags.map((t) => sql`p.tags LIKE ${'%"' + t + '"%'}`);
         conditions.push(sql`(${sql.join(tagConds, sql` OR `)})`);
       }
     }
 
-    const whereClause = conditions.length > 0
-      ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
-      : sql``;
+    const whereClause = sql`WHERE ${sql.join(conditions, sql` AND `)}`;
 
     // Sort clause
     let orderClause: ReturnType<typeof sql>;
@@ -128,7 +109,7 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit}
     `);
 
-    // Apply tier filter in application code
+    // Map to camelCase and apply tier filter
     let filtered = results.map((r) => ({
       id: r.id,
       name: r.name,
