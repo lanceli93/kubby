@@ -2,7 +2,8 @@
 
 import { Suspense, useState, useRef, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { MovieCard } from "@/components/movie/movie-card";
 import { PersonCard } from "@/components/people/person-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -21,6 +22,7 @@ import {
   X,
   Hash,
   UserRound,
+  Loader2,
 } from "lucide-react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
@@ -37,6 +39,14 @@ interface Movie {
   isWatched?: boolean;
   genres?: string[];
   tags?: string[];
+}
+
+interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
 }
 
 interface FiltersData {
@@ -224,13 +234,20 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
     enabled: !!libraryId,
   });
 
-  const { data: movies = [] } = useQuery<Movie[]>({
+  const {
+    data: moviesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingMovies,
+  } = useInfiniteQuery<PaginatedResponse<Movie>>({
     queryKey: ["movies", { libraryId, sort, sortOrder, sortDimension, selectedGenres, selectedTags, selectedYears, urlTag, urlStudio }],
-    queryFn: () => {
+    queryFn: ({ pageParam }) => {
       const params = new URLSearchParams();
       params.set("libraryId", libraryId);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
+      params.set("offset", String(pageParam));
       if (sortDimension) params.set("sortDimension", sortDimension);
       if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
       if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
@@ -239,6 +256,17 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
       if (urlStudio) params.set("studio", urlStudio);
       return fetch(`/api/movies?${params}`).then((r) => r.json());
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.offset + lastPage.limit : undefined,
+  });
+
+  const movies = moviesData?.pages.flatMap((p) => p.items) ?? [];
+  const totalCount = moviesData?.pages[0]?.totalCount ?? 0;
+  const { sentinelRef: moviesSentinelRef } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   });
 
   const activeFilterCount = selectedGenres.length + selectedTags.length + selectedYears.length;
@@ -268,9 +296,19 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   };
 
   return (
-    <div>
-      {/* Centered Sort & Filter Toolbar */}
-      <div className="py-[18px] flex items-center justify-center gap-6">
+    <div
+      className="grid gap-x-4 gap-y-4"
+      style={{
+        gridTemplateColumns: "repeat(auto-fill, 180px)",
+        justifyContent: "center",
+      }}
+    >
+      {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
+      <div className="py-[18px] flex items-center gap-6" style={{ gridColumn: "1 / -1" }}>
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {t("moviesCount", { count: totalCount || movies.length })}
+        </span>
+        <div className="flex flex-1 items-center justify-center gap-6">
         {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
@@ -584,16 +622,10 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             </div>
           )}
         </div>
+        </div>
       </div>
 
-      {/* Movie Grid */}
-      <div
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: "repeat(auto-fill, 180px)",
-          justifyContent: "center",
-        }}
-      >
+      {/* Movie cards */}
         {movies.map((movie) => (
           <MovieCard
             key={movie.id}
@@ -616,10 +648,17 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             onDelete={() => handleDeleteMovie(movie.id)}
           />
         ))}
-      </div>
 
-      {movies.length === 0 && (
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
+      {/* Infinite scroll sentinel */}
+      <div ref={moviesSentinelRef} style={{ gridColumn: "1 / -1", height: 1 }} />
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-6" style={{ gridColumn: "1 / -1" }}>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {!isLoadingMovies && movies.length === 0 && (
+        <div className="flex h-64 items-center justify-center text-muted-foreground" style={{ gridColumn: "1 / -1" }}>
           {t("noMovies")}
         </div>
       )}
@@ -816,20 +855,38 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
     enabled: !!libraryId,
   });
 
-  const { data: actors = [] } = useQuery<PersonItem[]>({
+  const {
+    data: actorsData,
+    fetchNextPage: fetchNextActors,
+    hasNextPage: hasNextActors,
+    isFetchingNextPage: isFetchingNextActors,
+    isLoading: isLoadingActors,
+  } = useInfiniteQuery<PaginatedResponse<PersonItem>>({
     queryKey: ["people", { libraryId, sort, sortOrder, sortDimension, selectedTypes, selectedTags, selectedTiers }],
-    queryFn: () => {
+    queryFn: ({ pageParam }) => {
       const params = new URLSearchParams();
       params.set("libraryId", libraryId);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
+      params.set("offset", String(pageParam));
       if (sortDimension) params.set("sortDimension", sortDimension);
       if (selectedTypes.length > 0) params.set("types", selectedTypes.join(","));
       if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
       if (selectedTiers.length > 0) params.set("tier", selectedTiers.join(","));
-      return fetch(`/api/people?${params}`).then((r) => r.json()).then((d) => Array.isArray(d) ? d : []);
+      return fetch(`/api/people?${params}`).then((r) => r.json());
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.offset + lastPage.limit : undefined,
     enabled: !!libraryId,
+  });
+
+  const actors = actorsData?.pages.flatMap((p) => p.items) ?? [];
+  const actorsTotalCount = actorsData?.pages[0]?.totalCount ?? 0;
+  const { sentinelRef: actorsSentinelRef } = useInfiniteScroll({
+    hasNextPage: hasNextActors,
+    isFetchingNextPage: isFetchingNextActors,
+    fetchNextPage: fetchNextActors,
   });
 
   const activeFilterCount = selectedTypes.length + selectedTags.length + selectedTiers.length;
@@ -859,9 +916,19 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
   };
 
   return (
-    <div>
-      {/* Centered Sort & Filter Toolbar */}
-      <div className="py-[18px] flex items-center justify-center gap-6">
+    <div
+      className="grid gap-x-4 gap-y-4"
+      style={{
+        gridTemplateColumns: "repeat(auto-fill, 180px)",
+        justifyContent: "center",
+      }}
+    >
+      {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
+      <div className="py-[18px] flex items-center gap-6" style={{ gridColumn: "1 / -1" }}>
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {t("actorsCount", { count: actorsTotalCount || actors.length })}
+        </span>
+        <div className="flex flex-1 items-center justify-center gap-6">
         {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
@@ -1200,16 +1267,10 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
             </div>
           )}
         </div>
+        </div>
       </div>
 
-      {/* People Grid */}
-      <div
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: "repeat(auto-fill, 180px)",
-          justifyContent: "center",
-        }}
-      >
+      {/* Actor cards */}
         {actors.map((person) => (
           <PersonCard
             key={person.id}
@@ -1221,10 +1282,17 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
             size="movie"
           />
         ))}
-      </div>
 
-      {actors.length === 0 && (
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
+      {/* Infinite scroll sentinel */}
+      <div ref={actorsSentinelRef} style={{ gridColumn: "1 / -1", height: 1 }} />
+      {isFetchingNextActors && (
+        <div className="flex justify-center py-6" style={{ gridColumn: "1 / -1" }}>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {!isLoadingActors && actors.length === 0 && (
+        <div className="flex h-64 items-center justify-center text-muted-foreground" style={{ gridColumn: "1 / -1" }}>
           {t("noActors")}
         </div>
       )}
