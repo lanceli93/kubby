@@ -213,7 +213,12 @@
     "agedYears": "aged {age}",
     "filmedAtAge": "Filmed at {age}",
     "filmography": "Filmography",
-    "moviesCount": "{count} movies"
+    "moviesCount": "{count} movies",
+    "photos": "Photos",
+    "photosCount": "{count} photos",
+    "uploadPhotos": "Upload",
+    "deletePhoto": "Delete photo",
+    "noPhotos": "No photos yet"
   },
   "metadata": {
     "editMetadata": "Edit Metadata",

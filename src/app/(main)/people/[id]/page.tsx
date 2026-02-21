@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ExternalLink, Star } from "lucide-react";
+import { MoreVertical, Pencil, ExternalLink, Star, ImagePlus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -66,10 +66,54 @@ export default function PersonDetailPage() {
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
 
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { data: person } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
     queryFn: () => fetch(`/api/people/${personId}`).then((r) => r.json()),
   });
+
+  const { data: galleryData } = useQuery<{ images: { filename: string; path: string }[] }>({
+    queryKey: ["person-gallery", personId],
+    queryFn: () => fetch(`/api/people/${personId}/gallery`).then((r) => r.json()),
+  });
+  const galleryImages = galleryData?.images ?? [];
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const formData = new FormData();
+    for (const file of Array.from(files)) {
+      formData.append("file", file);
+    }
+    await fetch(`/api/people/${personId}/gallery`, { method: "POST", body: formData });
+    queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDeleteGalleryImage = async (filename: string) => {
+    await fetch(`/api/people/${personId}/gallery`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
+  };
+
+  const handleLightboxKeyDown = useCallback((e: KeyboardEvent) => {
+    if (lightboxIndex === null) return;
+    if (e.key === "Escape") setLightboxIndex(null);
+    if (e.key === "ArrowLeft") setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i));
+    if (e.key === "ArrowRight") setLightboxIndex((i) => (i !== null && i < galleryImages.length - 1 ? i + 1 : i));
+  }, [lightboxIndex, galleryImages.length]);
+
+  useEffect(() => {
+    if (lightboxIndex !== null) {
+      document.addEventListener("keydown", handleLightboxKeyDown);
+      return () => document.removeEventListener("keydown", handleLightboxKeyDown);
+    }
+  }, [lightboxIndex, handleLightboxKeyDown]);
 
   const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
     await fetch(`/api/people/${personId}/user-data`, {
@@ -274,6 +318,113 @@ export default function PersonDetailPage() {
           ))}
         </div>
       </section>
+
+      {/* Photo Gallery */}
+      <section className="flex flex-col gap-4 px-20 pb-12">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold text-foreground">
+            {tPerson("photos")}
+          </h2>
+          <span className="text-sm text-[#666680]">
+            ({tPerson("photosCount", { count: galleryImages.length })})
+          </span>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+          >
+            <ImagePlus className="h-4 w-4" />
+            {tPerson("uploadPhotos")}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleUpload}
+          />
+        </div>
+
+        {galleryImages.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{tPerson("noPhotos")}</p>
+        ) : (
+          <div
+            className="grid gap-3"
+            style={{ gridTemplateColumns: "repeat(auto-fill, 220px)" }}
+          >
+            {galleryImages.map((img, idx) => (
+              <div
+                key={img.filename}
+                className="group relative cursor-pointer overflow-hidden rounded-lg"
+                style={{ aspectRatio: "3/4" }}
+                onClick={() => setLightboxIndex(idx)}
+              >
+                <Image
+                  src={resolveImageSrc(img.path)}
+                  alt={img.filename}
+                  fill
+                  className="object-cover transition-transform group-hover:scale-105"
+                  sizes="220px"
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteGalleryImage(img.filename);
+                  }}
+                  className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
+                  title={tPerson("deletePhoto")}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && galleryImages[lightboxIndex] && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <button
+            className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full text-white/70 hover:text-white cursor-pointer"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <X className="h-6 w-6" />
+          </button>
+          {lightboxIndex > 0 && (
+            <button
+              className="absolute left-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(lightboxIndex - 1);
+              }}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          )}
+          {lightboxIndex < galleryImages.length - 1 && (
+            <button
+              className="absolute right-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(lightboxIndex + 1);
+              }}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={resolveImageSrc(galleryImages[lightboxIndex].path)}
+            alt={galleryImages[lightboxIndex].filename}
+            className="max-h-[90vh] max-w-[90vw] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* Metadata editor dialog */}
       <PersonMetadataEditor
