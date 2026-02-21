@@ -129,7 +129,7 @@ export function ImageEditorDialog({
           {/* Poster */}
           <div className="flex w-[200px] flex-shrink-0 flex-col gap-2">
             <h3 className="text-xs font-medium text-white/50">{tMeta("poster")}</h3>
-            <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
+            <div className="relative aspect-[2/3] w-full overflow-hidden bg-white/[0.04] border border-white/[0.06]">
               {posterPath ? (
                 <Image
                   src={resolveImageSrc(posterPath)}
@@ -184,7 +184,7 @@ export function ImageEditorDialog({
                 </span>
               )}
             </div>
-            <div className="relative h-[300px] w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
+            <div className="relative h-[300px] w-full overflow-hidden bg-white/[0.04] border border-white/[0.06]">
               {fanartPath ? (
                 <Image
                   src={resolveImageSrc(fanartPath)}
