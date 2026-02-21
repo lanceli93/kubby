@@ -298,3 +298,40 @@
 - New `home.folderPaths`: "Folder Paths" / "文件夹路径"
 - New `home.addFolder`: "Add Folder" / "添加文件夹"
 - New `home.removeFolder`: "Remove Folder" / "移除文件夹"
+
+## 2026-02-21: Actor List Page with Sort, Filter, Tags & Personal Rating
+
+### New "Actors" tab on library browse page
+- Fourth tab alongside Movies, Favorites, Genres on the `/movies?libraryId=` page
+- Displays all people linked to movies in the current library as poster cards
+- PersonCard rendered at movie-card size (180×270) with tier badges
+- Click poster → navigates to person detail page
+
+### Sort options
+- Name (A–Z), Personal Rating, Date Added, Movie Count
+- Ascending/descending toggle (defaults: asc for name, desc for others)
+
+### Filter options
+- Type: checkboxes for actor/director/writer/producer (populated from library data)
+- Tags: checkboxes from people's tags in the library
+- Tier: checkboxes for SSS through E + Unrated
+
+### People tags support
+- New `tags` column on `people` table (JSON array string, same pattern as movies)
+- DB migration: `drizzle/0005_people_tags.sql` + auto-migration in `src/lib/db/index.ts`
+- Person metadata editor: tag chips with X remove + text input with Enter-to-add in General tab
+- `GET /api/people/[id]`: returns parsed `tags` array
+- `PUT /api/people/[id]`: accepts `tags` array, stores as JSON
+
+### New APIs
+- `GET /api/people`: list people with filters (libraryId, search, sort, sortOrder, types, tags, tier, limit)
+  - JOINs moviePeople → movies for library scoping, LEFT JOINs userPersonData for personal rating
+  - Computes movieCount via COUNT(DISTINCT movie_id)
+  - Tier filter applied in application code using getTier() thresholds
+- `GET /api/libraries/[id]/people-filters`: returns available types and tags for people in the library
+
+### PersonCard update
+- New `"movie"` size option: 180×270 (matches MovieCard poster dimensions)
+
+### i18n (EN + ZH)
+- New `movies` keys: actors, noActors, actorsCount, nameAZ, movieCount, personalRating, type, allTypes, unrated, tier

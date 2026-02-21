@@ -23,6 +23,8 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `show_resolution_badge` integer NOT NULL DEFAULT 1",
   // 0005: runtime seconds for accurate progress
   "ALTER TABLE `movies` ADD `runtime_seconds` integer",
+  // 0006: tags column for people
+  "ALTER TABLE `people` ADD `tags` text",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

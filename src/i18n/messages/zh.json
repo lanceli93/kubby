@@ -185,7 +185,17 @@
     "tags": "标签",
     "videoInfo": "视频信息",
     "resolution": "分辨率",
-    "codec": "编解码器"
+    "codec": "编解码器",
+    "actors": "演员",
+    "noActors": "没有找到演员",
+    "actorsCount": "{count} 位演员",
+    "nameAZ": "姓名 (A\u2013Z)",
+    "movieCount": "出演数量",
+    "personalRating": "个人评分",
+    "type": "类型",
+    "allTypes": "全部类型",
+    "unrated": "未评分",
+    "tier": "评级"
   },
   "search": {
     "search": "搜索",

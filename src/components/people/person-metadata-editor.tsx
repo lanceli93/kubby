@@ -35,6 +35,7 @@ interface PersonData {
   birthYear?: number;
   placeOfBirth?: string;
   deathDate?: string;
+  tags?: string[];
   userData?: {
     personalRating?: number | null;
     dimensionRatings?: Record<string, number> | null;
@@ -66,6 +67,8 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     personalRating: "",
   });
 
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [birthInputError, setBirthInputError] = useState("");
   const datePickerRef = useRef<HTMLInputElement>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
@@ -84,6 +87,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
         imdbId: person.imdbId || "",
         personalRating: person.userData?.personalRating?.toString() || "",
       });
+      setTags(person.tags || []);
       if (person.userData?.dimensionRatings) {
         setDimensionRatings(person.userData.dimensionRatings);
       }
@@ -158,6 +162,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
       deathDate: form.deathDate || null,
       tmdbId: form.tmdbId || null,
       imdbId: form.imdbId || null,
+      tags: tags.length > 0 ? tags : null,
     });
   };
 
@@ -276,6 +281,44 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 value={form.deathDate}
                 onChange={(e) => setForm((f) => ({ ...f, deathDate: e.target.value }))}
               />
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-2">
+              <Label>{t("tags")}</Label>
+              <div className="flex flex-wrap gap-1.5 min-h-[36px] rounded-md border border-input bg-transparent p-2">
+                {tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="flex items-center gap-1 rounded bg-white/10 px-2 py-0.5 text-xs text-foreground"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => setTags((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = tagInput.trim();
+                      if (val && !tags.includes(val)) {
+                        setTags((prev) => [...prev, val]);
+                      }
+                      setTagInput("");
+                    }
+                  }}
+                  placeholder={t("addTagPlaceholder")}
+                  className="flex-1 min-w-[120px] bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
+                />
+              </div>
             </div>
 
             {/* External IDs section */}

@@ -14,13 +14,14 @@ interface PersonCardProps {
   photoPath?: string | null;
   personalRating?: number | null;
   age?: number | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "movie";
 }
 
 const sizeConfig = {
   sm: { width: 140, height: 210 },
   md: { width: 160, height: 240 },
   lg: { width: 240, height: 340 },
+  movie: { width: 180, height: 270 },
 };
 
 export function PersonCard({

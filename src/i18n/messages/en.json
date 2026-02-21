@@ -185,7 +185,17 @@
     "tags": "Tags",
     "videoInfo": "Video Info",
     "resolution": "Resolution",
-    "codec": "Codec"
+    "codec": "Codec",
+    "actors": "Actors",
+    "noActors": "No actors found",
+    "actorsCount": "{count} actors",
+    "nameAZ": "Name (A\u2013Z)",
+    "movieCount": "Movie Count",
+    "personalRating": "Personal Rating",
+    "type": "Type",
+    "allTypes": "All Types",
+    "unrated": "Unrated",
+    "tier": "Tier"
   },
   "search": {
     "search": "Search",

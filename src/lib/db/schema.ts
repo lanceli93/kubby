@@ -80,6 +80,7 @@ export const people = sqliteTable("people", {
   placeOfBirth: text("place_of_birth"),
   deathDate: text("death_date"),
   imdbId: text("imdb_id"),
+  tags: text("tags"), // JSON array string
   dateAdded: text("date_added").notNull().default("(datetime('now'))"),
 }, (table) => [
   index("idx_people_name").on(table.name),

@@ -4,6 +4,7 @@ import { Suspense, useState, useRef, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
+import { PersonCard } from "@/components/people/person-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
@@ -18,6 +19,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  Hash,
 } from "lucide-react";
 
 interface Movie {
@@ -123,6 +125,7 @@ function MovieBrowseContent() {
             <TabsTrigger value="movies">{t("movies")}</TabsTrigger>
             <TabsTrigger value="favorites">{t("favorites")}</TabsTrigger>
             <TabsTrigger value="genres">{t("genres")}</TabsTrigger>
+            <TabsTrigger value="actors">{t("actors")}</TabsTrigger>
           </TabsList>
         </div>
 
@@ -137,6 +140,10 @@ function MovieBrowseContent() {
 
           <TabsContent value="genres">
             <GenresTabContent libraryId={libraryId} />
+          </TabsContent>
+
+          <TabsContent value="actors">
+            <ActorsTabContent libraryId={libraryId} />
           </TabsContent>
         </div>
       </Tabs>
@@ -654,6 +661,413 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
           </ScrollRow>
         </section>
       ))}
+    </div>
+  );
+}
+
+interface PersonItem {
+  id: string;
+  name: string;
+  type: string;
+  photoPath?: string | null;
+  personalRating?: number | null;
+  movieCount: number;
+  tags?: string[];
+  dateAdded?: string;
+}
+
+interface PeopleFiltersData {
+  types: string[];
+  tags: string[];
+}
+
+const TIERS = ["SSS", "SS", "S", "A", "B", "C", "D", "E"] as const;
+
+function ActorsTabContent({ libraryId }: { libraryId: string }) {
+  const t = useTranslations("movies");
+  const [sort, setSort] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTiers, setSelectedTiers] = useState<string[]>([]);
+  const [typesExpanded, setTypesExpanded] = useState(false);
+  const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [tiersExpanded, setTiersExpanded] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  const sortOptions = [
+    { value: "name", label: t("nameAZ"), icon: ArrowDownAZ },
+    { value: "personalRating", label: t("personalRating"), icon: Star },
+    { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
+    { value: "movieCount", label: t("movieCount"), icon: Hash },
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setShowSortDropdown(false);
+      }
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const { data: filters } = useQuery<PeopleFiltersData>({
+    queryKey: ["people-filters", libraryId],
+    queryFn: () =>
+      fetch(`/api/libraries/${libraryId}/people-filters`).then((r) => r.json()),
+    enabled: !!libraryId,
+  });
+
+  const { data: actors = [] } = useQuery<PersonItem[]>({
+    queryKey: ["people", { libraryId, sort, sortOrder, selectedTypes, selectedTags, selectedTiers }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("libraryId", libraryId);
+      params.set("sort", sort);
+      params.set("sortOrder", sortOrder);
+      if (selectedTypes.length > 0) params.set("types", selectedTypes.join(","));
+      if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+      if (selectedTiers.length > 0) params.set("tier", selectedTiers.join(","));
+      return fetch(`/api/people?${params}`).then((r) => r.json());
+    },
+    enabled: !!libraryId,
+  });
+
+  const activeFilterCount = selectedTypes.length + selectedTags.length + selectedTiers.length;
+
+  const toggleType = (type: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const toggleTier = (tier: string) => {
+    setSelectedTiers((prev) =>
+      prev.includes(tier) ? prev.filter((t) => t !== tier) : [...prev, tier]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedTypes([]);
+    setSelectedTags([]);
+    setSelectedTiers([]);
+  };
+
+  return (
+    <div>
+      {/* Centered Sort & Filter Toolbar */}
+      <div className="py-[18px] flex items-center justify-center gap-6">
+        {/* Sort button */}
+        <div className="relative" ref={sortRef}>
+          <button
+            onClick={() => {
+              setShowSortDropdown(!showSortDropdown);
+              setShowFilterDropdown(false);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowUpDown className="h-5 w-5" />
+            {t("sortBy")}
+          </button>
+
+          {showSortDropdown && (
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+              {sortOptions.map((option) => {
+                const Icon = option.icon;
+                const isActive = sort === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setSort(option.value);
+                      setSortOrder(option.value === "name" ? "asc" : "desc");
+                    }}
+                    className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                      isActive
+                        ? "bg-primary/[0.08] text-foreground"
+                        : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <Icon
+                      className={`h-4 w-4 ${
+                        isActive ? "text-primary" : "text-[#666680]"
+                      }`}
+                    />
+                    {option.label}
+                  </button>
+                );
+              })}
+              <div className="my-1.5 border-t border-white/[0.06]" />
+              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {t("sortOrder")}
+              </p>
+              <button
+                onClick={() => setSortOrder("asc")}
+                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                  sortOrder === "asc"
+                    ? "bg-primary/[0.08] text-foreground"
+                    : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                }`}
+              >
+                <span className={`h-3 w-3 rounded-full border-2 ${sortOrder === "asc" ? "border-primary bg-primary" : "border-[#666680]"}`} />
+                {t("ascending")}
+              </button>
+              <button
+                onClick={() => setSortOrder("desc")}
+                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                  sortOrder === "desc"
+                    ? "bg-primary/[0.08] text-foreground"
+                    : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                }`}
+              >
+                <span className={`h-3 w-3 rounded-full border-2 ${sortOrder === "desc" ? "border-primary bg-primary" : "border-[#666680]"}`} />
+                {t("descending")}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Filter button */}
+        <div className="relative" ref={filterRef}>
+          <button
+            onClick={() => {
+              setShowFilterDropdown(!showFilterDropdown);
+              setShowSortDropdown(false);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Filter className="h-5 w-5" />
+            {t("filter")}
+            {activeFilterCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          {showFilterDropdown && (
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+              {/* Clear all */}
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-red-400 transition-colors hover:bg-white/[0.04]"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {t("clearFilters")}
+                </button>
+              )}
+
+              {/* Types section */}
+              {filters && filters.types.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setTypesExpanded(!typesExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {typesExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    {t("type")}
+                  </button>
+                  {typesExpanded &&
+                    filters.types.map((type) => {
+                      const checked = selectedTypes.includes(type);
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => toggleType(type)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                            checked
+                              ? "text-foreground"
+                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              checked
+                                ? "border-primary bg-primary text-white"
+                                : "border-[#666680]"
+                            }`}
+                          >
+                            {checked && (
+                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          {type}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+
+              {/* Tags section */}
+              {filters && filters.tags.length > 0 && (
+                <>
+                  <div className="my-1.5 border-t border-white/[0.06]" />
+                  <button
+                    onClick={() => setTagsExpanded(!tagsExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {tagsExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    {t("tags")}
+                  </button>
+                  {tagsExpanded &&
+                    filters.tags.map((tag) => {
+                      const checked = selectedTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                            checked
+                              ? "text-foreground"
+                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              checked
+                                ? "border-primary bg-primary text-white"
+                                : "border-[#666680]"
+                            }`}
+                          >
+                            {checked && (
+                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          {tag}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+
+              {/* Tier section */}
+              <>
+                <div className="my-1.5 border-t border-white/[0.06]" />
+                <button
+                  onClick={() => setTiersExpanded(!tiersExpanded)}
+                  className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                >
+                  {tiersExpanded ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3" />
+                  )}
+                  {t("tier")}
+                </button>
+                {tiersExpanded && (
+                  <>
+                    {TIERS.map((tier) => {
+                      const checked = selectedTiers.includes(tier);
+                      return (
+                        <button
+                          key={tier}
+                          onClick={() => toggleTier(tier)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                            checked
+                              ? "text-foreground"
+                              : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              checked
+                                ? "border-primary bg-primary text-white"
+                                : "border-[#666680]"
+                            }`}
+                          >
+                            {checked && (
+                              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </span>
+                          {tier}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => toggleTier("unrated")}
+                      className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                        selectedTiers.includes("unrated")
+                          ? "text-foreground"
+                          : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-4 w-4 items-center justify-center rounded border ${
+                          selectedTiers.includes("unrated")
+                            ? "border-primary bg-primary text-white"
+                            : "border-[#666680]"
+                        }`}
+                      >
+                        {selectedTiers.includes("unrated") && (
+                          <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      {t("unrated")}
+                    </button>
+                  </>
+                )}
+              </>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* People Grid */}
+      <div
+        className="grid gap-4"
+        style={{
+          gridTemplateColumns: "repeat(auto-fill, 180px)",
+          justifyContent: "center",
+        }}
+      >
+        {actors.map((person) => (
+          <PersonCard
+            key={person.id}
+            id={person.id}
+            name={person.name}
+            role={`${person.movieCount} ${person.movieCount === 1 ? "movie" : "movies"}`}
+            photoPath={person.photoPath}
+            personalRating={person.personalRating}
+            size="movie"
+          />
+        ))}
+      </div>
+
+      {actors.length === 0 && (
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          {t("noActors")}
+        </div>
+      )}
     </div>
   );
 }

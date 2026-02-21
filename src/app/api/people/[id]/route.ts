@@ -34,6 +34,7 @@ export async function PUT(
     if (body.birthYear !== undefined) updateData.birthYear = body.birthYear ? Number(body.birthYear) : null;
     if (body.placeOfBirth !== undefined) updateData.placeOfBirth = body.placeOfBirth;
     if (body.deathDate !== undefined) updateData.deathDate = body.deathDate;
+    if (body.tags !== undefined) updateData.tags = body.tags ? JSON.stringify(body.tags) : null;
 
     db.update(people).set(updateData).where(eq(people.id, id)).run();
 
@@ -102,8 +103,12 @@ export async function GET(
         .get() || null;
     }
 
+    // Parse tags from JSON string
+    const parsedTags = person.tags ? (() => { try { return JSON.parse(person.tags); } catch { return []; } })() : [];
+
     return NextResponse.json({
       ...person,
+      tags: parsedTags,
       fanartPath,
       movies: resolvedFilms,
       userData: userData
