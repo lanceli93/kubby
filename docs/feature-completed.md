@@ -335,3 +335,53 @@
 
 ### i18n (EN + ZH)
 - New `movies` keys: actors, noActors, actorsCount, nameAZ, movieCount, personalRating, type, allTypes, unrated, tier
+
+## 2026-02-21: Person Photo Gallery Wall
+
+### Gallery API (`/api/people/[id]/gallery`)
+- `GET`: Lists gallery images from `{personDir}/gallery/` directory, filtered to image extensions (jpg, jpeg, png, webp), sorted by filename
+- `POST`: Multi-file upload via FormData, auto-numbers files as `001.jpg`, `002.png` etc., creates `gallery/` subdirectory if needed
+- `DELETE`: Removes a single gallery image by filename, validates against path traversal attacks
+- Person directory derived from `photoPath` in DB or computed from person name using `sanitizePersonName()`
+
+### Gallery section on person detail page (`/people/[id]`)
+- "Photos" section below Filmography with count display and Upload button (ImagePlus icon)
+- CSS grid layout with `repeat(auto-fill, 220px)` columns, 3:4 aspect ratio thumbnails with `object-cover`
+- Hover effect: subtle scale-up + delete X button appears (top-right corner)
+- Hidden file input triggered by Upload button, supports multiple file selection
+- Refetches gallery query on successful upload or delete
+
+### Lightbox viewer
+- Full-screen fixed overlay with dark backdrop (`bg-black/90`)
+- Centered image with `object-contain`, max 90vw × 90vh
+- Left/right arrow buttons for navigation between images
+- Keyboard support: Escape to close, arrow keys to navigate
+- Click backdrop to close, click image to stay open
+
+### i18n (EN + ZH)
+- New `person` keys: photos (照片), photosCount (张照片), uploadPhotos (上传), deletePhoto (删除照片), noPhotos (暂无照片)
+
+## 2026-02-21: Multi-Dimension Rating Sort
+
+### Backend: People API dimension sort
+- `GET /api/people`: new `sortDimension` query param
+- When `sort=personalRating` + `sortDimension` provided: sorts by `json_extract(upd.dimension_ratings, '$."dimensionName"')` with COALESCE fallback to -1
+- When `sort=personalRating` without `sortDimension`: existing behavior (sorts by `upd.personal_rating`)
+
+### Backend: Movies API dimension sort
+- `GET /api/movies`: new `sortDimension` query param
+- When `sort=personalRating` + `sortDimension` provided: sorts by `json_extract(userMovieData.dimensionRatings, '$."dimensionName"')` via raw SQL order clause
+- When `sort=personalRating` without `sortDimension`: existing behavior
+
+### Frontend: Expandable sort dropdown
+- All three sort dropdowns (`MoviesTabContent`, `PersonMoviesContent`, `ActorsTabContent`) updated:
+  - If user has configured rating dimensions: "Personal Rating" sort option becomes expandable with chevron toggle
+  - Expanding reveals: "Overall" (sorts by average personal_rating) + each dimension name as individual sort sub-items
+  - If no dimensions configured: "Personal Rating" remains a flat, non-expandable sort item
+  - Clicking a dimension sub-item sets `sort=personalRating` + `sortDimension=dimensionName` + auto-sets descending order
+  - Active state highlighting on the specific selected sub-item
+- `sortDimension` state included in React Query keys for automatic refetch on change
+- Uses `useUserPreferences()` hook: `movieRatingDimensions` for movie tabs, `personRatingDimensions` for actors tab
+
+### i18n (EN + ZH)
+- New `movies.overall` key: "Overall" / "综合"
