@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { sanitizePersonName } from "@/lib/tmdb";
 
-const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 const METADATA_DIR = path.join(process.cwd(), "data", "metadata", "people");
 
 function getPersonDir(person: { photoPath: string | null; name: string }): string {

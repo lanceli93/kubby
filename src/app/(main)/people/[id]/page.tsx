@@ -78,6 +78,10 @@ export default function PersonDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryContainerRef = useRef<HTMLElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [imageDims, setImageDims] = useState<Record<string, { w: number; h: number }>>({});
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const { data: person } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
@@ -126,6 +130,76 @@ export default function PersonDetailPage() {
       return () => document.removeEventListener("keydown", handleLightboxKeyDown);
     }
   }, [lightboxIndex, handleLightboxKeyDown]);
+
+  // Preload gallery image dimensions
+  useEffect(() => {
+    galleryImages.forEach((img) => {
+      if (imageDims[img.filename]) return;
+      const image = new window.Image();
+      image.onload = () => {
+        setImageDims((prev) => ({ ...prev, [img.filename]: { w: image.naturalWidth, h: image.naturalHeight } }));
+      };
+      image.src = resolveImageSrc(img.path);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [galleryImages]);
+
+  // Track gallery container width via callback ref
+  const galleryRefCallback = useCallback((el: HTMLElement | null) => {
+    if (resizeObserverRef.current) {
+      resizeObserverRef.current.disconnect();
+      resizeObserverRef.current = null;
+    }
+    galleryContainerRef.current = el;
+    if (el) {
+      const observer = new ResizeObserver((entries) => {
+        setContainerWidth(entries[0].contentRect.width);
+      });
+      observer.observe(el);
+      resizeObserverRef.current = observer;
+    }
+  }, []);
+
+  const GALLERY_ROW_HEIGHT = 280;
+  const GALLERY_GAP = 6;
+
+  const justifiedRows = (() => {
+    if (containerWidth <= 0) return [];
+    const rows: { filename: string; path: string; width: number; height: number }[][] = [];
+    let currentRow: { filename: string; path: string; ratio: number }[] = [];
+    let currentRowWidth = 0;
+
+    for (const img of galleryImages) {
+      const d = imageDims[img.filename];
+      if (!d) continue;
+      const ratio = d.w / d.h;
+      currentRow.push({ ...img, ratio });
+      currentRowWidth += ratio * GALLERY_ROW_HEIGHT + (currentRow.length > 1 ? GALLERY_GAP : 0);
+
+      if (currentRowWidth >= containerWidth && currentRow.length > 1) {
+        const totalGap = (currentRow.length - 1) * GALLERY_GAP;
+        const totalRatio = currentRow.reduce((s, r) => s + r.ratio, 0);
+        const rowH = (containerWidth - totalGap) / totalRatio;
+        rows.push(currentRow.map((r) => ({
+          filename: r.filename, path: r.path,
+          width: Math.floor(r.ratio * rowH), height: Math.floor(rowH),
+        })));
+        currentRow = [];
+        currentRowWidth = 0;
+      }
+    }
+    // Last row — cap at target height so it doesn't stretch
+    if (currentRow.length > 0) {
+      const totalGap = (currentRow.length - 1) * GALLERY_GAP;
+      const totalRatio = currentRow.reduce((s, r) => s + r.ratio, 0);
+      const rowH = Math.min((containerWidth - totalGap) / totalRatio, GALLERY_ROW_HEIGHT);
+      rows.push(currentRow.map((r) => ({
+        filename: r.filename, path: r.path,
+        width: Math.floor(r.ratio * rowH), height: Math.floor(rowH),
+      })));
+    }
+    return rows;
+  })();
 
   const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
     await fetch(`/api/people/${personId}/user-data`, {
@@ -332,7 +406,7 @@ export default function PersonDetailPage() {
       </section>
 
       {/* Photo Gallery */}
-      <section className="flex flex-col gap-4 px-20 pb-12">
+      <section ref={galleryRefCallback} className="flex flex-col gap-4 px-20 pb-12">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-foreground">
             {tPerson("photos")}
@@ -360,34 +434,34 @@ export default function PersonDetailPage() {
         {galleryImages.length === 0 ? (
           <p className="text-sm text-muted-foreground">{tPerson("noPhotos")}</p>
         ) : (
-          <div
-            className="grid gap-3"
-            style={{ gridTemplateColumns: "repeat(auto-fill, 220px)" }}
-          >
-            {galleryImages.map((img, idx) => (
-              <div
-                key={img.filename}
-                className="group relative cursor-pointer overflow-hidden rounded-lg"
-                style={{ aspectRatio: "3/4" }}
-                onClick={() => setLightboxIndex(idx)}
-              >
-                <Image
-                  src={resolveImageSrc(img.path)}
-                  alt={img.filename}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  sizes="220px"
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteTarget(img.filename);
-                  }}
-                  className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
-                  title={tPerson("deletePhoto")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
+          <div className="flex flex-col" style={{ gap: GALLERY_GAP }}>
+            {justifiedRows.map((row, rowIdx) => (
+              <div key={rowIdx} className="flex" style={{ gap: GALLERY_GAP }}>
+                {row.map((img) => (
+                  <div
+                    key={img.filename}
+                    className="group relative cursor-pointer overflow-hidden flex-shrink-0"
+                    style={{ width: img.width, height: img.height }}
+                    onClick={() => setLightboxIndex(galleryImages.findIndex((g) => g.filename === img.filename))}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={resolveImageSrc(img.path)}
+                      alt={img.filename}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(img.filename);
+                      }}
+                      className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
+                      title={tPerson("deletePhoto")}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
