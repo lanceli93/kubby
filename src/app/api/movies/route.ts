@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
+import fs from "fs";
 import { db } from "@/lib/db";
 import { movies, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
 import { eq, desc, asc, like, sql, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+
+const stampPath = (p: string | null) => {
+  if (!p) return null;
+  try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
+};
 
 // GET /api/movies
 export async function GET(request: NextRequest) {
@@ -260,8 +266,8 @@ export async function GET(request: NextRequest) {
     // Resolve relative paths to absolute
     const movieResults = results.map((r) => ({
       ...r,
-      posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
-      fanartPath: r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
+      posterPath: stampPath(r.posterPath ? path.join(r.folderPath, r.posterPath) : null),
+      fanartPath: stampPath(r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null),
       ...(includeGenres && r.genres ? { genres: JSON.parse(r.genres) } : {}),
       ...(includeGenres && r.tags ? { tags: JSON.parse(r.tags) } : {}),
       isFavorite: r.isFavorite ?? false,
@@ -293,7 +299,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         movies: movieResults,
-        people: peopleResults,
+        people: peopleResults.map((p) => ({ ...p, photoPath: stampPath(p.photoPath) })),
       });
     }
 

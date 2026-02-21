@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { getTier } from "@/lib/tier";
+
+const stampPath = (p: string | null) => {
+  if (!p) return null;
+  try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
+};
 
 // GET /api/people
 export async function GET(request: NextRequest) {
@@ -122,7 +128,7 @@ export async function GET(request: NextRequest) {
       id: r.id,
       name: r.name,
       type: r.type,
-      photoPath: r.photo_path,
+      photoPath: stampPath(r.photo_path),
       tags: r.tags ? (() => { try { return JSON.parse(r.tags); } catch { return []; } })() : [],
       dateAdded: r.date_added,
       personalRating: r.personal_rating,
