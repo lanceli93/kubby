@@ -180,6 +180,7 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">{t("languageDesc")}</p>
         <select
           value={locale}
+          style={{ colorScheme: "dark" }}
           onChange={async (e) => {
             const newLocale = e.target.value;
             await setLocale(newLocale);

@@ -499,6 +499,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                     );
                   }}
                   className="h-9 w-[120px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
+                  style={{ colorScheme: "dark" }}
                 >
                   <option value="actor">{t("actor")}</option>
                   <option value="director">{t("director")}</option>

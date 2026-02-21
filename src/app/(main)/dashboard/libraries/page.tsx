@@ -155,6 +155,7 @@ export default function LibrariesPage() {
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                   className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                  style={{ colorScheme: "dark" }}
                 >
                   <option value="movie">Movie</option>
                   <option value="tvshow" disabled>
@@ -268,6 +269,7 @@ export default function LibrariesPage() {
                     value={metadataLanguage}
                     onChange={(e) => setMetadataLanguage(e.target.value)}
                     className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                    style={{ colorScheme: "dark" }}
                   >
                     <option value="">English (default)</option>
                     <option value="zh-CN">简体中文</option>
