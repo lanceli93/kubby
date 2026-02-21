@@ -92,10 +92,11 @@ export async function POST(
     }
 
     const created: { filename: string; path: string }[] = [];
+    const padLen = Math.max(3, String(maxNum + files.length).length);
     for (const file of files) {
       maxNum++;
       const ext = path.extname(file.name).toLowerCase() || ".jpg";
-      const filename = String(maxNum).padStart(3, "0") + ext;
+      const filename = String(maxNum).padStart(padLen, "0") + ext;
       const destPath = path.join(galleryDir, filename);
       const buffer = Buffer.from(await file.arrayBuffer());
       fs.writeFileSync(destPath, buffer);

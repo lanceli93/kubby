@@ -42,10 +42,12 @@ export function AppHeader() {
   const { data: session } = useSession();
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
+  const isPersonFilmography = pathname === "/movies" && searchParams.get("personId");
   const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
   const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
   const isPlayerPage = /^\/movies\/[^/]+\/play$/.test(pathname);
   const libraryId = searchParams.get("libraryId");
+  const personId = searchParams.get("personId");
   const filterGenre = searchParams.get("genre");
   const filterTag = searchParams.get("tag");
   const filterStudio = searchParams.get("studio");
@@ -55,6 +57,12 @@ export function AppHeader() {
     queryKey: ["library", libraryId],
     queryFn: () => fetch(`/api/libraries/${libraryId}`).then((r) => r.json()),
     enabled: !!isLibraryPage && !!libraryId,
+  });
+
+  const { data: personData } = useQuery<{ name: string }>({
+    queryKey: ["person-header", personId],
+    queryFn: () => fetch(`/api/people/${personId}`).then((r) => r.json()),
+    enabled: !!isPersonFilmography && !!personId,
   });
 
   const initials =
@@ -88,10 +96,10 @@ export function AppHeader() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        {isLibraryPage ? (
+        {isLibraryPage || isPersonFilmography ? (
           <>
             <Link
-              href="/"
+              href={isPersonFilmography ? `/people/${personId}` : "/"}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -103,7 +111,9 @@ export function AppHeader() {
               <House className="h-5 w-5" />
             </Link>
             <span className="text-xl font-semibold text-foreground">
-              {library?.name || ""}{filterLabel ? ` — ${filterLabel}` : ""}
+              {isPersonFilmography
+                ? personData?.name || ""
+                : `${library?.name || ""}${filterLabel ? ` — ${filterLabel}` : ""}`}
             </span>
           </>
         ) : (

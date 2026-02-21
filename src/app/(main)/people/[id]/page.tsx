@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { MoreVertical, Pencil, ExternalLink, Star, ImagePlus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -376,31 +377,33 @@ export default function PersonDetailPage() {
       <section className="flex flex-col gap-4 px-20 mt-[10px] pb-12">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-foreground">
-            Filmography
+            {tPerson("filmography")}
           </h2>
           <span className="text-sm text-[#666680]">
-            ({person.movies.length} movies)
+            ({tPerson("moviesCount", { count: person.movies.length })})
           </span>
+          <Link
+            href={`/movies?personId=${personId}`}
+            className="ml-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {tPerson("viewAll")} →
+          </Link>
         </div>
 
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: "repeat(auto-fill, 180px)",
-          }}
-        >
+        <div className="flex gap-4 overflow-hidden">
           {person.movies.map((movie) => (
-            <MovieCard
-              key={movie.id}
-              id={movie.id}
-              title={movie.title}
-              year={movie.year}
-              posterPath={movie.posterPath}
-              rating={movie.communityRating}
-              personalRating={movie.personalRating}
-              videoWidth={movie.videoWidth}
-              videoHeight={movie.videoHeight}
-            />
+            <div key={movie.id} className="flex-shrink-0" style={{ width: 180 }}>
+              <MovieCard
+                id={movie.id}
+                title={movie.title}
+                year={movie.year}
+                posterPath={movie.posterPath}
+                rating={movie.communityRating}
+                personalRating={movie.personalRating}
+                videoWidth={movie.videoWidth}
+                videoHeight={movie.videoHeight}
+              />
+            </div>
           ))}
         </div>
       </section>

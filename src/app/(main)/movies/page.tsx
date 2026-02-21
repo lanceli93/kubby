@@ -98,7 +98,19 @@ function MovieBrowseContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const libraryId = searchParams.get("libraryId") || "";
+  const personId = searchParams.get("personId") || "";
   const t = useTranslations("movies");
+
+  // Person filmography mode — no tabs, just a movie grid
+  if (personId) {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex-1 overflow-auto px-12">
+          <PersonMoviesContent personId={personId} />
+        </div>
+      </div>
+    );
+  }
 
   // If no libraryId, redirect to home
   if (!libraryId) {
@@ -1066,6 +1078,290 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
       {actors.length === 0 && (
         <div className="flex h-64 items-center justify-center text-muted-foreground">
           {t("noActors")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PersonMoviesContent({ personId }: { personId: string }) {
+  const t = useTranslations("movies");
+  const [sort, setSort] = useState("releaseDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = useState<number[]>([]);
+  const [genresExpanded, setGenresExpanded] = useState(false);
+  const [yearsExpanded, setYearsExpanded] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+    useMovieMutations();
+
+  const sortOptions = [
+    { value: "title", label: t("titleAZ"), icon: ArrowDownAZ },
+    { value: "rating", label: t("rating"), icon: Star },
+    { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
+    { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
+    { value: "runtime", label: t("runtime"), icon: Timer },
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setShowSortDropdown(false);
+      }
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const { data: allMovies = [] } = useQuery<Movie[]>({
+    queryKey: ["movies", { personId, sort, sortOrder }],
+    queryFn: () =>
+      fetch(`/api/movies?personId=${personId}&sort=${sort}&sortOrder=${sortOrder}&includeGenres=true&limit=500`).then((r) => r.json()),
+  });
+
+  // Compute filter options from loaded movies
+  const availableGenres = useMemo(() => {
+    const set = new Set<string>();
+    for (const m of allMovies) {
+      if (m.genres && Array.isArray(m.genres)) m.genres.forEach((g) => set.add(g));
+    }
+    return Array.from(set).sort();
+  }, [allMovies]);
+
+  const availableYears = useMemo(() => {
+    const set = new Set<number>();
+    for (const m of allMovies) {
+      if (m.year) set.add(m.year);
+    }
+    return Array.from(set).sort((a, b) => b - a);
+  }, [allMovies]);
+
+  // Client-side filtering
+  const movies = useMemo(() => {
+    return allMovies.filter((m) => {
+      if (selectedGenres.length > 0) {
+        if (!m.genres || !Array.isArray(m.genres) || !selectedGenres.some((g) => m.genres!.includes(g))) return false;
+      }
+      if (selectedYears.length > 0) {
+        if (!m.year || !selectedYears.includes(m.year)) return false;
+      }
+      return true;
+    });
+  }, [allMovies, selectedGenres, selectedYears]);
+
+  const activeFilterCount = selectedGenres.length + selectedYears.length;
+
+  const toggleGenre = (genre: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+    );
+  };
+
+  const toggleYear = (year: number) => {
+    setSelectedYears((prev) =>
+      prev.includes(year) ? prev.filter((y) => y !== year) : [...prev, year]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedGenres([]);
+    setSelectedYears([]);
+  };
+
+  return (
+    <div>
+      {/* Sort & Filter Toolbar */}
+      <div className="py-[18px] flex items-center justify-center gap-6">
+        <div className="relative" ref={sortRef}>
+          <button
+            onClick={() => {
+              setShowSortDropdown(!showSortDropdown);
+              setShowFilterDropdown(false);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowUpDown className="h-5 w-5" />
+            {t("sortBy")}
+          </button>
+
+          {showSortDropdown && (
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+              {sortOptions.map((option) => {
+                const Icon = option.icon;
+                const isActive = sort === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setSort(option.value)}
+                    className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                      isActive
+                        ? "bg-primary/[0.08] text-foreground"
+                        : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-[#666680]"}`} />
+                    {option.label}
+                  </button>
+                );
+              })}
+              <div className="my-1.5 border-t border-white/[0.06]" />
+              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {t("sortOrder")}
+              </p>
+              <button
+                onClick={() => setSortOrder("asc")}
+                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                  sortOrder === "asc" ? "bg-primary/[0.08] text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                }`}
+              >
+                <span className={`h-3 w-3 rounded-full border-2 ${sortOrder === "asc" ? "border-primary bg-primary" : "border-[#666680]"}`} />
+                {t("ascending")}
+              </button>
+              <button
+                onClick={() => setSortOrder("desc")}
+                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                  sortOrder === "desc" ? "bg-primary/[0.08] text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"
+                }`}
+              >
+                <span className={`h-3 w-3 rounded-full border-2 ${sortOrder === "desc" ? "border-primary bg-primary" : "border-[#666680]"}`} />
+                {t("descending")}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="relative" ref={filterRef}>
+          <button
+            onClick={() => {
+              setShowFilterDropdown(!showFilterDropdown);
+              setShowSortDropdown(false);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Filter className="h-5 w-5" />
+            {t("filter")}
+            {activeFilterCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          {showFilterDropdown && (
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/10 bg-black/70 backdrop-blur-xl py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.63)]">
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-red-400 transition-colors hover:bg-white/[0.04]"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {t("clearFilters")}
+                </button>
+              )}
+
+              {availableGenres.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setGenresExpanded(!genresExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {genresExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {t("genres")}
+                  </button>
+                  {genresExpanded &&
+                    availableGenres.map((genre) => {
+                      const checked = selectedGenres.includes(genre);
+                      return (
+                        <button
+                          key={genre}
+                          onClick={() => toggleGenre(genre)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
+                        >
+                          <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? "border-primary bg-primary text-white" : "border-[#666680]"}`}>
+                            {checked && <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                          </span>
+                          {genre}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+
+              {availableYears.length > 0 && (
+                <>
+                  <div className="my-1.5 border-t border-white/[0.06]" />
+                  <button
+                    onClick={() => setYearsExpanded(!yearsExpanded)}
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  >
+                    {yearsExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {t("year")}
+                  </button>
+                  {yearsExpanded &&
+                    availableYears.map((year) => {
+                      const checked = selectedYears.includes(year);
+                      return (
+                        <button
+                          key={year}
+                          onClick={() => toggleYear(year)}
+                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
+                        >
+                          <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? "border-primary bg-primary text-white" : "border-[#666680]"}`}>
+                            {checked && <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                          </span>
+                          {year}
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Movie Grid */}
+      <div
+        className="grid gap-4"
+        style={{
+          gridTemplateColumns: "repeat(auto-fill, 180px)",
+          justifyContent: "center",
+        }}
+      >
+        {movies.map((movie) => (
+          <MovieCard
+            key={movie.id}
+            id={movie.id}
+            title={movie.title}
+            year={movie.year}
+            posterPath={movie.posterPath}
+            rating={movie.communityRating}
+            personalRating={movie.personalRating}
+            videoWidth={movie.videoWidth}
+            videoHeight={movie.videoHeight}
+            isFavorite={movie.isFavorite}
+            isWatched={movie.isWatched}
+            onToggleFavorite={() =>
+              handleToggleFavorite(movie.id, !!movie.isFavorite)
+            }
+            onToggleWatched={() =>
+              handleToggleWatched(movie.id, !!movie.isWatched)
+            }
+            onDelete={() => handleDeleteMovie(movie.id)}
+          />
+        ))}
+      </div>
+
+      {movies.length === 0 && (
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          {t("noMovies")}
         </div>
       )}
     </div>

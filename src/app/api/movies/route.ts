@@ -158,6 +158,7 @@ export async function GET(request: NextRequest) {
         conditions.push(sql`${movies.year} IN (${sql.join(yearList.map((y) => sql`${y}`), sql`, `)})`);
       }
     }
+    const personId = searchParams.get("personId");
     if (exclude) {
       conditions.push(sql`${movies.id} != ${exclude}`);
     }
@@ -227,6 +228,13 @@ export async function GET(request: NextRequest) {
         )
       )
       .$dynamic();
+
+    if (personId) {
+      baseQuery = baseQuery.innerJoin(
+        moviePeople,
+        and(eq(moviePeople.movieId, movies.id), eq(moviePeople.personId, personId))
+      );
+    }
 
     if (conditions.length > 0) {
       baseQuery = baseQuery.where(and(...conditions));
