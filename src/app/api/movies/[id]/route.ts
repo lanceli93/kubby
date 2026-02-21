@@ -315,7 +315,7 @@ export async function GET(
       genres: movie.genres ? JSON.parse(movie.genres) : [],
       studios: movie.studios ? JSON.parse(movie.studios) : [],
       tags: movie.tags ? JSON.parse(movie.tags) : [],
-      cast,
+      cast: cast.map((c) => ({ ...c, photoPath: stampPath(c.photoPath) })),
       directors,
       allPeople,
       userData: userData
