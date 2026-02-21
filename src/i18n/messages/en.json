@@ -220,6 +220,7 @@
     "photos": "Gallery",
     "photosCount": "{count} photos",
     "uploadPhotos": "Upload",
+    "uploadFolder": "Upload Folder",
     "deletePhoto": "Delete photo",
     "confirmDeletePhoto": "Are you sure you want to delete this photo? This action cannot be undone.",
     "noPhotos": "No photos yet"

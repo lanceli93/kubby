@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ExternalLink, Star, ImagePlus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { MoreVertical, Pencil, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -79,6 +79,7 @@ export default function PersonDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const galleryContainerRef = useRef<HTMLElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [imageDims, setImageDims] = useState<Record<string, { w: number; h: number }>>({});
@@ -95,16 +96,22 @@ export default function PersonDetailPage() {
   });
   const galleryImages = galleryData?.images ?? [];
 
+  const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif", ".bmp"]);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const formData = new FormData();
     for (const file of Array.from(files)) {
+      const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+      if (!IMAGE_EXTENSIONS.has(ext)) continue;
       formData.append("file", file);
     }
+    if (!formData.has("file")) return;
     await fetch(`/api/people/${personId}/gallery`, { method: "POST", body: formData });
     queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (folderInputRef.current) folderInputRef.current.value = "";
   };
 
   const handleDeleteGalleryImage = async () => {
@@ -419,8 +426,15 @@ export default function PersonDetailPage() {
             ({tPerson("photosCount", { count: galleryImages.length })})
           </span>
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => folderInputRef.current?.click()}
             className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+          >
+            <FolderOpen className="h-4 w-4" />
+            {tPerson("uploadFolder")}
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
           >
             <ImagePlus className="h-4 w-4" />
             {tPerson("uploadPhotos")}
@@ -432,6 +446,13 @@ export default function PersonDetailPage() {
             multiple
             className="hidden"
             onChange={handleUpload}
+          />
+          <input
+            ref={folderInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleUpload}
+            {...{ webkitdirectory: "" } as React.InputHTMLAttributes<HTMLInputElement>}
           />
         </div>
 
