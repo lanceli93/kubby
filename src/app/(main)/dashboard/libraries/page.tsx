@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 
 interface Library {
@@ -31,7 +32,7 @@ export default function LibrariesPage() {
   const [newFolderPath, setNewFolderPath] = useState("");
   const [type, setType] = useState("movie");
   const [scraperEnabled, setScraperEnabled] = useState(false);
-  const [metadataLanguage, setMetadataLanguage] = useState("");
+  const [metadataLanguage, setMetadataLanguage] = useState("en");
   const [tmdbConfigured, setTmdbConfigured] = useState<boolean | null>(null);
   const [scraperError, setScraperError] = useState("");
 
@@ -53,7 +54,7 @@ export default function LibrariesPage() {
       fetch("/api/libraries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, folderPaths, scraperEnabled, metadataLanguage: metadataLanguage || null }),
+        body: JSON.stringify({ name, type, folderPaths, scraperEnabled, metadataLanguage: metadataLanguage === "en" ? null : metadataLanguage }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
@@ -62,7 +63,7 @@ export default function LibrariesPage() {
       setFolderPaths([]);
       setNewFolderPath("");
       setScraperEnabled(false);
-      setMetadataLanguage("");
+      setMetadataLanguage("en");
     },
   });
 
@@ -265,25 +266,25 @@ export default function LibrariesPage() {
                   <label className="text-[13px] font-medium text-muted-foreground">
                     Metadata Language
                   </label>
-                  <select
-                    value={metadataLanguage}
-                    onChange={(e) => setMetadataLanguage(e.target.value)}
-                    className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                    style={{ colorScheme: "dark" }}
-                  >
-                    <option value="">English (default)</option>
-                    <option value="zh-CN">简体中文</option>
-                    <option value="zh-TW">繁體中文</option>
-                    <option value="ja">日本語</option>
-                    <option value="ko">한국어</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                    <option value="es">Español</option>
-                    <option value="pt-BR">Português (Brasil)</option>
-                    <option value="ru">Русский</option>
-                    <option value="it">Italiano</option>
-                    <option value="th">ไทย</option>
-                  </select>
+                  <Select value={metadataLanguage} onValueChange={setMetadataLanguage}>
+                    <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-white/[0.06] bg-card">
+                      <SelectItem value="en">English (default)</SelectItem>
+                      <SelectItem value="zh-CN">简体中文</SelectItem>
+                      <SelectItem value="zh-TW">繁體中文</SelectItem>
+                      <SelectItem value="ja">日本語</SelectItem>
+                      <SelectItem value="ko">한국어</SelectItem>
+                      <SelectItem value="fr">Français</SelectItem>
+                      <SelectItem value="de">Deutsch</SelectItem>
+                      <SelectItem value="es">Español</SelectItem>
+                      <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+                      <SelectItem value="ru">Русский</SelectItem>
+                      <SelectItem value="it">Italiano</SelectItem>
+                      <SelectItem value="th">ไทย</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-[#555568]">
                     Language for fetching metadata from TMDB (title, overview, etc.).
                   </p>

@@ -23,6 +23,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { FolderPicker } from "@/components/library/folder-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface LibraryCardProps {
   id: string;
@@ -52,7 +53,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
   const [newFolderPath, setNewFolderPath] = useState("");
   const [editFolderPickerOpen, setEditFolderPickerOpen] = useState(false);
   const [editScraperEnabled, setEditScraperEnabled] = useState(scraperEnabled ?? false);
-  const [editMetadataLanguage, setEditMetadataLanguage] = useState(metadataLanguage ?? "");
+  const [editMetadataLanguage, setEditMetadataLanguage] = useState(metadataLanguage || "en");
   const [editTmdbConfigured, setEditTmdbConfigured] = useState<boolean | null>(null);
   const [editScraperError, setEditScraperError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
@@ -66,7 +67,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
       await fetch(`/api/libraries/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, folderPaths: editFolderPaths, scraperEnabled: editScraperEnabled, metadataLanguage: editMetadataLanguage || null }),
+        body: JSON.stringify({ name: editName, folderPaths: editFolderPaths, scraperEnabled: editScraperEnabled, metadataLanguage: editMetadataLanguage === "en" ? null : editMetadataLanguage }),
       });
       setEditOpen(false);
       onEditComplete?.();
@@ -210,7 +211,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
                   setEditFolderPaths(folderPaths ?? []);
                   setNewFolderPath("");
                   setEditScraperEnabled(scraperEnabled ?? false);
-                  setEditMetadataLanguage(metadataLanguage ?? "");
+                  setEditMetadataLanguage(metadataLanguage || "en");
                   setEditScraperError("");
                   fetch("/api/settings/scraper").then((r) => r.json()).then((d) => setEditTmdbConfigured(d.configured)).catch(() => setEditTmdbConfigured(false));
                   setEditOpen(true);
@@ -392,26 +393,25 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
                 <label className="text-[13px] font-medium text-muted-foreground">
                   Metadata Language
                 </label>
-                <select
-                  value={editMetadataLanguage}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => setEditMetadataLanguage(e.target.value)}
-                  className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-                  style={{ colorScheme: "dark" }}
-                >
-                  <option value="">English (default)</option>
-                  <option value="zh-CN">简体中文</option>
-                  <option value="zh-TW">繁體中文</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
-                  <option value="es">Español</option>
-                  <option value="pt-BR">Português (Brasil)</option>
-                  <option value="ru">Русский</option>
-                  <option value="it">Italiano</option>
-                  <option value="th">ไทย</option>
-                </select>
+                <Select value={editMetadataLanguage} onValueChange={setEditMetadataLanguage}>
+                  <SelectTrigger className="h-10 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground" onClick={(e) => e.stopPropagation()}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-white/[0.06] bg-card" onClick={(e) => e.stopPropagation()}>
+                    <SelectItem value="en">English (default)</SelectItem>
+                    <SelectItem value="zh-CN">简体中文</SelectItem>
+                    <SelectItem value="zh-TW">繁體中文</SelectItem>
+                    <SelectItem value="ja">日本語</SelectItem>
+                    <SelectItem value="ko">한국어</SelectItem>
+                    <SelectItem value="fr">Français</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+                    <SelectItem value="ru">Русский</SelectItem>
+                    <SelectItem value="it">Italiano</SelectItem>
+                    <SelectItem value="th">ไทย</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
             {editScraperError && (
