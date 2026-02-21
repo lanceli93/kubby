@@ -219,6 +219,7 @@ export async function GET(request: NextRequest) {
         premiereDate: movies.premiereDate,
         year: movies.year,
         genres: movies.genres,
+        tags: movies.tags,
         studios: movies.studios,
         country: movies.country,
         tmdbId: movies.tmdbId,
@@ -262,6 +263,7 @@ export async function GET(request: NextRequest) {
       posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
       fanartPath: r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
       ...(includeGenres && r.genres ? { genres: JSON.parse(r.genres) } : {}),
+      ...(includeGenres && r.tags ? { tags: JSON.parse(r.tags) } : {}),
       isFavorite: r.isFavorite ?? false,
       isWatched: r.isWatched ?? false,
     }));
