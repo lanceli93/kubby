@@ -30,6 +30,15 @@ export async function GET(
   }
 
   try {
+    const stat = fs.statSync(imagePath);
+    const etag = `"${stat.mtimeMs.toString(36)}-${stat.size.toString(36)}"`;
+    const lastModified = stat.mtime.toUTCString();
+
+    // Return 304 if client has a fresh copy
+    if (_request.headers.get("if-none-match") === etag) {
+      return new Response(null, { status: 304, headers: { ETag: etag } });
+    }
+
     const ext = path.extname(imagePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
     const data = fs.readFileSync(imagePath);
@@ -37,7 +46,9 @@ export async function GET(
     return new Response(data, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "ETag": etag,
+        "Last-Modified": lastModified,
       },
     });
   } catch (error) {
