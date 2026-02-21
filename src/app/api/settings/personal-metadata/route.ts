@@ -25,6 +25,7 @@ export async function GET() {
         personRatingDimensions: [],
         showMovieRatingBadge: true,
         showPersonTierBadge: true,
+        showPersonRatingBadge: true,
         showResolutionBadge: true,
       });
     }
@@ -38,6 +39,7 @@ export async function GET() {
         : [],
       showMovieRatingBadge: row.showMovieRatingBadge,
       showPersonTierBadge: row.showPersonTierBadge,
+      showPersonRatingBadge: row.showPersonRatingBadge,
       showResolutionBadge: row.showResolutionBadge,
     });
   } catch (error) {
@@ -90,6 +92,9 @@ export async function PUT(request: NextRequest) {
       showPersonTierBadge: body.showPersonTierBadge !== undefined
         ? body.showPersonTierBadge
         : existing?.showPersonTierBadge ?? true,
+      showPersonRatingBadge: body.showPersonRatingBadge !== undefined
+        ? body.showPersonRatingBadge
+        : existing?.showPersonRatingBadge ?? true,
       showResolutionBadge: body.showResolutionBadge !== undefined
         ? body.showResolutionBadge
         : existing?.showResolutionBadge ?? true,

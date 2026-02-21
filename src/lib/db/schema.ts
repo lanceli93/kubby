@@ -133,5 +133,6 @@ export const userPreferences = sqliteTable("user_preferences", {
   personRatingDimensions: text("person_rating_dimensions"), // JSON array, e.g. '["样貌","身材","演技"]'
   showMovieRatingBadge: integer("show_movie_rating_badge", { mode: "boolean" }).notNull().default(true),
   showPersonTierBadge: integer("show_person_tier_badge", { mode: "boolean" }).notNull().default(true),
+  showPersonRatingBadge: integer("show_person_rating_badge", { mode: "boolean" }).notNull().default(true),
   showResolutionBadge: integer("show_resolution_badge", { mode: "boolean" }).notNull().default(true),
 });

@@ -106,9 +106,11 @@ function MovieCardPreview({
 /* ── Person card preview ── */
 function PersonCardPreview({
   showTier,
+  showRating,
   rating,
 }: {
   showTier: boolean;
+  showRating: boolean;
   rating: number;
 }) {
   const tier = getTier(rating);
@@ -116,12 +118,22 @@ function PersonCardPreview({
     <div className="relative" style={{ width: 120, height: 180 }}>
       <PosterPlaceholder icon="person" className="h-full w-full" />
 
-      {/* Tier badge — top-right */}
+      {/* Tier badge — top-left */}
       {showTier && (
         <div
-          className={`absolute right-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}
+          className={`absolute left-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}
         >
           {tier}
+        </div>
+      )}
+
+      {/* Personal rating badge — top-right */}
+      {showRating && (
+        <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+          <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
+          <span className="text-[11px] font-medium text-[var(--gold)]">
+            {rating.toFixed(1)}
+          </span>
         </div>
       )}
     </div>
@@ -175,6 +187,7 @@ export default function CardBadgesPage() {
   const [showMovieBadge, setShowMovieBadge] = useState(true);
   const [showResolutionBadge, setShowResolutionBadge] = useState(true);
   const [showPersonBadge, setShowPersonBadge] = useState(true);
+  const [showPersonRatingBadge, setShowPersonRatingBadge] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{
     text: string;
@@ -193,6 +206,7 @@ export default function CardBadgesPage() {
       setShowMovieBadge(prefs.showMovieRatingBadge);
       setShowResolutionBadge(prefs.showResolutionBadge);
       setShowPersonBadge(prefs.showPersonTierBadge);
+      setShowPersonRatingBadge(prefs.showPersonRatingBadge);
     }
   }, [prefs]);
 
@@ -206,6 +220,7 @@ export default function CardBadgesPage() {
           showMovieRatingBadge: showMovieBadge,
           showResolutionBadge: showResolutionBadge,
           showPersonTierBadge: showPersonBadge,
+          showPersonRatingBadge: showPersonRatingBadge,
         }),
       });
       if (res.ok) {
@@ -332,12 +347,38 @@ export default function CardBadgesPage() {
         <div className="flex items-center justify-center gap-8 rounded-lg border border-white/[0.06] bg-white/[0.02] py-5">
           <PersonCardPreview
             showTier={showPersonBadge}
+            showRating={showPersonRatingBadge}
             rating={9.5}
           />
           <PersonCardPreview
             showTier={showPersonBadge}
+            showRating={showPersonRatingBadge}
             rating={8.5}
           />
+        </div>
+
+        {/* Personal rating badge toggle */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {t("showPersonRatingBadge")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("showPersonRatingBadgeDesc")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowPersonRatingBadge(!showPersonRatingBadge)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              showPersonRatingBadge ? "bg-primary" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                showPersonRatingBadge ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
         </div>
 
         {/* Tier badge toggle + expandable rules */}

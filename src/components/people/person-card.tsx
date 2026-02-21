@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { Star } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -37,6 +38,7 @@ export function PersonCard({
   const t = useTranslations("person");
   const { data: prefs } = useUserPreferences();
   const showTierBadge = prefs?.showPersonTierBadge !== false;
+  const showRatingBadge = prefs?.showPersonRatingBadge !== false;
 
   return (
     <Link
@@ -63,15 +65,25 @@ export function PersonCard({
           </div>
         )}
 
-        {/* Tier badge */}
+        {/* Tier badge — top-left */}
         {showTierBadge && personalRating != null && personalRating > 0 && (() => {
           const tier = getTier(personalRating);
           return (
-            <div className={`absolute right-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}>
+            <div className={`absolute left-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}>
               {tier}
             </div>
           );
         })()}
+
+        {/* Personal rating badge — top-right */}
+        {showRatingBadge && personalRating != null && personalRating > 0 && (
+          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+            <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
+            <span className="text-[11px] font-medium text-[var(--gold)]">
+              {personalRating.toFixed(1)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Name & role below poster */}
