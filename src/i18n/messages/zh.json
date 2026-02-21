@@ -289,7 +289,9 @@
     "failedToSave": "保存设置失败",
     "viewRules": "查看规则",
     "hideRules": "隐藏规则",
-    "resolutionRulesTitle": "分辨率由视频宽度决定：",
+    "resolutionRulesTitle": "分辨率由视频尺寸决定：",
+    "width": "宽",
+    "height": "高",
     "tierRulesTitle": "评级由个人评分决定："
   },
   "personalMetadata": {

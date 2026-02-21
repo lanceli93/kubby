@@ -25,8 +25,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-function getResolutionLabel(width?: number | null): string | null {
+function getResolutionLabel(width?: number | null, height?: number | null): string | null {
   const w = width || 0;
+  const h = height || 0;
   if (w >= 8000) return "8K";
   if (w >= 7000) return "7K";
   if (w >= 6000) return "6K";
@@ -36,7 +37,11 @@ function getResolutionLabel(width?: number | null): string | null {
   if (w >= 2500) return "2K";
   if (w >= 1920) return "FHD";
   if (w >= 1280) return "HD";
-  if (w > 0) return "SD";
+  // Sub-HD: classify by height (the "P" in 576P etc.)
+  if (h >= 576) return "576P";
+  if (h >= 480) return "480P";
+  if (h >= 360) return "360P";
+  if (h > 0 || w > 0) return "240P";
   return null;
 }
 
@@ -108,7 +113,7 @@ export function MovieCard({
 
         {/* Resolution badge — top-left */}
         {showResBadge && (() => {
-          const res = getResolutionLabel(videoWidth);
+          const res = getResolutionLabel(videoWidth, videoHeight);
           return res ? (
             <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
               {res}

@@ -289,7 +289,9 @@
     "failedToSave": "Failed to save settings",
     "viewRules": "View rules",
     "hideRules": "Hide rules",
-    "resolutionRulesTitle": "Resolution is determined by video width:",
+    "resolutionRulesTitle": "Resolution is determined by video dimensions:",
+    "width": "W",
+    "height": "H",
     "tierRulesTitle": "Tier is determined by personal rating:"
   },
   "personalMetadata": {

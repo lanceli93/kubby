@@ -15,17 +15,20 @@ import {
 } from "@/lib/tier";
 
 /* ── Resolution rules (mirrors getResolutionLabel in movie-card.tsx) ── */
-const RESOLUTION_RULES: { minWidth: number; label: string }[] = [
-  { minWidth: 8000, label: "8K" },
-  { minWidth: 7000, label: "7K" },
-  { minWidth: 6000, label: "6K" },
-  { minWidth: 5000, label: "5K" },
-  { minWidth: 3500, label: "4K" },
-  { minWidth: 3000, label: "3K" },
-  { minWidth: 2500, label: "2K" },
-  { minWidth: 1920, label: "FHD" },
-  { minWidth: 1280, label: "HD" },
-  { minWidth: 0, label: "SD" },
+const RESOLUTION_RULES: { min: number; unit: "width" | "height"; label: string }[] = [
+  { min: 8000, unit: "width", label: "8K" },
+  { min: 7000, unit: "width", label: "7K" },
+  { min: 6000, unit: "width", label: "6K" },
+  { min: 5000, unit: "width", label: "5K" },
+  { min: 3500, unit: "width", label: "4K" },
+  { min: 3000, unit: "width", label: "3K" },
+  { min: 2500, unit: "width", label: "2K" },
+  { min: 1920, unit: "width", label: "FHD" },
+  { min: 1280, unit: "width", label: "HD" },
+  { min: 576, unit: "height", label: "576P" },
+  { min: 480, unit: "height", label: "480P" },
+  { min: 360, unit: "height", label: "360P" },
+  { min: 0, unit: "height", label: "240P" },
 ];
 
 /* ── Tier rules ── */
@@ -319,13 +322,15 @@ export default function CardBadgesPage() {
               {t("resolutionRulesTitle")}
             </p>
             <div className="grid grid-cols-2 gap-x-8 gap-y-0.5">
-              {RESOLUTION_RULES.map(({ minWidth, label }) => (
+              {RESOLUTION_RULES.map(({ min, unit, label }) => (
                 <div
                   key={label}
                   className="flex items-center justify-between text-xs text-muted-foreground"
                 >
                   <span>
-                    {minWidth > 0 ? `≥ ${minWidth}px` : `< 1280px`}
+                    {min > 0
+                      ? `${unit === "width" ? t("width") : t("height")} ≥ ${min}px`
+                      : `${t("height")} < 360px`}
                   </span>
                   <span className="font-mono font-semibold text-foreground">
                     {label}
