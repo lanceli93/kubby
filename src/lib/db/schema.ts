@@ -24,6 +24,7 @@ export const mediaLibraries = sqliteTable("media_libraries", {
   type: text("type", { enum: ["movie", "tvshow", "music", "book", "photo"] }).notNull().default("movie"),
   folderPath: text("folder_path").notNull(),
   scraperEnabled: integer("scraper_enabled", { mode: "boolean" }).notNull().default(false),
+  metadataLanguage: text("metadata_language"),
   lastScannedAt: text("last_scanned_at"),
   createdAt: text("created_at").notNull().default("(datetime('now'))"),
 });

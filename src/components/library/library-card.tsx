@@ -30,6 +30,7 @@ interface LibraryCardProps {
   type: string;
   folderPaths?: string[];
   scraperEnabled?: boolean;
+  metadataLanguage?: string | null;
   movieCount?: number;
   coverImage?: string | null;
   hasCustomCover?: boolean;
@@ -40,7 +41,7 @@ interface LibraryCardProps {
   onRemoveImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metadataLanguage, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
@@ -51,6 +52,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
   const [newFolderPath, setNewFolderPath] = useState("");
   const [editFolderPickerOpen, setEditFolderPickerOpen] = useState(false);
   const [editScraperEnabled, setEditScraperEnabled] = useState(scraperEnabled ?? false);
+  const [editMetadataLanguage, setEditMetadataLanguage] = useState(metadataLanguage ?? "");
   const [editTmdbConfigured, setEditTmdbConfigured] = useState<boolean | null>(null);
   const [editScraperError, setEditScraperError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
@@ -64,7 +66,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
       await fetch(`/api/libraries/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, folderPaths: editFolderPaths, scraperEnabled: editScraperEnabled }),
+        body: JSON.stringify({ name: editName, folderPaths: editFolderPaths, scraperEnabled: editScraperEnabled, metadataLanguage: editMetadataLanguage || null }),
       });
       setEditOpen(false);
       onEditComplete?.();
@@ -208,6 +210,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                   setEditFolderPaths(folderPaths ?? []);
                   setNewFolderPath("");
                   setEditScraperEnabled(scraperEnabled ?? false);
+                  setEditMetadataLanguage(metadataLanguage ?? "");
                   setEditScraperError("");
                   fetch("/api/settings/scraper").then((r) => r.json()).then((d) => setEditTmdbConfigured(d.configured)).catch(() => setEditTmdbConfigured(false));
                   setEditOpen(true);
@@ -384,6 +387,32 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, movie
                 Select metadata downloaders to automatically fetch movie info during library scan.
               </p>
             </div>
+            {editScraperEnabled && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-muted-foreground">
+                  Metadata Language
+                </label>
+                <select
+                  value={editMetadataLanguage}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setEditMetadataLanguage(e.target.value)}
+                  className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="">English (default)</option>
+                  <option value="zh-CN">简体中文</option>
+                  <option value="zh-TW">繁體中文</option>
+                  <option value="ja">日本語</option>
+                  <option value="ko">한국어</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="es">Español</option>
+                  <option value="pt-BR">Português (Brasil)</option>
+                  <option value="ru">Русский</option>
+                  <option value="it">Italiano</option>
+                  <option value="th">ไทย</option>
+                </select>
+              </div>
+            )}
             {editScraperError && (
               <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />

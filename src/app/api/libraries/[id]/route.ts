@@ -17,6 +17,8 @@ export async function GET(
         name: mediaLibraries.name,
         type: mediaLibraries.type,
         folderPath: mediaLibraries.folderPath,
+        scraperEnabled: mediaLibraries.scraperEnabled,
+        metadataLanguage: mediaLibraries.metadataLanguage,
         lastScannedAt: mediaLibraries.lastScannedAt,
         movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")`,
       })
@@ -46,7 +48,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { name, folderPaths, folderPath, scraperEnabled } = body;
+    const { name, folderPaths, folderPath, scraperEnabled, metadataLanguage } = body;
 
     const existing = db
       .select()
@@ -66,6 +68,7 @@ export async function PUT(
       updates.folderPath = folderPath;
     }
     if (scraperEnabled !== undefined) updates.scraperEnabled = scraperEnabled;
+    if (metadataLanguage !== undefined) updates.metadataLanguage = metadataLanguage || null;
 
     if (Object.keys(updates).length > 0) {
       db.update(mediaLibraries)

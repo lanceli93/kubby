@@ -7,6 +7,8 @@ import { eq, and } from "drizzle-orm";
 import { parseNfo } from "./nfo-parser";
 import { probeVideo } from "./probe";
 import { scrapeMovie } from "@/lib/scraper";
+import { writeActorsToNfo } from "./nfo-writer";
+import { fetchMovieCredits, downloadTmdbImage, getPersonPhotoPath, TMDB_PROFILE_SIZE } from "@/lib/tmdb";
 import { parseFolderPaths } from "@/lib/folder-paths";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v"];
@@ -112,6 +114,7 @@ export async function scanLibrary(
     const row = db.select().from(settings).where(eq(settings.key, "tmdb_api_key")).get();
     apiKey = row?.value ?? null;
   }
+  const metadataLanguage = library.metadataLanguage || undefined;
 
   const metadataDir = path.join(process.cwd(), "data", "metadata", "people");
 
@@ -148,7 +151,7 @@ export async function scanLibrary(
     // If no NFO and scraper is enabled, try to scrape from TMDB
     if (!fs.existsSync(nfoPath) && library.scraperEnabled && apiKey) {
       try {
-        const result = await scrapeMovie(movieDir, apiKey, metadataDir);
+        const result = await scrapeMovie(movieDir, apiKey, metadataDir, metadataLanguage);
         if (result.success) {
           console.log(`Scraped metadata for: ${result.title}`);
         } else {
@@ -173,6 +176,47 @@ export async function scanLibrary(
     } catch (e) {
       console.error(`Failed to parse NFO in ${movieDir}:`, e);
       continue;
+    }
+
+    // If NFO has no actors but has a TMDB ID, supplement from TMDB
+    if (nfoData.actors.length === 0 && nfoData.tmdbId && library.scraperEnabled && apiKey) {
+      try {
+        const credits = await fetchMovieCredits(nfoData.tmdbId, apiKey, metadataLanguage);
+        const topCast = (credits.cast ?? []).slice(0, 20);
+
+        for (const actor of topCast) {
+          if (actor.profile_path) {
+            try {
+              const photoPath = getPersonPhotoPath(metadataDir, actor.name);
+              await downloadTmdbImage(actor.profile_path, photoPath, TMDB_PROFILE_SIZE);
+            } catch {
+              // non-critical
+            }
+          }
+        }
+
+        const actorEntries = topCast.map((actor) => ({
+          name: actor.name,
+          role: actor.character,
+          thumb: actor.profile_path
+            ? getPersonPhotoPath(metadataDir, actor.name)
+            : undefined,
+          order: actor.order,
+        }));
+
+        writeActorsToNfo(nfoPath, actorEntries);
+
+        nfoData.actors = actorEntries.map((a) => ({
+          name: a.name,
+          role: a.role,
+          thumb: a.thumb,
+          order: a.order,
+        }));
+
+        console.log(`Supplemented ${topCast.length} actors for: ${nfoData.title}`);
+      } catch (e) {
+        console.warn(`Failed to supplement actors for ${entry.name}:`, e);
+      }
     }
 
     // Find poster and fanart (relative to movie dir)

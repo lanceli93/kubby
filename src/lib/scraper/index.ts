@@ -31,14 +31,15 @@ export interface ScrapeResult {
 export async function scrapeMovie(
   movieDir: string,
   apiKey: string,
-  metadataDir: string
+  metadataDir: string,
+  language?: string
 ): Promise<ScrapeResult> {
   const folderName = path.basename(movieDir);
   const { title, year } = parseFolderName(folderName);
 
   try {
     // 1. Search TMDB
-    const results = await searchMovie(title, year, apiKey);
+    const results = await searchMovie(title, year, apiKey, language);
     await delay(RATE_LIMIT_MS);
 
     if (results.length === 0) {
@@ -53,7 +54,7 @@ export async function scrapeMovie(
     }
 
     // 2. Get full details
-    const details = await getMovieDetails(bestMatch.id, apiKey);
+    const details = await getMovieDetails(bestMatch.id, apiKey, language);
     await delay(RATE_LIMIT_MS);
 
     // 3. Download poster

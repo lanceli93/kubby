@@ -31,9 +31,11 @@ export interface TmdbCredits {
 
 export async function fetchMovieCredits(
   tmdbId: string,
-  apiKey: string
+  apiKey: string,
+  language?: string
 ): Promise<TmdbCredits> {
-  const url = `${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${apiKey}`;
+  let url = `${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${apiKey}`;
+  if (language) url += `&language=${encodeURIComponent(language)}`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`TMDb API error: ${res.status} ${res.statusText}`);
@@ -77,10 +79,12 @@ export interface TmdbMovieDetails {
 export async function searchMovie(
   query: string,
   year: number | undefined,
-  apiKey: string
+  apiKey: string,
+  language?: string
 ): Promise<TmdbSearchResult[]> {
   let url = `${TMDB_BASE_URL}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
   if (year) url += `&year=${year}`;
+  if (language) url += `&language=${encodeURIComponent(language)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`TMDb search error: ${res.status} ${res.statusText}`);
   const data = await res.json();
@@ -89,9 +93,11 @@ export async function searchMovie(
 
 export async function getMovieDetails(
   tmdbId: number,
-  apiKey: string
+  apiKey: string,
+  language?: string
 ): Promise<TmdbMovieDetails> {
-  const url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${apiKey}&append_to_response=credits`;
+  let url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${apiKey}&append_to_response=credits`;
+  if (language) url += `&language=${encodeURIComponent(language)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`TMDb details error: ${res.status} ${res.statusText}`);
   return res.json();

@@ -17,6 +17,7 @@ export async function GET() {
         type: mediaLibraries.type,
         folderPath: mediaLibraries.folderPath,
         scraperEnabled: mediaLibraries.scraperEnabled,
+        metadataLanguage: mediaLibraries.metadataLanguage,
         lastScannedAt: mediaLibraries.lastScannedAt,
         createdAt: mediaLibraries.createdAt,
         movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")`,
@@ -61,7 +62,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, type = "movie", folderPaths, folderPath, scraperEnabled = false } = body;
+    const { name, type = "movie", folderPaths, folderPath, scraperEnabled = false, metadataLanguage } = body;
 
     // Accept either folderPaths array or single folderPath (backward compat)
     const paths: string[] = Array.isArray(folderPaths) ? folderPaths : folderPath ? [folderPath] : [];
@@ -76,10 +77,10 @@ export async function POST(request: NextRequest) {
     const id = uuidv4();
     const serialized = serializeFolderPaths(paths);
     db.insert(mediaLibraries)
-      .values({ id, name, type, folderPath: serialized, scraperEnabled: !!scraperEnabled })
+      .values({ id, name, type, folderPath: serialized, scraperEnabled: !!scraperEnabled, metadataLanguage: metadataLanguage || null })
       .run();
 
-    return NextResponse.json({ id, name, type, folderPath: serialized, folderPaths: paths, scraperEnabled: !!scraperEnabled }, { status: 201 });
+    return NextResponse.json({ id, name, type, folderPath: serialized, folderPaths: paths, scraperEnabled: !!scraperEnabled, metadataLanguage: metadataLanguage || null }, { status: 201 });
   } catch (error) {
     console.error("Create library error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

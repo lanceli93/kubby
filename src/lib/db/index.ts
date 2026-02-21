@@ -27,6 +27,8 @@ const pending = [
   "ALTER TABLE `people` ADD `tags` text",
   // 0007: person rating badge preference
   "ALTER TABLE `user_preferences` ADD `show_person_rating_badge` integer NOT NULL DEFAULT 1",
+  // 0008: metadata language per library
+  "ALTER TABLE `media_libraries` ADD `metadata_language` text",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

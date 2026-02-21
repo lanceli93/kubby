@@ -28,6 +28,7 @@ interface Library {
   type: string;
   folderPaths?: string[];
   scraperEnabled?: boolean;
+  metadataLanguage?: string | null;
   movieCount?: number;
   coverImage?: string | null;
   hasCustomCover?: boolean;
@@ -235,6 +236,7 @@ export default function HomePage() {
                     type={lib.type}
                     folderPaths={lib.folderPaths}
                     scraperEnabled={lib.scraperEnabled}
+                    metadataLanguage={lib.metadataLanguage}
                     movieCount={lib.movieCount}
                     coverImage={lib.coverImage}
                     hasCustomCover={lib.hasCustomCover}
