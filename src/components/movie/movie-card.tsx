@@ -95,10 +95,9 @@ export function MovieCard({
   const showResBadge = prefs?.showResolutionBadge !== false;
 
   return (
+    <div className="group flex-shrink-0 transition-transform hover:scale-[1.03]" style={{ width: 180 }}>
     <Link
       href={`/movies/${id}`}
-      className="group flex-shrink-0 transition-transform hover:scale-[1.03]"
-      style={{ width: 180 }}
     >
       {/* Poster */}
       <div className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)]" style={{ height: 270 }}>
@@ -291,22 +290,21 @@ export function MovieCard({
           <p className="text-xs text-muted-foreground">{year}</p>
         )}
       </div>
+    </Link>
 
-      {/* Metadata editor dialog */}
+      {/* Dialogs rendered outside <Link> to prevent React portal event bubbling from triggering navigation */}
       <MovieMetadataEditor
         movieId={id}
         open={metadataOpen}
         onOpenChange={setMetadataOpen}
       />
 
-      {/* Media info dialog */}
       <MediaInfoDialog
         movieId={id}
         open={mediaInfoOpen}
         onOpenChange={setMediaInfoOpen}
       />
 
-      {/* Image editor dialog */}
       <ImageEditorDialog
         open={imageEditorOpen}
         onOpenChange={setImageEditorOpen}
@@ -315,44 +313,31 @@ export function MovieCard({
         entityName={title}
       />
 
-      {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent
-          className="border-white/[0.06] bg-card sm:max-w-[400px]"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
+        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>{t("deleteMovie")}</DialogTitle>
             <DialogDescription>{t("confirmDeleteMovie")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDeleteOpen(false);
-              }}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => setDeleteOpen(false)}
+              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
             >
               {tCommon("cancel")}
             </button>
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+              onClick={() => {
                 onDelete?.();
                 setDeleteOpen(false);
               }}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
             >
               {tCommon("confirm")}
             </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Link>
+    </div>
   );
 }

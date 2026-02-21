@@ -51,10 +51,9 @@ export function PersonCard({
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
 
   return (
+    <div className="group flex-shrink-0 transition-transform hover:scale-[1.03]" style={{ width }}>
     <Link
       href={`/people/${id}`}
-      className="group flex-shrink-0 transition-transform hover:scale-[1.03]"
-      style={{ width }}
     >
       {/* Photo */}
       <div
@@ -141,8 +140,9 @@ export function PersonCard({
           <p className="truncate text-xs text-muted-foreground/70">{t("filmedAtAge", { age })}</p>
         )}
       </div>
+    </Link>
 
-      {/* Image editor dialog */}
+      {/* Dialog rendered outside <Link> to prevent React portal event bubbling from triggering navigation */}
       <ImageEditorDialog
         open={imageEditorOpen}
         onOpenChange={setImageEditorOpen}
@@ -150,6 +150,6 @@ export function PersonCard({
         entityId={id}
         entityName={name}
       />
-    </Link>
+    </div>
   );
 }
