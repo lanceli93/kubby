@@ -43,7 +43,6 @@ export function ImageEditorDialog({
   const tMeta = useTranslations("metadata");
   const [uploading, setUploading] = useState<"poster" | "fanart" | null>(null);
   const [deleting, setDeleting] = useState<"poster" | "fanart" | null>(null);
-  const [cacheBust, setCacheBust] = useState(0);
   const posterInputRef = useRef<HTMLInputElement>(null);
   const fanartInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +85,6 @@ export function ImageEditorDialog({
         body: formData,
       });
       await refetch();
-      setCacheBust((n) => n + 1);
       queryClient.invalidateQueries({ queryKey });
     } finally {
       setUploading(null);
@@ -102,7 +100,6 @@ export function ImageEditorDialog({
         body: JSON.stringify({ type }),
       });
       await refetch();
-      setCacheBust((n) => n + 1);
       queryClient.invalidateQueries({ queryKey });
     } finally {
       setDeleting(null);
@@ -135,12 +132,12 @@ export function ImageEditorDialog({
             <div className="relative aspect-[2/3] w-full overflow-hidden bg-white/[0.04] border border-white/[0.06]">
               {posterPath ? (
                 <Image
-                  src={`${resolveImageSrc(posterPath)}${cacheBust ? `?v=${cacheBust}` : ""}`}
+                  src={resolveImageSrc(posterPath)}
                   alt="Poster"
                   fill
                   className="object-cover"
                   sizes="200px"
-                  key={`${posterPath}-${cacheBust}`}
+                  key={posterPath}
                 />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-1.5 text-white/30">
@@ -190,12 +187,12 @@ export function ImageEditorDialog({
             <div className="relative h-[300px] w-full overflow-hidden bg-white/[0.04] border border-white/[0.06]">
               {fanartPath ? (
                 <Image
-                  src={`${resolveImageSrc(fanartPath)}${cacheBust ? `?v=${cacheBust}` : ""}`}
+                  src={resolveImageSrc(fanartPath)}
                   alt="Fanart"
                   fill
                   className="object-cover"
                   sizes="520px"
-                  key={`${fanartPath}-${cacheBust}`}
+                  key={fanartPath}
                 />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-1.5 text-white/30">

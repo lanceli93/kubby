@@ -120,12 +120,23 @@ export async function GET(
     // Parse tags from JSON string
     const parsedTags = person.tags ? (() => { try { return JSON.parse(person.tags); } catch { return []; } })() : [];
 
+    // Append file mtime to image paths for cache-busting (parsed by resolveImageSrc)
+    const stampPath = (p: string | null) => {
+      if (!p) return null;
+      try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
+    };
+
     return NextResponse.json({
       ...person,
+      photoPath: stampPath(person.photoPath),
       tags: parsedTags,
-      fanartPath,
+      fanartPath: stampPath(fanartPath),
       fanartSource,
-      movies: resolvedFilms,
+      movies: resolvedFilms.map((m) => ({
+        ...m,
+        posterPath: stampPath(m.posterPath),
+        fanartPath: stampPath(m.fanartPath),
+      })),
       userData: userData
         ? {
             personalRating: userData.personalRating,

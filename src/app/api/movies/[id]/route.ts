@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
+import fs from "fs";
 import { db } from "@/lib/db";
 import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams } from "@/lib/db/schema";
 import { eq, and, asc, sql } from "drizzle-orm";
@@ -301,10 +302,16 @@ export async function GET(
       ? nodePath.join(movie.folderPath, movie.fanartPath)
       : null;
 
+    // Append file mtime to image paths for cache-busting (parsed by resolveImageSrc)
+    const stampPath = (p: string | null) => {
+      if (!p) return null;
+      try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
+    };
+
     return NextResponse.json({
       ...movie,
-      posterPath,
-      fanartPath,
+      posterPath: stampPath(posterPath),
+      fanartPath: stampPath(fanartPath),
       genres: movie.genres ? JSON.parse(movie.genres) : [],
       studios: movie.studios ? JSON.parse(movie.studios) : [],
       tags: movie.tags ? JSON.parse(movie.tags) : [],
