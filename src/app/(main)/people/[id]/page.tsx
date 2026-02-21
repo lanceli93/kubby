@@ -15,6 +15,14 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -60,6 +68,7 @@ export default function PersonDetailPage() {
   const personId = params.id as string;
   const t = useTranslations("movies");
   const tPerson = useTranslations("person");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
@@ -67,6 +76,7 @@ export default function PersonDetailPage() {
   const personDimensions = prefs?.personRatingDimensions ?? [];
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: person } = useQuery<PersonDetail>({
@@ -92,13 +102,15 @@ export default function PersonDetailPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDeleteGalleryImage = async (filename: string) => {
+  const handleDeleteGalleryImage = async () => {
+    if (!deleteTarget) return;
     await fetch(`/api/people/${personId}/gallery`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename }),
+      body: JSON.stringify({ filename: deleteTarget }),
     });
     queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
+    setDeleteTarget(null);
   };
 
   const handleLightboxKeyDown = useCallback((e: KeyboardEvent) => {
@@ -369,7 +381,7 @@ export default function PersonDetailPage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDeleteGalleryImage(img.filename);
+                    setDeleteTarget(img.filename);
                   }}
                   className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
                   title={tPerson("deletePhoto")}
@@ -425,6 +437,30 @@ export default function PersonDetailPage() {
           />
         </div>
       )}
+
+      {/* Delete photo confirmation dialog */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{tPerson("deletePhoto")}</DialogTitle>
+            <DialogDescription>{tPerson("confirmDeletePhoto")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteTarget(null)}
+              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              onClick={handleDeleteGalleryImage}
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Metadata editor dialog */}
       <PersonMetadataEditor

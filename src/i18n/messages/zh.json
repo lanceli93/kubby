@@ -218,6 +218,7 @@
     "photosCount": "{count} 张照片",
     "uploadPhotos": "上传",
     "deletePhoto": "删除照片",
+    "confirmDeletePhoto": "确定要删除这张照片吗？此操作无法撤销。",
     "noPhotos": "暂无照片"
   },
   "metadata": {
