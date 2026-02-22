@@ -38,7 +38,8 @@ export const authConfig: NextAuthConfig = {
       const pathname = nextUrl.pathname;
 
       const publicPaths = ["/login", "/register", "/api/users", "/api/auth", "/setup", "/api/setup", "/api/filesystem"];
-      const isPublic = publicPaths.some((p) => pathname.startsWith(p));
+      const isPublic = publicPaths.some((p) => pathname.startsWith(p))
+        || /^\/api\/movies\/[^/]+\/stream/.test(pathname);
 
       if (isPublic) return true;
       if (!isLoggedIn) return false;
