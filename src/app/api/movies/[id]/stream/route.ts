@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { movies } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { movies, movieDiscs } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 
@@ -17,7 +17,21 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const filePath = movie.filePath;
+    // Support ?disc=N for multi-disc movies
+    const discParam = request.nextUrl.searchParams.get("disc");
+    const discNumber = discParam ? parseInt(discParam, 10) : 1;
+    let filePath = movie.filePath;
+    if (discNumber > 1) {
+      const disc = db
+        .select()
+        .from(movieDiscs)
+        .where(and(eq(movieDiscs.movieId, id), eq(movieDiscs.discNumber, discNumber)))
+        .get();
+      if (disc) {
+        filePath = disc.filePath;
+      }
+    }
+
     if (!fs.existsSync(filePath)) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }

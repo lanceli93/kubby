@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import fs from "fs";
 import { db } from "@/lib/db";
-import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams } from "@/lib/db/schema";
+import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams, movieDiscs } from "@/lib/db/schema";
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
@@ -294,6 +294,16 @@ export async function GET(
         .get() || null;
     }
 
+    // Get disc info for multi-disc movies
+    const discs = movie.discCount && movie.discCount > 1
+      ? db
+          .select()
+          .from(movieDiscs)
+          .where(eq(movieDiscs.movieId, id))
+          .orderBy(asc(movieDiscs.discNumber))
+          .all()
+      : [];
+
     // Resolve relative paths to absolute
     const posterPath = movie.posterPath
       ? nodePath.join(movie.folderPath, movie.posterPath)
@@ -318,11 +328,20 @@ export async function GET(
       cast: cast.map((c) => ({ ...c, photoPath: stampPath(c.photoPath) })),
       directors,
       allPeople,
+      discs: discs.map((d) => ({
+        ...d,
+        posterPath: stampPath(
+          d.posterPath
+            ? nodePath.join(movie.folderPath, d.posterPath)
+            : posterPath // fall back to movie poster
+        ),
+      })),
       userData: userData
         ? {
             isPlayed: userData.isPlayed,
             isFavorite: userData.isFavorite,
             playbackPositionSeconds: userData.playbackPositionSeconds,
+            currentDisc: userData.currentDisc ?? 1,
             playCount: userData.playCount,
             personalRating: userData.personalRating,
             dimensionRatings: userData.dimensionRatings ? JSON.parse(userData.dimensionRatings) : null,

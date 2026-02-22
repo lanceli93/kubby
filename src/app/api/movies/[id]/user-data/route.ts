@@ -35,6 +35,7 @@ export async function GET(
         }
       : {
           playbackPositionSeconds: 0,
+          currentDisc: 1,
           playCount: 0,
           isPlayed: false,
           isFavorite: false,
@@ -79,6 +80,8 @@ export async function PUT(
       const updateData: Record<string, unknown> = {};
       if (body.playbackPositionSeconds !== undefined)
         updateData.playbackPositionSeconds = body.playbackPositionSeconds;
+      if (body.currentDisc !== undefined)
+        updateData.currentDisc = body.currentDisc;
       if (body.isPlayed !== undefined)
         updateData.isPlayed = body.isPlayed;
       if (body.isFavorite !== undefined)
@@ -103,6 +106,7 @@ export async function PUT(
           userId,
           movieId,
           playbackPositionSeconds: body.playbackPositionSeconds || 0,
+          currentDisc: body.currentDisc || 1,
           playCount: body.playCount || 0,
           isPlayed: body.isPlayed || false,
           isFavorite: body.isFavorite || false,
