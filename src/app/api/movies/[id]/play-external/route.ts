@@ -129,28 +129,33 @@ function launchMac(
 ) {
   switch (playerName) {
     case "IINA": {
-      const args = ["-a", playerPath || "IINA", "--args"];
+      // Use iina-cli which works whether IINA is already running or not.
+      // `open -a IINA --args` only passes args on first launch.
+      const appPath = playerPath || "/Applications/IINA.app";
+      const cli = appPath.replace(/\/?$/, "/Contents/MacOS/iina-cli");
+      const args: string[] = [];
       if (startSeconds > 0) {
         args.push(`--mpv-start=+${startSeconds}`);
       }
       args.push(filePath);
-      execFile("open", args, { detached: true });
+      execFile(cli, args, { detached: true });
       break;
     }
     case "VLC": {
-      const args = ["-a", playerPath || "VLC", "--args"];
+      const vlcApp = playerPath || "/Applications/VLC.app";
+      const vlcBin = vlcApp.replace(/\/?$/, "/Contents/MacOS/VLC");
+      const args: string[] = [];
       if (startSeconds > 0) {
         args.push(`--start-time=${startSeconds}`);
       }
       args.push(filePath);
-      execFile("open", args, { detached: true });
+      execFile(vlcBin, args, { detached: true });
       break;
     }
     default: {
-      // Custom player
+      // Custom player — use `open` as fallback
       const appPath = playerPath || playerName;
-      const args = ["-a", appPath, "--args", filePath];
-      execFile("open", args, { detached: true });
+      execFile("open", ["-a", appPath, filePath], { detached: true });
       break;
     }
   }
