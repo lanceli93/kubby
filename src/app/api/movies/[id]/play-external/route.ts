@@ -135,15 +135,26 @@ function launchMac(
   filePath: string,
   startSeconds: number
 ) {
-  // IINA: use iina-cli which works whether IINA is already running or not
-  const appPath = playerPath || "/Applications/IINA.app";
-  const cli = appPath.replace(/\/?$/, "/Contents/MacOS/iina-cli");
-  const args: string[] = [];
-  if (startSeconds > 0) {
-    args.push(`--mpv-start=+${startSeconds}`);
+  switch (playerName) {
+    case "IINA": {
+      const appPath = playerPath || "/Applications/IINA.app";
+      const cli = appPath.replace(/\/?$/, "/Contents/MacOS/iina-cli");
+      const args: string[] = [];
+      if (startSeconds > 0) args.push(`--mpv-start=+${startSeconds}`);
+      args.push(filePath);
+      launchPlayer(cli, args);
+      break;
+    }
+    case "VLC": {
+      const vlcApp = playerPath || "/Applications/VLC.app";
+      const vlcBin = vlcApp.replace(/\/?$/, "/Contents/MacOS/VLC");
+      const args: string[] = [];
+      if (startSeconds > 0) args.push(`--start-time=${startSeconds}`);
+      args.push(filePath);
+      launchPlayer(vlcBin, args);
+      break;
+    }
   }
-  args.push(filePath);
-  launchPlayer(cli, args);
 }
 
 function launchWindows(
@@ -152,13 +163,22 @@ function launchWindows(
   filePath: string,
   startSeconds: number
 ) {
-  // PotPlayer
-  const exe =
-    playerPath || "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe";
-  const args: string[] = [];
-  if (startSeconds > 0) {
-    args.push(`/seek=${startSeconds * 1000}`);
+  switch (playerName) {
+    case "PotPlayer": {
+      const exe = playerPath || "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe";
+      const args: string[] = [];
+      if (startSeconds > 0) args.push(`/seek=${startSeconds * 1000}`);
+      args.push(filePath);
+      launchPlayer(exe, args);
+      break;
+    }
+    case "VLC": {
+      const exe = playerPath || "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
+      const args: string[] = [];
+      if (startSeconds > 0) args.push(`--start-time=${startSeconds}`);
+      args.push(filePath);
+      launchPlayer(exe, args);
+      break;
+    }
   }
-  args.push(filePath);
-  launchPlayer(exe, args);
 }

@@ -9,9 +9,10 @@ import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, AlertCircle } from "lucide-react";
 
-const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; defaultPath: string }> = {
-  IINA: { platform: "mac", defaultPath: "/Applications/IINA.app" },
-  PotPlayer: { platform: "win", defaultPath: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe" },
+const PLAYER_PRESETS: Record<string, { platform: "mac" | "win" | "all"; macPath?: string; winPath?: string; label?: string }> = {
+  IINA: { platform: "mac", macPath: "/Applications/IINA.app", label: "macOS" },
+  VLC: { platform: "all", macPath: "/Applications/VLC.app", winPath: "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe" },
+  PotPlayer: { platform: "win", winPath: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe", label: "Windows" },
 };
 
 export default function SettingsPage() {
@@ -77,16 +78,24 @@ export default function SettingsPage() {
   function handlePlayerChange(name: string) {
     setPlayerName(name);
     if (name && PLAYER_PRESETS[name]) {
-      setPlayerPath(PLAYER_PRESETS[name].defaultPath);
+      const preset = PLAYER_PRESETS[name];
+      const isMac = getEffectivePlatform(playerMode) === "mac";
+      setPlayerPath((isMac ? preset.macPath : preset.winPath) || "");
     } else {
       setPlayerPath("");
     }
   }
 
+  function isPlayerCompatible(name: string, mode: string) {
+    const preset = PLAYER_PRESETS[name];
+    if (!preset) return false;
+    if (preset.platform === "all") return true;
+    return preset.platform === getEffectivePlatform(mode);
+  }
+
   function handleModeChange(mode: string) {
     setPlayerMode(mode);
-    // Reset player only if current selection is incompatible with new platform
-    if (playerName && PLAYER_PRESETS[playerName]?.platform !== getEffectivePlatform(mode)) {
+    if (playerName && !isPlayerCompatible(playerName, mode)) {
       setPlayerName("");
       setPlayerPath("");
     }
@@ -314,12 +323,11 @@ export default function SettingsPage() {
           >
             <option value="">{t("playerNone")}</option>
             {Object.entries(PLAYER_PRESETS).map(([name, preset]) => {
-              const effectivePlatform = getEffectivePlatform(playerMode);
-              const disabled = preset.platform !== effectivePlatform;
-              const hint = preset.platform === "mac" ? " (macOS)" : " (Windows)";
+              const disabled = !isPlayerCompatible(name, playerMode);
+              const suffix = preset.label ? ` (${preset.label})` : "";
               return (
                 <option key={name} value={name} disabled={disabled}>
-                  {name}{disabled ? hint : ""}
+                  {name}{suffix}
                 </option>
               );
             })}
