@@ -80,6 +80,11 @@ const pending = [
   )`,
   "CREATE INDEX IF NOT EXISTS `idx_md_movie` ON `movie_discs` (`movie_id`)",
   "CREATE INDEX IF NOT EXISTS `idx_md_movie_disc` ON `movie_discs` (`movie_id`, `disc_number`)",
+  // 0011: fix literal datetime defaults (Drizzle default() stored string instead of evaluating SQL)
+  "UPDATE `users` SET `created_at` = datetime('now') WHERE `created_at` = '(datetime(''now''))'",
+  "UPDATE `media_libraries` SET `created_at` = datetime('now') WHERE `created_at` = '(datetime(''now''))'",
+  "UPDATE `movies` SET `date_added` = datetime('now') WHERE `date_added` = '(datetime(''now''))'",
+  "UPDATE `people` SET `date_added` = datetime('now') WHERE `date_added` = '(datetime(''now''))'",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

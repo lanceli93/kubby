@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 // ─── Users ──────────────────────────────────────────────────────
 export const users = sqliteTable("users", {
@@ -8,7 +9,7 @@ export const users = sqliteTable("users", {
   displayName: text("display_name"),
   isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
   locale: text("locale").default("en"),
-  createdAt: text("created_at").notNull().default("(datetime('now'))"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
 // ─── Settings (key-value) ──────────────────────────────────────
@@ -26,7 +27,7 @@ export const mediaLibraries = sqliteTable("media_libraries", {
   scraperEnabled: integer("scraper_enabled", { mode: "boolean" }).notNull().default(false),
   metadataLanguage: text("metadata_language"),
   lastScannedAt: text("last_scanned_at"),
-  createdAt: text("created_at").notNull().default("(datetime('now'))"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
 // ─── Movies ─────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ export const movies = sqliteTable("movies", {
   discCount: integer("disc_count").default(1),
   tags: text("tags"), // JSON array string
   mediaLibraryId: text("media_library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
-  dateAdded: text("date_added").notNull().default("(datetime('now'))"),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
 }, (table) => [
   index("idx_movies_library").on(table.mediaLibraryId),
   index("idx_movies_year").on(table.year),
@@ -86,7 +87,7 @@ export const people = sqliteTable("people", {
   deathDate: text("death_date"),
   imdbId: text("imdb_id"),
   tags: text("tags"), // JSON array string
-  dateAdded: text("date_added").notNull().default("(datetime('now'))"),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
 }, (table) => [
   index("idx_people_name").on(table.name),
 ]);

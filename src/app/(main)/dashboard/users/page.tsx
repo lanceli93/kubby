@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Shield, User } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface UserInfo {
   id: string;
@@ -11,7 +12,14 @@ interface UserInfo {
   createdAt: string;
 }
 
+function formatDate(raw: string): string {
+  const d = new Date(raw.replace(" ", "T") + "Z");
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
 export default function UsersPage() {
+  const t = useTranslations("dashboard");
   const { data: users = [] } = useQuery<UserInfo[]>({
     queryKey: ["users"],
     queryFn: () => fetch("/api/users").then((r) => r.json()),
@@ -19,7 +27,7 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col gap-6 p-8 px-10">
-      <h1 className="text-2xl font-bold text-foreground">Users</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t("users")}</h1>
 
       <div className="rounded-xl border border-white/[0.03] bg-card">
         {users.map((user) => (
@@ -39,7 +47,9 @@ export default function UsersPage() {
                 <p className="text-sm font-medium text-foreground">
                   {user.displayName || user.username}
                 </p>
-                <p className="text-xs text-muted-foreground">{user.username}</p>
+                {user.displayName && user.displayName !== user.username && (
+                  <p className="text-xs text-muted-foreground">{user.username}</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -53,7 +63,7 @@ export default function UsersPage() {
                 {user.isAdmin ? "Admin" : "User"}
               </span>
               <span className="text-xs text-muted-foreground">
-                {user.createdAt}
+                {formatDate(user.createdAt)}
               </span>
             </div>
           </div>
