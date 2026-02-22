@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2 } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -31,6 +31,21 @@ import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+
+interface DiscInfo {
+  id: string;
+  discNumber: number;
+  filePath: string;
+  label?: string;
+  posterPath?: string | null;
+  runtimeSeconds?: number | null;
+  videoCodec?: string | null;
+  audioCodec?: string | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
+  audioChannels?: number | null;
+  container?: string | null;
+}
 
 interface MovieDetail {
   id: string;
@@ -58,12 +73,15 @@ interface MovieDetail {
   tags?: string[];
   premiereDate?: string;
   mediaLibraryId?: string;
+  discCount?: number;
+  discs?: DiscInfo[];
   cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null; birthDate?: string | null; birthYear?: number | null }[];
   directors: { id: string; name: string }[];
   userData?: {
     isPlayed: boolean;
     isFavorite: boolean;
     playbackPositionSeconds: number;
+    currentDisc?: number;
     personalRating?: number | null;
     dimensionRatings?: Record<string, number> | null;
   };
@@ -380,7 +398,7 @@ export default function MovieDetailPage() {
                 className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
               >
                 <Play className="h-5 w-5 fill-black" />
-                Play
+                {(movie.discCount ?? 1) > 1 ? t("playAll") : t("play")}
               </Link>
               {movie.fanartPath && (
                 <button
@@ -538,6 +556,69 @@ export default function MovieDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Discs Section (multi-disc movies only) */}
+      {(movie.discCount ?? 1) > 1 && movie.discs && movie.discs.length > 0 && (
+        <section className="px-20 mt-[10px]">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
+            {t("discs")} ({movie.discs.length})
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {movie.discs.map((disc) => (
+              <Link
+                key={disc.id}
+                href={`/movies/${movie.id}/play?disc=${disc.discNumber}`}
+                className="group flex flex-col items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10 flex-shrink-0"
+                style={{ width: 170 }}
+              >
+                {/* Disc poster */}
+                <div className="relative h-[225px] w-[150px] overflow-hidden rounded-md">
+                  {disc.posterPath ? (
+                    <Image
+                      src={resolveImageSrc(disc.posterPath)}
+                      alt={disc.label || `Disc ${disc.discNumber}`}
+                      fill
+                      className="object-cover"
+                      sizes="150px"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
+                      <Disc className="h-8 w-8" />
+                    </div>
+                  )}
+                  {/* Play overlay on hover */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Play className="h-8 w-8 text-white fill-white" />
+                  </div>
+                </div>
+                {/* Label */}
+                <span className="text-sm font-semibold text-foreground">
+                  {disc.label || `${t("disc")} ${disc.discNumber}`}
+                </span>
+                {/* Runtime */}
+                {disc.runtimeSeconds && disc.runtimeSeconds > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {formatRuntime(disc.runtimeSeconds)}
+                  </span>
+                )}
+                {/* Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-1">
+                  {getResolutionLabel(disc.videoWidth) && (
+                    <span className="rounded border border-white/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white/70">
+                      {getResolutionLabel(disc.videoWidth)}
+                    </span>
+                  )}
+                  {disc.videoCodec && (
+                    <span className="rounded border border-white/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white/70">
+                      {disc.videoCodec}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Cast Section */}
       {movie.cast.length > 0 && (
