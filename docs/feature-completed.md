@@ -404,3 +404,12 @@
 - Chips now use `bg-primary/10 text-primary` styling instead of `bg-white/10 text-foreground`
 - Remove button uses `<X>` lucide icon instead of plain `×` character
 - Imported `X` from lucide-react and `Input` component (already imported) for consistency
+
+## 2026-02-22: Auto-Detect Video-Named NFO Files
+
+### Scanner enhancement
+- Before checking for `movie.nfo`, scanner now looks for an NFO file matching the video file name (e.g., `Inception.mp4` → `Inception.nfo`)
+- If found, copies it to `movie.nfo` (preserving the original) so existing NFO parse flow works unchanged
+- Only triggers when `movie.nfo` does not already exist
+- Non-matching NFO names (video name ≠ NFO name) fall through to scraper or skip logic as before
+- Enables importing media libraries from other tools (Jellyfin, Kodi, etc.) that use video-named NFO conventions

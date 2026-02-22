@@ -148,6 +148,19 @@ export async function scanLibrary(
     // Find NFO file
     let nfoPath = path.join(movieDir, "movie.nfo");
 
+    // If no movie.nfo, check for video-named NFO (e.g., Inception.mp4 -> Inception.nfo)
+    if (!fs.existsSync(nfoPath)) {
+      const videoFile = findVideoFile(movieDir);
+      if (videoFile) {
+        const videoBaseName = path.basename(videoFile, path.extname(videoFile));
+        const videoNamedNfo = path.join(movieDir, videoBaseName + ".nfo");
+        if (fs.existsSync(videoNamedNfo)) {
+          fs.copyFileSync(videoNamedNfo, nfoPath);
+          console.log(`Copied ${videoBaseName}.nfo -> movie.nfo in ${entry.name}`);
+        }
+      }
+    }
+
     // If no NFO and scraper is enabled, try to scrape from TMDB
     if (!fs.existsSync(nfoPath) && library.scraperEnabled && apiKey) {
       try {
