@@ -19,6 +19,8 @@ export async function GET() {
       .where(eq(userPreferences.userId, session.user.id))
       .get();
 
+    const serverPlatform = process.platform; // "darwin" | "win32" | "linux"
+
     if (!row) {
       return NextResponse.json({
         movieRatingDimensions: [],
@@ -31,6 +33,7 @@ export async function GET() {
         externalPlayerName: null,
         externalPlayerPath: null,
         externalPlayerMode: "local",
+        serverPlatform,
       });
     }
 
@@ -49,6 +52,7 @@ export async function GET() {
       externalPlayerName: row.externalPlayerName,
       externalPlayerPath: row.externalPlayerPath,
       externalPlayerMode: row.externalPlayerMode ?? "local",
+      serverPlatform,
     });
   } catch (error) {
     console.error("Get personal metadata settings error:", error);

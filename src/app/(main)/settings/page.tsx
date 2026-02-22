@@ -41,10 +41,9 @@ export default function SettingsPage() {
 
   function handlePlayerChange(name: string) {
     setPlayerName(name);
-    if (name && name !== "Custom" && PLAYER_PRESETS[name]) {
+    if (name && PLAYER_PRESETS[name]) {
       const preset = PLAYER_PRESETS[name];
-      const isMac = navigator.platform?.toLowerCase().includes("mac") ||
-        navigator.userAgent?.toLowerCase().includes("mac");
+      const isMac = prefs?.serverPlatform === "darwin";
       setPlayerPath((isMac ? preset.mac : preset.win) || "");
     } else if (!name) {
       setPlayerPath("");
