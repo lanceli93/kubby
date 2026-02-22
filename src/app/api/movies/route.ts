@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
 
     // Handle special filters that require user data join
     if (filter === "continue-watching" && userId) {
+      // Hard cap at 20 items — FIFO: most recently played first, oldest items fall off
+      const cwLimit = Math.min(limit, 20);
       const results = db
         .select({
           id: movies.id,
@@ -60,7 +62,7 @@ export async function GET(request: NextRequest) {
           )
         )
         .orderBy(desc(userMovieData.lastPlayedAt))
-        .limit(limit)
+        .limit(cwLimit)
         .all();
 
       return NextResponse.json(
