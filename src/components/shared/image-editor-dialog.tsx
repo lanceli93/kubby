@@ -86,6 +86,10 @@ export function ImageEditorDialog({
       });
       await refetch();
       queryClient.invalidateQueries({ queryKey });
+      // Person photos are embedded in movie detail cast — invalidate movie queries too
+      if (entityType === "person") {
+        queryClient.invalidateQueries({ queryKey: ["movie"] });
+      }
     } finally {
       setUploading(null);
     }
@@ -101,6 +105,9 @@ export function ImageEditorDialog({
       });
       await refetch();
       queryClient.invalidateQueries({ queryKey });
+      if (entityType === "person") {
+        queryClient.invalidateQueries({ queryKey: ["movie"] });
+      }
     } finally {
       setDeleting(null);
     }
