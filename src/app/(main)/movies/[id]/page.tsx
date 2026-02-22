@@ -188,20 +188,10 @@ export default function MovieDetailPage() {
     (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "::1");
   const externalPlayerMode = (!isLocalhost || (prefs?.externalPlayerMode || "local") === "stream") ? "stream" : "local";
 
-  function buildStreamProtocolUrl(disc?: number): string {
-    const streamUrl = disc && disc > 1
+  function getStreamUrl(disc?: number): string {
+    return disc && disc > 1
       ? `${window.location.origin}/api/movies/${movieId}/stream?disc=${disc}`
       : `${window.location.origin}/api/movies/${movieId}/stream`;
-    switch (externalPlayerName) {
-      case "IINA":
-        return `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
-      case "VLC":
-        return `vlc://${streamUrl}`;
-      case "PotPlayer":
-        return `potplayer://${streamUrl}`;
-      default:
-        return streamUrl;
-    }
   }
 
   async function launchExternal(disc?: number) {
@@ -212,8 +202,13 @@ export default function MovieDetailPage() {
     }
 
     if (externalPlayerMode === "stream") {
-      // Client-side: open URL protocol handler
-      const protocolUrl = buildStreamProtocolUrl(disc);
+      const streamUrl = getStreamUrl(disc);
+      let protocolUrl = streamUrl;
+      if (externalPlayerName === "IINA") {
+        protocolUrl = `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+      } else if (externalPlayerName === "PotPlayer") {
+        protocolUrl = `potplayer://${streamUrl}`;
+      }
       window.location.href = protocolUrl;
       setExternalToast(t("launchedIn", { player: externalPlayerName || "" }));
       setTimeout(() => setExternalToast(null), 3000);

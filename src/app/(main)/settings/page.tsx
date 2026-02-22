@@ -9,9 +9,8 @@ import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, AlertCircle } from "lucide-react";
 
-const PLAYER_PRESETS: Record<string, { platform: "mac" | "win" | "all"; macPath?: string; winPath?: string; label?: string }> = {
+const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string; winPath?: string; label: string }> = {
   IINA: { platform: "mac", macPath: "/Applications/IINA.app", label: "macOS" },
-  VLC: { platform: "all", macPath: "/Applications/VLC.app", winPath: "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe" },
   PotPlayer: { platform: "win", winPath: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe", label: "Windows" },
 };
 
@@ -88,7 +87,6 @@ export default function SettingsPage() {
   function isPlayerCompatible(name: string, mode: string) {
     const preset = PLAYER_PRESETS[name];
     if (!preset) return false;
-    if (preset.platform === "all") return true;
     return preset.platform === getEffectivePlatform(mode);
   }
 
