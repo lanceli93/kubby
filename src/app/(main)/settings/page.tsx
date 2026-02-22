@@ -76,7 +76,7 @@ export default function SettingsPage() {
       {/* Profile */}
       <form
         onSubmit={handleProfileSave}
-        className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.03] bg-card p-7"
+        className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7"
       >
         <h2 className="text-lg font-semibold text-foreground">{t("profile")}</h2>
         <div className="flex items-center gap-4">
@@ -120,7 +120,7 @@ export default function SettingsPage() {
       {/* Change Password */}
       <form
         onSubmit={handlePasswordChange}
-        className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.03] bg-card p-7"
+        className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7"
       >
         <h2 className="text-lg font-semibold text-foreground">
           {t("changePassword")}
@@ -175,7 +175,7 @@ export default function SettingsPage() {
       </form>
 
       {/* Language */}
-      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.03] bg-card p-7">
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold text-foreground">{t("language")}</h2>
         <p className="text-sm text-muted-foreground">{t("languageDesc")}</p>
         <select
@@ -199,7 +199,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Account Info */}
-      <div className="flex w-[720px] flex-col gap-3 rounded-xl border border-white/[0.03] bg-card p-7">
+      <div className="flex w-[720px] flex-col gap-3 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold text-foreground">{t("accountInfo")}</h2>
         <div className="flex gap-2 text-sm">
           <span className="text-[#666680]">{t("accountType")}:</span>

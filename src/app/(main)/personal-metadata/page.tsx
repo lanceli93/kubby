@@ -90,7 +90,7 @@ export default function PersonalMetadataPage() {
       <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
 
       {/* Movie Rating Dimensions */}
-      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.03] bg-card p-7">
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("movieRatingDimensions")}
         </h2>
@@ -128,7 +128,7 @@ export default function PersonalMetadataPage() {
       </div>
 
       {/* Person Rating Dimensions */}
-      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.03] bg-card p-7">
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("personRatingDimensions")}
         </h2>

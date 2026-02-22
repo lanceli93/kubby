@@ -29,11 +29,11 @@ export default function UsersPage() {
     <div className="flex flex-col gap-6 p-8 px-10">
       <h1 className="text-2xl font-bold text-foreground">{t("users")}</h1>
 
-      <div className="rounded-xl border border-white/[0.03] bg-card">
+      <div className="rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl">
         {users.map((user) => (
           <div
             key={user.id}
-            className="flex items-center justify-between border-b border-white/[0.03] px-6 py-4 last:border-b-0"
+            className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4 last:border-b-0"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">

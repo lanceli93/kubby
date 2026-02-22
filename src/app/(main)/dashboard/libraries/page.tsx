@@ -124,7 +124,7 @@ export default function LibrariesPage() {
               Add Library
             </button>
           </DialogTrigger>
-          <DialogContent className="border-white/[0.06] bg-card sm:max-w-[500px]">
+          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add Media Library</DialogTitle>
             </DialogHeader>
@@ -339,7 +339,7 @@ export default function LibrariesPage() {
         {libraries.map((lib) => (
           <div
             key={lib.id}
-            className="flex flex-col gap-3 rounded-xl border border-white/[0.03] bg-card p-6"
+            className="flex flex-col gap-3 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-6"
           >
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">

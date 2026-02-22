@@ -38,7 +38,7 @@ function StatCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-2 rounded-xl border border-white/[0.03] bg-card p-6">
+    <div className="flex flex-1 flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-6">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{label}</span>
         <Icon className="h-5 w-5 text-muted-foreground/50" />
@@ -108,7 +108,7 @@ export default function DashboardPage() {
           <h2 className="text-lg font-semibold text-foreground">
             {t("diskUsage")}
           </h2>
-          <div className="rounded-xl border border-white/[0.03] bg-card p-6">
+          <div className="rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-6">
             <div className="flex flex-col gap-4">
               {libraryUsage.map((lib, i) => {
                 const pct = maxBytes > 0 ? (lib.bytes / maxBytes) * 100 : 0;
@@ -143,7 +143,7 @@ export default function DashboardPage() {
         <h2 className="text-lg font-semibold text-foreground">
           {t("recentActivity")}
         </h2>
-        <div className="rounded-xl border border-white/[0.03] bg-card">
+        <div className="rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl">
           {activities.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">
               {t("noRecentActivity")}
@@ -152,7 +152,7 @@ export default function DashboardPage() {
             activities.map((activity) => (
               <div
                 key={activity.id}
-                className="flex items-center justify-between border-b border-white/[0.03] px-6 py-4 last:border-b-0"
+                className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4 last:border-b-0"
               >
                 <p className="text-sm text-foreground">{activity.message}</p>
                 <span className="text-xs text-muted-foreground">
