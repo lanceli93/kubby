@@ -62,6 +62,7 @@ export const movies = sqliteTable("movies", {
   totalBitrate: integer("total_bitrate"),
   fileSize: integer("file_size"),
   formatName: text("format_name"),
+  discCount: integer("disc_count").default(1),
   tags: text("tags"), // JSON array string
   mediaLibraryId: text("media_library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
   dateAdded: text("date_added").notNull().default("(datetime('now'))"),
@@ -108,6 +109,7 @@ export const userMovieData = sqliteTable("user_movie_data", {
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   movieId: text("movie_id").notNull().references(() => movies.id, { onDelete: "cascade" }),
   playbackPositionSeconds: integer("playback_position_seconds").default(0),
+  currentDisc: integer("current_disc").default(1),
   playCount: integer("play_count").default(0),
   isPlayed: integer("is_played", { mode: "boolean" }).default(false),
   isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
@@ -141,10 +143,34 @@ export const userPreferences = sqliteTable("user_preferences", {
   showResolutionBadge: integer("show_resolution_badge", { mode: "boolean" }).notNull().default(true),
 });
 
+// ─── Movie Discs ──────────────────────────────────────────────
+export const movieDiscs = sqliteTable("movie_discs", {
+  id: text("id").primaryKey(),
+  movieId: text("movie_id").notNull().references(() => movies.id, { onDelete: "cascade" }),
+  discNumber: integer("disc_number").notNull(),
+  filePath: text("file_path").notNull(),
+  label: text("label"),
+  posterPath: text("poster_path"),
+  runtimeSeconds: integer("runtime_seconds"),
+  fileSize: integer("file_size"),
+  videoCodec: text("video_codec"),
+  audioCodec: text("audio_codec"),
+  videoWidth: integer("video_width"),
+  videoHeight: integer("video_height"),
+  audioChannels: integer("audio_channels"),
+  container: text("container"),
+  totalBitrate: integer("total_bitrate"),
+  formatName: text("format_name"),
+}, (table) => [
+  index("idx_md_movie").on(table.movieId),
+  index("idx_md_movie_disc").on(table.movieId, table.discNumber),
+]);
+
 // ─── Media Streams ─────────────────────────────────────────────
 export const mediaStreams = sqliteTable("media_streams", {
   id: text("id").primaryKey(),
   movieId: text("movie_id").notNull().references(() => movies.id, { onDelete: "cascade" }),
+  discNumber: integer("disc_number").default(1),
   streamIndex: integer("stream_index").notNull(),
   streamType: text("stream_type", { enum: ["video", "audio", "subtitle"] }).notNull(),
   codec: text("codec"),

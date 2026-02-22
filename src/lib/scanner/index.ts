@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
-import { movies, people, moviePeople, mediaLibraries, settings, mediaStreams } from "@/lib/db/schema";
+import { movies, people, moviePeople, mediaLibraries, settings, mediaStreams, movieDiscs } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { parseNfo } from "./nfo-parser";
 import { probeVideo } from "./probe";
@@ -37,6 +37,57 @@ function findVideoFile(dir: string): string | null {
     if (VIDEO_EXTENSIONS.includes(ext)) {
       return path.join(dir, file);
     }
+  }
+  return null;
+}
+
+// ─── Multi-Disc Detection ─────────────────────────────────────
+
+interface DiscInfo {
+  discNumber: number;
+  filePath: string;
+  label: string;
+}
+
+const MULTI_DISC_REGEX = /[\s._\-\[\(]*(cd|dvd|disc|disk|part|pt)[\s._\-]*(\d+|[a-d])[\s._\-\]\)]*/i;
+
+function findVideoFiles(dir: string): string[] {
+  const files = fs.readdirSync(dir);
+  return files
+    .filter((file) => VIDEO_EXTENSIONS.includes(path.extname(file).toLowerCase()))
+    .sort()
+    .map((file) => path.join(dir, file));
+}
+
+function detectMultiDisc(videoPaths: string[]): DiscInfo[] | null {
+  const results: DiscInfo[] = [];
+  for (const filePath of videoPaths) {
+    const fileName = path.basename(filePath, path.extname(filePath));
+    const match = fileName.match(MULTI_DISC_REGEX);
+    if (match) {
+      const keyword = match[1]; // cd, dvd, disc, part, etc.
+      const numStr = match[2];
+      const discNumber = /^\d+$/.test(numStr) ? parseInt(numStr, 10) : (numStr.charCodeAt(0) - 96); // a=1, b=2…
+      const label = `${keyword.toUpperCase()} ${numStr.toUpperCase()}`;
+      results.push({ discNumber, filePath, label });
+    }
+  }
+  if (results.length < 2) return null;
+  results.sort((a, b) => a.discNumber - b.discNumber);
+  return results;
+}
+
+function findDiscPoster(movieDir: string, discInfo: DiscInfo): string | null {
+  const n = discInfo.discNumber;
+  const videoBaseName = path.basename(discInfo.filePath, path.extname(discInfo.filePath));
+  const patterns = [
+    `poster-disc${n}`,
+    `poster-cd${n}`,
+    `${videoBaseName}-poster`,
+  ];
+  for (const pattern of patterns) {
+    const found = findFileByPattern(movieDir, pattern, IMAGE_EXTENSIONS);
+    if (found) return path.relative(movieDir, found);
   }
   return null;
 }
@@ -177,9 +228,12 @@ export async function scanLibrary(
 
     if (!fs.existsSync(nfoPath)) continue;
 
-    // Find video file
-    const videoFile = findVideoFile(movieDir);
-    if (!videoFile) continue;
+    // Find video files (multi-disc detection)
+    const videoFiles = findVideoFiles(movieDir);
+    if (videoFiles.length === 0) continue;
+    const multiDiscResult = detectMultiDisc(videoFiles);
+    const isMultiDisc = multiDiscResult != null && multiDiscResult.length >= 2;
+    const primaryVideo = isMultiDisc ? multiDiscResult[0].filePath : videoFiles[0];
 
     // Parse NFO
     let nfoData;
@@ -243,8 +297,8 @@ export async function scanLibrary(
     const posterRelative = posterFile ? path.relative(movieDir, posterFile) : null;
     const fanartRelative = fanartFile ? path.relative(movieDir, fanartFile) : null;
 
-    // Probe video file with ffprobe for media info
-    const probeResult = await probeVideo(videoFile);
+    // Probe primary video file with ffprobe for media info
+    const probeResult = await probeVideo(primaryVideo);
 
     // ffprobe data takes priority over NFO data (more accurate)
     const videoCodec = probeResult?.videoCodec || nfoData.videoCodec || null;
@@ -252,7 +306,7 @@ export async function scanLibrary(
     const videoWidth = probeResult?.videoWidth || nfoData.videoWidth || null;
     const videoHeight = probeResult?.videoHeight || nfoData.videoHeight || null;
     const audioChannels = probeResult?.audioChannels || nfoData.audioChannels || null;
-    const container = probeResult?.container || path.extname(videoFile).toLowerCase().replace(".", "") || null;
+    const container = probeResult?.container || path.extname(primaryVideo).toLowerCase().replace(".", "") || null;
     // Runtime: prefer NFO/TMDB value, fall back to ffprobe duration
     const runtimeSeconds = probeResult?.durationSeconds || (nfoData.runtimeMinutes ? nfoData.runtimeMinutes * 60 : null);
     const runtimeMinutes = nfoData.runtimeMinutes || (probeResult?.durationSeconds ? Math.floor(probeResult.durationSeconds / 60) : null);
@@ -273,7 +327,7 @@ export async function scanLibrary(
       sortName: nfoData.sortName || null,
       overview: nfoData.overview || null,
       tagline: nfoData.tagline || null,
-      filePath: videoFile,
+      filePath: primaryVideo,
       folderPath: movieDir,
       posterPath: posterRelative,
       fanartPath: fanartRelative,
@@ -298,6 +352,7 @@ export async function scanLibrary(
       totalBitrate: probeResult?.totalBitrate || null,
       fileSize: probeResult?.fileSize || null,
       formatName: probeResult?.formatName || null,
+      discCount: isMultiDisc ? multiDiscResult.length : 1,
       tags: JSON.stringify(nfoData.tags),
       mediaLibraryId: libraryId,
     };
@@ -318,6 +373,7 @@ export async function scanLibrary(
         db.insert(mediaStreams).values({
           id: uuidv4(),
           movieId,
+          discNumber: 1,
           streamIndex: stream.streamIndex,
           streamType: stream.streamType,
           codec: stream.codec,
@@ -336,6 +392,79 @@ export async function scanLibrary(
           channelLayout: stream.channelLayout,
           sampleRate: stream.sampleRate,
         }).run();
+      }
+    }
+
+    // Multi-disc: probe each disc, insert movie_discs rows and per-disc streams
+    db.delete(movieDiscs).where(eq(movieDiscs.movieId, movieId)).run();
+    if (isMultiDisc) {
+      let totalRuntimeSeconds = 0;
+      for (const disc of multiDiscResult) {
+        const discProbe = disc.filePath === primaryVideo ? probeResult : await probeVideo(disc.filePath);
+        const discPoster = findDiscPoster(movieDir, disc);
+        const discExt = path.extname(disc.filePath).toLowerCase().replace(".", "");
+
+        db.insert(movieDiscs).values({
+          id: uuidv4(),
+          movieId,
+          discNumber: disc.discNumber,
+          filePath: disc.filePath,
+          label: disc.label,
+          posterPath: discPoster,
+          runtimeSeconds: discProbe?.durationSeconds || null,
+          fileSize: discProbe?.fileSize || null,
+          videoCodec: discProbe?.videoCodec || null,
+          audioCodec: discProbe?.audioCodec || null,
+          videoWidth: discProbe?.videoWidth || null,
+          videoHeight: discProbe?.videoHeight || null,
+          audioChannels: discProbe?.audioChannels || null,
+          container: discProbe?.container || discExt || null,
+          totalBitrate: discProbe?.totalBitrate || null,
+          formatName: discProbe?.formatName || null,
+        }).run();
+
+        if (discProbe?.durationSeconds) {
+          totalRuntimeSeconds += discProbe.durationSeconds;
+        }
+
+        // Insert per-disc media streams (skip disc 1 — already inserted above)
+        if (disc.discNumber > 1 && discProbe?.streams) {
+          for (const stream of discProbe.streams) {
+            db.insert(mediaStreams).values({
+              id: uuidv4(),
+              movieId,
+              discNumber: disc.discNumber,
+              streamIndex: stream.streamIndex,
+              streamType: stream.streamType,
+              codec: stream.codec,
+              profile: stream.profile,
+              bitrate: stream.bitrate,
+              language: stream.language,
+              title: stream.title,
+              isDefault: stream.isDefault,
+              isForced: stream.isForced,
+              width: stream.width,
+              height: stream.height,
+              bitDepth: stream.bitDepth,
+              frameRate: stream.frameRate,
+              hdrType: stream.hdrType,
+              channels: stream.channels,
+              channelLayout: stream.channelLayout,
+              sampleRate: stream.sampleRate,
+            }).run();
+          }
+        }
+      }
+
+      // Update total runtime to sum of all discs
+      if (totalRuntimeSeconds > 0) {
+        db.update(movies)
+          .set({
+            runtimeSeconds: totalRuntimeSeconds,
+            runtimeMinutes: Math.floor(totalRuntimeSeconds / 60),
+          })
+          .where(eq(movies.id, movieId))
+          .run();
       }
     }
 

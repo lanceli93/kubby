@@ -56,6 +56,30 @@ const pending = [
   "ALTER TABLE `movies` ADD `total_bitrate` integer",
   "ALTER TABLE `movies` ADD `file_size` integer",
   "ALTER TABLE `movies` ADD `format_name` text",
+  // 0010: multi-disc movie support
+  "ALTER TABLE `movies` ADD `disc_count` integer DEFAULT 1",
+  "ALTER TABLE `media_streams` ADD `disc_number` integer DEFAULT 1",
+  "ALTER TABLE `user_movie_data` ADD `current_disc` integer DEFAULT 1",
+  `CREATE TABLE IF NOT EXISTS \`movie_discs\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`movie_id\` text NOT NULL REFERENCES \`movies\`(\`id\`) ON DELETE CASCADE,
+    \`disc_number\` integer NOT NULL,
+    \`file_path\` text NOT NULL,
+    \`label\` text,
+    \`poster_path\` text,
+    \`runtime_seconds\` integer,
+    \`file_size\` integer,
+    \`video_codec\` text,
+    \`audio_codec\` text,
+    \`video_width\` integer,
+    \`video_height\` integer,
+    \`audio_channels\` integer,
+    \`container\` text,
+    \`total_bitrate\` integer,
+    \`format_name\` text
+  )`,
+  "CREATE INDEX IF NOT EXISTS `idx_md_movie` ON `movie_discs` (`movie_id`)",
+  "CREATE INDEX IF NOT EXISTS `idx_md_movie_disc` ON `movie_discs` (`movie_id`, `disc_number`)",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }
