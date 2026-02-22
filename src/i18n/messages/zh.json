@@ -129,7 +129,6 @@
     "playerName": "播放器",
     "playerPath": "播放器路径",
     "playerNone": "无（网页播放器）",
-    "playerCustom": "自定义",
     "playerMode": "播放方式",
     "playerModeLocal": "本地文件",
     "playerModeStream": "串流播放",

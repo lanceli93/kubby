@@ -96,8 +96,10 @@ export async function POST(
       } else if (platform === "win32") {
         launchWindows(playerName, playerPath, filePath, startSeconds);
       } else {
-        // Linux fallback
-        launchLinux(playerName, playerPath, filePath, startSeconds);
+        return NextResponse.json(
+          { error: "Unsupported platform" },
+          { status: 400 }
+        );
       }
     } catch (launchError) {
       console.error("Failed to launch external player:", launchError);
@@ -133,38 +135,15 @@ function launchMac(
   filePath: string,
   startSeconds: number
 ) {
-  switch (playerName) {
-    case "IINA": {
-      // Use iina-cli which works whether IINA is already running or not.
-      // `open -a IINA --args` only passes args on first launch.
-      const appPath = playerPath || "/Applications/IINA.app";
-      const cli = appPath.replace(/\/?$/, "/Contents/MacOS/iina-cli");
-      const args: string[] = [];
-      if (startSeconds > 0) {
-        args.push(`--mpv-start=+${startSeconds}`);
-      }
-      args.push(filePath);
-      launchPlayer(cli, args);
-      break;
-    }
-    case "VLC": {
-      const vlcApp = playerPath || "/Applications/VLC.app";
-      const vlcBin = vlcApp.replace(/\/?$/, "/Contents/MacOS/VLC");
-      const args: string[] = [];
-      if (startSeconds > 0) {
-        args.push(`--start-time=${startSeconds}`);
-      }
-      args.push(filePath);
-      launchPlayer(vlcBin, args);
-      break;
-    }
-    default: {
-      // Custom player — use `open` as fallback
-      const appPath = playerPath || playerName;
-      launchPlayer("open", ["-a", appPath, filePath]);
-      break;
-    }
+  // IINA: use iina-cli which works whether IINA is already running or not
+  const appPath = playerPath || "/Applications/IINA.app";
+  const cli = appPath.replace(/\/?$/, "/Contents/MacOS/iina-cli");
+  const args: string[] = [];
+  if (startSeconds > 0) {
+    args.push(`--mpv-start=+${startSeconds}`);
   }
+  args.push(filePath);
+  launchPlayer(cli, args);
 }
 
 function launchWindows(
@@ -173,57 +152,13 @@ function launchWindows(
   filePath: string,
   startSeconds: number
 ) {
-  switch (playerName) {
-    case "VLC": {
-      const exe = playerPath || "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
-      const args: string[] = [];
-      if (startSeconds > 0) {
-        args.push(`--start-time=${startSeconds}`);
-      }
-      args.push(filePath);
-      launchPlayer(exe, args);
-      break;
-    }
-    case "PotPlayer": {
-      const exe =
-        playerPath || "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe";
-      const args: string[] = [];
-      if (startSeconds > 0) {
-        args.push(`/seek=${startSeconds * 1000}`);
-      }
-      args.push(filePath);
-      launchPlayer(exe, args);
-      break;
-    }
-    default: {
-      const exe = playerPath || playerName;
-      launchPlayer(exe, [filePath]);
-      break;
-    }
+  // PotPlayer
+  const exe =
+    playerPath || "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe";
+  const args: string[] = [];
+  if (startSeconds > 0) {
+    args.push(`/seek=${startSeconds * 1000}`);
   }
-}
-
-function launchLinux(
-  playerName: string,
-  playerPath: string | null,
-  filePath: string,
-  startSeconds: number
-) {
-  switch (playerName) {
-    case "VLC": {
-      const exe = playerPath || "vlc";
-      const args: string[] = [];
-      if (startSeconds > 0) {
-        args.push(`--start-time=${startSeconds}`);
-      }
-      args.push(filePath);
-      launchPlayer(exe, args);
-      break;
-    }
-    default: {
-      const exe = playerPath || playerName;
-      launchPlayer(exe, [filePath]);
-      break;
-    }
-  }
+  args.push(filePath);
+  launchPlayer(exe, args);
 }

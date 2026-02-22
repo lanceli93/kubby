@@ -129,7 +129,6 @@
     "playerName": "Player",
     "playerPath": "Player Path",
     "playerNone": "None (Web Player)",
-    "playerCustom": "Custom",
     "playerMode": "Playback Mode",
     "playerModeLocal": "Local File",
     "playerModeStream": "Stream URL",

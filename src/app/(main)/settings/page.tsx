@@ -10,7 +10,6 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const PLAYER_PRESETS: Record<string, { mac?: string; win?: string }> = {
   IINA: { mac: "/Applications/IINA.app" },
-  VLC: { mac: "/Applications/VLC.app", win: "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe" },
   PotPlayer: { win: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe" },
 };
 
@@ -272,9 +271,7 @@ export default function SettingsPage() {
           >
             <option value="">{t("playerNone")}</option>
             <option value="IINA">IINA</option>
-            <option value="VLC">VLC</option>
             <option value="PotPlayer">PotPlayer</option>
-            <option value="Custom">{t("playerCustom")}</option>
           </select>
         </div>
         {playerName && (

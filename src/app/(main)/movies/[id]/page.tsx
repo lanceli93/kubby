@@ -193,8 +193,6 @@ export default function MovieDetailPage() {
     switch (externalPlayerName) {
       case "IINA":
         return `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
-      case "VLC":
-        return `vlc://${streamUrl}`;
       case "PotPlayer":
         return `potplayer://${streamUrl}`;
       default:
