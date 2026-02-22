@@ -1,0 +1,188 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: "22.12.0"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14           # Apple Silicon runner
+            platform: darwin-arm64
+            go_os: darwin
+            go_arch: arm64
+            node_platform: darwin-arm64
+            archive_ext: tar.gz
+          - os: macos-13           # Intel runner
+            platform: darwin-x64
+            go_os: darwin
+            go_arch: amd64
+            node_platform: darwin-x64
+            archive_ext: tar.gz
+          - os: windows-latest
+            platform: win-x64
+            go_os: windows
+            go_arch: amd64
+            node_platform: win-x64
+            archive_ext: zip
+          - os: ubuntu-latest
+            platform: linux-x64
+            go_os: linux
+            go_arch: amd64
+            node_platform: linux-x64
+            archive_ext: tar.gz
+
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.platform }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: launcher/go.sum
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Build Next.js standalone
+        run: npm run build
+
+      - name: Determine standalone root
+        id: standalone
+        shell: bash
+        run: |
+          SERVER_JS=$(find .next/standalone -name "server.js" -not -path "*/node_modules/*" | head -1)
+          STANDALONE_ROOT=$(dirname "$SERVER_JS")
+          echo "root=$STANDALONE_ROOT" >> "$GITHUB_OUTPUT"
+          echo "Standalone root: $STANDALONE_ROOT"
+
+      - name: Assemble server directory
+        shell: bash
+        run: |
+          mkdir -p dist/kubby-${{ matrix.platform }}/server
+          cp -r "${{ steps.standalone.outputs.root }}/." dist/kubby-${{ matrix.platform }}/server/
+          cp -r .next/static dist/kubby-${{ matrix.platform }}/server/.next/static
+          if [ -d public ]; then
+            cp -r public dist/kubby-${{ matrix.platform }}/server/public
+          fi
+
+      - name: Download Node.js runtime
+        shell: bash
+        run: |
+          mkdir -p dist/kubby-${{ matrix.platform }}/node
+
+          if [ "${{ matrix.platform }}" = "win-x64" ]; then
+            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-win-x64.zip" -o node.zip
+            unzip -q node.zip
+            cp "node-v${NODE_VERSION}-win-x64/node.exe" dist/kubby-${{ matrix.platform }}/node/
+          elif [ "${{ matrix.platform }}" = "darwin-arm64" ]; then
+            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-arm64.tar.gz" | tar xz
+            mkdir -p dist/kubby-${{ matrix.platform }}/node/bin
+            cp "node-v${NODE_VERSION}-darwin-arm64/bin/node" dist/kubby-${{ matrix.platform }}/node/bin/
+          elif [ "${{ matrix.platform }}" = "darwin-x64" ]; then
+            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-x64.tar.gz" | tar xz
+            mkdir -p dist/kubby-${{ matrix.platform }}/node/bin
+            cp "node-v${NODE_VERSION}-darwin-x64/bin/node" dist/kubby-${{ matrix.platform }}/node/bin/
+          else
+            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" | tar xJ
+            mkdir -p dist/kubby-${{ matrix.platform }}/node/bin
+            cp "node-v${NODE_VERSION}-linux-x64/bin/node" dist/kubby-${{ matrix.platform }}/node/bin/
+          fi
+
+      - name: Download ffprobe
+        shell: bash
+        run: |
+          mkdir -p dist/kubby-${{ matrix.platform }}/bin
+
+          FFPROBE_MAP_darwin_arm64="ffprobe-darwin-arm64"
+          FFPROBE_MAP_darwin_x64="ffprobe-darwin-x64"
+          FFPROBE_MAP_win_x64="ffprobe-win32-x64"
+          FFPROBE_MAP_linux_x64="ffprobe-linux-x64"
+
+          PLATFORM_KEY="${{ matrix.platform }}"
+          PLATFORM_KEY="${PLATFORM_KEY//-/_}"
+          FFPROBE_NAME_VAR="FFPROBE_MAP_${PLATFORM_KEY}"
+          FFPROBE_NAME="${!FFPROBE_NAME_VAR}"
+
+          curl -fsSL "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/${FFPROBE_NAME}.gz" -o ffprobe.gz
+
+          if [ "${{ matrix.platform }}" = "win-x64" ]; then
+            gunzip -c ffprobe.gz > dist/kubby-${{ matrix.platform }}/bin/ffprobe.exe
+          else
+            gunzip -c ffprobe.gz > dist/kubby-${{ matrix.platform }}/bin/ffprobe
+            chmod +x dist/kubby-${{ matrix.platform }}/bin/ffprobe
+          fi
+
+      - name: Build Go launcher
+        shell: bash
+        env:
+          GOOS: ${{ matrix.go_os }}
+          GOARCH: ${{ matrix.go_arch }}
+          CGO_ENABLED: ${{ matrix.platform == 'win-x64' && '0' || '1' }}
+        run: |
+          cd launcher
+          if [ "${{ matrix.platform }}" = "win-x64" ]; then
+            go build -ldflags "-H=windowsgui" -o "../dist/kubby-${{ matrix.platform }}/kubby.exe" .
+          else
+            go build -o "../dist/kubby-${{ matrix.platform }}/kubby" .
+            chmod +x "../dist/kubby-${{ matrix.platform }}/kubby"
+          fi
+
+      - name: Create archive
+        shell: bash
+        run: |
+          cd dist
+          if [ "${{ matrix.archive_ext }}" = "zip" ]; then
+            7z a -tzip "kubby-${{ matrix.platform }}.zip" "kubby-${{ matrix.platform }}/"
+          else
+            tar czf "kubby-${{ matrix.platform }}.tar.gz" "kubby-${{ matrix.platform }}/"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubby-${{ matrix.platform }}
+          path: dist/kubby-${{ matrix.platform }}.${{ matrix.archive_ext }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            artifacts/**/*
