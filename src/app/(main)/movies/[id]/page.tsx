@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,6 +18,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
@@ -141,15 +149,18 @@ function computeAgeAtRelease(
 
 export default function MovieDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const movieId = params.id as string;
   const queryClient = useQueryClient();
   const t = useTranslations("movies");
   const tMeta = useTranslations("metadata");
+  const tCommon = useTranslations("common");
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
   const [fanartMode, setFanartMode] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
 
@@ -191,6 +202,15 @@ export default function MovieDetailPage() {
         body: JSON.stringify({ isPlayed: !movie?.userData?.isPlayed }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie", movieId] }),
+  });
+
+  const deleteMovie = useMutation({
+    mutationFn: () =>
+      fetch(`/api/movies/${movieId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+      router.push("/movies");
+    },
   });
 
   if (!movie) {
@@ -431,7 +451,7 @@ export default function MovieDetailPage() {
                     {t("refreshMetadata")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive" onClick={() => alert("Delete media — coming soon")}>
+                  <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
                     <Trash2 className="h-4 w-4" />
                     {tMeta("deleteMedia")}
                   </DropdownMenuItem>
@@ -595,6 +615,33 @@ export default function MovieDetailPage() {
         dimensions={movieDimensions}
         dimensionRatings={movie.userData?.dimensionRatings}
       />
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{t("deleteMovie")}</DialogTitle>
+            <DialogDescription>{t("confirmDeleteMovie")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteOpen(false)}
+              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              onClick={() => {
+                deleteMovie.mutate();
+                setDeleteOpen(false);
+              }}
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </div>
   );
