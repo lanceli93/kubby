@@ -37,7 +37,7 @@ export async function POST(
     // Get movie file path
     let filePath: string | null = null;
 
-    if (discNumber && discNumber > 1) {
+    if (discNumber) {
       const disc = db
         .select()
         .from(movieDiscs)
