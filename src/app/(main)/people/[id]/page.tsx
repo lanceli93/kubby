@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -80,6 +80,7 @@ export default function PersonDetailPage() {
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
 
+  const [fanartMode, setFanartMode] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -246,13 +247,21 @@ export default function PersonDetailPage() {
           />
         )}
 
+        {/* Fanart fullscreen click-to-dismiss overlay */}
+        {fanartMode && (
+          <div
+            className="absolute inset-0 z-20 cursor-pointer"
+            onClick={() => setFanartMode(false)}
+          />
+        )}
+
         {/* Bottom gradient — fade to page background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+        <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
         {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20" />
+        <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + person info */}
-        <div className="absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16">
+        <div className={`absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
           {/* Poster — 350×525 (2:3), same as movie detail */}
           <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {person.photoPath ? (
@@ -325,6 +334,17 @@ export default function PersonDetailPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* View fanart button */}
+              {person.fanartPath && (
+                <button
+                  onClick={() => setFanartMode(true)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  title="View fanart"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
             {/* Overview / Biography */}

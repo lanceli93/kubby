@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MoreHorizontal, ImageIcon } from "lucide-react";
+import { Star, MoreHorizontal, ImageIcon, Pencil } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
+import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 
 interface PersonCardProps {
   id: string;
@@ -49,6 +50,7 @@ export function PersonCard({
   const showTierBadge = prefs?.showPersonTierBadge !== false;
   const showRatingBadge = prefs?.showPersonRatingBadge !== false;
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
   return (
     <div className="group flex-shrink-0 transition-transform hover:scale-[1.03]" style={{ width }}>
@@ -119,6 +121,15 @@ export function PersonCard({
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
+                  setMetadataOpen(true);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+                {tMeta("editMetadata")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
                   setImageEditorOpen(true);
                 }}
               >
@@ -142,7 +153,12 @@ export function PersonCard({
       </div>
     </Link>
 
-      {/* Dialog rendered outside <Link> to prevent React portal event bubbling from triggering navigation */}
+      {/* Dialogs rendered outside <Link> to prevent React portal event bubbling from triggering navigation */}
+      <PersonMetadataEditor
+        personId={id}
+        open={metadataOpen}
+        onOpenChange={setMetadataOpen}
+      />
       <ImageEditorDialog
         open={imageEditorOpen}
         onOpenChange={setImageEditorOpen}

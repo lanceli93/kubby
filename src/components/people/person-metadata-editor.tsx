@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Star, CalendarDays } from "lucide-react";
+import { Star, CalendarDays, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -286,39 +286,38 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
             {/* Tags */}
             <div className="space-y-2">
               <Label>{t("tags")}</Label>
-              <div className="flex flex-wrap gap-1.5 min-h-[36px] rounded-md border border-input bg-transparent p-2">
+              <div className="flex flex-wrap gap-1.5 mb-2">
                 {tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="flex items-center gap-1 rounded bg-white/10 px-2 py-0.5 text-xs text-foreground"
+                    className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => setTags((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-primary/60 hover:text-primary"
                     >
-                      ×
+                      <X className="h-3 w-3" />
                     </button>
                   </span>
                 ))}
-                <input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const val = tagInput.trim();
-                      if (val && !tags.includes(val)) {
-                        setTags((prev) => [...prev, val]);
-                      }
-                      setTagInput("");
-                    }
-                  }}
-                  placeholder={t("addTagPlaceholder")}
-                  className="flex-1 min-w-[120px] bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
-                />
               </div>
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = tagInput.trim();
+                    if (val && !tags.includes(val)) {
+                      setTags((prev) => [...prev, val]);
+                    }
+                    setTagInput("");
+                  }
+                }}
+                placeholder={t("addTagPlaceholder")}
+              />
             </div>
 
             {/* External IDs section */}
