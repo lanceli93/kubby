@@ -182,8 +182,9 @@ export default function MovieDetailPage() {
   const [externalToast, setExternalToast] = useState<string | null>(null);
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
-  const externalEnabled = prefs?.externalPlayerEnabled && !!prefs?.externalPlayerName;
-  const externalPlayerName = prefs?.externalPlayerName;
+  const SUPPORTED_PLAYERS = ["IINA", "PotPlayer"];
+  const externalPlayerName = SUPPORTED_PLAYERS.includes(prefs?.externalPlayerName || "") ? prefs!.externalPlayerName : null;
+  const externalEnabled = prefs?.externalPlayerEnabled && !!externalPlayerName;
   const isLocalhost = typeof window !== "undefined" &&
     (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "::1");
   const externalPlayerMode = (!isLocalhost || (prefs?.externalPlayerMode || "local") === "stream") ? "stream" : "local";
