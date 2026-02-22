@@ -133,7 +133,7 @@
     "playerModeLocal": "本地文件",
     "playerModeStream": "串流播放",
     "playerModeLocalDesc": "在服务器本机通过本地文件路径启动播放器。仅在服务器本机浏览时可用。",
-    "playerModeStreamDesc": "通过 URL 协议（iina://、vlc://）唤起播放器。任何安装了该播放器的设备均可使用。",
+    "playerModeStreamDesc": "通过 URL 协议（iina://、potplayer://）唤起播放器。任何安装了该播放器的设备均可使用。",
     "externalPlayerWarning": "外部播放器无法将播放进度回传给 Kubby。观看进度仅记录到切换外部播放器时的位置。",
     "saving": "保存中...",
     "savePlaybackSettings": "保存",
