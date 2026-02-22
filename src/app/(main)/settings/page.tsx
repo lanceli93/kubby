@@ -296,7 +296,7 @@ export default function SettingsPage() {
             </p>
           </div>
         )}
-        {playerName && playerMode === "local" && (
+        {playerName && (
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium text-muted-foreground">
               {t("playerPath")}

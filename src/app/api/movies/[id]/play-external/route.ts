@@ -89,6 +89,8 @@ export async function POST(
     const playerPath = prefs.externalPlayerPath;
     const platform = process.platform;
 
+    console.log("[play-external] config:", { playerName, playerPath, platform, filePath, startSeconds });
+
     // Build and execute launch command
     try {
       if (platform === "darwin") {
@@ -122,7 +124,11 @@ export async function POST(
 }
 
 function spawnDetached(exe: string, args: string[]) {
+  console.log("[play-external] spawn:", exe, args);
   const child = spawn(exe, args, { detached: true, stdio: "ignore" });
+  child.on("error", (err) => {
+    console.error("[play-external] spawn error:", err);
+  });
   child.unref();
 }
 
