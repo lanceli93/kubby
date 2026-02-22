@@ -14,6 +14,8 @@ import {
   SkipBack,
   SkipForward,
   Gauge,
+  HelpCircle,
+  X,
 } from "lucide-react";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -57,6 +59,7 @@ export default function PlayerPage() {
   const osdTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const volumeAreaRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const { data: movie } = useQuery<MovieData>({
     queryKey: ["movie-player", movieId],
@@ -211,12 +214,22 @@ export default function PlayerPage() {
           e.preventDefault();
           cycleSpeed(-1);
           break;
+        case "?":
+          e.preventDefault();
+          setShowHelp((v) => !v);
+          break;
+        case "Escape":
+          if (showHelp) {
+            e.preventDefault();
+            setShowHelp(false);
+          }
+          break;
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [volume, isMuted, playbackRate, isPlaying]);
+  }, [volume, isMuted, playbackRate, isPlaying, showHelp]);
 
   // Track fullscreen changes
   useEffect(() => {
@@ -344,14 +357,20 @@ export default function PlayerPage() {
             )}
           </span>
         </div>
-        {isMultiDisc && (
-          <span className="text-sm text-white/60">
-            {currentDisc} / {totalDiscs}
-          </span>
-        )}
-        {!isMultiDisc && (
-          <span className="text-sm text-white/60">Kubby</span>
-        )}
+        <div className="flex items-center gap-3">
+          {isMultiDisc && (
+            <span className="text-sm text-white/60">
+              {currentDisc} / {totalDiscs}
+            </span>
+          )}
+          <button
+            onClick={() => setShowHelp((v) => !v)}
+            className="text-white/40 hover:text-white/80"
+            title="Keyboard shortcuts (?)"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* Center play button (on pause) */}
@@ -368,6 +387,59 @@ export default function PlayerPage() {
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="rounded-lg bg-black/70 px-6 py-3 text-lg font-medium text-white">
             {osdMessage}
+          </div>
+        </div>
+      )}
+
+      {/* Help overlay */}
+      {showHelp && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowHelp(false);
+          }}
+        >
+          <div
+            className="relative max-h-[80vh] w-[480px] overflow-y-auto rounded-xl bg-zinc-900 p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Keyboard Shortcuts</h2>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="text-white/50 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-3 text-sm">
+              {[
+                ["Space / K", "Play / Pause"],
+                ["\u2190", "Rewind 5s"],
+                ["Shift + \u2190", "Rewind 30s"],
+                ["\u2192", "Forward 5s"],
+                ["Shift + \u2192", "Forward 30s"],
+                ["\u2191", "Volume up"],
+                ["\u2193", "Volume down"],
+                ["M", "Mute / Unmute"],
+                ["F", "Toggle fullscreen"],
+                ["> or .", "Increase speed"],
+                ["< or ,", "Decrease speed"],
+                ["?", "Show / Hide this help"],
+                ["Esc", "Close this help"],
+              ].map(([key, desc]) => (
+                <div key={key} className="flex items-center justify-between">
+                  <span className="text-white/70">{desc}</span>
+                  <kbd className="rounded bg-white/10 px-2 py-0.5 font-mono text-xs text-white/90">
+                    {key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-white/40">
+              Click the speed button or use the volume hover slider for mouse controls.
+            </p>
           </div>
         </div>
       )}
