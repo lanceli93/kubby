@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc, Monitor } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -179,8 +179,34 @@ export default function MovieDetailPage() {
   const [ratingOpen, setRatingOpen] = useState(false);
   const [fanartMode, setFanartMode] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [externalToast, setExternalToast] = useState<string | null>(null);
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
+  const externalEnabled = prefs?.externalPlayerEnabled && !!prefs?.externalPlayerName;
+  const externalPlayerName = prefs?.externalPlayerName;
+
+  async function launchExternal(disc?: number) {
+    if (!externalEnabled) {
+      setExternalToast(t("configureExternalPlayer"));
+      setTimeout(() => setExternalToast(null), 3000);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/movies/${movieId}/play-external`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disc }),
+      });
+      if (res.ok) {
+        setExternalToast(t("launchedIn", { player: externalPlayerName || "" }));
+      } else {
+        setExternalToast(t("externalPlayerFailed"));
+      }
+    } catch {
+      setExternalToast(t("externalPlayerFailed"));
+    }
+    setTimeout(() => setExternalToast(null), 3000);
+  }
 
   const { data: movie } = useQuery<MovieDetail>({
     queryKey: ["movie", movieId],
@@ -391,13 +417,42 @@ export default function MovieDetailPage() {
 
             {/* Action buttons — Jellyfin-style uniform small buttons */}
             <div className="flex items-center gap-2 pt-1">
-              <Link
-                href={`/movies/${movie.id}/play`}
-                className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
-              >
-                <Play className="h-5 w-5 fill-black" />
-                {(movie.discCount ?? 1) > 1 ? t("playAll") : t("play")}
-              </Link>
+              {externalEnabled ? (
+                <button
+                  onClick={() => launchExternal()}
+                  className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white cursor-pointer"
+                >
+                  <Play className="h-5 w-5 fill-black" />
+                  {t("playExternal", { player: externalPlayerName || "" })}
+                </button>
+              ) : (
+                <Link
+                  href={`/movies/${movie.id}/play`}
+                  className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
+                >
+                  <Play className="h-5 w-5 fill-black" />
+                  {(movie.discCount ?? 1) > 1 ? t("playAll") : t("play")}
+                </Link>
+              )}
+              {prefs?.externalPlayerName && (
+                <button
+                  onClick={async () => {
+                    const newEnabled = !prefs?.externalPlayerEnabled;
+                    await fetch("/api/settings/personal-metadata", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+                  }}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
+                    externalEnabled ? "text-blue-400" : "text-white/70"
+                  }`}
+                  title={`External player: ${externalEnabled ? "on" : "off"}`}
+                >
+                  <Monitor className="h-5 w-5" />
+                </button>
+              )}
               {movie.fanartPath && (
                 <button
                   onClick={() => setFanartMode(true)}
@@ -563,6 +618,72 @@ export default function MovieDetailPage() {
           </h2>
           <div className="flex gap-3 overflow-x-auto pb-2">
             {movie.discs.map((disc) => (
+              externalEnabled ? (
+              <button
+                key={disc.id}
+                onClick={() => launchExternal(disc.discNumber)}
+                className="group flex flex-shrink-0 gap-4 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10 cursor-pointer text-left"
+              >
+                {/* Disc poster with play overlay */}
+                <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
+                  {disc.posterPath ? (
+                    <Image
+                      src={resolveImageSrc(disc.posterPath)}
+                      alt={disc.label || `Disc ${disc.discNumber}`}
+                      fill
+                      className="object-cover"
+                      sizes="107px"
+                    />
+                  ) : movie.posterPath ? (
+                    <Image
+                      src={resolveImageSrc(movie.posterPath)}
+                      alt={disc.label || `Disc ${disc.discNumber}`}
+                      fill
+                      className="object-cover"
+                      sizes="107px"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
+                      <Disc className="h-6 w-6" />
+                    </div>
+                  )}
+                  {/* Centered play button on hover */}
+                  <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
+                    </div>
+                  </div>
+                </div>
+                {/* Info on the right */}
+                <div className="flex flex-col justify-center gap-2 pr-3">
+                  <span className="text-base font-semibold text-foreground">
+                    {disc.label || `${t("disc")} ${disc.discNumber}`}
+                  </span>
+                  {disc.runtimeSeconds && disc.runtimeSeconds > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {formatRuntime(disc.runtimeSeconds)}
+                    </span>
+                  )}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {getResolutionLabel(disc.videoWidth) && (
+                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
+                        {getResolutionLabel(disc.videoWidth)}
+                      </span>
+                    )}
+                    {disc.videoCodec && (
+                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
+                        {disc.videoCodec}
+                      </span>
+                    )}
+                    {disc.audioCodec && (
+                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
+                        {disc.audioCodec}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+              ) : (
               <Link
                 key={disc.id}
                 href={`/movies/${movie.id}/play?disc=${disc.discNumber}`}
@@ -627,6 +748,7 @@ export default function MovieDetailPage() {
                   </div>
                 </div>
               </Link>
+              )
             ))}
           </div>
         </section>
@@ -736,6 +858,13 @@ export default function MovieDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* External player toast */}
+      {externalToast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-black/80 border border-white/10 backdrop-blur-xl px-5 py-3 text-sm text-white shadow-lg">
+          {externalToast}
+        </div>
+      )}
     </div>
     </div>
   );

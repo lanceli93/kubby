@@ -147,6 +147,9 @@ export const userPreferences = sqliteTable("user_preferences", {
   showPersonTierBadge: integer("show_person_tier_badge", { mode: "boolean" }).notNull().default(true),
   showPersonRatingBadge: integer("show_person_rating_badge", { mode: "boolean" }).notNull().default(true),
   showResolutionBadge: integer("show_resolution_badge", { mode: "boolean" }).notNull().default(true),
+  externalPlayerEnabled: integer("external_player_enabled", { mode: "boolean" }).notNull().default(false),
+  externalPlayerName: text("external_player_name"),
+  externalPlayerPath: text("external_player_path"),
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────

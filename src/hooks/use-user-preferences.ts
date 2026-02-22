@@ -7,6 +7,9 @@ export interface UserPreferences {
   showPersonTierBadge: boolean;
   showPersonRatingBadge: boolean;
   showResolutionBadge: boolean;
+  externalPlayerEnabled: boolean;
+  externalPlayerName: string | null;
+  externalPlayerPath: string | null;
 }
 
 export function useUserPreferences() {

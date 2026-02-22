@@ -1,22 +1,77 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { setLocale } from "@/i18n/locale";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useQueryClient } from "@tanstack/react-query";
+
+const PLAYER_PRESETS: Record<string, { mac?: string; win?: string }> = {
+  IINA: { mac: "/Applications/IINA.app" },
+  VLC: { mac: "/Applications/VLC.app", win: "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe" },
+  PotPlayer: { win: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe" },
+};
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const t = useTranslations("settings");
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: prefs } = useUserPreferences();
   const [displayName, setDisplayName] = useState(session?.user?.name || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [profileMsg, setProfileMsg] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
+  const [playbackMsg, setPlaybackMsg] = useState("");
+  const [playerName, setPlayerName] = useState<string>("");
+  const [playerPath, setPlayerPath] = useState("");
   const locale = useLocale();
+
+  useEffect(() => {
+    if (prefs) {
+      setPlayerName(prefs.externalPlayerName || "");
+      setPlayerPath(prefs.externalPlayerPath || "");
+    }
+  }, [prefs]);
+
+  function handlePlayerChange(name: string) {
+    setPlayerName(name);
+    if (name && name !== "Custom" && PLAYER_PRESETS[name]) {
+      const preset = PLAYER_PRESETS[name];
+      const isMac = navigator.platform?.toLowerCase().includes("mac") ||
+        navigator.userAgent?.toLowerCase().includes("mac");
+      setPlayerPath((isMac ? preset.mac : preset.win) || "");
+    } else if (!name) {
+      setPlayerPath("");
+    }
+  }
+
+  async function handlePlaybackSave() {
+    setPlaybackMsg("");
+    try {
+      const res = await fetch("/api/settings/personal-metadata", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          externalPlayerEnabled: !!playerName,
+          externalPlayerName: playerName || null,
+          externalPlayerPath: playerPath || null,
+        }),
+      });
+      if (res.ok) {
+        setPlaybackMsg(t("playbackSettingsSaved"));
+        queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+      } else {
+        setPlaybackMsg(t("failedToSave"));
+      }
+    } catch {
+      setPlaybackMsg(t("somethingWentWrong"));
+    }
+  }
 
   async function handleProfileSave(e: React.FormEvent) {
     e.preventDefault();
@@ -196,6 +251,60 @@ export default function SettingsPage() {
           <option value="en">English</option>
           <option value="zh">中文</option>
         </select>
+      </div>
+
+      {/* Playback */}
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
+        <h2 className="text-lg font-semibold text-foreground">{t("playback")}</h2>
+        <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[13px] font-medium text-muted-foreground">
+            {t("playerName")}
+          </label>
+          <select
+            value={playerName}
+            style={{ colorScheme: "dark" }}
+            onChange={(e) => handlePlayerChange(e.target.value)}
+            className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+          >
+            <option value="">{t("playerNone")}</option>
+            <option value="IINA">IINA</option>
+            <option value="VLC">VLC</option>
+            <option value="PotPlayer">PotPlayer</option>
+            <option value="Custom">{t("playerCustom")}</option>
+          </select>
+        </div>
+        {playerName && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-muted-foreground">
+              {t("playerPath")}
+            </label>
+            <input
+              type="text"
+              value={playerPath}
+              onChange={(e) => setPlayerPath(e.target.value)}
+              className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+              placeholder="/Applications/IINA.app"
+            />
+          </div>
+        )}
+        {playerName && (
+          <p className="text-xs text-yellow-500/80">
+            {t("externalPlayerWarning")}
+          </p>
+        )}
+        {playbackMsg && (
+          <p className={`text-sm ${playbackMsg === t("playbackSettingsSaved") ? "text-green-500" : "text-destructive"}`}>
+            {playbackMsg}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={handlePlaybackSave}
+          className="w-fit rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+        >
+          {t("savePlaybackSettings")}
+        </button>
       </div>
 
       {/* Account Info */}

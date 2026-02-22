@@ -36,6 +36,20 @@
       "when": 1771174400000,
       "tag": "0004_resolution_badge",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1771670150997,
+      "tag": "0005_pink_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1771764041684,
+      "tag": "0006_late_winter_soldier",
+      "breakpoints": true
     }
   ]
 }

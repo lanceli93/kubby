@@ -122,7 +122,17 @@
     "language": "Language",
     "languageDesc": "Choose your preferred display language",
     "passwordsDoNotMatch": "Passwords do not match",
-    "somethingWentWrong": "Something went wrong"
+    "somethingWentWrong": "Something went wrong",
+    "playback": "Playback",
+    "externalPlayer": "External Player",
+    "externalPlayerDesc": "Choose a local player to play videos instead of the built-in web player",
+    "playerName": "Player",
+    "playerPath": "Player Path",
+    "playerNone": "None (Web Player)",
+    "playerCustom": "Custom",
+    "externalPlayerWarning": "External players cannot report playback progress back to Kubby. Your watch progress will only be tracked up to when you switch to the external player.",
+    "savePlaybackSettings": "Save",
+    "playbackSettingsSaved": "Playback settings saved"
   },
   "dashboard": {
     "overview": "Overview",
@@ -200,7 +210,11 @@
     "overall": "Overall",
     "discs": "Discs",
     "disc": "Disc",
-    "playAll": "Play All"
+    "playAll": "Play All",
+    "playExternal": "Play ({player})",
+    "launchedIn": "Launched in {player}",
+    "configureExternalPlayer": "Please configure your external player in Settings first",
+    "externalPlayerFailed": "Failed to launch external player"
   },
   "search": {
     "search": "Search",

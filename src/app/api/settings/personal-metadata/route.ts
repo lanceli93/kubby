@@ -27,6 +27,9 @@ export async function GET() {
         showPersonTierBadge: true,
         showPersonRatingBadge: true,
         showResolutionBadge: true,
+        externalPlayerEnabled: false,
+        externalPlayerName: null,
+        externalPlayerPath: null,
       });
     }
 
@@ -41,6 +44,9 @@ export async function GET() {
       showPersonTierBadge: row.showPersonTierBadge,
       showPersonRatingBadge: row.showPersonRatingBadge,
       showResolutionBadge: row.showResolutionBadge,
+      externalPlayerEnabled: row.externalPlayerEnabled,
+      externalPlayerName: row.externalPlayerName,
+      externalPlayerPath: row.externalPlayerPath,
     });
   } catch (error) {
     console.error("Get personal metadata settings error:", error);
@@ -98,6 +104,15 @@ export async function PUT(request: NextRequest) {
       showResolutionBadge: body.showResolutionBadge !== undefined
         ? body.showResolutionBadge
         : existing?.showResolutionBadge ?? true,
+      externalPlayerEnabled: body.externalPlayerEnabled !== undefined
+        ? body.externalPlayerEnabled
+        : existing?.externalPlayerEnabled ?? false,
+      externalPlayerName: body.externalPlayerName !== undefined
+        ? body.externalPlayerName
+        : existing?.externalPlayerName ?? null,
+      externalPlayerPath: body.externalPlayerPath !== undefined
+        ? body.externalPlayerPath
+        : existing?.externalPlayerPath ?? null,
     };
 
     if (existing) {

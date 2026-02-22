@@ -122,7 +122,17 @@
     "language": "语言",
     "languageDesc": "选择您偏好的显示语言",
     "passwordsDoNotMatch": "两次密码不一致",
-    "somethingWentWrong": "出了点问题"
+    "somethingWentWrong": "出了点问题",
+    "playback": "播放设置",
+    "externalPlayer": "外部播放器",
+    "externalPlayerDesc": "选择本地播放器替代内置网页播放器播放视频",
+    "playerName": "播放器",
+    "playerPath": "播放器路径",
+    "playerNone": "无（网页播放器）",
+    "playerCustom": "自定义",
+    "externalPlayerWarning": "外部播放器无法将播放进度回传给 Kubby。观看进度仅记录到切换外部播放器时的位置。",
+    "savePlaybackSettings": "保存",
+    "playbackSettingsSaved": "播放设置已保存"
   },
   "dashboard": {
     "overview": "概览",
@@ -200,7 +210,11 @@
     "overall": "综合",
     "discs": "分碟",
     "disc": "碟",
-    "playAll": "播放全部"
+    "playAll": "播放全部",
+    "playExternal": "播放（{player}）",
+    "launchedIn": "已在 {player} 中打开",
+    "configureExternalPlayer": "请先在设置 → 播放设置中配置外部播放器",
+    "externalPlayerFailed": "启动外部播放器失败"
   },
   "search": {
     "search": "搜索",
