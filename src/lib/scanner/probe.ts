@@ -119,9 +119,10 @@ function parseStream(raw: Record<string, unknown>): ProbeStream | null {
 }
 
 export function probeVideo(filePath: string): Promise<ProbeResult | null> {
+  const ffprobePath = process.env.FFPROBE_PATH || "ffprobe";
   return new Promise((resolve) => {
     execFile(
-      "ffprobe",
+      ffprobePath,
       [
         "-v", "quiet",
         "-print_format", "json",

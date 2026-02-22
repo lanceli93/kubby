@@ -11,6 +11,7 @@ import { writeActorsToNfo } from "./nfo-writer";
 import { fetchMovieCredits, downloadTmdbImage, getPersonPhotoPath, TMDB_PROFILE_SIZE } from "@/lib/tmdb";
 import { parseFolderPaths } from "@/lib/folder-paths";
 import { generateBlurDataURL, getFileMtime } from "@/lib/blur-utils";
+import { getPeopleMetadataDir } from "@/lib/paths";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
@@ -170,7 +171,7 @@ export async function scanLibrary(
   }
   const metadataLanguage = library.metadataLanguage || undefined;
 
-  const metadataDir = path.join(process.cwd(), "data", "metadata", "people");
+  const metadataDir = getPeopleMetadataDir();
 
   // Aggregate all movie directories from all valid paths
   const dirs: { name: string; fullPath: string }[] = [];

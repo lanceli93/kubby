@@ -30,7 +30,7 @@ import {
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY as string;
 const MAX_ACTORS = 20;
-const METADATA_DIR = path.resolve(process.cwd(), "data/metadata/people");
+const METADATA_DIR = path.resolve(process.env.KUBBY_DATA_DIR || path.join(process.cwd(), "data"), "metadata/people");
 
 const args = process.argv.slice(2);
 const force = args.includes("--force");

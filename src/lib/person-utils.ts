@@ -1,7 +1,8 @@
 import path from "path";
 import { sanitizePersonName } from "@/lib/tmdb";
+import { getPeopleMetadataDir } from "@/lib/paths";
 
-const METADATA_DIR = path.join(process.cwd(), "data", "metadata", "people");
+const METADATA_DIR = getPeopleMetadataDir();
 
 export function getPersonDir(person: { photoPath: string | null; name: string }): string {
   if (person.photoPath) {
