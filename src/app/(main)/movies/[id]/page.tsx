@@ -184,7 +184,9 @@ export default function MovieDetailPage() {
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
   const externalEnabled = prefs?.externalPlayerEnabled && !!prefs?.externalPlayerName;
   const externalPlayerName = prefs?.externalPlayerName;
-  const externalPlayerMode = prefs?.externalPlayerMode || "local";
+  const isLocalhost = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "::1");
+  const externalPlayerMode = (!isLocalhost || (prefs?.externalPlayerMode || "local") === "stream") ? "stream" : "local";
 
   function buildStreamProtocolUrl(disc?: number): string {
     const streamUrl = disc && disc > 1

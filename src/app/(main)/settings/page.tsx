@@ -29,30 +29,28 @@ export default function SettingsPage() {
   const [playerName, setPlayerName] = useState<string>("");
   const [playerPath, setPlayerPath] = useState("");
   const [playerMode, setPlayerMode] = useState<string>("local");
+  const [isLocalhost, setIsLocalhost] = useState(false);
   const locale = useLocale();
+
+  useEffect(() => {
+    const host = window.location.hostname;
+    setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
+  }, []);
 
   useEffect(() => {
     if (prefs) {
       setPlayerName(prefs.externalPlayerName || "");
       setPlayerPath(prefs.externalPlayerPath || "");
-      setPlayerMode(prefs.externalPlayerMode || "local");
+      const savedMode = prefs.externalPlayerMode || "local";
+      // Remote users can only use stream mode
+      setPlayerMode(!isLocalhost && savedMode === "local" ? "stream" : savedMode);
     }
-  }, [prefs]);
+  }, [prefs, isLocalhost]);
 
-  function getIsMacForMode(mode: string) {
-    if (mode === "stream") {
-      // Stream mode: player runs on user's device → detect client OS
-      return navigator.platform?.toLowerCase().includes("mac") ||
-        navigator.userAgent?.toLowerCase().includes("mac");
-    }
-    // Local mode: player runs on server → use server OS
-    return prefs?.serverPlatform === "darwin";
-  }
-
-  function autoFillPath(name: string, mode: string) {
+  function autoFillPath(name: string) {
     if (name && PLAYER_PRESETS[name]) {
       const preset = PLAYER_PRESETS[name];
-      const isMac = getIsMacForMode(mode);
+      const isMac = prefs?.serverPlatform === "darwin";
       setPlayerPath((isMac ? preset.mac : preset.win) || "");
     } else if (!name) {
       setPlayerPath("");
@@ -61,12 +59,11 @@ export default function SettingsPage() {
 
   function handlePlayerChange(name: string) {
     setPlayerName(name);
-    autoFillPath(name, playerMode);
+    autoFillPath(name);
   }
 
   function handleModeChange(mode: string) {
     setPlayerMode(mode);
-    autoFillPath(playerName, mode);
   }
 
   async function handlePlaybackSave() {
@@ -303,7 +300,7 @@ export default function SettingsPage() {
               onChange={(e) => handleModeChange(e.target.value)}
               className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             >
-              <option value="local">{t("playerModeLocal")}</option>
+              <option value="local" disabled={!isLocalhost}>{t("playerModeLocal")}</option>
               <option value="stream">{t("playerModeStream")}</option>
             </select>
             <p className="text-xs text-muted-foreground">
