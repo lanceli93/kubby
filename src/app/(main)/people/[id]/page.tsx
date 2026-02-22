@@ -255,6 +255,9 @@ export default function PersonDetailPage() {
           />
         )}
 
+        {/* Subtle bottom edge gradient — only visible in fanart mode */}
+        <div className={`absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background via-background/40 to-transparent z-10 transition-opacity duration-300 ${fanartMode ? "opacity-100" : "opacity-0 pointer-events-none"}`} />
+
         {/* Bottom gradient — fade to page background */}
         <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
         {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
@@ -311,6 +314,17 @@ export default function PersonDetailPage() {
                 </button>
               )}
 
+              {/* View fanart button */}
+              {person.fanartPath && (
+                <button
+                  onClick={() => setFanartMode(true)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  title="View fanart"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+
               {/* Three-dot menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -334,17 +348,6 @@ export default function PersonDetailPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              {/* View fanart button */}
-              {person.fanartPath && (
-                <button
-                  onClick={() => setFanartMode(true)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
-                  title="View fanart"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              )}
             </div>
 
             {/* Overview / Biography */}

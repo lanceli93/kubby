@@ -238,6 +238,9 @@ export default function MovieDetailPage() {
           />
         )}
 
+        {/* Subtle bottom edge gradient — only visible in fanart mode */}
+        <div className={`absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background via-background/40 to-transparent z-10 transition-opacity duration-300 ${fanartMode ? "opacity-100" : "opacity-0 pointer-events-none"}`} />
+
         {/* Bottom gradient — fade to page background */}
         <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
         {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
