@@ -29,12 +29,14 @@ export default function SettingsPage() {
   const [playbackMsg, setPlaybackMsg] = useState("");
   const [playerName, setPlayerName] = useState<string>("");
   const [playerPath, setPlayerPath] = useState("");
+  const [playerMode, setPlayerMode] = useState<string>("local");
   const locale = useLocale();
 
   useEffect(() => {
     if (prefs) {
       setPlayerName(prefs.externalPlayerName || "");
       setPlayerPath(prefs.externalPlayerPath || "");
+      setPlayerMode(prefs.externalPlayerMode || "local");
     }
   }, [prefs]);
 
@@ -60,6 +62,7 @@ export default function SettingsPage() {
           externalPlayerEnabled: !!playerName,
           externalPlayerName: playerName || null,
           externalPlayerPath: playerPath || null,
+          externalPlayerMode: playerMode,
         }),
       });
       if (res.ok) {
@@ -275,6 +278,25 @@ export default function SettingsPage() {
           </select>
         </div>
         {playerName && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-muted-foreground">
+              {t("playerMode")}
+            </label>
+            <select
+              value={playerMode}
+              style={{ colorScheme: "dark" }}
+              onChange={(e) => setPlayerMode(e.target.value)}
+              className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            >
+              <option value="local">{t("playerModeLocal")}</option>
+              <option value="stream">{t("playerModeStream")}</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              {playerMode === "local" ? t("playerModeLocalDesc") : t("playerModeStreamDesc")}
+            </p>
+          </div>
+        )}
+        {playerName && playerMode === "local" && (
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium text-muted-foreground">
               {t("playerPath")}

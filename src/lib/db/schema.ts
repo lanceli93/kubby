@@ -150,6 +150,7 @@ export const userPreferences = sqliteTable("user_preferences", {
   externalPlayerEnabled: integer("external_player_enabled", { mode: "boolean" }).notNull().default(false),
   externalPlayerName: text("external_player_name"),
   externalPlayerPath: text("external_player_path"),
+  externalPlayerMode: text("external_player_mode").default("local"), // "local" | "stream"
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────

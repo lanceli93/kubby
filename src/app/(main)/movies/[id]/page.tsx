@@ -184,6 +184,23 @@ export default function MovieDetailPage() {
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
   const externalEnabled = prefs?.externalPlayerEnabled && !!prefs?.externalPlayerName;
   const externalPlayerName = prefs?.externalPlayerName;
+  const externalPlayerMode = prefs?.externalPlayerMode || "local";
+
+  function buildStreamProtocolUrl(disc?: number): string {
+    const streamUrl = disc && disc > 1
+      ? `${window.location.origin}/api/movies/${movieId}/stream?disc=${disc}`
+      : `${window.location.origin}/api/movies/${movieId}/stream`;
+    switch (externalPlayerName) {
+      case "IINA":
+        return `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+      case "VLC":
+        return `vlc://${streamUrl}`;
+      case "PotPlayer":
+        return `potplayer://${streamUrl}`;
+      default:
+        return streamUrl;
+    }
+  }
 
   async function launchExternal(disc?: number) {
     if (!externalEnabled) {
@@ -191,6 +208,17 @@ export default function MovieDetailPage() {
       setTimeout(() => setExternalToast(null), 3000);
       return;
     }
+
+    if (externalPlayerMode === "stream") {
+      // Client-side: open URL protocol handler
+      const protocolUrl = buildStreamProtocolUrl(disc);
+      window.location.href = protocolUrl;
+      setExternalToast(t("launchedIn", { player: externalPlayerName || "" }));
+      setTimeout(() => setExternalToast(null), 3000);
+      return;
+    }
+
+    // Local mode: server-side launch
     try {
       const res = await fetch(`/api/movies/${movieId}/play-external`, {
         method: "POST",

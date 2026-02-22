@@ -30,6 +30,7 @@ export async function GET() {
         externalPlayerEnabled: false,
         externalPlayerName: null,
         externalPlayerPath: null,
+        externalPlayerMode: "local",
       });
     }
 
@@ -47,6 +48,7 @@ export async function GET() {
       externalPlayerEnabled: row.externalPlayerEnabled,
       externalPlayerName: row.externalPlayerName,
       externalPlayerPath: row.externalPlayerPath,
+      externalPlayerMode: row.externalPlayerMode ?? "local",
     });
   } catch (error) {
     console.error("Get personal metadata settings error:", error);
@@ -113,6 +115,9 @@ export async function PUT(request: NextRequest) {
       externalPlayerPath: body.externalPlayerPath !== undefined
         ? body.externalPlayerPath
         : existing?.externalPlayerPath ?? null,
+      externalPlayerMode: body.externalPlayerMode !== undefined
+        ? body.externalPlayerMode
+        : existing?.externalPlayerMode ?? "local",
     };
 
     if (existing) {

@@ -130,6 +130,11 @@
     "playerPath": "Player Path",
     "playerNone": "None (Web Player)",
     "playerCustom": "Custom",
+    "playerMode": "Playback Mode",
+    "playerModeLocal": "Local File",
+    "playerModeStream": "Stream URL",
+    "playerModeLocalDesc": "Launch player on the server machine with local file path. Only works when browsing from the same machine.",
+    "playerModeStreamDesc": "Open player via URL protocol (iina://, vlc://). Works from any device with the player installed.",
     "externalPlayerWarning": "External players cannot report playback progress back to Kubby. Your watch progress will only be tracked up to when you switch to the external player.",
     "savePlaybackSettings": "Save",
     "playbackSettingsSaved": "Playback settings saved"

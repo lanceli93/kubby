@@ -95,6 +95,7 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `external_player_enabled` integer NOT NULL DEFAULT 0",
   "ALTER TABLE `user_preferences` ADD `external_player_name` text",
   "ALTER TABLE `user_preferences` ADD `external_player_path` text",
+  "ALTER TABLE `user_preferences` ADD `external_player_mode` text DEFAULT 'local'",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

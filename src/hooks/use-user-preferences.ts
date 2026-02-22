@@ -10,6 +10,7 @@ export interface UserPreferences {
   externalPlayerEnabled: boolean;
   externalPlayerName: string | null;
   externalPlayerPath: string | null;
+  externalPlayerMode: string | null; // "local" | "stream"
 }
 
 export function useUserPreferences() {

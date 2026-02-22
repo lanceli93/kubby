@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execFile } from "child_process";
+import { spawn } from "child_process";
 import { existsSync } from "fs";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, userPreferences, userMovieData } from "@/lib/db/schema";
@@ -121,6 +121,11 @@ export async function POST(
   }
 }
 
+function spawnDetached(exe: string, args: string[]) {
+  const child = spawn(exe, args, { detached: true, stdio: "ignore" });
+  child.unref();
+}
+
 function launchMac(
   playerName: string,
   playerPath: string | null,
@@ -138,7 +143,7 @@ function launchMac(
         args.push(`--mpv-start=+${startSeconds}`);
       }
       args.push(filePath);
-      execFile(cli, args, { detached: true });
+      spawnDetached(cli, args);
       break;
     }
     case "VLC": {
@@ -149,13 +154,13 @@ function launchMac(
         args.push(`--start-time=${startSeconds}`);
       }
       args.push(filePath);
-      execFile(vlcBin, args, { detached: true });
+      spawnDetached(vlcBin, args);
       break;
     }
     default: {
       // Custom player — use `open` as fallback
       const appPath = playerPath || playerName;
-      execFile("open", ["-a", appPath, filePath], { detached: true });
+      spawnDetached("open", ["-a", appPath, filePath]);
       break;
     }
   }
@@ -175,7 +180,7 @@ function launchWindows(
         args.push(`--start-time=${startSeconds}`);
       }
       args.push(filePath);
-      execFile(exe, args, { detached: true });
+      spawnDetached(exe, args);
       break;
     }
     case "PotPlayer": {
@@ -186,13 +191,12 @@ function launchWindows(
         args.push(`/seek=${startSeconds * 1000}`);
       }
       args.push(filePath);
-      execFile(exe, args, { detached: true });
+      spawnDetached(exe, args);
       break;
     }
     default: {
-      // Custom player
       const exe = playerPath || playerName;
-      execFile(exe, [filePath], { detached: true });
+      spawnDetached(exe, [filePath]);
       break;
     }
   }
@@ -212,12 +216,12 @@ function launchLinux(
         args.push(`--start-time=${startSeconds}`);
       }
       args.push(filePath);
-      execFile(exe, args, { detached: true });
+      spawnDetached(exe, args);
       break;
     }
     default: {
       const exe = playerPath || playerName;
-      execFile(exe, [filePath], { detached: true });
+      spawnDetached(exe, [filePath]);
       break;
     }
   }
