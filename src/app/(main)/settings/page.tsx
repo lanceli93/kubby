@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { setLocale } from "@/i18n/locale";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, ChevronDown, Monitor } from "lucide-react";
 
-const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string; winPath?: string; label: string }> = {
-  IINA: { platform: "mac", macPath: "/Applications/IINA.app", label: "macOS" },
-  PotPlayer: { platform: "win", winPath: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe", label: "Windows" },
+const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string; winPath?: string; label: string; icon: string }> = {
+  IINA: { platform: "mac", macPath: "/Applications/IINA.app", label: "macOS", icon: "/icons/iina.png" },
+  PotPlayer: { platform: "win", winPath: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe", label: "Windows", icon: "/icons/potplayer.png" },
 };
 
 export default function SettingsPage() {
@@ -312,23 +312,47 @@ export default function SettingsPage() {
           <label className="text-[13px] font-medium text-muted-foreground">
             {t("playerName")}
           </label>
-          <select
-            value={playerName}
-            style={{ colorScheme: "dark" }}
-            onChange={(e) => handlePlayerChange(e.target.value)}
-            className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-          >
-            <option value="">{t("playerNone")}</option>
+          <div className="flex flex-col gap-1.5">
+            {/* None option */}
+            <button
+              type="button"
+              onClick={() => handlePlayerChange("")}
+              className={`flex h-11 w-80 items-center gap-3 rounded-lg border px-3.5 text-sm transition-colors cursor-pointer ${
+                !playerName
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : "border-white/[0.06] bg-[var(--input-bg)] text-muted-foreground hover:bg-white/5"
+              }`}
+            >
+              <Monitor className="h-5 w-5 flex-shrink-0 opacity-50" />
+              <span>None</span>
+              <span className="text-xs text-muted-foreground">(Web Player)</span>
+            </button>
+            {/* Player options */}
             {Object.entries(PLAYER_PRESETS).map(([name, preset]) => {
               const disabled = !isPlayerCompatible(name, playerMode);
-              const suffix = preset.label ? ` (${preset.label})` : "";
+              const selected = playerName === name;
               return (
-                <option key={name} value={name} disabled={disabled}>
-                  {name}{suffix}
-                </option>
+                <button
+                  key={name}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => handlePlayerChange(name)}
+                  className={`flex h-11 w-80 items-center gap-3 rounded-lg border px-3.5 text-sm transition-colors ${
+                    disabled
+                      ? "border-white/[0.03] bg-white/[0.02] text-muted-foreground/40 cursor-not-allowed opacity-40"
+                      : selected
+                        ? "border-primary bg-primary/10 text-foreground cursor-pointer"
+                        : "border-white/[0.06] bg-[var(--input-bg)] text-foreground hover:bg-white/5 cursor-pointer"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={preset.icon} alt={name} className="h-5 w-5 flex-shrink-0 rounded" />
+                  <span>{name}</span>
+                  <span className="text-xs text-muted-foreground">({preset.label})</span>
+                </button>
               );
             })}
-          </select>
+          </div>
         </div>
         {playerName && (
           <div className="flex flex-col gap-1.5">
