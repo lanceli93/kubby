@@ -66,7 +66,7 @@ export function PersonCard({
       >
         {photoPath ? (
           <Image
-            src={resolveImageSrc(photoPath)}
+            src={resolveImageSrc(photoPath, width * 2)}
             alt={name}
             fill
             className="object-cover"

@@ -6,9 +6,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
-    localPatterns: [
-      { pathname: "/api/images/**" },
-    ],
+    unoptimized: true, // We handle image optimization ourselves in /api/images/ via sharp
     remotePatterns: [
       {
         protocol: "http",

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { Readable } from "stream";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -12,9 +11,21 @@ const MIME_TYPES: Record<string, string> = {
   ".gif": "image/gif",
 };
 
-// GET /api/images/[...path] - Serve local image files via streaming
+let sharpModule: typeof import("sharp") | null = null;
+async function getSharp() {
+  if (sharpModule) return sharpModule;
+  try {
+    sharpModule = (await import("sharp")).default;
+    return sharpModule;
+  } catch {
+    return null;
+  }
+}
+
+// GET /api/images/[...path] - Serve local image files with optional resize
+// Query params: ?w=WIDTH (resize width) &q=QUALITY (1-100, default 80)
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path: pathSegments } = await params;
@@ -26,19 +37,37 @@ export async function GET(
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
+  const { searchParams } = request.nextUrl;
+  const requestedWidth = parseInt(searchParams.get("w") || "0", 10);
+  const quality = parseInt(searchParams.get("q") || "80", 10);
+
   try {
-    const stat = await fs.promises.stat(imagePath);
+    const data = await fs.promises.readFile(imagePath);
     const ext = path.extname(imagePath).toLowerCase();
+
+    // If width requested and sharp available, resize + convert to WebP
+    if (requestedWidth > 0) {
+      const sharp = await getSharp();
+      if (sharp) {
+        const optimized = await sharp(data)
+          .resize(requestedWidth, undefined, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: Math.min(Math.max(quality, 1), 100) })
+          .toBuffer();
+
+        return new Response(optimized, {
+          headers: {
+            "Content-Type": "image/webp",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      }
+    }
+
+    // Fallback: serve original file
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
-
-    // Stream the file instead of reading it entirely into memory
-    const nodeStream = fs.createReadStream(imagePath);
-    const webStream = Readable.toWeb(nodeStream) as ReadableStream;
-
-    return new Response(webStream, {
+    return new Response(data, {
       headers: {
         "Content-Type": contentType,
-        "Content-Length": String(stat.size),
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });

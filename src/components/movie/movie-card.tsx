@@ -105,7 +105,7 @@ export function MovieCard({
       <div className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)]" style={{ height: 270 }}>
         {posterPath ? (
           <Image
-            src={resolveImageSrc(posterPath)}
+            src={resolveImageSrc(posterPath, 360)}
             alt={title}
             fill
             className="object-cover"
