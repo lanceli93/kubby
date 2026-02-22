@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc, Monitor } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -173,6 +173,7 @@ export default function MovieDetailPage() {
   const t = useTranslations("movies");
   const tMeta = useTranslations("metadata");
   const tCommon = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
@@ -460,25 +461,28 @@ export default function MovieDetailPage() {
                   {(movie.discCount ?? 1) > 1 ? t("playAll") : t("play")}
                 </Link>
               )}
-              {prefs?.externalPlayerName && (
-                <button
-                  onClick={async () => {
-                    const newEnabled = !prefs?.externalPlayerEnabled;
-                    await fetch("/api/settings/personal-metadata", {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
-                    });
-                    queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
-                  }}
-                  className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
-                    externalEnabled ? "text-blue-400" : "text-white/70"
-                  }`}
-                  title={`External player: ${externalEnabled ? "on" : "off"}`}
-                >
-                  <Monitor className="h-5 w-5" />
-                </button>
-              )}
+              <button
+                onClick={async () => {
+                  if (!externalPlayerName) {
+                    setExternalToast("__configure__");
+                    setTimeout(() => setExternalToast(null), 5000);
+                    return;
+                  }
+                  const newEnabled = !prefs?.externalPlayerEnabled;
+                  await fetch("/api/settings/personal-metadata", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+                }}
+                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
+                  externalEnabled ? "text-blue-400" : "text-white/70"
+                }`}
+                title={`External player: ${externalEnabled ? "on" : "off"}`}
+              >
+                <Monitor className="h-5 w-5" />
+              </button>
               {movie.fanartPath && (
                 <button
                   onClick={() => setFanartMode(true)}
@@ -887,8 +891,27 @@ export default function MovieDetailPage() {
 
       {/* External player toast */}
       {externalToast && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-black/80 border border-white/10 backdrop-blur-xl px-5 py-3 text-sm text-white shadow-lg">
-          {externalToast}
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 rounded-lg border px-5 py-3 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
+          externalToast === "__configure__"
+            ? "border-red-500/20 bg-red-500/10 text-white"
+            : "border-green-500/20 bg-green-500/10 text-green-400"
+        }`}>
+          {externalToast === "__configure__" ? (
+            <>
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>
+                {t("configureExternalPlayer")}{" "}
+                <Link href="/settings" className="underline font-semibold text-blue-400 hover:text-blue-300">
+                  {tSettings("settings")} → {tSettings("playback")}
+                </Link>
+              </span>
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4 flex-shrink-0" />
+              {externalToast}
+            </>
+          )}
         </div>
       )}
     </div>
