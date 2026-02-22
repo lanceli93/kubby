@@ -16,6 +16,7 @@
  *   npx tsx scripts/package.ts --platform win-x64
  *   npx tsx scripts/package.ts --platform linux-x64
  *   npx tsx scripts/package.ts --skip-download    # Skip Node/ffprobe download (use cached)
+ *   npx tsx scripts/package.ts --skip-build       # Skip Next.js build (use existing .next/)
  */
 
 import fs from "fs";
@@ -23,11 +24,13 @@ import path from "path";
 import { execSync } from "child_process";
 import { createWriteStream } from "fs";
 import { pipeline } from "stream/promises";
+import { fileURLToPath } from "url";
 
 // ─── Configuration ───────────────────────────────────────────
 
-const NODE_VERSION = "22.12.0";
-const PROJECT_ROOT = path.resolve(import.meta.dirname, "..");
+const NODE_VERSION = "22.13.1";
+const __scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = path.resolve(__scriptDir, "..");
 const DIST_DIR = path.join(PROJECT_ROOT, "dist");
 const DOWNLOAD_CACHE = path.join(PROJECT_ROOT, ".download-cache");
 
@@ -182,13 +185,21 @@ function assembleServer(outputDir: string) {
 
   const serverDir = path.join(outputDir, "server");
   const standaloneRoot = findStandaloneRoot();
+  ensureDir(serverDir);
 
   console.log(`  Standalone root: ${standaloneRoot}`);
 
-  // Copy standalone output
-  copyDirRecursive(standaloneRoot, serverDir);
+  // Only copy essential files from standalone (skip project config, docs, etc.)
+  const essentials = ["server.js", "package.json", "node_modules", ".next"];
+  for (const name of essentials) {
+    const src = path.join(standaloneRoot, name);
+    if (fs.existsSync(src)) {
+      copyDirRecursive(src, path.join(serverDir, name));
+      console.log(`  Copied ${name}`);
+    }
+  }
 
-  // Copy static assets
+  // Copy static assets (not included in standalone by default)
   const staticSrc = path.join(PROJECT_ROOT, ".next", "static");
   const staticDest = path.join(serverDir, ".next", "static");
   if (fs.existsSync(staticSrc)) {
@@ -202,13 +213,6 @@ function assembleServer(outputDir: string) {
   if (fs.existsSync(publicSrc)) {
     copyDirRecursive(publicSrc, publicDest);
     console.log("  Copied public/");
-  }
-
-  // Copy drizzle migrations if they exist
-  const drizzleSrc = path.join(PROJECT_ROOT, "drizzle");
-  if (fs.existsSync(drizzleSrc)) {
-    copyDirRecursive(drizzleSrc, path.join(serverDir, "drizzle"));
-    console.log("  Copied drizzle/");
   }
 }
 
@@ -266,16 +270,28 @@ async function downloadFfprobe(platform: Platform, outputDir: string, skipDownlo
   const archiveName = path.basename(new URL(cfg.ffprobeUrl).pathname);
   const archivePath = path.join(DOWNLOAD_CACHE, archiveName);
 
+  const binDir = path.join(outputDir, "bin");
+  ensureDir(binDir);
+  const ffprobeDest = path.join(binDir, cfg.ffprobeBin);
+
   if (!skipDownload) {
     await downloadFile(cfg.ffprobeUrl, archivePath);
   } else if (!fs.existsSync(archivePath)) {
-    throw new Error(`--skip-download specified but cache missing: ${archivePath}`);
+    // Fallback: try to copy system ffprobe
+    try {
+      const systemFfprobe = execSync("which ffprobe", { encoding: "utf-8" }).trim();
+      if (systemFfprobe && fs.existsSync(systemFfprobe)) {
+        console.log(`  Copying system ffprobe: ${systemFfprobe}`);
+        fs.cpSync(systemFfprobe, ffprobeDest);
+        fs.chmodSync(ffprobeDest, 0o755);
+        console.log("  ffprobe ready (from system)");
+        return;
+      }
+    } catch { /* no system ffprobe */ }
+    console.warn("  WARNING: ffprobe not found. Place it manually at:");
+    console.warn(`    ${ffprobeDest}`);
+    return;
   }
-
-  const binDir = path.join(outputDir, "bin");
-  ensureDir(binDir);
-
-  const ffprobeDest = path.join(binDir, cfg.ffprobeBin);
 
   // The ffprobe-static releases are .gz files (gzipped single binary)
   if (archiveName.endsWith(".gz")) {
@@ -302,7 +318,7 @@ function buildLauncher(platform: Platform, outputDir: string) {
   const binDest = path.join(outputDir, cfg.launcherBin);
 
   run(
-    `GOOS=${cfg.goOs} GOARCH=${cfg.goArch} CGO_ENABLED=${cgoEnabled} GOPROXY=https://goproxy.cn,direct go build ${ldflags} -o "${binDest}" .`,
+    `GOOS=${cfg.goOs} GOARCH=${cfg.goArch} CGO_ENABLED=${cgoEnabled} GOPROXY=direct go build ${ldflags} -o "${binDest}" .`,
     { cwd: launcherDir }
   );
 
@@ -354,8 +370,8 @@ function finalReport(outputDir: string) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const platformArg = args.find((a) => !a.startsWith("--"));
   const skipDownload = args.includes("--skip-download");
+  const skipBuild = args.includes("--skip-build");
 
   let platform: Platform;
   const platformFlag = args.indexOf("--platform");
@@ -386,7 +402,11 @@ async function main() {
   ensureDir(DOWNLOAD_CACHE);
 
   // Run build steps
-  buildNextjs();
+  if (!skipBuild) {
+    buildNextjs();
+  } else {
+    console.log("\n[1/6] Skipping Next.js build (--skip-build)");
+  }
   assembleServer(outputDir);
   await downloadNode(platform, outputDir, skipDownload);
   await downloadFfprobe(platform, outputDir, skipDownload);
