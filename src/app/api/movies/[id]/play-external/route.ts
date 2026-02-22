@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "child_process";
+import { execFile } from "child_process";
 import { existsSync } from "fs";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, userPreferences, userMovieData } from "@/lib/db/schema";
@@ -89,8 +89,6 @@ export async function POST(
     const playerPath = prefs.externalPlayerPath;
     const platform = process.platform;
 
-    console.log("[play-external] config:", { playerName, playerPath, platform, filePath, startSeconds });
-
     // Build and execute launch command
     try {
       if (platform === "darwin") {
@@ -123,13 +121,10 @@ export async function POST(
   }
 }
 
-function spawnDetached(exe: string, args: string[]) {
-  console.log("[play-external] spawn:", exe, args);
-  const child = spawn(exe, args, { detached: true, stdio: "ignore" });
-  child.on("error", (err) => {
-    console.error("[play-external] spawn error:", err);
+function launchPlayer(exe: string, args: string[]) {
+  execFile(exe, args, (error) => {
+    if (error) console.error("[play-external] launch error:", error.message);
   });
-  child.unref();
 }
 
 function launchMac(
@@ -149,7 +144,7 @@ function launchMac(
         args.push(`--mpv-start=+${startSeconds}`);
       }
       args.push(filePath);
-      spawnDetached(cli, args);
+      launchPlayer(cli, args);
       break;
     }
     case "VLC": {
@@ -160,13 +155,13 @@ function launchMac(
         args.push(`--start-time=${startSeconds}`);
       }
       args.push(filePath);
-      spawnDetached(vlcBin, args);
+      launchPlayer(vlcBin, args);
       break;
     }
     default: {
       // Custom player — use `open` as fallback
       const appPath = playerPath || playerName;
-      spawnDetached("open", ["-a", appPath, filePath]);
+      launchPlayer("open", ["-a", appPath, filePath]);
       break;
     }
   }
@@ -186,7 +181,7 @@ function launchWindows(
         args.push(`--start-time=${startSeconds}`);
       }
       args.push(filePath);
-      spawnDetached(exe, args);
+      launchPlayer(exe, args);
       break;
     }
     case "PotPlayer": {
@@ -197,12 +192,12 @@ function launchWindows(
         args.push(`/seek=${startSeconds * 1000}`);
       }
       args.push(filePath);
-      spawnDetached(exe, args);
+      launchPlayer(exe, args);
       break;
     }
     default: {
       const exe = playerPath || playerName;
-      spawnDetached(exe, [filePath]);
+      launchPlayer(exe, [filePath]);
       break;
     }
   }
@@ -222,12 +217,12 @@ function launchLinux(
         args.push(`--start-time=${startSeconds}`);
       }
       args.push(filePath);
-      spawnDetached(exe, args);
+      launchPlayer(exe, args);
       break;
     }
     default: {
       const exe = playerPath || playerName;
-      spawnDetached(exe, [filePath]);
+      launchPlayer(exe, [filePath]);
       break;
     }
   }
