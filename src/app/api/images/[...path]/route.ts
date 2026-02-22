@@ -54,7 +54,7 @@ export async function GET(
           .webp({ quality: Math.min(Math.max(quality, 1), 100) })
           .toBuffer();
 
-        return new Response(optimized, {
+        return new Response(new Uint8Array(optimized), {
           headers: {
             "Content-Type": "image/webp",
             "Cache-Control": "public, max-age=31536000, immutable",
@@ -65,7 +65,7 @@ export async function GET(
 
     // Fallback: serve original file
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
-    return new Response(data, {
+    return new Response(new Uint8Array(data), {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=31536000, immutable",
