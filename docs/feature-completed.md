@@ -452,3 +452,38 @@
 
 ### i18n (EN + ZH)
 - New `movies` keys: discs (分碟), disc (碟), playAll (播放全部)
+
+## 2026-02-22: Packaging & Distribution System
+
+### Next.js Standalone Adaptation
+- Enabled `output: "standalone"` in `next.config.ts` for self-contained server bundle
+- Added `sharp` to `serverExternalPackages` for proper native module bundling
+- Created `src/lib/paths.ts` — centralized path management with `KUBBY_DATA_DIR` env var support
+- Replaced hardcoded `process.cwd()/data` paths in 4 files: `db/index.ts`, `scanner/index.ts`, `person-utils.ts`, `scripts/enrich-nfo.ts`
+- Added `FFPROBE_PATH` env var support in `scanner/probe.ts`
+- Verified standalone build: `node .next/standalone/.../server.js` starts in ~95ms, all routes functional
+
+### Go Launcher (`launcher/`)
+- System tray application using `getlantern/systray`
+- Manages Node.js child process lifecycle (start/stop/health check)
+- OS-standard data directories: `~/Library/Application Support/Kubby` (macOS), `%LOCALAPPDATA%\Kubby` (Windows), `~/.local/share/kubby` (Linux)
+- Auto-generates `AUTH_SECRET` on first run, persisted in data directory
+- Config file (`config.json`) for port settings
+- Tray menu: Open Kubby, Port display, Quit
+- Graceful shutdown: SIGTERM → 5s wait → SIGKILL
+- Cross-platform compilation via Makefile (darwin-arm64, darwin-x64, win-x64, linux-x64)
+- Binary size: ~9MB
+
+### Packaging Script (`scripts/package.ts`)
+- Assembles distributable package: Go launcher + Node.js runtime + ffprobe + Next.js standalone
+- Downloads Node.js 22 LTS binary from nodejs.org
+- Downloads ffprobe static build (falls back to system ffprobe)
+- Selective copy of standalone output (only server.js, package.json, node_modules, .next, public)
+- Supports `--platform`, `--skip-download` flags
+- Output to `dist/kubby-{platform}/` (~185MB total for darwin-arm64)
+
+### GitHub Actions CI (`.github/workflows/release.yml`)
+- Triggered on `v*` tag push
+- Matrix builds: macOS arm64/x64, Windows x64, Linux x64
+- Creates tar.gz (Unix) / zip (Windows) archives
+- Publishes as draft GitHub Release with auto-generated notes

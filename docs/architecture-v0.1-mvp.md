@@ -124,6 +124,7 @@ kubby/
 │   │   ├── scraper/
 │   │   │   ├── index.ts                            # TMDB 刮削器 (搜索+详情+下载图片+生成NFO)
 │   │   │   └── folder-parser.ts                    # 电影文件夹名解析 ("Inception (2010)" → {title, year})
+│   │   ├── paths.ts                                 # 集中路径管理 (KUBBY_DATA_DIR 环境变量支持)
 │   │   ├── tmdb.ts                                 # TMDb API 客户端 (search/details/credits/图片下载/API key验证)
 │   │   └── utils.ts                                # shadcn/ui cn() 工具函数
 │   ├── hooks/
@@ -139,9 +140,16 @@ kubby/
 ├── drizzle.config.ts                               # Drizzle Kit 配置
 ├── web-design.pen                                  # Pencil MCP 设计稿 (16个页面, 含 Setup Wizard 4页)
 ├── scripts/
-│   └── enrich-nfo.ts                               # 独立脚本: TMDb 演员数据 → 下载头像 → 回写 NFO
-├── .env.local                                      # AUTH_SECRET + AUTH_TRUST_HOST (+ 可选 TMDB_API_KEY)
-└── next.config.ts                                  # serverExternalPackages, images, next-intl 插件包裹
+│   ├── enrich-nfo.ts                               # 独立脚本: TMDb 演员数据 → 下载头像 → 回写 NFO
+│   └── package.ts                                  # 打包脚本: standalone + Node.js + ffprobe + Go launcher
+├── launcher/                                        # Go 启动器 (系统托盘 + 子进程管理)
+│   ├── main.go                                      # 入口: 启动 server → 浏览器 → 托盘
+│   ├── server.go                                    # Node.js 子进程管理
+│   ├── tray.go                                      # 系统托盘
+│   └── paths.go, config.go, secret.go, browser.go
+├── .env.local                                       # AUTH_SECRET + AUTH_TRUST_HOST (+ 可选 TMDB_API_KEY)
+├── .github/workflows/release.yml                    # CI: 跨平台构建 + GitHub Release
+└── next.config.ts                                   # standalone + serverExternalPackages + next-intl
 ```
 
 ---
@@ -680,9 +688,10 @@ data/metadata/people/
 // 使用 createNextIntlPlugin 包裹, 指向 src/i18n/request.ts
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 export default withNextIntl({
+  output: "standalone",                          // 产出可独立运行的 server bundle
   reactCompiler: true,
-  images: { unoptimized: true },         // 本地图片走 API 不需要 Next.js 优化
-  serverExternalPackages: ["better-sqlite3"], // 避免 Webpack 打包原生模块
+  images: { unoptimized: true },                 // 本地图片走 API 不需要 Next.js 优化
+  serverExternalPackages: ["better-sqlite3", "sharp"], // 避免 Webpack 打包原生模块
 });
 ```
 
@@ -773,6 +782,32 @@ Step 4: POST /api/setup/complete → 显示完成 → 跳转 /login
 - Dashboard 活动日志为占位实现
 - i18n 覆盖 auth/setup/settings/home/movies/nav 页面, 包括 Tab 导航标签 + 卡片 hover 操作菜单文案
 
+### 打包分发
+
+Kubby 支持构建为可分发的桌面应用:
+
+```
+dist/kubby-{platform}/
+├── kubby(.exe)              # Go 启动器 (~9MB)
+├── node/                    # Node.js 22 LTS 运行时
+├── bin/                     # ffprobe 静态编译
+└── server/                  # Next.js standalone 输出
+    ├── server.js
+    ├── package.json
+    ├── node_modules/        # 最小化依赖 (含 better-sqlite3, sharp)
+    ├── .next/               # 编译产物
+    └── public/              # 静态资源
+```
+
+**启动流程**: Go 启动器 → 创建 OS 标准数据目录 → 自动生成 AUTH_SECRET → 启动 Node.js 子进程 → 等待就绪 → 打开浏览器 → 系统托盘
+
+**关键配置**:
+- `KUBBY_DATA_DIR` — 数据目录路径 (默认 `process.cwd()/data`)
+- `FFPROBE_PATH` — ffprobe 二进制路径 (默认 PATH 中的 `ffprobe`)
+- 路径管理集中在 `src/lib/paths.ts`
+
+**构建命令**: `npx tsx scripts/package.ts [--platform darwin-arm64|win-x64|linux-x64]`
+
 ### 预留扩展点
 - `media_libraries.type` enum 已包含 tvshow/music/book/photo
 - `movies.tmdb_id` / `imdb_id` 预留远程元数据
@@ -787,9 +822,17 @@ Step 4: POST /api/setup/complete → 显示完成 → 跳转 /login
 
 ```bash
 npm run dev              # 启动开发服务器 (http://localhost:3000)
-npm run build            # 生产构建
+npm run build            # 生产构建 (standalone 输出到 .next/standalone/)
 npx drizzle-kit generate # 生成迁移文件
 npx drizzle-kit push     # 推送 schema 到数据库
 npx drizzle-kit studio   # 打开 Drizzle Studio (数据库 GUI)
 TMDB_API_KEY=xxx npx tsx scripts/enrich-nfo.ts <媒体库路径>  # 从 TMDb 补充演员数据到 NFO
+
+# 打包分发
+npx tsx scripts/package.ts                       # 打包当前平台
+npx tsx scripts/package.ts --platform win-x64    # 交叉打包 Windows
+npx tsx scripts/package.ts --skip-download       # 跳过下载 (使用缓存或系统 ffprobe)
+
+# Go 启动器开发
+cd launcher && go build -o kubby . && ./kubby    # 构建并运行启动器
 ```
