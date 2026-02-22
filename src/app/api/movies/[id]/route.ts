@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
-import fs from "fs";
 import { db } from "@/lib/db";
 import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams, movieDiscs } from "@/lib/db/schema";
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
+
+/** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
+const stampPath = (p: string | null, mtime?: number | null) => {
+  if (!p) return null;
+  return mtime ? `${p}|${mtime}` : p;
+};
 
 // DELETE /api/movies/[id]
 export async function DELETE(
@@ -231,6 +236,8 @@ export async function GET(
         name: people.name,
         role: moviePeople.role,
         photoPath: people.photoPath,
+        photoMtime: people.photoMtime,
+        photoBlur: people.photoBlur,
         sortOrder: moviePeople.sortOrder,
         personalRating: userPersonData.personalRating,
         birthDate: people.birthDate,
@@ -312,20 +319,15 @@ export async function GET(
       ? nodePath.join(movie.folderPath, movie.fanartPath)
       : null;
 
-    // Append file mtime to image paths for cache-busting (parsed by resolveImageSrc)
-    const stampPath = (p: string | null) => {
-      if (!p) return null;
-      try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
-    };
-
     return NextResponse.json({
       ...movie,
-      posterPath: stampPath(posterPath),
-      fanartPath: stampPath(fanartPath),
+      posterPath: stampPath(posterPath, movie.posterMtime),
+      posterBlur: movie.posterBlur,
+      fanartPath: stampPath(fanartPath, movie.fanartMtime),
       genres: movie.genres ? JSON.parse(movie.genres) : [],
       studios: movie.studios ? JSON.parse(movie.studios) : [],
       tags: movie.tags ? JSON.parse(movie.tags) : [],
-      cast: cast.map((c) => ({ ...c, photoPath: stampPath(c.photoPath) })),
+      cast: cast.map((c) => ({ ...c, photoPath: stampPath(c.photoPath, c.photoMtime), photoBlur: c.photoBlur })),
       directors,
       allPeople,
       discs: discs.map((d) => ({
@@ -333,7 +335,8 @@ export async function GET(
         posterPath: stampPath(
           d.posterPath
             ? nodePath.join(movie.folderPath, d.posterPath)
-            : posterPath // fall back to movie poster
+            : posterPath, // fall back to movie poster
+          movie.posterMtime
         ),
       })),
       userData: userData

@@ -12,7 +12,6 @@ const nextConfig: NextConfig = {
         hostname: "localhost",
       },
     ],
-    unoptimized: true,
   },
   serverExternalPackages: ["better-sqlite3"],
 };

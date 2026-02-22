@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
-import fs from "fs";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
 import { eq, desc, asc, like, sql, and, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
-const stampPath = (p: string | null) => {
+/** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
+const stampPath = (p: string | null, mtime?: number | null) => {
   if (!p) return null;
-  try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
+  return mtime ? `${p}|${mtime}` : p;
 };
 
 // GET /api/movies
@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
           title: movies.title,
           year: movies.year,
           posterPath: movies.posterPath,
+          posterMtime: movies.posterMtime,
+          posterBlur: movies.posterBlur,
           folderPath: movies.folderPath,
           communityRating: movies.communityRating,
           personalRating: userMovieData.personalRating,
@@ -115,7 +117,8 @@ export async function GET(request: NextRequest) {
 
           return {
             ...r,
-            posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
+            posterPath: stampPath(r.posterPath ? path.join(r.folderPath, r.posterPath) : null, r.posterMtime),
+            posterBlur: r.posterBlur,
             progress,
             discLabel,
             currentDisc: isMultiDisc ? curDisc : undefined,
@@ -139,6 +142,8 @@ export async function GET(request: NextRequest) {
           title: movies.title,
           year: movies.year,
           posterPath: movies.posterPath,
+          posterMtime: movies.posterMtime,
+          posterBlur: movies.posterBlur,
           folderPath: movies.folderPath,
           communityRating: movies.communityRating,
           personalRating: userMovieData.personalRating,
@@ -162,7 +167,8 @@ export async function GET(request: NextRequest) {
 
       const favResults = results.map((r) => ({
         ...r,
-        posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
+        posterPath: stampPath(r.posterPath ? path.join(r.folderPath, r.posterPath) : null, r.posterMtime),
+        posterBlur: r.posterBlur,
         isFavorite: true,
       }));
 
@@ -293,7 +299,10 @@ export async function GET(request: NextRequest) {
         filePath: movies.filePath,
         folderPath: movies.folderPath,
         posterPath: movies.posterPath,
+        posterMtime: movies.posterMtime,
+        posterBlur: movies.posterBlur,
         fanartPath: movies.fanartPath,
+        fanartMtime: movies.fanartMtime,
         communityRating: movies.communityRating,
         officialRating: movies.officialRating,
         runtimeMinutes: movies.runtimeMinutes,
@@ -345,8 +354,9 @@ export async function GET(request: NextRequest) {
     // Resolve relative paths to absolute
     const movieResults = results.map((r) => ({
       ...r,
-      posterPath: stampPath(r.posterPath ? path.join(r.folderPath, r.posterPath) : null),
-      fanartPath: stampPath(r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null),
+      posterPath: stampPath(r.posterPath ? path.join(r.folderPath, r.posterPath) : null, r.posterMtime),
+      posterBlur: r.posterBlur,
+      fanartPath: stampPath(r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null, r.fanartMtime),
       ...(includeGenres && r.genres ? { genres: JSON.parse(r.genres) } : {}),
       ...(includeGenres && r.tags ? { tags: JSON.parse(r.tags) } : {}),
       isFavorite: r.isFavorite ?? false,
@@ -362,6 +372,7 @@ export async function GET(request: NextRequest) {
           name: people.name,
           type: people.type,
           photoPath: people.photoPath,
+          photoMtime: people.photoMtime,
           personalRating: userPersonData.personalRating,
         })
         .from(people)
@@ -378,7 +389,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         movies: movieResults,
-        people: peopleResults.map((p) => ({ ...p, photoPath: stampPath(p.photoPath) })),
+        people: peopleResults.map((p) => ({ ...p, photoPath: stampPath(p.photoPath, p.photoMtime) })),
       });
     }
 

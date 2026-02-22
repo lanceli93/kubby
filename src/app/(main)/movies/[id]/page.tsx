@@ -75,7 +75,7 @@ interface MovieDetail {
   mediaLibraryId?: string;
   discCount?: number;
   discs?: DiscInfo[];
-  cast: { id: string; name: string; role?: string; photoPath?: string | null; personalRating?: number | null; birthDate?: string | null; birthYear?: number | null }[];
+  cast: { id: string; name: string; role?: string; photoPath?: string | null; photoBlur?: string | null; personalRating?: number | null; birthDate?: string | null; birthYear?: number | null }[];
   directors: { id: string; name: string }[];
   userData?: {
     isPlayed: boolean;
@@ -276,8 +276,6 @@ export default function MovieDetailPage() {
           />
         )}
 
-        {/* Subtle bottom edge gradient — only visible in fanart mode */}
-        <div className={`absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background via-background/40 to-transparent z-10 transition-opacity duration-300 ${fanartMode ? "opacity-100" : "opacity-0 pointer-events-none"}`} />
 
         {/* Bottom gradient — fade to page background */}
         <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
@@ -563,56 +561,70 @@ export default function MovieDetailPage() {
           <h2 className="text-xl font-semibold text-foreground mb-4">
             {t("discs")} ({movie.discs.length})
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-2">
             {movie.discs.map((disc) => (
               <Link
                 key={disc.id}
                 href={`/movies/${movie.id}/play?disc=${disc.discNumber}`}
-                className="group flex flex-col items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10 flex-shrink-0"
-                style={{ width: 170 }}
+                className="group flex flex-shrink-0 gap-4 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
               >
-                {/* Disc poster */}
-                <div className="relative h-[225px] w-[150px] overflow-hidden rounded-md">
+                {/* Disc poster with play overlay */}
+                <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
                   {disc.posterPath ? (
                     <Image
                       src={resolveImageSrc(disc.posterPath)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
                       className="object-cover"
-                      sizes="150px"
+                      sizes="107px"
+                    />
+                  ) : movie.posterPath ? (
+                    <Image
+                      src={resolveImageSrc(movie.posterPath)}
+                      alt={disc.label || `Disc ${disc.discNumber}`}
+                      fill
+                      className="object-cover"
+                      sizes="107px"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
-                      <Disc className="h-8 w-8" />
+                      <Disc className="h-6 w-6" />
                     </div>
                   )}
-                  {/* Play overlay on hover */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Play className="h-8 w-8 text-white fill-white" />
+                  {/* Centered play button on hover — matches MovieCard style */}
+                  <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
+                    </div>
                   </div>
                 </div>
-                {/* Label */}
-                <span className="text-sm font-semibold text-foreground">
-                  {disc.label || `${t("disc")} ${disc.discNumber}`}
-                </span>
-                {/* Runtime */}
-                {disc.runtimeSeconds && disc.runtimeSeconds > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {formatRuntime(disc.runtimeSeconds)}
+                {/* Info on the right */}
+                <div className="flex flex-col justify-center gap-2 pr-3">
+                  <span className="text-base font-semibold text-foreground">
+                    {disc.label || `${t("disc")} ${disc.discNumber}`}
                   </span>
-                )}
-                {/* Badges */}
-                <div className="flex flex-wrap items-center justify-center gap-1">
-                  {getResolutionLabel(disc.videoWidth) && (
-                    <span className="rounded border border-white/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white/70">
-                      {getResolutionLabel(disc.videoWidth)}
+                  {disc.runtimeSeconds && disc.runtimeSeconds > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {formatRuntime(disc.runtimeSeconds)}
                     </span>
                   )}
-                  {disc.videoCodec && (
-                    <span className="rounded border border-white/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white/70">
-                      {disc.videoCodec}
-                    </span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {getResolutionLabel(disc.videoWidth) && (
+                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
+                        {getResolutionLabel(disc.videoWidth)}
+                      </span>
+                    )}
+                    {disc.videoCodec && (
+                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
+                        {disc.videoCodec}
+                      </span>
+                    )}
+                    {disc.audioCodec && (
+                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
+                        {disc.audioCodec}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -631,6 +643,7 @@ export default function MovieDetailPage() {
                 name={person.name}
                 role={person.role}
                 photoPath={person.photoPath}
+                photoBlur={person.photoBlur}
                 personalRating={person.personalRating}
                 age={computeAgeAtRelease(person.birthYear, person.birthDate, movie.premiereDate, movie.year)}
                 size="sm"

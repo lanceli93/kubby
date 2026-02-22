@@ -7,6 +7,18 @@ import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
 
+/** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
+const stampPath = (p: string | null, mtime?: number | null) => {
+  if (!p) return null;
+  return mtime ? `${p}|${mtime}` : p;
+};
+
+/** Fallback: read mtime from filesystem for paths without stored mtime (e.g. person fanart). */
+const stampPathFs = (p: string | null) => {
+  if (!p) return null;
+  try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
+};
+
 // PUT /api/people/[id]
 export async function PUT(
   request: NextRequest,
@@ -67,7 +79,10 @@ export async function GET(
         title: movies.title,
         year: movies.year,
         posterPath: movies.posterPath,
+        posterMtime: movies.posterMtime,
+        posterBlur: movies.posterBlur,
         fanartPath: movies.fanartPath,
+        fanartMtime: movies.fanartMtime,
         folderPath: movies.folderPath,
         communityRating: movies.communityRating,
         videoWidth: movies.videoWidth,
@@ -120,22 +135,18 @@ export async function GET(
     // Parse tags from JSON string
     const parsedTags = person.tags ? (() => { try { return JSON.parse(person.tags); } catch { return []; } })() : [];
 
-    // Append file mtime to image paths for cache-busting (parsed by resolveImageSrc)
-    const stampPath = (p: string | null) => {
-      if (!p) return null;
-      try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
-    };
-
     return NextResponse.json({
       ...person,
-      photoPath: stampPath(person.photoPath),
+      photoPath: stampPath(person.photoPath, person.photoMtime),
+      photoBlur: person.photoBlur,
       tags: parsedTags,
-      fanartPath: stampPath(fanartPath),
+      fanartPath: stampPathFs(fanartPath), // person fanart has no DB mtime — use fs fallback (1 call)
       fanartSource,
       movies: resolvedFilms.map((m) => ({
         ...m,
-        posterPath: stampPath(m.posterPath),
-        fanartPath: stampPath(m.fanartPath),
+        posterPath: stampPath(m.posterPath, m.posterMtime),
+        posterBlur: m.posterBlur,
+        fanartPath: stampPath(m.fanartPath, m.fanartMtime),
       })),
       userData: userData
         ? {

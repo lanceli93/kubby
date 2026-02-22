@@ -13,6 +13,7 @@ interface Movie {
   title: string;
   year?: number;
   posterPath?: string | null;
+  posterBlur?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
   videoWidth?: number | null;
@@ -67,6 +68,7 @@ function MovieRow({
             title={displayTitle}
             year={movie.year}
             posterPath={movie.posterPath}
+            posterBlur={movie.posterBlur}
             rating={movie.communityRating}
             personalRating={movie.personalRating}
             videoWidth={movie.videoWidth}
@@ -320,6 +322,7 @@ export default function HomePage() {
                     title={movie.title}
                     year={movie.year}
                     posterPath={movie.posterPath}
+                    posterBlur={movie.posterBlur}
                     rating={movie.communityRating}
                     personalRating={movie.personalRating}
                     videoWidth={movie.videoWidth}

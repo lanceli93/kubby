@@ -64,6 +64,9 @@ export const movies = sqliteTable("movies", {
   fileSize: integer("file_size"),
   formatName: text("format_name"),
   discCount: integer("disc_count").default(1),
+  posterMtime: real("poster_mtime"),
+  fanartMtime: real("fanart_mtime"),
+  posterBlur: text("poster_blur"), // tiny base64 data URL for blur placeholder
   tags: text("tags"), // JSON array string
   mediaLibraryId: text("media_library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
   dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
@@ -79,6 +82,8 @@ export const people = sqliteTable("people", {
   name: text("name").notNull(),
   type: text("type", { enum: ["actor", "director", "writer", "producer"] }).notNull(),
   photoPath: text("photo_path"),
+  photoMtime: real("photo_mtime"),
+  photoBlur: text("photo_blur"), // tiny base64 data URL for blur placeholder
   tmdbId: text("tmdb_id"),
   overview: text("overview"),
   birthDate: text("birth_date"),

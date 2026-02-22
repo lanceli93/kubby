@@ -32,6 +32,7 @@ interface Movie {
   title: string;
   year?: number;
   posterPath?: string | null;
+  posterBlur?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
   videoWidth?: number | null;
@@ -643,6 +644,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             title={movie.title}
             year={movie.year}
             posterPath={movie.posterPath}
+            posterBlur={movie.posterBlur}
             rating={movie.communityRating}
             personalRating={movie.personalRating}
             videoWidth={movie.videoWidth}
@@ -828,6 +830,7 @@ function GenreScrollRow({ genre, libraryId }: { genre: string; libraryId: string
             title={movie.title}
             year={movie.year}
             posterPath={movie.posterPath}
+            posterBlur={movie.posterBlur}
             rating={movie.communityRating}
             personalRating={movie.personalRating}
             videoWidth={movie.videoWidth}
@@ -853,6 +856,7 @@ interface PersonItem {
   name: string;
   type: string;
   photoPath?: string | null;
+  photoBlur?: string | null;
   personalRating?: number | null;
   movieCount: number;
   tags?: string[];
@@ -1335,6 +1339,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
             name={person.name}
             role={`${person.movieCount} ${person.movieCount === 1 ? "movie" : "movies"}`}
             photoPath={person.photoPath}
+            photoBlur={person.photoBlur}
             personalRating={person.personalRating}
             size="movie"
           />
@@ -1747,6 +1752,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
             title={movie.title}
             year={movie.year}
             posterPath={movie.posterPath}
+            posterBlur={movie.posterBlur}
             rating={movie.communityRating}
             personalRating={movie.personalRating}
             videoWidth={movie.videoWidth}

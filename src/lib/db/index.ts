@@ -80,6 +80,12 @@ const pending = [
   )`,
   "CREATE INDEX IF NOT EXISTS `idx_md_movie` ON `movie_discs` (`movie_id`)",
   "CREATE INDEX IF NOT EXISTS `idx_md_movie_disc` ON `movie_discs` (`movie_id`, `disc_number`)",
+  // 0012: image mtime + blur placeholder columns for cache-busting without fs.statSync
+  "ALTER TABLE `movies` ADD `poster_mtime` real",
+  "ALTER TABLE `movies` ADD `fanart_mtime` real",
+  "ALTER TABLE `movies` ADD `poster_blur` text",
+  "ALTER TABLE `people` ADD `photo_mtime` real",
+  "ALTER TABLE `people` ADD `photo_blur` text",
   // 0011: fix literal datetime defaults (Drizzle default() stored string instead of evaluating SQL)
   "UPDATE `users` SET `created_at` = datetime('now') WHERE `created_at` = '(datetime(''now''))'",
   "UPDATE `media_libraries` SET `created_at` = datetime('now') WHERE `created_at` = '(datetime(''now''))'",

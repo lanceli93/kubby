@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { movies } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { generateBlurDataURL } from "@/lib/blur-utils";
 
 // POST /api/movies/[id]/images?type=poster|fanart — upload image
 export async function POST(
@@ -39,11 +40,15 @@ export async function POST(
     const destPath = path.join(movie.folderPath, filename);
     fs.writeFileSync(destPath, buffer);
 
-    // Update DB
+    // Read new mtime + generate blur placeholder
+    const mtime = fs.statSync(destPath).mtimeMs;
+    const blur = type === "poster" ? await generateBlurDataURL(destPath) : null;
+
+    // Update DB with path, mtime, and blur
     if (type === "poster") {
-      db.update(movies).set({ posterPath: filename }).where(eq(movies.id, id)).run();
+      db.update(movies).set({ posterPath: filename, posterMtime: mtime, posterBlur: blur }).where(eq(movies.id, id)).run();
     } else {
-      db.update(movies).set({ fanartPath: filename }).where(eq(movies.id, id)).run();
+      db.update(movies).set({ fanartPath: filename, fanartMtime: mtime }).where(eq(movies.id, id)).run();
     }
 
     return NextResponse.json({ path: destPath });
@@ -84,11 +89,11 @@ export async function DELETE(
       }
     }
 
-    // Update DB
+    // Update DB — clear path, mtime, and blur
     if (type === "poster") {
-      db.update(movies).set({ posterPath: null }).where(eq(movies.id, id)).run();
+      db.update(movies).set({ posterPath: null, posterMtime: null, posterBlur: null }).where(eq(movies.id, id)).run();
     } else {
-      db.update(movies).set({ fanartPath: null }).where(eq(movies.id, id)).run();
+      db.update(movies).set({ fanartPath: null, fanartMtime: null }).where(eq(movies.id, id)).run();
     }
 
     return NextResponse.json({ success: true });

@@ -10,6 +10,7 @@ import { scrapeMovie } from "@/lib/scraper";
 import { writeActorsToNfo } from "./nfo-writer";
 import { fetchMovieCredits, downloadTmdbImage, getPersonPhotoPath, TMDB_PROFILE_SIZE } from "@/lib/tmdb";
 import { parseFolderPaths } from "@/lib/folder-paths";
+import { generateBlurDataURL, getFileMtime } from "@/lib/blur-utils";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
@@ -95,7 +96,9 @@ function findDiscPoster(movieDir: string, discInfo: DiscInfo): string | null {
 function getOrCreatePerson(
   name: string,
   type: "actor" | "director" | "writer" | "producer",
-  photoPath?: string
+  photoPath?: string,
+  photoMtime?: number | null,
+  photoBlur?: string | null,
 ): string {
   // Case-insensitive lookup
   const existing = db
@@ -113,7 +116,7 @@ function getOrCreatePerson(
     // Update photoPath if we now have one and the existing record doesn't
     if (photoPath && !existing.photoPath) {
       db.update(people)
-        .set({ photoPath })
+        .set({ photoPath, photoMtime: photoMtime ?? null, photoBlur: photoBlur ?? null })
         .where(eq(people.id, existing.id))
         .run();
     }
@@ -122,7 +125,7 @@ function getOrCreatePerson(
 
   const id = uuidv4();
   db.insert(people)
-    .values({ id, name, type, photoPath: photoPath || null })
+    .values({ id, name, type, photoPath: photoPath || null, photoMtime: photoMtime ?? null, photoBlur: photoBlur ?? null })
     .run();
   return id;
 }
@@ -297,6 +300,11 @@ export async function scanLibrary(
     const posterRelative = posterFile ? path.relative(movieDir, posterFile) : null;
     const fanartRelative = fanartFile ? path.relative(movieDir, fanartFile) : null;
 
+    // Image mtime + blur placeholder
+    const posterMtime = posterFile ? getFileMtime(posterFile) : null;
+    const fanartMtime = fanartFile ? getFileMtime(fanartFile) : null;
+    const posterBlur = posterFile ? await generateBlurDataURL(posterFile) : null;
+
     // Probe primary video file with ffprobe for media info
     const probeResult = await probeVideo(primaryVideo);
 
@@ -331,6 +339,9 @@ export async function scanLibrary(
       folderPath: movieDir,
       posterPath: posterRelative,
       fanartPath: fanartRelative,
+      posterMtime,
+      fanartMtime,
+      posterBlur,
       nfoPath: "movie.nfo",
       communityRating: nfoData.communityRating || null,
       officialRating: nfoData.officialRating || null,
@@ -474,7 +485,9 @@ export async function scanLibrary(
     // Add actors
     for (const actor of nfoData.actors) {
       if (!actor.name) continue;
-      const personId = getOrCreatePerson(actor.name, "actor", actor.thumb);
+      const actorMtime = actor.thumb ? getFileMtime(actor.thumb) : null;
+      const actorBlur = actor.thumb ? await generateBlurDataURL(actor.thumb) : null;
+      const personId = getOrCreatePerson(actor.name, "actor", actor.thumb, actorMtime, actorBlur);
       db.insert(moviePeople)
         .values({
           id: uuidv4(),

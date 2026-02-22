@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
-const stampPath = (p: string | null) => {
+/** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
+const stampPath = (p: string | null, mtime?: number | null) => {
   if (!p) return null;
-  try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
+  return mtime ? `${p}|${mtime}` : p;
 };
 
 // GET /api/people
@@ -136,6 +136,8 @@ export async function GET(request: NextRequest) {
       name: string;
       type: string;
       photo_path: string | null;
+      photo_mtime: number | null;
+      photo_blur: string | null;
       tags: string | null;
       date_added: string;
       personal_rating: number | null;
@@ -146,6 +148,8 @@ export async function GET(request: NextRequest) {
         p.name,
         p.type,
         p.photo_path,
+        p.photo_mtime,
+        p.photo_blur,
         p.tags,
         p.date_added,
         upd.personal_rating,
@@ -166,7 +170,8 @@ export async function GET(request: NextRequest) {
       id: r.id,
       name: r.name,
       type: r.type,
-      photoPath: stampPath(r.photo_path),
+      photoPath: stampPath(r.photo_path, r.photo_mtime),
+      photoBlur: r.photo_blur,
       tags: r.tags ? (() => { try { return JSON.parse(r.tags); } catch { return []; } })() : [],
       dateAdded: r.date_added,
       personalRating: r.personal_rating,

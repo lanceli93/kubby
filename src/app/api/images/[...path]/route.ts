@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { Readable } from "stream";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -11,7 +12,7 @@ const MIME_TYPES: Record<string, string> = {
   ".gif": "image/gif",
 };
 
-// GET /api/images/[...path] - Serve local image files
+// GET /api/images/[...path] - Serve local image files via streaming
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -25,22 +26,26 @@ export async function GET(
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
-  if (!fs.existsSync(imagePath)) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
   try {
+    const stat = await fs.promises.stat(imagePath);
     const ext = path.extname(imagePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
-    const data = fs.readFileSync(imagePath);
 
-    return new Response(data, {
+    // Stream the file instead of reading it entirely into memory
+    const nodeStream = fs.createReadStream(imagePath);
+    const webStream = Readable.toWeb(nodeStream) as ReadableStream;
+
+    return new Response(webStream, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=86400",
+        "Content-Length": String(stat.size),
+        "Cache-Control": "public, max-age=31536000, immutable",
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     console.error("Image serve error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

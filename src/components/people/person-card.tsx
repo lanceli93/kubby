@@ -22,6 +22,7 @@ interface PersonCardProps {
   name: string;
   role?: string;
   photoPath?: string | null;
+  photoBlur?: string | null;
   personalRating?: number | null;
   age?: number | null;
   size?: "sm" | "md" | "lg" | "movie";
@@ -39,6 +40,7 @@ export function PersonCard({
   name,
   role,
   photoPath,
+  photoBlur,
   personalRating,
   age,
   size = "sm",
@@ -69,6 +71,7 @@ export function PersonCard({
             fill
             className="object-cover"
             sizes={`${width}px`}
+            {...(photoBlur ? { placeholder: "blur" as const, blurDataURL: photoBlur } : {})}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground text-3xl">
@@ -153,19 +156,23 @@ export function PersonCard({
       </div>
     </Link>
 
-      {/* Dialogs rendered outside <Link> to prevent React portal event bubbling from triggering navigation */}
-      <PersonMetadataEditor
-        personId={id}
-        open={metadataOpen}
-        onOpenChange={setMetadataOpen}
-      />
-      <ImageEditorDialog
-        open={imageEditorOpen}
-        onOpenChange={setImageEditorOpen}
-        entityType="person"
-        entityId={id}
-        entityName={name}
-      />
+      {/* Dialogs rendered lazily — only mount when opened to minimize DOM overhead */}
+      {metadataOpen && (
+        <PersonMetadataEditor
+          personId={id}
+          open={metadataOpen}
+          onOpenChange={setMetadataOpen}
+        />
+      )}
+      {imageEditorOpen && (
+        <ImageEditorDialog
+          open={imageEditorOpen}
+          onOpenChange={setImageEditorOpen}
+          entityType="person"
+          entityId={id}
+          entityName={name}
+        />
+      )}
     </div>
   );
 }

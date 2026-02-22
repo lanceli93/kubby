@@ -52,6 +52,7 @@ interface MovieCardProps {
   title: string;
   year?: number;
   posterPath?: string | null;
+  posterBlur?: string | null;
   rating?: number | null;
   personalRating?: number | null;
   videoWidth?: number | null;
@@ -70,6 +71,7 @@ export function MovieCard({
   title,
   year,
   posterPath,
+  posterBlur,
   rating,
   personalRating,
   videoWidth,
@@ -108,6 +110,7 @@ export function MovieCard({
             fill
             className="object-cover"
             sizes="180px"
+            {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
@@ -292,52 +295,60 @@ export function MovieCard({
       </div>
     </Link>
 
-      {/* Dialogs rendered outside <Link> to prevent React portal event bubbling from triggering navigation */}
-      <MovieMetadataEditor
-        movieId={id}
-        open={metadataOpen}
-        onOpenChange={setMetadataOpen}
-      />
+      {/* Dialogs rendered lazily — only mount when opened to minimize DOM overhead */}
+      {metadataOpen && (
+        <MovieMetadataEditor
+          movieId={id}
+          open={metadataOpen}
+          onOpenChange={setMetadataOpen}
+        />
+      )}
 
-      <MediaInfoDialog
-        movieId={id}
-        open={mediaInfoOpen}
-        onOpenChange={setMediaInfoOpen}
-      />
+      {mediaInfoOpen && (
+        <MediaInfoDialog
+          movieId={id}
+          open={mediaInfoOpen}
+          onOpenChange={setMediaInfoOpen}
+        />
+      )}
 
-      <ImageEditorDialog
-        open={imageEditorOpen}
-        onOpenChange={setImageEditorOpen}
-        entityType="movie"
-        entityId={id}
-        entityName={title}
-      />
+      {imageEditorOpen && (
+        <ImageEditorDialog
+          open={imageEditorOpen}
+          onOpenChange={setImageEditorOpen}
+          entityType="movie"
+          entityId={id}
+          entityName={title}
+        />
+      )}
 
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>{t("deleteMovie")}</DialogTitle>
-            <DialogDescription>{t("confirmDeleteMovie")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={() => setDeleteOpen(false)}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              onClick={() => {
-                onDelete?.();
-                setDeleteOpen(false);
-              }}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
-            >
-              {tCommon("confirm")}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {deleteOpen && (
+        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>{t("deleteMovie")}</DialogTitle>
+              <DialogDescription>{t("confirmDeleteMovie")}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <button
+                onClick={() => setDeleteOpen(false)}
+                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  onDelete?.();
+                  setDeleteOpen(false);
+                }}
+                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+              >
+                {tCommon("confirm")}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
