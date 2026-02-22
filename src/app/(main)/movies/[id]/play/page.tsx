@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRef, useEffect, useCallback, useState } from "react";
 import {
@@ -13,17 +13,26 @@ import {
   SkipForward,
 } from "lucide-react";
 
+interface DiscData {
+  discNumber: number;
+  label?: string;
+}
+
 interface MovieData {
   id: string;
   title: string;
+  discCount?: number;
+  discs?: DiscData[];
   userData?: {
     playbackPositionSeconds?: number;
+    currentDisc?: number;
   };
 }
 
 export default function PlayerPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const movieId = params.id as string;
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,18 +41,38 @@ export default function PlayerPage() {
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const controlsTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [currentDisc, setCurrentDisc] = useState<number>(1);
+  const initializedRef = useRef(false);
 
   const { data: movie } = useQuery<MovieData>({
     queryKey: ["movie-player", movieId],
     queryFn: () => fetch(`/api/movies/${movieId}`).then((r) => r.json()),
   });
 
+  const isMultiDisc = (movie?.discCount ?? 1) > 1;
+  const totalDiscs = movie?.discCount ?? 1;
+
+  // Initialize currentDisc from URL param or userData resume
+  useEffect(() => {
+    if (!movie || initializedRef.current) return;
+    initializedRef.current = true;
+    const discParam = searchParams.get("disc");
+    if (discParam) {
+      setCurrentDisc(parseInt(discParam, 10));
+    } else if (movie.userData?.currentDisc && movie.userData.currentDisc > 1) {
+      setCurrentDisc(movie.userData.currentDisc);
+    }
+  }, [movie, searchParams]);
+
   const saveProgress = useMutation({
-    mutationFn: (seconds: number) =>
+    mutationFn: (data: { seconds: number; disc?: number }) =>
       fetch(`/api/movies/${movieId}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playbackPositionSeconds: Math.floor(seconds) }),
+        body: JSON.stringify({
+          playbackPositionSeconds: Math.floor(data.seconds),
+          ...(data.disc !== undefined ? { currentDisc: data.disc } : {}),
+        }),
       }),
   });
 
@@ -51,19 +80,22 @@ export default function PlayerPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (videoRef.current && isPlaying) {
-        saveProgress.mutate(videoRef.current.currentTime);
+        saveProgress.mutate({ seconds: videoRef.current.currentTime, disc: currentDisc });
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [isPlaying, movieId, saveProgress]);
+  }, [isPlaying, movieId, currentDisc, saveProgress]);
 
-  // Restore position on load
+  // Restore position on load (only for the initial disc)
   useEffect(() => {
-    const pos = movie?.userData?.playbackPositionSeconds;
-    if (pos && videoRef.current) {
+    if (!movie || !initializedRef.current) return;
+    const pos = movie.userData?.playbackPositionSeconds;
+    const savedDisc = movie.userData?.currentDisc ?? 1;
+    // Only restore position if we're on the saved disc (resume scenario)
+    if (pos && videoRef.current && savedDisc === currentDisc && !searchParams.get("disc")) {
       videoRef.current.currentTime = pos;
     }
-  }, [movie?.userData?.playbackPositionSeconds]);
+  }, [movie?.userData?.playbackPositionSeconds, movie?.userData?.currentDisc, currentDisc, searchParams, movie]);
 
   // Hide controls after inactivity
   const resetControlsTimer = useCallback(() => {
@@ -105,7 +137,17 @@ export default function PlayerPage() {
     }
   }
 
+  // Get label for current disc
+  const currentDiscLabel = isMultiDisc
+    ? movie?.discs?.find((d) => d.discNumber === currentDisc)?.label || `Disc ${currentDisc}`
+    : null;
+
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Build video src with disc param
+  const videoSrc = isMultiDisc
+    ? `/api/movies/${movieId}/stream?disc=${currentDisc}`
+    : `/api/movies/${movieId}/stream`;
 
   return (
     <div
@@ -116,19 +158,35 @@ export default function PlayerPage() {
     >
       <video
         ref={videoRef}
+        key={videoSrc}
         className="h-full w-full"
-        src={`/api/movies/${movieId}/stream`}
+        src={videoSrc}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
-        onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
+        onLoadedMetadata={() => {
+          setDuration(videoRef.current?.duration || 0);
+          // Auto-play when advancing to next disc
+          if (isPlaying || currentDisc > 1) {
+            videoRef.current?.play();
+          }
+        }}
         onEnded={() => {
-          saveProgress.mutate(0);
-          fetch(`/api/movies/${movieId}/user-data`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isPlayed: true }),
-          });
+          if (isMultiDisc && currentDisc < totalDiscs) {
+            // Auto-advance to next disc
+            const nextDisc = currentDisc + 1;
+            saveProgress.mutate({ seconds: 0, disc: nextDisc });
+            setCurrentDisc(nextDisc);
+            setCurrentTime(0);
+          } else {
+            // Final disc or single disc: mark as played, reset
+            saveProgress.mutate({ seconds: 0, disc: 1 });
+            fetch(`/api/movies/${movieId}/user-data`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ isPlayed: true, currentDisc: 1 }),
+            });
+          }
         }}
       />
 
@@ -142,7 +200,7 @@ export default function PlayerPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
-              if (videoRef.current) saveProgress.mutate(videoRef.current.currentTime);
+              if (videoRef.current) saveProgress.mutate({ seconds: videoRef.current.currentTime, disc: currentDisc });
               router.back();
             }}
             className="text-white/80 hover:text-white"
@@ -151,9 +209,19 @@ export default function PlayerPage() {
           </button>
           <span className="text-base font-medium text-white">
             {movie?.title || ""}
+            {currentDiscLabel && (
+              <span className="ml-2 text-white/60">— {currentDiscLabel}</span>
+            )}
           </span>
         </div>
-        <span className="text-sm text-white/60">Kubby</span>
+        {isMultiDisc && (
+          <span className="text-sm text-white/60">
+            {currentDisc} / {totalDiscs}
+          </span>
+        )}
+        {!isMultiDisc && (
+          <span className="text-sm text-white/60">Kubby</span>
+        )}
       </div>
 
       {/* Center play button (on pause) */}
