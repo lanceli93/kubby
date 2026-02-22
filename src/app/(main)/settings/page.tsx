@@ -65,9 +65,8 @@ export default function SettingsPage() {
 
       // Validate saved player is available on the effective platform
       const savedName = prefs.externalPlayerName || "";
-      const platform = getEffectivePlatform(effectiveMode);
-      if (savedName && PLAYER_PRESETS[savedName]?.platform !== platform) {
-        setPlayerName(""); // Reset if player doesn't match platform
+      if (savedName && !isPlayerCompatible(savedName, effectiveMode)) {
+        setPlayerName("");
       } else {
         setPlayerName(savedName);
       }
