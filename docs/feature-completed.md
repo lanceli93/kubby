@@ -385,3 +385,22 @@
 
 ### i18n (EN + ZH)
 - New `movies.overall` key: "Overall" / "综合"
+
+## 2026-02-22: Person Detail Fanart View, Person Card Edit Metadata, Tags UI Fix
+
+### Person detail fanart view button
+- Added `Maximize2` button in the person detail header badges area (matches movie detail behavior)
+- When clicked, gradients and content overlay fade out (`opacity-0 pointer-events-none` with 300ms transition) to reveal full fanart background
+- Click-to-dismiss overlay (`z-20 cursor-pointer`) restores normal view
+- Button only appears when `fanartPath` exists on the person
+
+### Person card "Edit Metadata" in dropdown
+- Added `Pencil` icon + "Edit Metadata" option to the three-dot dropdown menu on `PersonCard`
+- Opens `PersonMetadataEditor` dialog (same component used on person detail page)
+- Dialog rendered outside `<Link>` to prevent navigation on portal event bubbling
+
+### Person metadata editor tags UI consistency
+- Changed tags from inline chips-inside-bordered-container to movie editor style: chip list above + separate `<Input>` component below
+- Chips now use `bg-primary/10 text-primary` styling instead of `bg-white/10 text-foreground`
+- Remove button uses `<X>` lucide icon instead of plain `×` character
+- Imported `X` from lucide-react and `Input` component (already imported) for consistency
