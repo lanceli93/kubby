@@ -4,6 +4,22 @@ import path from "path";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
 
+// ─── Rate-limit-aware fetch with retry ─────────────────────────
+const MAX_RETRIES = 3;
+const DEFAULT_RETRY_MS = 2000;
+
+async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<Response> {
+  const res = await fetch(url);
+  if (res.status === 429 && retries > 0) {
+    const retryAfter = res.headers.get("Retry-After");
+    const waitMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : DEFAULT_RETRY_MS;
+    console.warn(`TMDB rate limited, retrying in ${waitMs}ms (${retries} retries left)`);
+    await new Promise((r) => setTimeout(r, waitMs));
+    return fetchWithRetry(url, retries - 1);
+  }
+  return res;
+}
+
 export const TMDB_POSTER_SIZE = "w500";
 export const TMDB_BACKDROP_SIZE = "w1280";
 export const TMDB_PROFILE_SIZE = "w185";
@@ -36,7 +52,7 @@ export async function fetchMovieCredits(
 ): Promise<TmdbCredits> {
   let url = `${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${apiKey}`;
   if (language) url += `&language=${encodeURIComponent(language)}`;
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) {
     throw new Error(`TMDb API error: ${res.status} ${res.statusText}`);
   }
@@ -85,7 +101,7 @@ export async function searchMovie(
   let url = `${TMDB_BASE_URL}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
   if (year) url += `&year=${year}`;
   if (language) url += `&language=${encodeURIComponent(language)}`;
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error(`TMDb search error: ${res.status} ${res.statusText}`);
   const data = await res.json();
   return data.results ?? [];
@@ -98,7 +114,7 @@ export async function getMovieDetails(
 ): Promise<TmdbMovieDetails> {
   let url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${apiKey}&append_to_response=credits`;
   if (language) url += `&language=${encodeURIComponent(language)}`;
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error(`TMDb details error: ${res.status} ${res.statusText}`);
   return res.json();
 }
@@ -106,7 +122,7 @@ export async function getMovieDetails(
 export async function validateApiKey(apiKey: string): Promise<boolean> {
   try {
     const url = `${TMDB_BASE_URL}/configuration?api_key=${apiKey}`;
-    const res = await fetch(url);
+    const res = await fetchWithRetry(url);
     return res.ok;
   } catch {
     return false;
@@ -131,7 +147,7 @@ export async function downloadImage(
   const dir = path.dirname(destPath);
   fs.mkdirSync(dir, { recursive: true });
 
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) {
     throw new Error(`Failed to download image: ${res.status}`);
   }
