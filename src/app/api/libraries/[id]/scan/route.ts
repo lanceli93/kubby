@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { scanLibrary } from "@/lib/scanner";
-import { setScanProgress, clearScan } from "@/lib/scan-state";
 
 // POST /api/libraries/[id]/scan — SSE streaming progress
 export async function POST(
@@ -8,9 +7,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
-  // Mark scan as started in global state
-  setScanProgress(id, { status: "scanning", current: 0, total: 0 });
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -21,24 +17,13 @@ export async function POST(
 
       try {
         const result = await scanLibrary(id, (progress) => {
-          setScanProgress(id, {
-            current: progress.current,
-            total: progress.total,
-          });
           send({ current: progress.current, total: progress.total });
         });
-        setScanProgress(id, {
-          status: "done",
-          scannedCount: result.scannedCount,
-        });
         send({ done: true, scannedCount: result.scannedCount });
-        // Keep "done" visible for 5 seconds, then clean up
-        setTimeout(() => clearScan(id), 5000);
       } catch (error) {
-        const msg = error instanceof Error ? error.message : "Scan failed";
-        setScanProgress(id, { status: "error", error: msg });
-        send({ error: msg });
-        setTimeout(() => clearScan(id), 5000);
+        send({
+          error: error instanceof Error ? error.message : "Scan failed",
+        });
       } finally {
         controller.close();
       }

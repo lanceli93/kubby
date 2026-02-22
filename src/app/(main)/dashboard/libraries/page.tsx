@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useScanProgress } from "@/hooks/use-scan-progress";
+import { useAllScans, useScanActions } from "@/providers/scan-provider";
 import {
   Dialog,
   DialogContent,
@@ -68,32 +68,10 @@ export default function LibrariesPage() {
     },
   });
 
-  const { data: activeScans = [] } = useScanProgress();
-  const [scanInitiatingId, setScanInitiatingId] = useState<string | null>(null);
+  const scansMap = useAllScans();
+  const { startScan: ctxStartScan } = useScanActions();
 
-  const getScanForLib = (libId: string) => activeScans.find((s) => s.libraryId === libId);
-  const anyScanRunning = activeScans.some((s) => s.status === "scanning") || !!scanInitiatingId;
-
-  const startScan = async (libId: string) => {
-    if (anyScanRunning) return;
-    setScanInitiatingId(libId);
-    try {
-      const res = await fetch(`/api/libraries/${libId}/scan`, { method: "POST" });
-      const reader = res.body?.getReader();
-      if (reader) {
-        (async () => {
-          try {
-            while (true) { const { done } = await reader.read(); if (done) break; }
-          } catch { /* stream closed */ }
-          queryClient.invalidateQueries({ queryKey: ["libraries"] });
-        })();
-      }
-    } catch (e) {
-      console.error("Scan error:", e);
-    } finally {
-      setScanInitiatingId(null);
-    }
-  };
+  const startScan = (libId: string) => ctxStartScan(libId);
 
   const deleteLibrary = useMutation({
     mutationFn: (id: string) =>
@@ -352,22 +330,21 @@ export default function LibrariesPage() {
             </p>
             <div className="flex gap-2 pt-1">
               {(() => {
-                const scan = getScanForLib(lib.id);
-                const isScanning = scan?.status === "scanning" || scanInitiatingId === lib.id;
+                const libScan = scansMap.get(lib.id);
+                const isScanning = libScan?.scanning ?? false;
+                const progress = libScan?.progress;
                 return (
                   <button
                     onClick={() => startScan(lib.id)}
-                    disabled={anyScanRunning}
+                    disabled={isScanning}
                     className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-2 text-sm text-foreground transition-colors hover:bg-white/[0.04]"
                   >
                     <RefreshCw className={`h-3.5 w-3.5 ${isScanning ? "animate-spin" : ""}`} />
-                    {isScanning && scan?.total && scan.total > 0
-                      ? `${scan.current}/${scan.total}`
+                    {isScanning && progress
+                      ? `${progress.current}/${progress.total}`
                       : isScanning
                         ? "Scanning..."
-                        : scan?.status === "done"
-                          ? `Done (${scan.scannedCount})`
-                          : "Scan Now"}
+                        : "Scan Now"}
                   </button>
                 );
               })()}

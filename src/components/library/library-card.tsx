@@ -7,7 +7,7 @@ import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageI
 import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
-import { useLibraryScanProgress } from "@/hooks/use-scan-progress";
+import { useLibraryScan } from "@/providers/scan-provider";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -58,15 +58,13 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
   const [editTmdbConfigured, setEditTmdbConfigured] = useState<boolean | null>(null);
   const [editScraperError, setEditScraperError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
-  const [scanInitiating, setScanInitiating] = useState(false);
-  const serverScan = useLibraryScanProgress(id);
-  const scanning = scanInitiating || serverScan?.status === "scanning";
-  const scanProgress = serverScan?.status === "scanning" && serverScan.total > 0
-    ? { current: serverScan.current, total: serverScan.total }
-    : null;
-  const scanResult = serverScan?.status === "done"
-    ? tHome("scanComplete", { count: serverScan.scannedCount ?? 0 })
-    : serverScan?.status === "error"
+  const libScan = useLibraryScan(id);
+  const scanning = libScan.scanning;
+  const scanProgress = libScan.progress;
+  const isDone = libScan.result?.startsWith("done:");
+  const scanResult = isDone
+    ? tHome("scanComplete", { count: parseInt(libScan.result!.split(":")[1], 10) })
+    : libScan.result === "error"
       ? tHome("scanFailed")
       : null;
 
@@ -87,31 +85,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
     }
   };
 
-  const startScan = async () => {
-    if (scanning) return;
-    setScanInitiating(true);
-    try {
-      // Fire-and-forget: the server tracks progress, polling hook picks it up
-      const res = await fetch(`/api/libraries/${id}/scan`, { method: "POST" });
-      // Consume the stream in background so the request completes
-      const reader = res.body?.getReader();
-      if (reader) {
-        (async () => {
-          try {
-            while (true) {
-              const { done } = await reader.read();
-              if (done) break;
-            }
-          } catch { /* stream closed */ }
-          onScanComplete?.();
-        })();
-      }
-    } catch {
-      // ignore — polling will show error state from server
-    } finally {
-      setScanInitiating(false);
-    }
-  };
+  const startScan = () => libScan.startScan();
 
   return (
     <Link
