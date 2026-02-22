@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { setLocale } from "@/i18n/locale";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
+import { Check, AlertCircle } from "lucide-react";
 
 const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; defaultPath: string }> = {
   IINA: { platform: "mac", defaultPath: "/Applications/IINA.app" },
@@ -25,7 +26,15 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [profileMsg, setProfileMsg] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
-  const [playbackMsg, setPlaybackMsg] = useState("");
+  const [playbackSaving, setPlaybackSaving] = useState(false);
+  const [playbackToast, setPlaybackToast] = useState<{ text: string; success: boolean } | null>(null);
+  const playbackToastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  function showPlaybackToast(text: string, success: boolean) {
+    clearTimeout(playbackToastTimer.current);
+    setPlaybackToast({ text, success });
+    playbackToastTimer.current = setTimeout(() => setPlaybackToast(null), 2500);
+  }
   const [playerName, setPlayerName] = useState<string>("");
   const [playerPath, setPlayerPath] = useState("");
   const [playerMode, setPlayerMode] = useState<string>("local");
@@ -84,7 +93,7 @@ export default function SettingsPage() {
   }
 
   async function handlePlaybackSave() {
-    setPlaybackMsg("");
+    setPlaybackSaving(true);
     try {
       const res = await fetch("/api/settings/personal-metadata", {
         method: "PUT",
@@ -97,13 +106,15 @@ export default function SettingsPage() {
         }),
       });
       if (res.ok) {
-        setPlaybackMsg(t("playbackSettingsSaved"));
+        showPlaybackToast(t("playbackSettingsSaved"), true);
         queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
       } else {
-        setPlaybackMsg(t("failedToSave"));
+        showPlaybackToast(t("failedToSave"), false);
       }
     } catch {
-      setPlaybackMsg(t("somethingWentWrong"));
+      showPlaybackToast(t("somethingWentWrong"), false);
+    } finally {
+      setPlaybackSaving(false);
     }
   }
 
@@ -352,17 +363,13 @@ export default function SettingsPage() {
             {t("externalPlayerWarning")}
           </p>
         )}
-        {playbackMsg && (
-          <p className={`text-sm ${playbackMsg === t("playbackSettingsSaved") ? "text-green-500" : "text-destructive"}`}>
-            {playbackMsg}
-          </p>
-        )}
         <button
           type="button"
           onClick={handlePlaybackSave}
-          className="w-fit rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          disabled={playbackSaving}
+          className="w-fit rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
-          {t("savePlaybackSettings")}
+          {playbackSaving ? t("saving") : t("savePlaybackSettings")}
         </button>
       </div>
 
@@ -379,6 +386,26 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+
+      {/* Playback toast */}
+      <div
+        className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
+          playbackToast
+            ? "translate-y-0 opacity-100"
+            : "translate-y-4 opacity-0 pointer-events-none"
+        } ${
+          playbackToast?.success
+            ? "border-green-500/20 bg-green-500/10 text-green-400"
+            : "border-red-500/20 bg-red-500/10 text-red-400"
+        }`}
+      >
+        {playbackToast?.success ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <AlertCircle className="h-4 w-4" />
+        )}
+        {playbackToast?.text}
+      </div>
     </div>
   );
 }
