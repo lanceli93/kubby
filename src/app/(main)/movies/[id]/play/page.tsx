@@ -8,10 +8,15 @@ import {
   Pause,
   ArrowLeft,
   Volume2,
+  VolumeX,
   Maximize,
+  Minimize,
   SkipBack,
   SkipForward,
+  Gauge,
 } from "lucide-react";
+
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 interface DiscData {
   discNumber: number;
@@ -43,6 +48,15 @@ export default function PlayerPage() {
   const controlsTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [currentDisc, setCurrentDisc] = useState<number>(1);
   const initializedRef = useRef(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [osdMessage, setOsdMessage] = useState<string | null>(null);
+  const osdTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const volumeAreaRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const { data: movie } = useQuery<MovieData>({
     queryKey: ["movie-player", movieId],
@@ -105,6 +119,122 @@ export default function PlayerPage() {
       if (isPlaying) setShowControls(false);
     }, 3000);
   }, [isPlaying]);
+
+  const showOsd = useCallback((msg: string) => {
+    setOsdMessage(msg);
+    clearTimeout(osdTimer.current);
+    osdTimer.current = setTimeout(() => setOsdMessage(null), 800);
+  }, []);
+
+  function changeSpeed(rate: number) {
+    if (!videoRef.current) return;
+    videoRef.current.playbackRate = rate;
+    setPlaybackRate(rate);
+    showOsd(`${rate}x`);
+  }
+
+  function cycleSpeed(direction: 1 | -1) {
+    const idx = SPEED_OPTIONS.indexOf(playbackRate);
+    const next = idx + direction;
+    if (next >= 0 && next < SPEED_OPTIONS.length) {
+      changeSpeed(SPEED_OPTIONS[next]);
+    }
+  }
+
+  function changeVolume(v: number) {
+    if (!videoRef.current) return;
+    const clamped = Math.max(0, Math.min(1, v));
+    videoRef.current.volume = clamped;
+    setVolume(clamped);
+    if (clamped > 0 && isMuted) {
+      videoRef.current.muted = false;
+      setIsMuted(false);
+    }
+    showOsd(`Volume ${Math.round(clamped * 100)}%`);
+  }
+
+  function toggleMute() {
+    if (!videoRef.current) return;
+    const muted = !videoRef.current.muted;
+    videoRef.current.muted = muted;
+    setIsMuted(muted);
+    showOsd(muted ? "Muted" : `Volume ${Math.round(volume * 100)}%`);
+  }
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      // Don't capture if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      switch (e.key) {
+        case " ":
+        case "k":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          skip(e.shiftKey ? -30 : -5);
+          showOsd(e.shiftKey ? "−30s" : "−5s");
+          resetControlsTimer();
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          skip(e.shiftKey ? 30 : 5);
+          showOsd(e.shiftKey ? "+30s" : "+5s");
+          resetControlsTimer();
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          changeVolume(volume + 0.1);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          changeVolume(volume - 0.1);
+          break;
+        case "f":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "m":
+          e.preventDefault();
+          toggleMute();
+          break;
+        case ">":
+        case ".":
+          e.preventDefault();
+          cycleSpeed(1);
+          break;
+        case "<":
+        case ",":
+          e.preventDefault();
+          cycleSpeed(-1);
+          break;
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [volume, isMuted, playbackRate, isPlaying]);
+
+  // Track fullscreen changes
+  useEffect(() => {
+    function onFsChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  // Close speed menu and volume slider when clicking outside
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (showSpeedMenu) setShowSpeedMenu(false);
+    }
+    window.addEventListener("click", onClick);
+    return () => window.removeEventListener("click", onClick);
+  }, [showSpeedMenu]);
 
   function togglePlay() {
     if (!videoRef.current) return;
@@ -225,10 +355,19 @@ export default function PlayerPage() {
       </div>
 
       {/* Center play button (on pause) */}
-      {!isPlaying && (
+      {!isPlaying && !osdMessage && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white/20">
             <Play className="h-8 w-8 text-white" />
+          </div>
+        </div>
+      )}
+
+      {/* OSD overlay */}
+      {osdMessage && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="rounded-lg bg-black/70 px-6 py-3 text-lg font-medium text-white">
+            {osdMessage}
           </div>
         </div>
       )}
@@ -261,30 +400,119 @@ export default function PlayerPage() {
 
         <div className="flex items-center justify-between">
           {/* Time */}
-          <span className="text-sm text-white/80">
+          <span className="min-w-[120px] text-sm text-white/80">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
           {/* Center controls */}
           <div className="flex items-center gap-4">
-            <button onClick={() => skip(-10)} className="text-white/80 hover:text-white">
+            <button
+              onClick={() => { skip(-10); showOsd("−10s"); }}
+              className="text-white/80 hover:text-white"
+              title="Rewind 10s"
+            >
               <SkipBack className="h-5 w-5" />
             </button>
             <button onClick={togglePlay} className="text-white hover:text-white/90">
               {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
             </button>
-            <button onClick={() => skip(10)} className="text-white/80 hover:text-white">
+            <button
+              onClick={() => { skip(10); showOsd("+10s"); }}
+              className="text-white/80 hover:text-white"
+              title="Forward 10s"
+            >
               <SkipForward className="h-5 w-5" />
             </button>
           </div>
 
           {/* Right controls */}
           <div className="flex items-center gap-3">
-            <button className="text-white/60 hover:text-white">
-              <Volume2 className="h-5 w-5" />
-            </button>
-            <button onClick={toggleFullscreen} className="text-white/60 hover:text-white">
-              <Maximize className="h-5 w-5" />
+            {/* Speed control */}
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSpeedMenu(!showSpeedMenu);
+                }}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-sm ${
+                  playbackRate !== 1
+                    ? "bg-white/20 text-white"
+                    : "text-white/60 hover:text-white"
+                }`}
+                title="Playback speed"
+              >
+                <Gauge className="h-4 w-4" />
+                <span className="text-xs">{playbackRate}x</span>
+              </button>
+              {showSpeedMenu && (
+                <div
+                  className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {SPEED_OPTIONS.map((rate) => (
+                    <button
+                      key={rate}
+                      onClick={() => {
+                        changeSpeed(rate);
+                        setShowSpeedMenu(false);
+                      }}
+                      className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
+                        rate === playbackRate
+                          ? "bg-white/10 text-white"
+                          : "text-white/70 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      {rate}x{rate === 1 ? " (Normal)" : ""}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Volume control */}
+            <div
+              ref={volumeAreaRef}
+              className="relative flex items-center"
+              onMouseEnter={() => setShowVolumeSlider(true)}
+              onMouseLeave={() => setShowVolumeSlider(false)}
+            >
+              <button
+                onClick={toggleMute}
+                className="text-white/60 hover:text-white"
+                title={isMuted ? "Unmute (M)" : "Mute (M)"}
+              >
+                {isMuted || volume === 0 ? (
+                  <VolumeX className="h-5 w-5" />
+                ) : (
+                  <Volume2 className="h-5 w-5" />
+                )}
+              </button>
+              {showVolumeSlider && (
+                <div className="ml-2 flex w-20 items-center">
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={isMuted ? 0 : volume}
+                    onChange={(e) => changeVolume(parseFloat(e.target.value))}
+                    className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/30 accent-primary [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Fullscreen */}
+            <button
+              onClick={toggleFullscreen}
+              className="text-white/60 hover:text-white"
+              title="Fullscreen (F)"
+            >
+              {isFullscreen ? (
+                <Minimize className="h-5 w-5" />
+              ) : (
+                <Maximize className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>
