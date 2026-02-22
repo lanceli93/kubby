@@ -197,7 +197,10 @@
     "allTypes": "全部类型",
     "unrated": "未评分",
     "tier": "评级",
-    "overall": "综合"
+    "overall": "综合",
+    "discs": "分碟",
+    "disc": "碟",
+    "playAll": "播放全部"
   },
   "search": {
     "search": "搜索",

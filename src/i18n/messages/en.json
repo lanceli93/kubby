@@ -197,7 +197,10 @@
     "allTypes": "All Types",
     "unrated": "Unrated",
     "tier": "Tier",
-    "overall": "Overall"
+    "overall": "Overall",
+    "discs": "Discs",
+    "disc": "Disc",
+    "playAll": "Play All"
   },
   "search": {
     "search": "Search",
