@@ -148,7 +148,7 @@ kubby/
 
 ## 数据库 Schema
 
-8 张表，SQLite + WAL 模式，文件位于 `data/kubby.db`。
+11 张表，SQLite + WAL 模式，文件位于 `data/kubby.db`。
 
 ### ER 关系图
 
@@ -158,6 +158,9 @@ users ──1:N──> user_person_data ──N:1──> people
 users ──1:1──> user_preferences
                                           │
 media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1──> people
+                                   │
+                                   ├──1:N──> movie_discs
+                                   └──1:N──> media_streams
 
 settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 ```
@@ -209,6 +212,14 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | genres | text | JSON 数组字符串 `["Sci-Fi","Action"]` |
 | studios | text | JSON 数组字符串 |
 | country | text | 国家 |
+| video_codec, audio_codec | text | 编解码器 |
+| video_width, video_height | integer | 视频分辨率 |
+| audio_channels | integer | 音频声道数 |
+| container | text | 容器格式 (mkv, mp4 等) |
+| total_bitrate | integer | 总码率 (bps) |
+| file_size | integer | 文件大小 (bytes) |
+| format_name | text | 格式名称 |
+| disc_count | integer | 碟数, 默认 1 |
 | tmdb_id, imdb_id | text | 外部 ID (预留) |
 | media_library_id | text FK | 所属媒体库 (CASCADE 删除) |
 | date_added | text | 入库时间 |
@@ -246,6 +257,7 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | user_id | text FK | CASCADE |
 | movie_id | text FK | CASCADE |
 | playback_position_seconds | integer | 播放进度 (秒) |
+| current_disc | integer | 当前碟片 (多碟恢复), 默认 1 |
 | play_count | integer | 播放次数 |
 | is_played | integer (bool) | 是否已看 |
 | is_favorite | integer (bool) | 是否收藏 |
@@ -275,6 +287,48 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | person_rating_dimensions | text | JSON 数组, 人物评分自定义维度 |
 | show_movie_rating_badge | integer (bool) | 是否在电影卡片显示个人评分, 默认 true |
 | show_person_tier_badge | integer (bool) | 是否在人物卡片显示评级标记, 默认 true |
+
+#### movie_discs (多碟电影)
+| 列 | 类型 | 说明 |
+|----|------|------|
+| id | text PK | UUID |
+| movie_id | text FK | CASCADE |
+| disc_number | integer | 碟号 (1, 2, 3…) |
+| file_path | text | 视频文件绝对路径 |
+| label | text | 标签 (如 "CD 1", "PART 2") |
+| poster_path | text | 碟片海报 (相对于 movie folder_path, 可空) |
+| runtime_seconds | integer | 时长 (秒) |
+| file_size | integer | 文件大小 |
+| video_codec, audio_codec | text | 编解码器 |
+| video_width, video_height | integer | 分辨率 |
+| audio_channels | integer | 声道数 |
+| container | text | 容器格式 |
+| total_bitrate | integer | 总码率 |
+| format_name | text | 格式名称 |
+
+**索引**: movie_id, (movie_id, disc_number)
+
+#### media_streams (逐流媒体信息)
+| 列 | 类型 | 说明 |
+|----|------|------|
+| id | text PK | UUID |
+| movie_id | text FK | CASCADE |
+| disc_number | integer | 所属碟片, 默认 1 |
+| stream_index | integer | 流序号 |
+| stream_type | text | enum: video/audio/subtitle |
+| codec, profile | text | 编解码器和配置 |
+| bitrate | integer | 码率 |
+| language, title | text | 语言和标题 |
+| is_default, is_forced | integer (bool) | 默认/强制标记 |
+| width, height | integer | 视频分辨率 |
+| bit_depth | integer | 位深 |
+| frame_rate | text | 帧率 |
+| hdr_type | text | HDR 类型 (Dolby Vision, HDR10, HLG) |
+| channels | integer | 声道数 |
+| channel_layout | text | 声道布局 |
+| sample_rate | integer | 采样率 |
+
+**索引**: movie_id, (movie_id, stream_type)
 
 ### 自定义评分维度：设计决策
 

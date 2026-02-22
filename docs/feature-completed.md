@@ -413,3 +413,42 @@
 - Only triggers when `movie.nfo` does not already exist
 - Non-matching NFO names (video name ≠ NFO name) fall through to scraper or skip logic as before
 - Enables importing media libraries from other tools (Jellyfin, Kodi, etc.) that use video-named NFO conventions
+
+## 2026-02-22: Multi-Disc/Multi-CD Movie Support
+
+### Database schema
+- New `movie_discs` table: per-disc metadata (file_path, label, poster_path, runtime_seconds, video_codec, audio_codec, video_width, video_height, audio_channels, container, total_bitrate, format_name)
+- New `movies.disc_count` column (integer, default 1)
+- New `media_streams.disc_number` column (integer, default 1)
+- New `user_movie_data.current_disc` column (integer, default 1) for multi-disc resume
+- All defaults ensure existing single-disc movies work unchanged
+
+### Scanner multi-disc detection
+- Regex-based detection: `/[\s._\-\[\(]*(cd|dvd|disc|disk|part|pt)[\s._\-]*(\d+|[a-d])/i`
+- Requires 2+ matching video files to be detected as multi-disc (prevents false positives)
+- Per-disc poster lookup: `poster-disc{N}`, `poster-cd{N}`, `{videoBaseName}-poster`
+- Primary disc probed first, then each additional disc probed and stored in `movie_discs`
+- Total runtime calculated as sum of all disc runtimes
+- Per-disc media streams stored with `disc_number` column
+
+### API changes
+- `GET /api/movies/[id]`: returns `discs[]` array with resolved poster paths and `currentDisc` in userData
+- `GET /api/movies/[id]/stream`: supports `?disc=N` query parameter for per-disc streaming
+- `PUT /api/movies/[id]/user-data`: accepts `currentDisc` field for resume tracking
+- `GET /api/movies/[id]/media-info`: includes per-disc details (file, codec, resolution, runtime)
+
+### Movie detail page disc section
+- "Discs (N)" section between hero and cast for multi-disc movies
+- Each disc card: poster (150x225, falls back to movie poster), label, runtime, resolution + codec badges
+- Entire disc card is a link to play that specific disc
+- Hero play button shows "Play All" for multi-disc movies
+
+### Player multi-disc playback
+- Reads `?disc=N` URL param or resumes from saved `currentDisc` in userData
+- Auto-advances to next disc on `onEnded` event
+- Shows disc label in top bar (e.g. "Movie Title — CD 2") with disc counter (2/3)
+- Saves `currentDisc` alongside `playbackPositionSeconds` for resume
+- On final disc ended: marks movie as played, resets `currentDisc` to 1
+
+### i18n (EN + ZH)
+- New `movies` keys: discs (分碟), disc (碟), playAll (播放全部)
