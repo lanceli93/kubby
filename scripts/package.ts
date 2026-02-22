@@ -24,11 +24,14 @@ import path from "path";
 import { execSync } from "child_process";
 import { createWriteStream } from "fs";
 import { pipeline } from "stream/promises";
+import { createGunzip } from "zlib";
+import { Readable } from "stream";
 import { fileURLToPath } from "url";
 
 // ─── Configuration ───────────────────────────────────────────
 
-const NODE_VERSION = "22.13.1";
+// Use current Node.js version or override via NODE_VERSION env
+const NODE_VERSION = process.env.KUBBY_NODE_VERSION || process.version.replace("v", "");
 const __scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__scriptDir, "..");
 const DIST_DIR = path.join(PROJECT_ROOT, "dist");
@@ -119,17 +122,33 @@ function copyDirRecursive(src: string, dest: string) {
 }
 
 async function downloadFile(url: string, dest: string): Promise<void> {
-  if (fs.existsSync(dest)) {
+  if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
     console.log(`  [cached] ${path.basename(dest)}`);
     return;
   }
   console.log(`  Downloading ${url}...`);
   const res = await fetch(url, { redirect: "follow" });
-  if (!res.ok) throw new Error(`Failed to download ${url}: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to download ${url}: ${res.status} ${res.statusText}`);
+  if (!res.body) throw new Error(`No response body for ${url}`);
   ensureDir(path.dirname(dest));
-  const fileStream = createWriteStream(dest);
-  await pipeline(res.body as any, fileStream);
-  console.log(`  Saved to ${dest}`);
+  const arrayBuf = await res.arrayBuffer();
+  fs.writeFileSync(dest, new Uint8Array(arrayBuf));
+  console.log(`  Saved to ${dest} (${(arrayBuf.byteLength / 1024 / 1024).toFixed(1)} MB)`);
+}
+
+// Download a .gz file and decompress it to dest
+async function downloadAndGunzip(url: string, cachePath: string, dest: string, skipDownload: boolean): Promise<void> {
+  if (!skipDownload) {
+    await downloadFile(url, cachePath);
+  } else if (!fs.existsSync(cachePath)) {
+    throw new Error(`--skip-download specified but cache missing: ${cachePath}`);
+  }
+
+  ensureDir(path.dirname(dest));
+  const input = fs.createReadStream(cachePath);
+  const gunzip = createGunzip();
+  const output = createWriteStream(dest);
+  await pipeline(input, gunzip, output);
 }
 
 function detectPlatform(): Platform {
@@ -274,31 +293,8 @@ async function downloadFfprobe(platform: Platform, outputDir: string, skipDownlo
   ensureDir(binDir);
   const ffprobeDest = path.join(binDir, cfg.ffprobeBin);
 
-  if (!skipDownload) {
-    await downloadFile(cfg.ffprobeUrl, archivePath);
-  } else if (!fs.existsSync(archivePath)) {
-    // Fallback: try to copy system ffprobe
-    try {
-      const systemFfprobe = execSync("which ffprobe", { encoding: "utf-8" }).trim();
-      if (systemFfprobe && fs.existsSync(systemFfprobe)) {
-        console.log(`  Copying system ffprobe: ${systemFfprobe}`);
-        fs.cpSync(systemFfprobe, ffprobeDest);
-        fs.chmodSync(ffprobeDest, 0o755);
-        console.log("  ffprobe ready (from system)");
-        return;
-      }
-    } catch { /* no system ffprobe */ }
-    console.warn("  WARNING: ffprobe not found. Place it manually at:");
-    console.warn(`    ${ffprobeDest}`);
-    return;
-  }
-
-  // The ffprobe-static releases are .gz files (gzipped single binary)
-  if (archiveName.endsWith(".gz")) {
-    run(`gunzip -c "${archivePath}" > "${ffprobeDest}"`);
-  } else {
-    fs.cpSync(archivePath, ffprobeDest);
-  }
+  // Download and decompress .gz → binary using Node.js zlib
+  await downloadAndGunzip(cfg.ffprobeUrl, archivePath, ffprobeDest, skipDownload);
 
   if (platform !== "win-x64") {
     fs.chmodSync(ffprobeDest, 0o755);
