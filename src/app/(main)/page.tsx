@@ -20,6 +20,9 @@ interface Movie {
   isFavorite?: boolean;
   isWatched?: boolean;
   progress?: number;
+  discLabel?: string | null;
+  currentDisc?: number;
+  discCount?: number;
 }
 
 interface Library {
@@ -53,11 +56,15 @@ function MovieRow({
 
   return (
     <ScrollRow title={title}>
-      {movies.map((movie) => (
+      {movies.map((movie) => {
+          const displayTitle = movie.discLabel
+            ? `${movie.discLabel} · ${movie.title}`
+            : movie.title;
+          return (
           <MovieCard
-            key={movie.id}
+            key={movie.discLabel ? `${movie.id}-disc${movie.currentDisc}` : movie.id}
             id={movie.id}
-            title={movie.title}
+            title={displayTitle}
             year={movie.year}
             posterPath={movie.posterPath}
             rating={movie.communityRating}
@@ -76,7 +83,8 @@ function MovieRow({
             }
             onDelete={() => onDelete(movie.id)}
           />
-        ))}
+          );
+        })}
       </ScrollRow>
   );
 }

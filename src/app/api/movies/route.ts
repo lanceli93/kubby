@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
-import { eq, desc, asc, like, sql, and, count, sum } from "drizzle-orm";
+import { eq, desc, asc, like, sql, and, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 const stampPath = (p: string | null) => {
@@ -68,25 +68,27 @@ export async function GET(request: NextRequest) {
         .limit(cwLimit)
         .all();
 
-      // For multi-disc movies, fetch per-disc runtimes to calculate accurate progress
-      const multiDiscIds = results.filter((r) => (r.discCount ?? 1) > 1).map((r) => r.id);
-      const discRuntimeMap = new Map<string, { discNumber: number; runtimeSeconds: number | null }[]>();
+      // For multi-disc movies, fetch the current disc's runtime + label
+      const multiDiscItems = results.filter((r) => (r.discCount ?? 1) > 1);
+      const discInfoMap = new Map<string, { runtimeSeconds: number | null; label: string | null }>();
 
-      if (multiDiscIds.length > 0) {
+      if (multiDiscItems.length > 0) {
+        // Build OR conditions: (movie_id = X AND disc_number = Y) for each item
+        const discConditions = multiDiscItems.map(
+          (r) => sql`(${movieDiscs.movieId} = ${r.id} AND ${movieDiscs.discNumber} = ${r.currentDisc ?? 1})`
+        );
         const discRows = db
           .select({
             movieId: movieDiscs.movieId,
-            discNumber: movieDiscs.discNumber,
             runtimeSeconds: movieDiscs.runtimeSeconds,
+            label: movieDiscs.label,
           })
           .from(movieDiscs)
-          .where(sql`${movieDiscs.movieId} IN (${sql.join(multiDiscIds.map((id) => sql`${id}`), sql`, `)})`)
-          .orderBy(asc(movieDiscs.discNumber))
+          .where(sql`(${sql.join(discConditions, sql` OR `)})`)
           .all();
 
         for (const row of discRows) {
-          if (!discRuntimeMap.has(row.movieId)) discRuntimeMap.set(row.movieId, []);
-          discRuntimeMap.get(row.movieId)!.push(row);
+          discInfoMap.set(row.movieId, { runtimeSeconds: row.runtimeSeconds, label: row.label });
         }
       }
 
@@ -94,29 +96,30 @@ export async function GET(request: NextRequest) {
         results.map((r) => {
           const isMultiDisc = (r.discCount ?? 1) > 1;
           const curDisc = r.currentDisc ?? 1;
-          let progress = 0;
 
+          // Per-disc progress: treat each disc as an independent item
+          let discRuntime: number;
           if (isMultiDisc) {
-            const discs = discRuntimeMap.get(r.id) || [];
-            const totalRuntime = discs.reduce((sum, d) => sum + (d.runtimeSeconds || 0), 0);
-            if (totalRuntime > 0) {
-              // Sum completed discs' runtimes + current position
-              const completedRuntime = discs
-                .filter((d) => d.discNumber < curDisc)
-                .reduce((sum, d) => sum + (d.runtimeSeconds || 0), 0);
-              progress = Math.min(100, Math.round(((completedRuntime + (r.playbackPositionSeconds || 0)) / totalRuntime) * 100));
-            }
+            discRuntime = discInfoMap.get(r.id)?.runtimeSeconds || 0;
           } else {
-            const totalSeconds = r.runtimeSeconds || (r.runtimeMinutes ? r.runtimeMinutes * 60 : 0);
-            if (totalSeconds && r.playbackPositionSeconds) {
-              progress = Math.min(100, Math.round((r.playbackPositionSeconds / totalSeconds) * 100));
-            }
+            discRuntime = r.runtimeSeconds || (r.runtimeMinutes ? r.runtimeMinutes * 60 : 0);
           }
+          const progress = discRuntime && r.playbackPositionSeconds
+            ? Math.min(100, Math.round((r.playbackPositionSeconds / discRuntime) * 100))
+            : 0;
+
+          // Disc label for multi-disc movies (prefix for title display)
+          const discLabel = isMultiDisc
+            ? discInfoMap.get(r.id)?.label || `Disc ${curDisc}`
+            : null;
 
           return {
             ...r,
             posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
             progress,
+            discLabel,
+            currentDisc: isMultiDisc ? curDisc : undefined,
+            discCount: isMultiDisc ? r.discCount : undefined,
           };
         })
       );
