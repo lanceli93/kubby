@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useScanProgress } from "@/hooks/use-scan-progress";
 import {
   Dialog,
   DialogContent,
@@ -67,41 +68,30 @@ export default function LibrariesPage() {
     },
   });
 
-  const [scanningId, setScanningId] = useState<string | null>(null);
-  const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
+  const { data: activeScans = [] } = useScanProgress();
+  const [scanInitiatingId, setScanInitiatingId] = useState<string | null>(null);
+
+  const getScanForLib = (libId: string) => activeScans.find((s) => s.libraryId === libId);
+  const anyScanRunning = activeScans.some((s) => s.status === "scanning") || !!scanInitiatingId;
 
   const startScan = async (libId: string) => {
-    if (scanningId) return;
-    setScanningId(libId);
-    setScanProgress(null);
+    if (anyScanRunning) return;
+    setScanInitiatingId(libId);
     try {
       const res = await fetch(`/api/libraries/${libId}/scan`, { method: "POST" });
       const reader = res.body?.getReader();
-      if (!reader) throw new Error("No stream");
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
-          const match = line.match(/^data: (.+)$/m);
-          if (!match) continue;
-          const data = JSON.parse(match[1]);
-          if (data.total) {
-            setScanProgress({ current: data.current, total: data.total });
-          }
-        }
+      if (reader) {
+        (async () => {
+          try {
+            while (true) { const { done } = await reader.read(); if (done) break; }
+          } catch { /* stream closed */ }
+          queryClient.invalidateQueries({ queryKey: ["libraries"] });
+        })();
       }
-      queryClient.invalidateQueries({ queryKey: ["libraries"] });
     } catch (e) {
       console.error("Scan error:", e);
     } finally {
-      setScanningId(null);
-      setScanProgress(null);
+      setScanInitiatingId(null);
     }
   };
 
@@ -361,18 +351,26 @@ export default function LibrariesPage() {
               {lib.lastScannedAt && ` · Last scanned: ${lib.lastScannedAt}`}
             </p>
             <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => startScan(lib.id)}
-                disabled={!!scanningId}
-                className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-2 text-sm text-foreground transition-colors hover:bg-white/[0.04]"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${scanningId === lib.id ? "animate-spin" : ""}`} />
-                {scanningId === lib.id && scanProgress
-                  ? `${scanProgress.current}/${scanProgress.total}`
-                  : scanningId === lib.id
-                    ? "Scanning..."
-                    : "Scan Now"}
-              </button>
+              {(() => {
+                const scan = getScanForLib(lib.id);
+                const isScanning = scan?.status === "scanning" || scanInitiatingId === lib.id;
+                return (
+                  <button
+                    onClick={() => startScan(lib.id)}
+                    disabled={anyScanRunning}
+                    className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-2 text-sm text-foreground transition-colors hover:bg-white/[0.04]"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isScanning ? "animate-spin" : ""}`} />
+                    {isScanning && scan?.total && scan.total > 0
+                      ? `${scan.current}/${scan.total}`
+                      : isScanning
+                        ? "Scanning..."
+                        : scan?.status === "done"
+                          ? `Done (${scan.scannedCount})`
+                          : "Scan Now"}
+                  </button>
+                );
+              })()}
               <button
                 onClick={() => {
                   if (confirm("Delete this library?")) {

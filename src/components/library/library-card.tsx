@@ -7,6 +7,7 @@ import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageI
 import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
+import { useLibraryScanProgress } from "@/hooks/use-scan-progress";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -57,9 +58,17 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
   const [editTmdbConfigured, setEditTmdbConfigured] = useState<boolean | null>(null);
   const [editScraperError, setEditScraperError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<string | null>(null);
-  const [scanProgress, setScanProgress] = useState<{ current: number; total: number } | null>(null);
+  const [scanInitiating, setScanInitiating] = useState(false);
+  const serverScan = useLibraryScanProgress(id);
+  const scanning = scanInitiating || serverScan?.status === "scanning";
+  const scanProgress = serverScan?.status === "scanning" && serverScan.total > 0
+    ? { current: serverScan.current, total: serverScan.total }
+    : null;
+  const scanResult = serverScan?.status === "done"
+    ? tHome("scanComplete", { count: serverScan.scannedCount ?? 0 })
+    : serverScan?.status === "error"
+      ? tHome("scanFailed")
+      : null;
 
   const handleEditSave = async () => {
     setEditSaving(true);
@@ -80,45 +89,27 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
 
   const startScan = async () => {
     if (scanning) return;
-    setScanning(true);
-    setScanResult(null);
-    setScanProgress(null);
+    setScanInitiating(true);
     try {
+      // Fire-and-forget: the server tracks progress, polling hook picks it up
       const res = await fetch(`/api/libraries/${id}/scan`, { method: "POST" });
+      // Consume the stream in background so the request completes
       const reader = res.body?.getReader();
-      if (!reader) throw new Error("No stream");
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let scannedCount = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
-          const match = line.match(/^data: (.+)$/m);
-          if (!match) continue;
-          const data = JSON.parse(match[1]);
-          if (data.done) {
-            scannedCount = data.scannedCount ?? 0;
-          } else if (data.error) {
-            throw new Error(data.error);
-          } else if (data.total) {
-            setScanProgress({ current: data.current, total: data.total });
-          }
-        }
+      if (reader) {
+        (async () => {
+          try {
+            while (true) {
+              const { done } = await reader.read();
+              if (done) break;
+            }
+          } catch { /* stream closed */ }
+          onScanComplete?.();
+        })();
       }
-      setScanResult(tHome("scanComplete", { count: scannedCount }));
-      onScanComplete?.();
-      setTimeout(() => setScanResult(null), 3000);
     } catch {
-      setScanResult(tHome("scanFailed"));
-      setTimeout(() => setScanResult(null), 3000);
+      // ignore — polling will show error state from server
     } finally {
-      setScanning(false);
-      setScanProgress(null);
+      setScanInitiating(false);
     }
   };
 
