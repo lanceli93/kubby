@@ -119,8 +119,23 @@ export default function PlayerPage() {
     setShowControls(true);
     clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
+      if (isPlaying) {
+        setShowControls(false);
+        setShowSpeedMenu(false);
+        setShowVolumeSlider(false);
+      }
     }, 3000);
+  }, [isPlaying]);
+
+  // Auto-hide controls when playback starts
+  useEffect(() => {
+    if (isPlaying) {
+      resetControlsTimer();
+    } else {
+      clearTimeout(controlsTimer.current);
+      setShowControls(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying]);
 
   const showOsd = useCallback((msg: string) => {
@@ -295,7 +310,7 @@ export default function PlayerPage() {
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full bg-black overflow-hidden"
+      className={`relative h-full w-full bg-black overflow-hidden ${!showControls ? "cursor-none" : ""}`}
       onMouseMove={resetControlsTimer}
       onClick={togglePlay}
     >
@@ -336,7 +351,7 @@ export default function PlayerPage() {
       {/* Top bar */}
       <div
         className={`absolute inset-x-0 top-0 flex h-20 items-center justify-between bg-gradient-to-b from-black/80 to-transparent px-8 transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
+          showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -447,7 +462,7 @@ export default function PlayerPage() {
       {/* Bottom controls */}
       <div
         className={`absolute inset-x-0 bottom-0 flex flex-col gap-3 bg-gradient-to-t from-black/80 to-transparent px-8 pb-6 pt-4 transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
+          showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
