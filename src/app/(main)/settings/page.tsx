@@ -39,15 +39,34 @@ export default function SettingsPage() {
     }
   }, [prefs]);
 
-  function handlePlayerChange(name: string) {
-    setPlayerName(name);
+  function getIsMacForMode(mode: string) {
+    if (mode === "stream") {
+      // Stream mode: player runs on user's device → detect client OS
+      return navigator.platform?.toLowerCase().includes("mac") ||
+        navigator.userAgent?.toLowerCase().includes("mac");
+    }
+    // Local mode: player runs on server → use server OS
+    return prefs?.serverPlatform === "darwin";
+  }
+
+  function autoFillPath(name: string, mode: string) {
     if (name && PLAYER_PRESETS[name]) {
       const preset = PLAYER_PRESETS[name];
-      const isMac = prefs?.serverPlatform === "darwin";
+      const isMac = getIsMacForMode(mode);
       setPlayerPath((isMac ? preset.mac : preset.win) || "");
     } else if (!name) {
       setPlayerPath("");
     }
+  }
+
+  function handlePlayerChange(name: string) {
+    setPlayerName(name);
+    autoFillPath(name, playerMode);
+  }
+
+  function handleModeChange(mode: string) {
+    setPlayerMode(mode);
+    autoFillPath(playerName, mode);
   }
 
   async function handlePlaybackSave() {
@@ -281,7 +300,7 @@ export default function SettingsPage() {
             <select
               value={playerMode}
               style={{ colorScheme: "dark" }}
-              onChange={(e) => setPlayerMode(e.target.value)}
+              onChange={(e) => handleModeChange(e.target.value)}
               className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             >
               <option value="local">{t("playerModeLocal")}</option>
@@ -292,7 +311,7 @@ export default function SettingsPage() {
             </p>
           </div>
         )}
-        {playerName && (
+        {playerName && playerMode === "local" && (
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium text-muted-foreground">
               {t("playerPath")}
