@@ -8,9 +8,9 @@ import { setLocale } from "@/i18n/locale";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
 
-const PLAYER_PRESETS: Record<string, { mac?: string; win?: string }> = {
-  IINA: { mac: "/Applications/IINA.app" },
-  PotPlayer: { win: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe" },
+const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; defaultPath: string }> = {
+  IINA: { platform: "mac", defaultPath: "/Applications/IINA.app" },
+  PotPlayer: { platform: "win", defaultPath: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe" },
 };
 
 export default function SettingsPage() {
@@ -37,33 +37,50 @@ export default function SettingsPage() {
     setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
   }, []);
 
+  const clientIsMac = typeof navigator !== "undefined" &&
+    (navigator.platform?.toLowerCase().includes("mac") || navigator.userAgent?.toLowerCase().includes("mac"));
+  const serverIsMac = prefs?.serverPlatform === "darwin";
+
+  // Which platform determines available players: local → server, stream → client
+  function getEffectivePlatform(mode: string): "mac" | "win" {
+    return (mode === "local" ? serverIsMac : clientIsMac) ? "mac" : "win";
+  }
+
   useEffect(() => {
     if (prefs) {
-      setPlayerName(prefs.externalPlayerName || "");
-      setPlayerPath(prefs.externalPlayerPath || "");
       const savedMode = prefs.externalPlayerMode || "local";
-      // Remote users can only use stream mode
-      setPlayerMode(!isLocalhost && savedMode === "local" ? "stream" : savedMode);
+      const effectiveMode = !isLocalhost && savedMode === "local" ? "stream" : savedMode;
+      setPlayerMode(effectiveMode);
+      setPlayerPath(prefs.externalPlayerPath || "");
+
+      // Validate saved player is available on the effective platform
+      const savedName = prefs.externalPlayerName || "";
+      const platform = getEffectivePlatform(effectiveMode);
+      if (savedName && PLAYER_PRESETS[savedName]?.platform !== platform) {
+        setPlayerName(""); // Reset if player doesn't match platform
+      } else {
+        setPlayerName(savedName);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefs, isLocalhost]);
 
-  function autoFillPath(name: string) {
+  function handlePlayerChange(name: string) {
+    setPlayerName(name);
     if (name && PLAYER_PRESETS[name]) {
-      const preset = PLAYER_PRESETS[name];
-      const isMac = prefs?.serverPlatform === "darwin";
-      setPlayerPath((isMac ? preset.mac : preset.win) || "");
-    } else if (!name) {
+      setPlayerPath(PLAYER_PRESETS[name].defaultPath);
+    } else {
       setPlayerPath("");
     }
   }
 
-  function handlePlayerChange(name: string) {
-    setPlayerName(name);
-    autoFillPath(name);
-  }
-
   function handleModeChange(mode: string) {
     setPlayerMode(mode);
+    // Reset player only if current selection is incompatible with new platform
+    if (playerName && PLAYER_PRESETS[playerName]?.platform !== getEffectivePlatform(mode)) {
+      setPlayerName("");
+      setPlayerPath("");
+    }
   }
 
   async function handlePlaybackSave() {
@@ -285,8 +302,16 @@ export default function SettingsPage() {
             className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
           >
             <option value="">{t("playerNone")}</option>
-            <option value="IINA">IINA</option>
-            <option value="PotPlayer">PotPlayer</option>
+            {Object.entries(PLAYER_PRESETS).map(([name, preset]) => {
+              const effectivePlatform = getEffectivePlatform(playerMode);
+              const disabled = preset.platform !== effectivePlatform;
+              const hint = preset.platform === "mac" ? " (macOS)" : " (Windows)";
+              return (
+                <option key={name} value={name} disabled={disabled}>
+                  {name}{disabled ? hint : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
         {playerName && (
