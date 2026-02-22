@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import { db } from "@/lib/db";
-import { movies, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
-import { eq, desc, asc, like, sql, and, count } from "drizzle-orm";
+import { movies, movieDiscs, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
+import { eq, desc, asc, like, sql, and, count, sum } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 const stampPath = (p: string | null) => {
@@ -41,8 +41,10 @@ export async function GET(request: NextRequest) {
           communityRating: movies.communityRating,
           personalRating: userMovieData.personalRating,
           playbackPositionSeconds: userMovieData.playbackPositionSeconds,
+          currentDisc: userMovieData.currentDisc,
           runtimeMinutes: movies.runtimeMinutes,
           runtimeSeconds: movies.runtimeSeconds,
+          discCount: movies.discCount,
           videoWidth: movies.videoWidth,
           videoHeight: movies.videoHeight,
           isFavorite: userMovieData.isFavorite,
@@ -57,7 +59,8 @@ export async function GET(request: NextRequest) {
         )
         .where(
           and(
-            sql`${userMovieData.playbackPositionSeconds} > 0`,
+            // Include: has playback progress OR is on disc 2+ (between discs)
+            sql`(${userMovieData.playbackPositionSeconds} > 0 OR ${userMovieData.currentDisc} > 1)`,
             eq(userMovieData.isPlayed, false)
           )
         )
@@ -65,16 +68,55 @@ export async function GET(request: NextRequest) {
         .limit(cwLimit)
         .all();
 
+      // For multi-disc movies, fetch per-disc runtimes to calculate accurate progress
+      const multiDiscIds = results.filter((r) => (r.discCount ?? 1) > 1).map((r) => r.id);
+      const discRuntimeMap = new Map<string, { discNumber: number; runtimeSeconds: number | null }[]>();
+
+      if (multiDiscIds.length > 0) {
+        const discRows = db
+          .select({
+            movieId: movieDiscs.movieId,
+            discNumber: movieDiscs.discNumber,
+            runtimeSeconds: movieDiscs.runtimeSeconds,
+          })
+          .from(movieDiscs)
+          .where(sql`${movieDiscs.movieId} IN (${sql.join(multiDiscIds.map((id) => sql`${id}`), sql`, `)})`)
+          .orderBy(asc(movieDiscs.discNumber))
+          .all();
+
+        for (const row of discRows) {
+          if (!discRuntimeMap.has(row.movieId)) discRuntimeMap.set(row.movieId, []);
+          discRuntimeMap.get(row.movieId)!.push(row);
+        }
+      }
+
       return NextResponse.json(
         results.map((r) => {
-          const totalSeconds = r.runtimeSeconds || (r.runtimeMinutes ? r.runtimeMinutes * 60 : 0);
+          const isMultiDisc = (r.discCount ?? 1) > 1;
+          const curDisc = r.currentDisc ?? 1;
+          let progress = 0;
+
+          if (isMultiDisc) {
+            const discs = discRuntimeMap.get(r.id) || [];
+            const totalRuntime = discs.reduce((sum, d) => sum + (d.runtimeSeconds || 0), 0);
+            if (totalRuntime > 0) {
+              // Sum completed discs' runtimes + current position
+              const completedRuntime = discs
+                .filter((d) => d.discNumber < curDisc)
+                .reduce((sum, d) => sum + (d.runtimeSeconds || 0), 0);
+              progress = Math.min(100, Math.round(((completedRuntime + (r.playbackPositionSeconds || 0)) / totalRuntime) * 100));
+            }
+          } else {
+            const totalSeconds = r.runtimeSeconds || (r.runtimeMinutes ? r.runtimeMinutes * 60 : 0);
+            if (totalSeconds && r.playbackPositionSeconds) {
+              progress = Math.min(100, Math.round((r.playbackPositionSeconds / totalSeconds) * 100));
+            }
+          }
+
           return {
             ...r,
             posterPath: r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
-            progress:
-              totalSeconds && r.playbackPositionSeconds
-                ? Math.min(100, Math.round((r.playbackPositionSeconds / totalSeconds) * 100))
-                : 0,
+            progress,
           };
         })
       );
