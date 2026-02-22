@@ -91,6 +91,10 @@ const pending = [
   "UPDATE `media_libraries` SET `created_at` = datetime('now') WHERE `created_at` = '(datetime(''now''))'",
   "UPDATE `movies` SET `date_added` = datetime('now') WHERE `date_added` = '(datetime(''now''))'",
   "UPDATE `people` SET `date_added` = datetime('now') WHERE `date_added` = '(datetime(''now''))'",
+  // 0013: external player preferences
+  "ALTER TABLE `user_preferences` ADD `external_player_enabled` integer NOT NULL DEFAULT 0",
+  "ALTER TABLE `user_preferences` ADD `external_player_name` text",
+  "ALTER TABLE `user_preferences` ADD `external_player_path` text",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }
