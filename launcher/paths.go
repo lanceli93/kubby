@@ -35,6 +35,28 @@ func getExeDir() (string, error) {
 	return filepath.Dir(exe), nil
 }
 
+// getResourceDir returns the directory containing bundled resources
+// (node/, bin/, server/). On macOS .app bundles this is Contents/Resources/;
+// otherwise it falls back to the executable's own directory.
+func getResourceDir() (string, error) {
+	exeDir, err := getExeDir()
+	if err != nil {
+		return "", err
+	}
+
+	// Detect macOS .app bundle: exe is at Kubby.app/Contents/MacOS/kubby
+	// Resources would be at Kubby.app/Contents/Resources/
+	if runtime.GOOS == "darwin" {
+		resourceDir := filepath.Join(exeDir, "..", "Resources")
+		if info, err := os.Stat(resourceDir); err == nil && info.IsDir() {
+			return filepath.Clean(resourceDir), nil
+		}
+	}
+
+	// Flat layout: everything next to the executable
+	return exeDir, nil
+}
+
 // ensureDir creates a directory (and parents) if it doesn't exist.
 func ensureDir(dir string) error {
 	return os.MkdirAll(dir, 0755)

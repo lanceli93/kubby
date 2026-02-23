@@ -325,6 +325,75 @@ function buildLauncher(platform: Platform, outputDir: string) {
   console.log(`  Launcher built: ${cfg.launcherBin}`);
 }
 
+function createMacOSApp(platform: Platform, flatDir: string, distDir: string) {
+  if (!platform.startsWith("darwin")) return flatDir;
+
+  console.log("\n[6/7] Creating macOS .app bundle...");
+  const cfg = PLATFORMS[platform];
+
+  const appDir = path.join(distDir, "Kubby.app");
+  const contentsDir = path.join(appDir, "Contents");
+  const macosDir = path.join(contentsDir, "MacOS");
+  const resourcesDir = path.join(contentsDir, "Resources");
+
+  // Clean previous .app
+  if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true });
+
+  ensureDir(macosDir);
+  ensureDir(resourcesDir);
+
+  // Copy Info.plist
+  const plistSrc = path.join(PROJECT_ROOT, "launcher", "assets", "Info.plist");
+  fs.cpSync(plistSrc, path.join(contentsDir, "Info.plist"));
+
+  // Move launcher binary → Contents/MacOS/
+  const launcherSrc = path.join(flatDir, cfg.launcherBin);
+  const launcherDest = path.join(macosDir, cfg.launcherBin);
+  fs.renameSync(launcherSrc, launcherDest);
+
+  // Move resources → Contents/Resources/
+  for (const name of ["server", "node", "bin"]) {
+    const src = path.join(flatDir, name);
+    if (fs.existsSync(src)) {
+      fs.renameSync(src, path.join(resourcesDir, name));
+    }
+  }
+
+  // Generate a simple .icns icon (use sips to convert PNG → ICNS)
+  try {
+    const iconsetDir = path.join(distDir, "kubby.iconset");
+    ensureDir(iconsetDir);
+
+    // Generate a 512x512 PNG using the Go icon generator concept (simple blue circle with K)
+    // For now, create a minimal placeholder via sips if possible
+    const tempPng = path.join(distDir, "icon_512.png");
+    // Use the Go launcher's icon.go concept — create via ImageMagick or sips
+    // Fallback: just skip icon if no tools available
+    try {
+      // Try to create a simple icon with sips from a solid color
+      run(`sips -z 512 512 /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out "${tempPng}" 2>/dev/null || true`);
+      if (fs.existsSync(tempPng) && fs.statSync(tempPng).size > 0) {
+        // Create iconset with multiple sizes
+        for (const size of [16, 32, 128, 256, 512]) {
+          run(`sips -z ${size} ${size} "${tempPng}" --out "${iconsetDir}/icon_${size}x${size}.png" 2>/dev/null || true`);
+          run(`sips -z ${size * 2} ${size * 2} "${tempPng}" --out "${iconsetDir}/icon_${size}x${size}@2x.png" 2>/dev/null || true`);
+        }
+        run(`iconutil -c icns "${iconsetDir}" -o "${path.join(resourcesDir, "kubby.icns")}" 2>/dev/null || true`);
+      }
+    } catch { /* icon generation optional */ }
+
+    // Cleanup
+    if (fs.existsSync(iconsetDir)) fs.rmSync(iconsetDir, { recursive: true });
+    if (fs.existsSync(tempPng)) fs.unlinkSync(tempPng);
+  } catch { /* icon is optional */ }
+
+  // Remove the now-empty flat directory
+  try { fs.rmSync(flatDir, { recursive: true }); } catch { /* might not be empty */ }
+
+  console.log(`  Created: ${appDir}`);
+  return appDir;
+}
+
 function finalReport(outputDir: string) {
   console.log("\n[6/6] Package complete!");
   console.log(`  Output: ${outputDir}`);
@@ -401,15 +470,22 @@ async function main() {
   if (!skipBuild) {
     buildNextjs();
   } else {
-    console.log("\n[1/6] Skipping Next.js build (--skip-build)");
+    console.log("\n[1/7] Skipping Next.js build (--skip-build)");
   }
   assembleServer(outputDir);
   await downloadNode(platform, outputDir, skipDownload);
   await downloadFfprobe(platform, outputDir, skipDownload);
   buildLauncher(platform, outputDir);
-  finalReport(outputDir);
 
-  console.log(`\nDone! To test: cd ${outputDir} && ./${PLATFORMS[platform].launcherBin}`);
+  // Create .app bundle on macOS
+  const finalDir = createMacOSApp(platform, outputDir, DIST_DIR);
+  finalReport(finalDir);
+
+  if (platform.startsWith("darwin")) {
+    console.log(`\nDone! To test: open ${finalDir}`);
+  } else {
+    console.log(`\nDone! To test: cd ${finalDir} && ./${PLATFORMS[platform].launcherBin}`);
+  }
 }
 
 main().catch((e) => {

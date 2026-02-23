@@ -19,12 +19,12 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	log.Println("Kubby launcher starting...")
 
-	// 1. Resolve exe directory (where kubby binary + bundled files live)
-	exeDir, err := getExeDir()
+	// 1. Resolve resource directory (node/, server/, bin/)
+	resDir, err := getResourceDir()
 	if err != nil {
-		log.Fatalf("Failed to determine executable directory: %v", err)
+		log.Fatalf("Failed to determine resource directory: %v", err)
 	}
-	log.Printf("Executable directory: %s", exeDir)
+	log.Printf("Resource directory: %s", resDir)
 
 	// 2. Resolve & ensure data directory
 	dataDir := getDataDir()
@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// 6. Start Node.js server
-	server, err := StartServer(exeDir, dataDir, cfg.Port, authSecret)
+	server, err := StartServer(resDir, dataDir, cfg.Port, authSecret)
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
