@@ -69,6 +69,45 @@ Right-click the Kubby icon in the Dock → **Quit**, or click the tray icon in t
 | **Signed** (Developer ID, $99/year) | "From an identified developer" — user can click Open directly |
 | **Signed + Notarized** | No warning at all, same as App Store apps |
 
+## Installation (Windows)
+
+### 1. Download
+
+Download `KubbySetup.exe` from the [Releases](https://github.com/kubby-app/kubby/releases) page.
+
+### 2. Install
+
+1. Double-click `KubbySetup.exe`
+2. Follow the installer wizard (choose install location → Install)
+3. Check **Launch Kubby** on the finish page
+
+The installer creates Start Menu and Desktop shortcuts.
+
+### 3. First Launch
+
+Windows SmartScreen may show a warning for unsigned apps. Click **More info** → **Run anyway**.
+
+### What Happens on Launch
+
+- Kubby starts a local server at `http://localhost:3000`
+- Your browser opens automatically
+- The Kubby icon appears in the system tray (bottom-right)
+- Data is stored in `%LOCALAPPDATA%\Kubby\`
+
+### Quit
+
+Right-click the Kubby icon in the system tray → **Quit**. This stops all background processes (kubby.exe and node.exe).
+
+### Upgrade
+
+Run the new `KubbySetup.exe` — it automatically closes the running instance and overwrites the old installation. Your data is preserved.
+
+### Uninstall
+
+Control Panel → Programs and Features → Kubby → Uninstall. Or use the **Uninstall Kubby** shortcut in Start Menu.
+
+User data in `%LOCALAPPDATA%\Kubby\` is preserved. Delete it manually if you want a clean removal.
+
 ## Build from Source
 
 ### Prerequisites
@@ -77,20 +116,21 @@ Right-click the Kubby icon in the Dock → **Quit**, or click the tray icon in t
 - Go 1.22+
 - npm
 
-### Package for macOS
+### Package
 
 ```bash
 npm install
-npx tsx scripts/package.ts
+npx tsx scripts/package.ts                       # macOS → Kubby.dmg
+npx tsx scripts/package.ts --platform win-x64    # Windows → KubbySetup.exe
 ```
 
-This produces `dist/Kubby.dmg` (~93 MB) and `dist/Kubby.app`, containing:
+Each package (~80-90 MB) contains:
 - Go launcher (system tray + process management)
 - Node.js runtime
 - ffprobe binary
 - Next.js standalone server
 
-Add `--skip-build` to skip Next.js rebuild, `--skip-download` to reuse cached Node.js/ffprobe binaries.
+Add `--skip-build` to skip Next.js rebuild, `--skip-download` to reuse cached binaries. Windows can be cross-built from macOS (native modules are automatically swapped).
 
 ### Cross-platform Packaging
 
