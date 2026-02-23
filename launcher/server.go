@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -55,8 +54,11 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 		"AUTH_TRUST_HOST=true",
 		"NODE_ENV=production",
 	)
-	cmd.Stdout = io.MultiWriter(logFile, os.Stdout)
-	cmd.Stderr = io.MultiWriter(logFile, os.Stderr)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	// On Windows: hide the Node.js console window
+	hideConsoleWindow(cmd)
 
 	if err := cmd.Start(); err != nil {
 		logFile.Close()
