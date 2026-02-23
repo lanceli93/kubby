@@ -10,8 +10,140 @@ sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
 
 // Auto-apply schema migrations
+// Base tables are created IF NOT EXISTS so standalone mode works on a fresh DB.
+// ALTER TABLE statements use try/catch to skip when column already exists.
 const pending = [
-  // 0003: people metadata columns
+  // 0000: base tables (idempotent — only created if missing)
+  `CREATE TABLE IF NOT EXISTS \`users\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`username\` text NOT NULL UNIQUE,
+    \`password_hash\` text NOT NULL,
+    \`display_name\` text,
+    \`is_admin\` integer NOT NULL DEFAULT 0,
+    \`locale\` text DEFAULT 'en',
+    \`created_at\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`settings\` (
+    \`key\` text PRIMARY KEY NOT NULL,
+    \`value\` text NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`media_libraries\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`name\` text NOT NULL,
+    \`type\` text NOT NULL DEFAULT 'movie',
+    \`folder_path\` text NOT NULL,
+    \`scraper_enabled\` integer NOT NULL DEFAULT 0,
+    \`metadata_language\` text,
+    \`last_scanned_at\` text,
+    \`created_at\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`movies\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`title\` text NOT NULL,
+    \`original_title\` text,
+    \`sort_name\` text,
+    \`overview\` text,
+    \`tagline\` text,
+    \`file_path\` text NOT NULL,
+    \`folder_path\` text NOT NULL,
+    \`poster_path\` text,
+    \`fanart_path\` text,
+    \`nfo_path\` text,
+    \`community_rating\` real,
+    \`official_rating\` text,
+    \`runtime_minutes\` integer,
+    \`runtime_seconds\` integer,
+    \`premiere_date\` text,
+    \`year\` integer,
+    \`genres\` text,
+    \`studios\` text,
+    \`country\` text,
+    \`tmdb_id\` text,
+    \`imdb_id\` text,
+    \`video_codec\` text,
+    \`audio_codec\` text,
+    \`video_width\` integer,
+    \`video_height\` integer,
+    \`audio_channels\` integer,
+    \`container\` text,
+    \`total_bitrate\` integer,
+    \`file_size\` integer,
+    \`format_name\` text,
+    \`disc_count\` integer DEFAULT 1,
+    \`poster_mtime\` real,
+    \`fanart_mtime\` real,
+    \`poster_blur\` text,
+    \`tags\` text,
+    \`media_library_id\` text NOT NULL REFERENCES \`media_libraries\`(\`id\`) ON DELETE CASCADE,
+    \`date_added\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+  "CREATE INDEX IF NOT EXISTS `idx_movies_library` ON `movies` (`media_library_id`)",
+  "CREATE INDEX IF NOT EXISTS `idx_movies_year` ON `movies` (`year`)",
+  "CREATE INDEX IF NOT EXISTS `idx_movies_date_added` ON `movies` (`date_added`)",
+  `CREATE TABLE IF NOT EXISTS \`people\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`name\` text NOT NULL,
+    \`type\` text NOT NULL,
+    \`photo_path\` text,
+    \`photo_mtime\` real,
+    \`photo_blur\` text,
+    \`tmdb_id\` text,
+    \`overview\` text,
+    \`birth_date\` text,
+    \`birth_year\` integer,
+    \`place_of_birth\` text,
+    \`death_date\` text,
+    \`imdb_id\` text,
+    \`tags\` text,
+    \`date_added\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+  "CREATE INDEX IF NOT EXISTS `idx_people_name` ON `people` (`name`)",
+  `CREATE TABLE IF NOT EXISTS \`movie_people\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`movie_id\` text NOT NULL REFERENCES \`movies\`(\`id\`) ON DELETE CASCADE,
+    \`person_id\` text NOT NULL REFERENCES \`people\`(\`id\`) ON DELETE CASCADE,
+    \`role\` text,
+    \`sort_order\` integer
+  )`,
+  "CREATE INDEX IF NOT EXISTS `idx_mp_movie` ON `movie_people` (`movie_id`)",
+  "CREATE INDEX IF NOT EXISTS `idx_mp_person` ON `movie_people` (`person_id`)",
+  `CREATE TABLE IF NOT EXISTS \`user_movie_data\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+    \`movie_id\` text NOT NULL REFERENCES \`movies\`(\`id\`) ON DELETE CASCADE,
+    \`playback_position_seconds\` integer DEFAULT 0,
+    \`current_disc\` integer DEFAULT 1,
+    \`play_count\` integer DEFAULT 0,
+    \`is_played\` integer DEFAULT 0,
+    \`is_favorite\` integer DEFAULT 0,
+    \`personal_rating\` real,
+    \`dimension_ratings\` text,
+    \`last_played_at\` text
+  )`,
+  "CREATE UNIQUE INDEX IF NOT EXISTS `idx_umd_user_movie` ON `user_movie_data` (`user_id`, `movie_id`)",
+  `CREATE TABLE IF NOT EXISTS \`user_person_data\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+    \`person_id\` text NOT NULL REFERENCES \`people\`(\`id\`) ON DELETE CASCADE,
+    \`personal_rating\` real,
+    \`dimension_ratings\` text
+  )`,
+  "CREATE UNIQUE INDEX IF NOT EXISTS `idx_upd_user_person` ON `user_person_data` (`user_id`, `person_id`)",
+  `CREATE TABLE IF NOT EXISTS \`user_preferences\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE UNIQUE,
+    \`movie_rating_dimensions\` text,
+    \`person_rating_dimensions\` text,
+    \`show_movie_rating_badge\` integer NOT NULL DEFAULT 1,
+    \`show_person_tier_badge\` integer NOT NULL DEFAULT 1,
+    \`show_person_rating_badge\` integer NOT NULL DEFAULT 1,
+    \`show_resolution_badge\` integer NOT NULL DEFAULT 1,
+    \`external_player_enabled\` integer NOT NULL DEFAULT 0,
+    \`external_player_name\` text,
+    \`external_player_path\` text,
+    \`external_player_mode\` text DEFAULT 'local'
+  )`,
+  // 0003: people metadata columns (incremental — skipped if table already has these columns)
   "ALTER TABLE `people` ADD `overview` text",
   "ALTER TABLE `people` ADD `birth_date` text",
   "ALTER TABLE `people` ADD `birth_year` integer",
