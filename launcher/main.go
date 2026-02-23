@@ -43,9 +43,11 @@ func main() {
 	}
 	log.Printf("Port: %d", cfg.Port)
 
-	// 4. Check port availability
+	// 4. Check if already running — if so, just open browser and exit
 	if !IsPortAvailable(cfg.Port) {
-		log.Fatalf("Port %d is already in use. Edit config.json in %s to change the port.", cfg.Port, dataDir)
+		log.Printf("Port %d already in use — Kubby is likely running. Opening browser.", cfg.Port)
+		_ = openBrowser(serverURL(cfg.Port))
+		return
 	}
 
 	// 5. Load or generate AUTH_SECRET

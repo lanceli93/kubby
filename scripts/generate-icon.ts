@@ -72,14 +72,21 @@ async function main() {
   }
   fs.rmSync(iconsetDir, { recursive: true });
 
-  // 4. Generate 32px tray icon (white on transparent for menu bar)
-  const traySvg = `<svg width="32" height="32" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  // 4. Generate tray icons
+  // macOS: white on transparent (menu bar is light or dark)
+  const trayMacSvg = `<svg width="32" height="32" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
   <rect x="2" y="2" width="24" height="24" rx="6" fill="none" stroke="white" stroke-width="2.2"/>
   <path d="M10 8v12M10 14l8-6M10 14l8 6" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>`;
-  const trayPng = await sharp(Buffer.from(traySvg)).resize(32, 32).png().toBuffer();
-  fs.writeFileSync(path.join(OUTPUT_DIR, "tray_icon.png"), trayPng);
-  console.log(`Generated: tray_icon.png`);
+  const trayMacPng = await sharp(Buffer.from(trayMacSvg)).resize(32, 32).png().toBuffer();
+  fs.writeFileSync(path.join(OUTPUT_DIR, "tray_icon.png"), trayMacPng);
+  console.log(`Generated: tray_icon.png (macOS)`);
+
+  // Windows: full-color icon (blue K on dark background, visible on any taskbar)
+  const trayWinSvg = kubbyLogoSVG(64);
+  const trayWinPng = await sharp(Buffer.from(trayWinSvg)).resize(64, 64).png().toBuffer();
+  fs.writeFileSync(path.join(OUTPUT_DIR, "tray_icon_win.png"), trayWinPng);
+  console.log(`Generated: tray_icon_win.png (Windows)`);
 }
 
 main().catch((e) => {

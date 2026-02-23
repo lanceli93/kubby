@@ -23,9 +23,9 @@ func onReady(app *TrayApp) {
 	systray.SetTitle("Kubby")
 	systray.SetTooltip(fmt.Sprintf("Kubby — localhost:%d", app.port))
 
-	// Try to load icon from embedded bytes; skip if not available
-	if len(iconData) > 0 {
-		systray.SetIcon(iconData)
+	// Set platform-appropriate tray icon
+	if icon := trayIcon(); len(icon) > 0 {
+		systray.SetIcon(icon)
 	}
 
 	mOpen := systray.AddMenuItem("Open Kubby", "Open in browser")
