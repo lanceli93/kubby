@@ -1,0 +1,13 @@
+node_modules
+.next
+dist
+.download-cache
+.git
+*.md
+launcher
+installer
+scripts/package.ts
+scripts/generate-icon.ts
+web-design.pen
+kubby.db
+data/*.db*

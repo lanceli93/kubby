@@ -108,6 +108,60 @@ Control Panel → Programs and Features → Kubby → Uninstall. Or use the **Un
 
 User data in `%LOCALAPPDATA%\Kubby\` is preserved. Delete it manually if you want a clean removal.
 
+## Installation (Docker / Linux / NAS)
+
+Supports **amd64** and **arm64** — works on Synology, QNAP, Unraid, and any Linux server.
+
+### Docker Compose (recommended)
+
+Create a `docker-compose.yml`:
+
+```yaml
+services:
+  kubby:
+    image: ghcr.io/kubby-app/kubby:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - kubby-data:/data
+      - /path/to/your/movies:/media:ro
+    restart: unless-stopped
+
+volumes:
+  kubby-data:
+```
+
+```bash
+docker compose up -d
+```
+
+Open `http://<your-server-ip>:3000`.
+
+### Docker CLI
+
+```bash
+docker run -d \
+  --name kubby \
+  -p 3000:3000 \
+  -v kubby-data:/data \
+  -v /path/to/your/movies:/media:ro \
+  --restart unless-stopped \
+  ghcr.io/kubby-app/kubby:latest
+```
+
+### Data & Volumes
+
+| Mount | Purpose |
+|-------|---------|
+| `/data` | Database, config, logs, metadata (persist this!) |
+| `/media` | Your media library folders (read-only is fine) |
+
+### Update
+
+```bash
+docker compose pull && docker compose up -d
+```
+
 ## Build from Source
 
 ### Prerequisites
