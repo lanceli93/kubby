@@ -564,6 +564,34 @@ function createDMG(appDir: string, distDir: string) {
   fs.rmSync(dmgStaging, { recursive: true });
 }
 
+function createWindowsInstaller(flatDir: string, distDir: string) {
+  console.log("\n[6/6] Creating Windows installer (NSIS)...");
+
+  const nsiScript = path.join(PROJECT_ROOT, "installer", "windows", "kubby.nsi");
+  if (!fs.existsSync(nsiScript)) {
+    console.warn("  NSIS script not found, skipping installer creation");
+    return;
+  }
+
+  // Check makensis is available
+  try {
+    execSync("which makensis", { stdio: "ignore" });
+  } catch {
+    console.warn("  makensis not found. Install via: brew install nsis");
+    return;
+  }
+
+  // Run makensis from project root; INPUTDIR points to the flat build dir
+  // -NOCD prevents makensis from changing to the .nsi file's directory
+  const relFlatDir = path.relative(PROJECT_ROOT, flatDir);
+  run(`makensis -NOCD -DINPUTDIR="${relFlatDir}" "${path.relative(PROJECT_ROOT, nsiScript)}"`);
+
+  const exePath = path.join(distDir, "KubbySetup.exe");
+  if (fs.existsSync(exePath)) {
+    console.log(`  Created: ${exePath} (${(fs.statSync(exePath).size / 1024 / 1024).toFixed(1)} MB)`);
+  }
+}
+
 function finalReport(outputDir: string) {
   console.log("\n[6/6] Package complete!");
   console.log(`  Output: ${outputDir}`);
@@ -648,22 +676,25 @@ async function main() {
   await downloadFfprobe(platform, outputDir, skipDownload);
   buildLauncher(platform, outputDir);
 
-  // Create .app bundle + DMG on macOS
-  const finalDir = createMacOSApp(platform, outputDir, DIST_DIR);
+  // Platform-specific installer
+  let finalDir = outputDir;
   if (platform.startsWith("darwin")) {
+    finalDir = createMacOSApp(platform, outputDir, DIST_DIR);
     createDMG(finalDir, DIST_DIR);
+  } else if (platform === "win-x64") {
+    createWindowsInstaller(outputDir, DIST_DIR);
   }
-  finalReport(finalDir);
+  finalReport(platform.startsWith("darwin") ? finalDir : outputDir);
 
+  // Print final output path
   if (platform.startsWith("darwin")) {
     const dmgPath = path.join(DIST_DIR, "Kubby.dmg");
-    if (fs.existsSync(dmgPath)) {
-      console.log(`\nDone! Distribute: ${dmgPath}`);
-    } else {
-      console.log(`\nDone! To test: open ${finalDir}`);
-    }
+    console.log(`\nDone! Distribute: ${fs.existsSync(dmgPath) ? dmgPath : finalDir}`);
+  } else if (platform === "win-x64") {
+    const exePath = path.join(DIST_DIR, "KubbySetup.exe");
+    console.log(`\nDone! Distribute: ${fs.existsSync(exePath) ? exePath : outputDir}`);
   } else {
-    console.log(`\nDone! To test: cd ${finalDir} && ./${PLATFORMS[platform].launcherBin}`);
+    console.log(`\nDone! To test: cd ${outputDir} && ./${PLATFORMS[platform].launcherBin}`);
   }
 }
 
