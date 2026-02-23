@@ -1,6 +1,6 @@
 /**
- * Generate Kubby app icon as a 1024x1024 PNG, then convert to .icns via iconutil.
- * Uses sharp to create a blue circle with a white "K" letter.
+ * Generate Kubby app icon matching the header logo (rounded square + K strokes).
+ * Outputs .icns (macOS), 1024px PNG, and 32px tray PNG.
  *
  * Usage: npx tsx scripts/generate-icon.ts [output-dir]
  */
@@ -13,60 +13,64 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = process.argv[2] || path.resolve(__dirname, "..", "launcher", "assets");
 
-async function createIconPNG(size: number): Promise<Buffer> {
-  const sharp = (await import("sharp")).default;
+function kubbyLogoSVG(size: number): string {
+  // Matches the KubbyLogo component in app-header.tsx:
+  //   rounded square frame + K letter strokes
+  // Scaled from viewBox 28x28 to target size with padding
+  const padding = size * 0.08;
+  const inner = size - padding * 2;
 
-  // Create SVG with a rounded square background and "K" letter
-  const svg = `
-<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+  // Map original 28x28 coordinates to the target canvas
+  const s = (v: number) => padding + (v / 28) * inner;
+  const sw = (v: number) => (v / 28) * inner;
+
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4F6AFF"/>
-      <stop offset="100%" style="stop-color:#3B45CC"/>
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
     </linearGradient>
   </defs>
-  <rect width="${size}" height="${size}" rx="${size * 0.22}" ry="${size * 0.22}" fill="url(#bg)"/>
-  <text
-    x="50%" y="54%"
-    text-anchor="middle"
-    dominant-baseline="central"
-    font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
-    font-weight="700"
-    font-size="${size * 0.55}"
-    fill="white"
-    letter-spacing="-${size * 0.02}"
-  >K</text>
+  <!-- Dark background with rounded corners (macOS icon shape) -->
+  <rect width="${size}" height="${size}" rx="${size * 0.22}" fill="url(#bg)"/>
+  <!-- Rounded square frame -->
+  <rect x="${s(2)}" y="${s(2)}" width="${sw(24)}" height="${sw(24)}" rx="${sw(6)}"
+        fill="none" stroke="#3b82f6" stroke-width="${sw(2.5)}"/>
+  <!-- Letter K -->
+  <path d="M${s(10)} ${s(8)}v${sw(12)}M${s(10)} ${s(14)}l${sw(8)} ${sw(-6)}M${s(10)} ${s(14)}l${sw(8)} ${sw(6)}"
+        stroke="#3b82f6" stroke-width="${sw(2.8)}"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>`;
-
-  return sharp(Buffer.from(svg)).resize(size, size).png().toBuffer();
 }
 
 async function main() {
+  const sharp = (await import("sharp")).default;
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  // Generate 1024px master icon
-  const masterPng = await createIconPNG(1024);
+  // 1. Generate 1024px master
+  const svg1024 = kubbyLogoSVG(1024);
+  const masterPng = await sharp(Buffer.from(svg1024)).resize(1024, 1024).png().toBuffer();
   const masterPath = path.join(OUTPUT_DIR, "icon_1024.png");
   fs.writeFileSync(masterPath, masterPng);
   console.log(`Generated: ${masterPath}`);
 
-  // Create .iconset directory for macOS
+  // 2. Generate .iconset for macOS
   const iconsetDir = path.join(OUTPUT_DIR, "kubby.iconset");
   if (fs.existsSync(iconsetDir)) fs.rmSync(iconsetDir, { recursive: true });
   fs.mkdirSync(iconsetDir, { recursive: true });
 
-  const sharp = (await import("sharp")).default;
-  const sizes = [16, 32, 128, 256, 512];
-  for (const s of sizes) {
-    // 1x
-    const buf1x = await sharp(masterPng).resize(s, s).png().toBuffer();
-    fs.writeFileSync(path.join(iconsetDir, `icon_${s}x${s}.png`), buf1x);
-    // 2x
-    const buf2x = await sharp(masterPng).resize(s * 2, s * 2).png().toBuffer();
-    fs.writeFileSync(path.join(iconsetDir, `icon_${s}x${s}@2x.png`), buf2x);
+  for (const s of [16, 32, 128, 256, 512]) {
+    fs.writeFileSync(
+      path.join(iconsetDir, `icon_${s}x${s}.png`),
+      await sharp(masterPng).resize(s, s).png().toBuffer()
+    );
+    fs.writeFileSync(
+      path.join(iconsetDir, `icon_${s}x${s}@2x.png`),
+      await sharp(masterPng).resize(s * 2, s * 2).png().toBuffer()
+    );
   }
 
-  // Convert to .icns
+  // 3. Convert to .icns
   const icnsPath = path.join(OUTPUT_DIR, "kubby.icns");
   try {
     execSync(`iconutil -c icns "${iconsetDir}" -o "${icnsPath}"`, { stdio: "inherit" });
@@ -74,15 +78,16 @@ async function main() {
   } catch {
     console.error("iconutil failed — .icns not created (macOS only)");
   }
-
-  // Cleanup iconset
   fs.rmSync(iconsetDir, { recursive: true });
 
-  // Also generate a 32x32 PNG for the system tray
-  const trayPng = await createIconPNG(32);
-  const trayPath = path.join(OUTPUT_DIR, "tray_icon.png");
-  fs.writeFileSync(trayPath, trayPng);
-  console.log(`Generated: ${trayPath}`);
+  // 4. Generate 32px tray icon (white on transparent for menu bar)
+  const traySvg = `<svg width="32" height="32" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="24" height="24" rx="6" fill="none" stroke="white" stroke-width="2.2"/>
+  <path d="M10 8v12M10 14l8-6M10 14l8 6" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>`;
+  const trayPng = await sharp(Buffer.from(traySvg)).resize(32, 32).png().toBuffer();
+  fs.writeFileSync(path.join(OUTPUT_DIR, "tray_icon.png"), trayPng);
+  console.log(`Generated: tray_icon.png`);
 }
 
 main().catch((e) => {
