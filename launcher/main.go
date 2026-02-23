@@ -41,7 +41,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
-	log.Printf("Port: %d", cfg.Port)
+	// Derive hostname from config
+	hostname := "127.0.0.1"
+	if cfg.AllowRemoteAccess {
+		hostname = "0.0.0.0"
+	}
+	log.Printf("Port: %d, Hostname: %s (remote access: %v)", cfg.Port, hostname, cfg.AllowRemoteAccess)
 
 	// 4. Single-instance check via lock file
 	lockHandle, acquired := tryAcquireLock(dataDir)
@@ -59,7 +64,7 @@ func main() {
 	}
 
 	// 6. Start Node.js server
-	server, err := StartServer(resDir, dataDir, cfg.Port, authSecret)
+	server, err := StartServer(resDir, dataDir, cfg.Port, hostname, authSecret)
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -83,8 +88,9 @@ func main() {
 		runHeadless(server)
 	} else {
 		RunTray(&TrayApp{
-			port:   cfg.Port,
-			server: server,
+			port:     cfg.Port,
+			hostname: hostname,
+			server:   server,
 		})
 	}
 

@@ -22,7 +22,7 @@ type Server struct {
 }
 
 // StartServer launches the Node.js process with the appropriate environment.
-func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, error) {
+func StartServer(exeDir, dataDir string, port int, hostname string, authSecret string) (*Server, error) {
 	// Resolve paths to bundled Node.js and server.js
 	nodeBin := resolveNodeBin(exeDir)
 	serverJS := filepath.Join(exeDir, "server", "server.js")
@@ -47,7 +47,7 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 	cmd.Dir = filepath.Join(exeDir, "server")
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("PORT=%d", port),
-		fmt.Sprintf("HOSTNAME=%s", "0.0.0.0"),
+		fmt.Sprintf("HOSTNAME=%s", hostname),
 		fmt.Sprintf("KUBBY_DATA_DIR=%s", dataDir),
 		fmt.Sprintf("FFPROBE_PATH=%s", ffprobeBin),
 		fmt.Sprintf("AUTH_SECRET=%s", authSecret),
@@ -65,7 +65,7 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 		return nil, fmt.Errorf("start node: %w", err)
 	}
 
-	log.Printf("Node.js server started (PID %d) on port %d", cmd.Process.Pid, port)
+	log.Printf("Node.js server started (PID %d) on %s:%d", cmd.Process.Pid, hostname, port)
 
 	s := &Server{cmd: cmd}
 

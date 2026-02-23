@@ -161,7 +161,16 @@
     "enableScraper": "Enable metadata scraper",
     "scraperApiKeyMissing": "TMDB API key not configured",
     "configureApiKey": "Configure",
-    "scraping": "Scraping metadata..."
+    "scraping": "Scraping metadata...",
+    "networking": "Networking",
+    "networkingServerSettings": "Server Settings",
+    "networkingCurrentlyListening": "Currently listening on",
+    "networkingPort": "Port",
+    "networkingPortHelp": "Port number (1024–65535). Requires restart to take effect.",
+    "networkingAllowRemoteAccess": "Allow Remote Access",
+    "networkingAllowRemoteAccessHelp": "Listen on all network interfaces (0.0.0.0) instead of localhost only. Requires restart.",
+    "networkingRestartRequired": "Settings have been saved but require an app restart to take effect.",
+    "networkingDockerMode": "Running in Docker mode. Networking is configured via environment variables (PORT, HOSTNAME)."
   },
   "movies": {
     "movies": "Movies",
