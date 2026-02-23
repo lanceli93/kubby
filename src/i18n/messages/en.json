@@ -348,6 +348,7 @@
     "saved": "Settings saved",
     "failedToSave": "Failed to save settings",
     "maxDimensions": "Maximum 10 dimensions",
+    "maxDimensionLength": "Maximum {max} characters per dimension name",
     "overall": "Overall"
   },
   "mediaInfoDialog": {

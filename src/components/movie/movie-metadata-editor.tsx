@@ -548,7 +548,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                 {/* Per-dimension inputs */}
                 {movieDimensions.map((dim) => (
                   <div key={dim} className="space-y-2">
-                    <Label>{dim}</Label>
+                    <Label className="block truncate max-w-[12rem]" title={dim}>{dim}</Label>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-0.5">
                         {[0, 1, 2, 3, 4].map((starIndex) => {

@@ -38,12 +38,15 @@ export default function PersonalMetadataPage() {
     }
   }, [prefs]);
 
+  const MAX_DIM_LENGTH = 20;
+
   const handleMovieDimKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && movieInput.trim()) {
       e.preventDefault();
       if (movieDims.length >= 10) return;
-      if (!movieDims.includes(movieInput.trim())) {
-        setMovieDims((d) => [...d, movieInput.trim()]);
+      const trimmed = movieInput.trim().slice(0, MAX_DIM_LENGTH);
+      if (!movieDims.includes(trimmed)) {
+        setMovieDims((d) => [...d, trimmed]);
       }
       setMovieInput("");
     }
@@ -53,8 +56,9 @@ export default function PersonalMetadataPage() {
     if (e.key === "Enter" && personInput.trim()) {
       e.preventDefault();
       if (personDims.length >= 10) return;
-      if (!personDims.includes(personInput.trim())) {
-        setPersonDims((d) => [...d, personInput.trim()]);
+      const trimmed = personInput.trim().slice(0, MAX_DIM_LENGTH);
+      if (!personDims.includes(trimmed)) {
+        setPersonDims((d) => [...d, trimmed]);
       }
       setPersonInput("");
     }
@@ -119,6 +123,7 @@ export default function PersonalMetadataPage() {
           onChange={(e) => setMovieInput(e.target.value)}
           onKeyDown={handleMovieDimKeyDown}
           placeholder={t("addDimensionPlaceholder")}
+          maxLength={MAX_DIM_LENGTH}
           disabled={movieDims.length >= 10}
           className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
         />
@@ -157,6 +162,7 @@ export default function PersonalMetadataPage() {
           onChange={(e) => setPersonInput(e.target.value)}
           onKeyDown={handlePersonDimKeyDown}
           placeholder={t("addDimensionPlaceholder")}
+          maxLength={MAX_DIM_LENGTH}
           disabled={personDims.length >= 10}
           className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
         />

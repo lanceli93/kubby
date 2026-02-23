@@ -348,6 +348,7 @@
     "saved": "设置已保存",
     "failedToSave": "保存设置失败",
     "maxDimensions": "最多 10 个维度",
+    "maxDimensionLength": "每个维度名称最多 {max} 个字符",
     "overall": "综合"
   },
   "mediaInfoDialog": {

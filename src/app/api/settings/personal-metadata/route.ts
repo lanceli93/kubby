@@ -84,6 +84,13 @@ export async function PUT(request: NextRequest) {
     if (body.personRatingDimensions?.length > 10) {
       return NextResponse.json({ error: "Maximum 10 person rating dimensions" }, { status: 400 });
     }
+    const MAX_DIM_LENGTH = 20;
+    if (body.movieRatingDimensions?.some((d: string) => typeof d !== "string" || d.length > MAX_DIM_LENGTH)) {
+      return NextResponse.json({ error: `Dimension name must be at most ${MAX_DIM_LENGTH} characters` }, { status: 400 });
+    }
+    if (body.personRatingDimensions?.some((d: string) => typeof d !== "string" || d.length > MAX_DIM_LENGTH)) {
+      return NextResponse.json({ error: `Dimension name must be at most ${MAX_DIM_LENGTH} characters` }, { status: 400 });
+    }
 
     const existing = db
       .select()

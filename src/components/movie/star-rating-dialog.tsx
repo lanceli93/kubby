@@ -209,7 +209,7 @@ export function StarRatingDialog({
               <div className="flex flex-col gap-3">
                 {dimensions.map((dim) => (
                   <div key={dim} className="flex items-center gap-3">
-                    <span className="min-w-[4rem] text-sm text-white/70 truncate">{dim}</span>
+                    <span className="w-[5rem] shrink-0 text-sm text-white/70 truncate" title={dim}>{dim}</span>
                     <StarRow
                       rating={dimRatings[dim] ?? null}
                       hoverRating={dimHovers[dim] ?? null}
