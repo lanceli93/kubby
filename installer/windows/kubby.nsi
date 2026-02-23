@@ -49,9 +49,9 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 
 ; ─── Close Running Instance ──────────────────────────────
 Function .onInit
-  ; Kill running Kubby process before install/upgrade
-  nsExec::ExecToLog 'taskkill /F /IM kubby.exe'
-  Sleep 1000
+  ; Kill running Kubby + child node.exe process tree before install/upgrade
+  nsExec::ExecToLog 'taskkill /F /T /IM kubby.exe'
+  Sleep 2000
 FunctionEnd
 
 ; ─── Installer Section ──────────────────────────────────
@@ -104,7 +104,7 @@ SectionEnd
 
 ; ─── Close Running Instance Before Uninstall ─────────────
 Function un.onInit
-  nsExec::ExecToLog 'taskkill /F /IM kubby.exe'
+  nsExec::ExecToLog 'taskkill /F /T /IM kubby.exe'
   Sleep 2000
 FunctionEnd
 
