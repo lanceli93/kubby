@@ -36,6 +36,9 @@ export function SetupWizard() {
     setSelectedLocale(locale);
     await setLocale(locale);
     router.refresh();
+  }
+
+  function handleLanguageNext() {
     setStep(2);
   }
 
@@ -131,8 +134,8 @@ export function SetupWizard() {
                   : "border-white/[0.06] bg-[#0f0f1a] hover:border-white/[0.12]"
               }`}
             >
-              <span className="text-2xl font-bold text-primary">EN</span>
-              <span className="text-[15px] font-semibold text-foreground">
+              <span className={`text-2xl font-bold ${selectedLocale === "en" ? "text-primary" : "text-muted-foreground"}`}>EN</span>
+              <span className={`text-[15px] ${selectedLocale === "en" ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                 English
               </span>
             </button>
@@ -144,12 +147,17 @@ export function SetupWizard() {
                   : "border-white/[0.06] bg-[#0f0f1a] hover:border-white/[0.12]"
               }`}
             >
-              <span className="text-2xl font-bold text-muted-foreground">
-                中
-              </span>
-              <span className="text-[15px] text-muted-foreground">中文</span>
+              <span className={`text-2xl font-bold ${selectedLocale === "zh" ? "text-primary" : "text-muted-foreground"}`}>中</span>
+              <span className={`text-[15px] ${selectedLocale === "zh" ? "font-semibold text-foreground" : "text-muted-foreground"}`}>中文</span>
             </button>
           </div>
+
+          <button
+            onClick={handleLanguageNext}
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            {tc("next")}
+          </button>
 
           <ProgressDots current={1} />
         </div>
