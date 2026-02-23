@@ -9,10 +9,9 @@ import (
 
 // TrayApp holds references needed by the system tray.
 type TrayApp struct {
-	port     int
-	hostname string
-	server   *Server
-	onQuit   func()
+	port   int
+	server *Server
+	onQuit func()
 }
 
 // RunTray starts the system tray and blocks until Quit is clicked.
@@ -22,7 +21,7 @@ func RunTray(app *TrayApp) {
 
 func onReady(app *TrayApp) {
 	systray.SetTitle("Kubby")
-	systray.SetTooltip(fmt.Sprintf("Kubby — %s:%d", app.hostname, app.port))
+	systray.SetTooltip(fmt.Sprintf("Kubby — localhost:%d", app.port))
 
 	// Set platform-appropriate tray icon
 	if icon := trayIcon(); len(icon) > 0 {

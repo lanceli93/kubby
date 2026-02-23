@@ -8,8 +8,7 @@ import (
 
 // Config holds user-configurable settings persisted in config.json.
 type Config struct {
-	Port              int  `json:"port"`
-	AllowRemoteAccess bool `json:"allowRemoteAccess"`
+	Port int `json:"port"`
 }
 
 const defaultPort = 3000
