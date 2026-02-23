@@ -43,12 +43,14 @@ func main() {
 	}
 	log.Printf("Port: %d", cfg.Port)
 
-	// 4. Check if already running — if so, just open browser and exit
-	if !IsPortAvailable(cfg.Port) {
-		log.Printf("Port %d already in use — Kubby is likely running. Opening browser.", cfg.Port)
+	// 4. Single-instance check via lock file
+	lockHandle, acquired := tryAcquireLock(dataDir)
+	if !acquired {
+		log.Printf("Another Kubby instance is running. Opening browser.")
 		_ = openBrowser(serverURL(cfg.Port))
 		return
 	}
+	defer releaseLock(lockHandle, dataDir)
 
 	// 5. Load or generate AUTH_SECRET
 	authSecret, err := loadOrCreateSecret(dataDir)

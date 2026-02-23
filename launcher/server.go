@@ -123,7 +123,9 @@ func (s *Server) Stop() {
 	// Try graceful shutdown first
 	if runtime.GOOS == "windows" {
 		// Windows: taskkill /T kills the entire process tree (node + workers)
-		_ = exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", s.cmd.Process.Pid)).Run()
+		killCmd := exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprintf("%d", s.cmd.Process.Pid))
+		hideConsoleWindow(killCmd)
+		_ = killCmd.Run()
 	} else {
 		_ = s.cmd.Process.Signal(os.Interrupt)
 	}
