@@ -374,6 +374,39 @@ function createMacOSApp(platform: Platform, flatDir: string, distDir: string) {
   return appDir;
 }
 
+function createDMG(appDir: string, distDir: string) {
+  if (!appDir.endsWith(".app")) return;
+
+  console.log("\n[7/7] Creating DMG installer...");
+
+  const dmgPath = path.join(distDir, "Kubby.dmg");
+  if (fs.existsSync(dmgPath)) fs.unlinkSync(dmgPath);
+
+  // Create a temporary directory for DMG contents
+  const dmgStaging = path.join(distDir, ".dmg-staging");
+  if (fs.existsSync(dmgStaging)) fs.rmSync(dmgStaging, { recursive: true });
+  ensureDir(dmgStaging);
+
+  // Copy .app into staging
+  copyDirRecursive(appDir, path.join(dmgStaging, "Kubby.app"));
+
+  // Create a symlink to /Applications (the drag-to-install target)
+  fs.symlinkSync("/Applications", path.join(dmgStaging, "Applications"));
+
+  // Create DMG using hdiutil
+  try {
+    run(
+      `hdiutil create -volname "Kubby" -srcfolder "${dmgStaging}" -ov -format UDZO "${dmgPath}"`,
+    );
+    console.log(`  Created: ${dmgPath} (${(fs.statSync(dmgPath).size / 1024 / 1024).toFixed(1)} MB)`);
+  } catch (e) {
+    console.error("  DMG creation failed:", e);
+  }
+
+  // Cleanup staging
+  fs.rmSync(dmgStaging, { recursive: true });
+}
+
 function finalReport(outputDir: string) {
   console.log("\n[6/6] Package complete!");
   console.log(`  Output: ${outputDir}`);
@@ -457,12 +490,20 @@ async function main() {
   await downloadFfprobe(platform, outputDir, skipDownload);
   buildLauncher(platform, outputDir);
 
-  // Create .app bundle on macOS
+  // Create .app bundle + DMG on macOS
   const finalDir = createMacOSApp(platform, outputDir, DIST_DIR);
+  if (platform.startsWith("darwin")) {
+    createDMG(finalDir, DIST_DIR);
+  }
   finalReport(finalDir);
 
   if (platform.startsWith("darwin")) {
-    console.log(`\nDone! To test: open ${finalDir}`);
+    const dmgPath = path.join(DIST_DIR, "Kubby.dmg");
+    if (fs.existsSync(dmgPath)) {
+      console.log(`\nDone! Distribute: ${dmgPath}`);
+    } else {
+      console.log(`\nDone! To test: open ${finalDir}`);
+    }
   } else {
     console.log(`\nDone! To test: cd ${finalDir} && ./${PLATFORMS[platform].launcherBin}`);
   }
