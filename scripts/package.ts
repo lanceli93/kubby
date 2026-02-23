@@ -329,10 +329,27 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
       execSync(`tar xzf "${prebuildCache}" -C "${extractDir}"`, { stdio: "ignore" });
       // The prebuild tarball contains build/Release/better_sqlite3.node
       const srcNode = path.join(extractDir, "build", "Release", "better_sqlite3.node");
-      const destNode = path.join(bs3Dir, "build", "Release", "better_sqlite3.node");
       if (fs.existsSync(srcNode)) {
+        // Replace in top-level node_modules
+        const destNode = path.join(bs3Dir, "build", "Release", "better_sqlite3.node");
         ensureDir(path.dirname(destNode));
         fs.cpSync(srcNode, destNode);
+
+        // Also replace in .next/node_modules/ (Next.js standalone copies native modules there too)
+        const dotNextNodeModules = path.join(serverNodeModules, "..", ".next", "node_modules");
+        if (fs.existsSync(dotNextNodeModules)) {
+          const entries = fs.readdirSync(dotNextNodeModules);
+          for (const entry of entries) {
+            if (entry.startsWith("better-sqlite3")) {
+              const innerNode = path.join(dotNextNodeModules, entry, "build", "Release", "better_sqlite3.node");
+              if (fs.existsSync(innerNode)) {
+                fs.cpSync(srcNode, innerNode);
+                console.log(`  Replaced .next/node_modules/${entry} binary`);
+              }
+            }
+          }
+        }
+
         console.log(`  Replaced better-sqlite3 binary (${native.npm})`);
       }
       fs.rmSync(extractDir, { recursive: true });

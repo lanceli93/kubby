@@ -47,6 +47,13 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 ; ─── Language ───────────────────────────────────────────
 !insertmacro MUI_LANGUAGE "English"
 
+; ─── Close Running Instance ──────────────────────────────
+Function .onInit
+  ; Kill running Kubby process before install/upgrade
+  nsExec::ExecToLog 'taskkill /F /IM kubby.exe'
+  Sleep 1000
+FunctionEnd
+
 ; ─── Installer Section ──────────────────────────────────
 Section "Install"
   SetOutPath "$INSTDIR"
