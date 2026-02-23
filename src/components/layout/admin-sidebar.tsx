@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Folder, Users, Search } from "lucide-react";
+import { LayoutDashboard, Folder, Users, Search, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export function AdminSidebar() {
@@ -14,6 +14,7 @@ export function AdminSidebar() {
     { label: t("mediaLibraries"), href: "/dashboard/libraries", icon: Folder },
     { label: t("users"), href: "/dashboard/users", icon: Users },
     { label: t("scraperSettings"), href: "/dashboard/scraper", icon: Search },
+    { label: t("networking"), href: "/dashboard/networking", icon: Globe },
   ];
 
   return (

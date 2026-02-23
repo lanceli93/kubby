@@ -161,7 +161,14 @@
     "enableScraper": "启用元数据刮削",
     "scraperApiKeyMissing": "未配置 TMDB API 密钥",
     "configureApiKey": "去配置",
-    "scraping": "正在刮削元数据..."
+    "scraping": "正在刮削元数据...",
+    "networking": "网络",
+    "networkingServerSettings": "服务器设置",
+    "networkingCurrentlyListening": "当前监听地址",
+    "networkingPort": "端口",
+    "networkingPortHelp": "端口号（1024–65535）。修改后需重启应用生效。",
+    "networkingRestartRequired": "设置已保存，需要重启应用才能生效。",
+    "networkingDockerMode": "当前运行在 Docker 模式。网络设置通过环境变量（PORT、HOSTNAME）配置。"
   },
   "movies": {
     "movies": "电影",
