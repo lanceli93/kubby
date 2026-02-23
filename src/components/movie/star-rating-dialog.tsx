@@ -135,9 +135,10 @@ export function StarRatingDialog({
     }
   }, [open, value, hasDimensions, initialDimensionRatings]);
 
-  // Compute average from dimension ratings
+  // Compute average from dimension ratings (only current dimensions)
   const computeAverage = (ratings: Record<string, number>): number | null => {
-    const values = Object.values(ratings).filter((v) => v > 0);
+    if (!dimensions || dimensions.length === 0) return null;
+    const values = dimensions.map((d) => ratings[d]).filter((v) => v != null && v > 0);
     if (values.length === 0) return null;
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     return Math.round(avg * 10) / 10;
@@ -182,8 +183,13 @@ export function StarRatingDialog({
 
   const handleSave = () => {
     if (hasDimensions) {
-      const avg = computeAverage(dimRatings);
-      onSave(avg, dimRatings);
+      // Only save ratings for current dimensions, discard stale keys
+      const cleanRatings: Record<string, number> = {};
+      for (const dim of dimensions!) {
+        if (dimRatings[dim] != null) cleanRatings[dim] = dimRatings[dim];
+      }
+      const avg = computeAverage(cleanRatings);
+      onSave(avg, cleanRatings);
     } else {
       onSave(rating);
     }

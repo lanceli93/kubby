@@ -116,13 +116,18 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     let dimRatingsToSend: Record<string, number> | null = null;
 
     if (personDimensions.length > 0) {
-      const values = Object.values(dimensionRatings).filter((v) => v > 0);
+      // Only use current dimensions, discard stale keys
+      const cleanRatings: Record<string, number> = {};
+      for (const dim of personDimensions) {
+        if (dimensionRatings[dim] != null && dimensionRatings[dim] > 0) cleanRatings[dim] = dimensionRatings[dim];
+      }
+      const values = Object.values(cleanRatings);
       if (values.length > 0) {
         personalRating = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
       } else {
         personalRating = null;
       }
-      dimRatingsToSend = dimensionRatings;
+      dimRatingsToSend = cleanRatings;
     }
 
     // Save personal rating via user-data API first
@@ -417,7 +422,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 <div className="space-y-3 border-t border-white/10 pt-4">
                   <div className="flex items-center justify-between">
                     <Label>{t("personalRating")}</Label>
-                    {Object.values(dimensionRatings).some((v) => v > 0) && (
+                    {personDimensions.some((d) => dimensionRatings[d] > 0) && (
                       <button
                         type="button"
                         onClick={() => setDimensionRatings({})}
@@ -429,7 +434,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   </div>
                   <p className="text-lg font-bold text-[var(--gold)]">
                     {(() => {
-                      const values = Object.values(dimensionRatings).filter((v) => v > 0);
+                      const values = personDimensions.map((d) => dimensionRatings[d]).filter((v) => v != null && v > 0);
                       if (values.length === 0) return "—";
                       return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
                     })()}
@@ -440,7 +445,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 <div className="space-y-3">
                   <Label>{t("personalTier")}</Label>
                   {(() => {
-                    const values = Object.values(dimensionRatings).filter((v) => v > 0);
+                    const values = personDimensions.map((d) => dimensionRatings[d]).filter((v) => v != null && v > 0);
                     if (values.length === 0) return <p className="text-sm text-muted-foreground">{t("tierNoRating")}</p>;
                     const avg = values.reduce((a, b) => a + b, 0) / values.length;
                     const tier = getTier(avg);
