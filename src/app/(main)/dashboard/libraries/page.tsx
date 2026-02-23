@@ -297,7 +297,7 @@ export default function LibrariesPage() {
                   <DialogHeader>
                     <DialogTitle>Enable Jellyfin Compatibility?</DialogTitle>
                     <DialogDescription>
-                      When enabled, Kubby will never modify or create NFO files in your library folders. Actor photos referenced by local paths in NFO &lt;thumb&gt; tags will be copied to Kubby&apos;s metadata directory. This is recommended if Jellyfin also uses this library.
+                      When enabled, Kubby will never modify or create NFO files in your library folders. Actor photos referenced by local paths in NFO thumb tags will be copied to Kubby&apos;s metadata directory. This is recommended if Jellyfin also uses this library.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
