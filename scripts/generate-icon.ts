@@ -15,27 +15,19 @@ const OUTPUT_DIR = process.argv[2] || path.resolve(__dirname, "..", "launcher", 
 
 function kubbyLogoSVG(size: number): string {
   // Matches the KubbyLogo component in app-header.tsx:
-  //   rounded square frame + K letter strokes
-  // Scaled from viewBox 28x28 to target size with padding
-  const padding = size * 0.08;
+  //   rounded square frame + K letter strokes, transparent background
+  // Scaled from viewBox 28x28 to target size
+  // Minimal padding — macOS applies its own superellipse mask
+  const padding = size * 0.02;
   const inner = size - padding * 2;
 
-  // Map original 28x28 coordinates to the target canvas
   const s = (v: number) => padding + (v / 28) * inner;
   const sw = (v: number) => (v / 28) * inner;
 
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1a1a2e"/>
-      <stop offset="100%" stop-color="#0f0f1a"/>
-    </linearGradient>
-  </defs>
-  <!-- Dark background with rounded corners (macOS icon shape) -->
-  <rect width="${size}" height="${size}" rx="${size * 0.22}" fill="url(#bg)"/>
-  <!-- Rounded square frame -->
+  <!-- Rounded square frame with white fill -->
   <rect x="${s(2)}" y="${s(2)}" width="${sw(24)}" height="${sw(24)}" rx="${sw(6)}"
-        fill="none" stroke="#3b82f6" stroke-width="${sw(2.5)}"/>
+        fill="#0f0f1a" stroke="#3b82f6" stroke-width="${sw(2.5)}"/>
   <!-- Letter K -->
   <path d="M${s(10)} ${s(8)}v${sw(12)}M${s(10)} ${s(14)}l${sw(8)} ${sw(-6)}M${s(10)} ${s(14)}l${sw(8)} ${sw(6)}"
         stroke="#3b82f6" stroke-width="${sw(2.8)}"

@@ -393,14 +393,56 @@ function createDMG(appDir: string, distDir: string) {
   // Create a symlink to /Applications (the drag-to-install target)
   fs.symlinkSync("/Applications", path.join(dmgStaging, "Applications"));
 
-  // Create DMG using hdiutil
+  // Copy .icns as volume icon
+  const icnsSrc = path.join(PROJECT_ROOT, "launcher", "assets", "kubby.icns");
+  if (fs.existsSync(icnsSrc)) {
+    fs.cpSync(icnsSrc, path.join(dmgStaging, ".VolumeIcon.icns"));
+  }
+
+  // Create read-write DMG first, set volume icon, then convert to compressed
+  const dmgRW = path.join(distDir, "Kubby-rw.dmg");
+  if (fs.existsSync(dmgRW)) fs.unlinkSync(dmgRW);
+
   try {
-    run(
-      `hdiutil create -volname "Kubby" -srcfolder "${dmgStaging}" -ov -format UDZO "${dmgPath}"`,
-    );
+    // Create read-write DMG
+    run(`hdiutil create -volname "Kubby" -srcfolder "${dmgStaging}" -ov -format UDRW "${dmgRW}"`);
+
+    // Mount it, set custom icon flag, unmount
+    run(`hdiutil attach "${dmgRW}" -mountpoint /tmp/kubby-dmg-mount -nobrowse`);
+    try {
+      // SetFile -a C sets the "custom icon" flag on the volume
+      execSync(`SetFile -a C /tmp/kubby-dmg-mount`, { stdio: "ignore" });
+    } catch { /* SetFile may not be available, icon still works in most cases */ }
+    run(`hdiutil detach /tmp/kubby-dmg-mount`);
+
+    // Convert to compressed read-only DMG
+    run(`hdiutil convert "${dmgRW}" -format UDZO -o "${dmgPath}"`);
+    fs.unlinkSync(dmgRW);
+
+    // Set DMG file icon visible in Finder (via resource fork)
+    try {
+      const pngSrc = path.join(PROJECT_ROOT, "launcher", "assets", "icon_1024.png");
+      const tmpIcon = "/tmp/kubby_tmpicon.png";
+      fs.cpSync(pngSrc, tmpIcon);
+      execSync(`sips -i "${tmpIcon}"`, { stdio: "ignore" });
+      execSync(`DeRez -only icns "${tmpIcon}" > /tmp/kubby_icon.rsrc`, { stdio: "ignore", shell: "/bin/bash" });
+      execSync(`Rez -append /tmp/kubby_icon.rsrc -o "${dmgPath}"`, { stdio: "ignore" });
+      execSync(`SetFile -a C "${dmgPath}"`, { stdio: "ignore" });
+      fs.unlinkSync(tmpIcon);
+      fs.unlinkSync("/tmp/kubby_icon.rsrc");
+      console.log("  DMG file icon set");
+    } catch { /* icon on DMG file is optional */ }
+
     console.log(`  Created: ${dmgPath} (${(fs.statSync(dmgPath).size / 1024 / 1024).toFixed(1)} MB)`);
   } catch (e) {
     console.error("  DMG creation failed:", e);
+    // Fallback: simple DMG without custom icon
+    if (!fs.existsSync(dmgPath)) {
+      try {
+        run(`hdiutil create -volname "Kubby" -srcfolder "${dmgStaging}" -ov -format UDZO "${dmgPath}"`);
+      } catch { /* give up */ }
+    }
+    if (fs.existsSync(dmgRW)) fs.unlinkSync(dmgRW);
   }
 
   // Cleanup staging
