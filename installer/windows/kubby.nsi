@@ -29,9 +29,9 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 
 ; ─── MUI Settings ───────────────────────────────────────
 !define MUI_ABORTWARNING
-; Icon paths relative to project root (where makensis runs via -NOCD)
-!define MUI_ICON "launcher\assets\icon.ico"
-!define MUI_UNICON "launcher\assets\icon.ico"
+; Icon paths relative to project root (forward slashes for cross-platform makensis)
+!define MUI_ICON "launcher/assets/icon.ico"
+!define MUI_UNICON "launcher/assets/icon.ico"
 
 ; ─── Pages ──────────────────────────────────────────────
 !insertmacro MUI_PAGE_WELCOME
