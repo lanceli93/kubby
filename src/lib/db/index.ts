@@ -228,6 +228,8 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `external_player_name` text",
   "ALTER TABLE `user_preferences` ADD `external_player_path` text",
   "ALTER TABLE `user_preferences` ADD `external_player_mode` text DEFAULT 'local'",
+  // 0014: Jellyfin compatibility mode per library
+  "ALTER TABLE `media_libraries` ADD `jellyfin_compat` integer NOT NULL DEFAULT 0",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

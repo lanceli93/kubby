@@ -210,14 +210,20 @@ export async function scanLibrary(
         const videoBaseName = path.basename(videoFile, path.extname(videoFile));
         const videoNamedNfo = path.join(movieDir, videoBaseName + ".nfo");
         if (fs.existsSync(videoNamedNfo)) {
-          fs.copyFileSync(videoNamedNfo, nfoPath);
-          console.log(`Copied ${videoBaseName}.nfo -> movie.nfo in ${entry.name}`);
+          // In Jellyfin compat mode, read the NFO in-place without copying
+          if (library.jellyfinCompat) {
+            nfoPath = videoNamedNfo;
+          } else {
+            fs.copyFileSync(videoNamedNfo, nfoPath);
+            console.log(`Copied ${videoBaseName}.nfo -> movie.nfo in ${entry.name}`);
+          }
         }
       }
     }
 
     // If no NFO and scraper is enabled, try to scrape from TMDB
-    if (!fs.existsSync(nfoPath) && library.scraperEnabled && apiKey) {
+    // Skip scraper NFO creation in Jellyfin compat mode (would write NFO files)
+    if (!fs.existsSync(nfoPath) && library.scraperEnabled && apiKey && !library.jellyfinCompat) {
       try {
         const result = await scrapeMovie(movieDir, apiKey, metadataDir, metadataLanguage);
         if (result.success) {
@@ -275,7 +281,10 @@ export async function scanLibrary(
           order: actor.order,
         }));
 
-        writeActorsToNfo(nfoPath, actorEntries);
+        // Skip NFO write in Jellyfin compat mode
+        if (!library.jellyfinCompat) {
+          writeActorsToNfo(nfoPath, actorEntries);
+        }
 
         nfoData.actors = actorEntries.map((a) => ({
           name: a.name,
@@ -486,6 +495,25 @@ export async function scanLibrary(
     // Add actors
     for (const actor of nfoData.actors) {
       if (!actor.name) continue;
+
+      // Jellyfin compat: import actor photos from local <thumb> paths
+      if (library.jellyfinCompat && actor.thumb && !actor.thumb.startsWith("http")) {
+        if (fs.existsSync(actor.thumb)) {
+          const origExt = path.extname(actor.thumb) || ".jpg";
+          const kubbyPhotoPath = getPersonPhotoPath(metadataDir, actor.name, origExt);
+          if (!fs.existsSync(kubbyPhotoPath)) {
+            try {
+              fs.mkdirSync(path.dirname(kubbyPhotoPath), { recursive: true });
+              fs.copyFileSync(actor.thumb, kubbyPhotoPath);
+              console.log(`Imported actor photo for ${actor.name} from Jellyfin`);
+            } catch (e) {
+              console.warn(`Failed to import actor photo for ${actor.name}:`, e);
+            }
+          }
+          actor.thumb = kubbyPhotoPath;
+        }
+      }
+
       const actorMtime = actor.thumb ? getFileMtime(actor.thumb) : null;
       const actorBlur = actor.thumb ? await generateBlurDataURL(actor.thumb) : null;
       const personId = getOrCreatePerson(actor.name, "actor", actor.thumb, actorMtime, actorBlur);

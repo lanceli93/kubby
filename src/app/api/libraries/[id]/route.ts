@@ -18,6 +18,7 @@ export async function GET(
         type: mediaLibraries.type,
         folderPath: mediaLibraries.folderPath,
         scraperEnabled: mediaLibraries.scraperEnabled,
+        jellyfinCompat: mediaLibraries.jellyfinCompat,
         metadataLanguage: mediaLibraries.metadataLanguage,
         lastScannedAt: mediaLibraries.lastScannedAt,
         movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")`,
@@ -48,7 +49,7 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { name, folderPaths, folderPath, scraperEnabled, metadataLanguage } = body;
+    const { name, folderPaths, folderPath, scraperEnabled, jellyfinCompat, metadataLanguage } = body;
 
     const existing = db
       .select()
@@ -68,6 +69,7 @@ export async function PUT(
       updates.folderPath = folderPath;
     }
     if (scraperEnabled !== undefined) updates.scraperEnabled = scraperEnabled;
+    if (jellyfinCompat !== undefined) updates.jellyfinCompat = jellyfinCompat;
     if (metadataLanguage !== undefined) updates.metadataLanguage = metadataLanguage || null;
 
     if (Object.keys(updates).length > 0) {

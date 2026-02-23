@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import { db } from "@/lib/db";
-import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams, movieDiscs } from "@/lib/db/schema";
+import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams, movieDiscs, mediaLibraries } from "@/lib/db/schema";
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
@@ -146,8 +146,9 @@ export async function PUT(
       .where(and(eq(moviePeople.movieId, id), eq(people.type, "director")))
       .all();
 
-    // Regenerate NFO file
-    if (updated.nfoPath) {
+    // Regenerate NFO file (skip in Jellyfin compat mode)
+    const movieLibrary = db.select().from(mediaLibraries).where(eq(mediaLibraries.id, updated.mediaLibraryId)).get();
+    if (updated.nfoPath && !movieLibrary?.jellyfinCompat) {
       const nfoFullPath = nodePath.join(updated.folderPath, updated.nfoPath);
 
       // Fetch media streams for rich NFO fileinfo

@@ -165,8 +165,8 @@ export function sanitizePersonName(name: string): string {
  * Get the local photo path for a person, organized by first letter like Jellyfin:
  *   {metadataDir}/{FirstLetter}/{SanitizedName}/photo.jpg
  */
-export function getPersonPhotoPath(metadataDir: string, name: string): string {
+export function getPersonPhotoPath(metadataDir: string, name: string, ext: string = ".jpg"): string {
   const sanitized = sanitizePersonName(name);
   const firstLetter = sanitized.charAt(0).toUpperCase() || "_";
-  return path.join(metadataDir, firstLetter, sanitized, "photo.jpg");
+  return path.join(metadataDir, firstLetter, sanitized, `photo${ext}`);
 }

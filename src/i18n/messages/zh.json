@@ -98,7 +98,13 @@
     "enableScraper": "启用 TMDB 刮削",
     "folderPaths": "文件夹路径",
     "addFolder": "添加文件夹",
-    "removeFolder": "移除文件夹"
+    "removeFolder": "移除文件夹",
+    "jellyfinCompat": "Jellyfin 兼容模式",
+    "jellyfinCompatHelp": "阻止 Kubby 写入 NFO 文件，并从 Jellyfin 本地路径导入演员照片。",
+    "jellyfinCompatDialogTitle": "启用 Jellyfin 兼容模式？",
+    "jellyfinCompatDialogDesc": "启用后，Kubby 将不会修改或创建媒体库文件夹中的 NFO 文件。NFO 中 <thumb> 标签引用的本地演员照片将被复制到 Kubby 的元数据目录。如果 Jellyfin 也在使用此媒体库，建议开启此选项。",
+    "jellyfinCompatDisableTitle": "禁用 Jellyfin 兼容模式？",
+    "jellyfinCompatDisableDesc": "Kubby 将恢复在编辑元数据或扫描时写入 NFO 文件。现有的 NFO 文件可能会被覆盖。"
   },
   "settings": {
     "settings": "设置",

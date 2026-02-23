@@ -32,6 +32,7 @@ interface LibraryCardProps {
   type: string;
   folderPaths?: string[];
   scraperEnabled?: boolean;
+  jellyfinCompat?: boolean;
   metadataLanguage?: string | null;
   movieCount?: number;
   coverImage?: string | null;
@@ -43,7 +44,7 @@ interface LibraryCardProps {
   onRemoveImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metadataLanguage, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jellyfinCompat, metadataLanguage, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
@@ -57,6 +58,9 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
   const [editMetadataLanguage, setEditMetadataLanguage] = useState(metadataLanguage || "en");
   const [editTmdbConfigured, setEditTmdbConfigured] = useState<boolean | null>(null);
   const [editScraperError, setEditScraperError] = useState("");
+  const [editJellyfinCompat, setEditJellyfinCompat] = useState(jellyfinCompat ?? false);
+  const [jellyfinCompatConfirmOpen, setJellyfinCompatConfirmOpen] = useState(false);
+  const [jellyfinCompatConfirmAction, setJellyfinCompatConfirmAction] = useState<"enable" | "disable">("enable");
   const [editSaving, setEditSaving] = useState(false);
   const libScan = useLibraryScan(id);
   const scanning = libScan.scanning;
@@ -74,7 +78,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
       await fetch(`/api/libraries/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, folderPaths: editFolderPaths, scraperEnabled: editScraperEnabled, metadataLanguage: editMetadataLanguage === "en" ? null : editMetadataLanguage }),
+        body: JSON.stringify({ name: editName, folderPaths: editFolderPaths, scraperEnabled: editScraperEnabled, jellyfinCompat: editJellyfinCompat, metadataLanguage: editMetadataLanguage === "en" ? null : editMetadataLanguage }),
       });
       setEditOpen(false);
       onEditComplete?.();
@@ -176,6 +180,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
                   setEditFolderPaths(folderPaths ?? []);
                   setNewFolderPath("");
                   setEditScraperEnabled(scraperEnabled ?? false);
+                  setEditJellyfinCompat(jellyfinCompat ?? false);
                   setEditMetadataLanguage(metadataLanguage || "en");
                   setEditScraperError("");
                   fetch("/api/settings/scraper").then((r) => r.json()).then((d) => setEditTmdbConfigured(d.configured)).catch(() => setEditTmdbConfigured(false));
@@ -401,6 +406,30 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
                 </button>
               </div>
             )}
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {tHome("jellyfinCompat")}
+              </label>
+              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={editJellyfinCompat}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setJellyfinCompatConfirmAction(e.target.checked ? "enable" : "disable");
+                      setJellyfinCompatConfirmOpen(true);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                  />
+                  <span className="text-sm text-foreground">{tHome("jellyfinCompat")}</span>
+                </label>
+              </div>
+              <p className="text-xs text-[#555568]">
+                {tHome("jellyfinCompatHelp")}
+              </p>
+            </div>
             <DialogFooter>
               <button
                 type="button"
@@ -418,6 +447,50 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, metad
               </button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Jellyfin compat confirmation dialog */}
+      <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
+        <DialogContent
+          className="border-white/[0.06] bg-card sm:max-w-[400px]"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {jellyfinCompatConfirmAction === "enable"
+                ? tHome("jellyfinCompatDialogTitle")
+                : tHome("jellyfinCompatDisableTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {jellyfinCompatConfirmAction === "enable"
+                ? tHome("jellyfinCompatDialogDesc")
+                : tHome("jellyfinCompatDisableDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setJellyfinCompatConfirmOpen(false);
+              }}
+              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setEditJellyfinCompat(jellyfinCompatConfirmAction === "enable");
+                setJellyfinCompatConfirmOpen(false);
+              }}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

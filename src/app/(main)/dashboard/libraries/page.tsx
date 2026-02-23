@@ -6,6 +6,8 @@ import { useAllScans, useScanActions } from "@/providers/scan-provider";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -36,6 +38,8 @@ export default function LibrariesPage() {
   const [metadataLanguage, setMetadataLanguage] = useState("en");
   const [tmdbConfigured, setTmdbConfigured] = useState<boolean | null>(null);
   const [scraperError, setScraperError] = useState("");
+  const [jellyfinCompat, setJellyfinCompat] = useState(false);
+  const [jellyfinCompatConfirmOpen, setJellyfinCompatConfirmOpen] = useState(false);
 
   const { data: libraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
@@ -55,7 +59,7 @@ export default function LibrariesPage() {
       fetch("/api/libraries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, folderPaths, scraperEnabled, metadataLanguage: metadataLanguage === "en" ? null : metadataLanguage }),
+        body: JSON.stringify({ name, type, folderPaths, scraperEnabled, jellyfinCompat, metadataLanguage: metadataLanguage === "en" ? null : metadataLanguage }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
@@ -64,6 +68,7 @@ export default function LibrariesPage() {
       setFolderPaths([]);
       setNewFolderPath("");
       setScraperEnabled(false);
+      setJellyfinCompat(false);
       setMetadataLanguage("en");
     },
   });
@@ -258,6 +263,64 @@ export default function LibrariesPage() {
                   </p>
                 </div>
               )}
+
+              {/* Jellyfin Compatibility Mode */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-muted-foreground">
+                  Jellyfin Compatibility
+                </label>
+                <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+                  <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={jellyfinCompat}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setJellyfinCompatConfirmOpen(true);
+                        } else {
+                          setJellyfinCompat(false);
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                    />
+                    <span className="text-sm text-foreground">Jellyfin Compatibility Mode</span>
+                  </label>
+                </div>
+                <p className="text-xs text-[#555568]">
+                  Prevents Kubby from writing to NFO files and imports actor photos from Jellyfin local paths.
+                </p>
+              </div>
+
+              {/* Jellyfin compat confirmation dialog */}
+              <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
+                <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+                  <DialogHeader>
+                    <DialogTitle>Enable Jellyfin Compatibility?</DialogTitle>
+                    <DialogDescription>
+                      When enabled, Kubby will never modify or create NFO files in your library folders. Actor photos referenced by local paths in NFO &lt;thumb&gt; tags will be copied to Kubby&apos;s metadata directory. This is recommended if Jellyfin also uses this library.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <button
+                      type="button"
+                      onClick={() => setJellyfinCompatConfirmOpen(false)}
+                      className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setJellyfinCompat(true);
+                        setJellyfinCompatConfirmOpen(false);
+                      }}
+                      className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    >
+                      Enable
+                    </button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               {/* Scraper error alert */}
               {scraperError && (

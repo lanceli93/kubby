@@ -1,0 +1,1 @@
+ALTER TABLE `media_libraries` ADD `jellyfin_compat` integer NOT NULL DEFAULT 0;
