@@ -102,6 +102,12 @@ Section "Install"
   CreateShortCut "$DESKTOP\Kubby.lnk" "$INSTDIR\kubby.exe" "" "$INSTDIR\kubby.exe"
 SectionEnd
 
+; ─── Close Running Instance Before Uninstall ─────────────
+Function un.onInit
+  nsExec::ExecToLog 'taskkill /F /IM kubby.exe'
+  Sleep 2000
+FunctionEnd
+
 ; ─── Uninstaller Section ────────────────────────────────
 Section "Uninstall"
   ; Remove installed files (NOT user data in %LOCALAPPDATA%\Kubby)
