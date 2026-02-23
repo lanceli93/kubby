@@ -176,16 +176,17 @@ function findStandaloneRoot(): string {
   // Next.js standalone mirrors the project path under .next/standalone/
   const standaloneBase = path.join(PROJECT_ROOT, ".next", "standalone");
 
-  // Find server.js recursively (it's nested under the workspace root mirror)
+  // Find the directory containing both server.js AND node_modules/
+  // (to avoid matching stale copies in dist/)
   function findServerJS(dir: string): string | null {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isFile() && entry.name === "server.js") {
-        return dir;
-      }
-      if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".next") {
-        const found = findServerJS(fullPath);
+    const hasServerJS = fs.existsSync(path.join(dir, "server.js"));
+    const hasNodeModules = fs.existsSync(path.join(dir, "node_modules"));
+    if (hasServerJS && hasNodeModules) {
+      return dir;
+    }
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".next" && entry.name !== "dist") {
+        const found = findServerJS(path.join(dir, entry.name));
         if (found) return found;
       }
     }
@@ -194,7 +195,7 @@ function findStandaloneRoot(): string {
 
   const root = findServerJS(standaloneBase);
   if (!root) {
-    throw new Error("Could not find server.js in .next/standalone/");
+    throw new Error("Could not find server.js + node_modules in .next/standalone/");
   }
   return root;
 }
@@ -359,33 +360,12 @@ function createMacOSApp(platform: Platform, flatDir: string, distDir: string) {
     }
   }
 
-  // Generate a simple .icns icon (use sips to convert PNG → ICNS)
-  try {
-    const iconsetDir = path.join(distDir, "kubby.iconset");
-    ensureDir(iconsetDir);
-
-    // Generate a 512x512 PNG using the Go icon generator concept (simple blue circle with K)
-    // For now, create a minimal placeholder via sips if possible
-    const tempPng = path.join(distDir, "icon_512.png");
-    // Use the Go launcher's icon.go concept — create via ImageMagick or sips
-    // Fallback: just skip icon if no tools available
-    try {
-      // Try to create a simple icon with sips from a solid color
-      run(`sips -z 512 512 /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out "${tempPng}" 2>/dev/null || true`);
-      if (fs.existsSync(tempPng) && fs.statSync(tempPng).size > 0) {
-        // Create iconset with multiple sizes
-        for (const size of [16, 32, 128, 256, 512]) {
-          run(`sips -z ${size} ${size} "${tempPng}" --out "${iconsetDir}/icon_${size}x${size}.png" 2>/dev/null || true`);
-          run(`sips -z ${size * 2} ${size * 2} "${tempPng}" --out "${iconsetDir}/icon_${size}x${size}@2x.png" 2>/dev/null || true`);
-        }
-        run(`iconutil -c icns "${iconsetDir}" -o "${path.join(resourcesDir, "kubby.icns")}" 2>/dev/null || true`);
-      }
-    } catch { /* icon generation optional */ }
-
-    // Cleanup
-    if (fs.existsSync(iconsetDir)) fs.rmSync(iconsetDir, { recursive: true });
-    if (fs.existsSync(tempPng)) fs.unlinkSync(tempPng);
-  } catch { /* icon is optional */ }
+  // Copy pre-generated .icns icon
+  const icnsSrc = path.join(PROJECT_ROOT, "launcher", "assets", "kubby.icns");
+  if (fs.existsSync(icnsSrc)) {
+    fs.cpSync(icnsSrc, path.join(resourcesDir, "kubby.icns"));
+    console.log("  Copied kubby.icns");
+  }
 
   // Remove the now-empty flat directory
   try { fs.rmSync(flatDir, { recursive: true }); } catch { /* might not be empty */ }
