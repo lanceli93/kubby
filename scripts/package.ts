@@ -236,6 +236,121 @@ function assembleServer(outputDir: string) {
   }
 }
 
+// Map platform to npm/prebuild naming
+const NATIVE_PLATFORM_MAP: Record<Platform, { npm: string; prebuildOs: string; prebuildArch: string }> = {
+  "darwin-arm64": { npm: "darwin-arm64", prebuildOs: "darwin", prebuildArch: "arm64" },
+  "darwin-x64": { npm: "darwin-x64", prebuildOs: "darwin", prebuildArch: "x64" },
+  "win-x64": { npm: "win32-x64", prebuildOs: "win32", prebuildArch: "x64" },
+  "linux-x64": { npm: "linux-x64", prebuildOs: "linux", prebuildArch: "x64" },
+};
+
+async function swapNativeModules(platform: Platform, outputDir: string, skipDownload: boolean) {
+  const hostPlatform = detectPlatform();
+  const native = NATIVE_PLATFORM_MAP[platform];
+  const hostNative = NATIVE_PLATFORM_MAP[hostPlatform];
+
+  if (native.npm === hostNative.npm) {
+    console.log("  Native modules match host platform, no swap needed");
+    return;
+  }
+
+  console.log(`  Swapping native modules: ${hostNative.npm} → ${native.npm}`);
+  const serverNodeModules = path.join(outputDir, "server", "node_modules");
+
+  // --- sharp ---
+  // Remove host platform sharp, install target platform
+  const hostSharpDir = path.join(serverNodeModules, `@img/sharp-${hostNative.npm}`);
+  const hostSharpLibvipsDir = path.join(serverNodeModules, `@img/sharp-libvips-${hostNative.npm}`);
+  const targetSharpPkg = `@img/sharp-${native.npm}`;
+  const targetLibvipsPkg = `@img/sharp-libvips-${native.npm}`;
+
+  if (fs.existsSync(hostSharpDir)) {
+    fs.rmSync(hostSharpDir, { recursive: true });
+    console.log(`  Removed @img/sharp-${hostNative.npm}`);
+  }
+  if (fs.existsSync(hostSharpLibvipsDir)) {
+    fs.rmSync(hostSharpLibvipsDir, { recursive: true });
+    console.log(`  Removed @img/sharp-libvips-${hostNative.npm}`);
+  }
+
+  // Download target sharp packages from npm registry
+  for (const pkg of [targetSharpPkg, targetLibvipsPkg]) {
+    const tarballUrl = await getNpmTarballUrl(pkg);
+    if (!tarballUrl) {
+      console.warn(`  WARNING: Could not find ${pkg} on npm`);
+      continue;
+    }
+    const cachePath = path.join(DOWNLOAD_CACHE, `${pkg.replace("/", "-")}.tgz`);
+    if (!skipDownload) {
+      await downloadFile(tarballUrl, cachePath);
+    }
+    if (fs.existsSync(cachePath)) {
+      const extractDir = path.join(DOWNLOAD_CACHE, "npm-extract");
+      if (fs.existsSync(extractDir)) fs.rmSync(extractDir, { recursive: true });
+      ensureDir(extractDir);
+      execSync(`tar xzf "${cachePath}" -C "${extractDir}"`, { stdio: "ignore" });
+      // npm tarballs extract to a "package/" directory
+      const pkgDir = path.join(extractDir, "package");
+      const targetDir = path.join(serverNodeModules, pkg);
+      ensureDir(path.dirname(targetDir));
+      if (fs.existsSync(pkgDir)) {
+        copyDirRecursive(pkgDir, targetDir);
+        console.log(`  Installed ${pkg}`);
+      }
+      fs.rmSync(extractDir, { recursive: true });
+    }
+  }
+
+  // --- better-sqlite3 ---
+  // Download prebuilt .node binary for target platform
+  const bs3Dir = path.join(serverNodeModules, "better-sqlite3");
+  if (fs.existsSync(bs3Dir)) {
+    const bs3Version = JSON.parse(fs.readFileSync(path.join(bs3Dir, "package.json"), "utf-8")).version;
+    // better-sqlite3 prebuild URL format:
+    // https://github.com/JoshuaWise/better-sqlite3/releases/download/v{ver}/better-sqlite3-v{ver}-node-v{abi}-{os}-{arch}.tar.gz
+    const nodeABI = process.versions.modules; // e.g. "127"
+    const prebuildName = `better-sqlite3-v${bs3Version}-node-v${nodeABI}-${native.prebuildOs}-${native.prebuildArch}.tar.gz`;
+    const prebuildUrl = `https://github.com/JoshuaWise/better-sqlite3/releases/download/v${bs3Version}/${prebuildName}`;
+    const prebuildCache = path.join(DOWNLOAD_CACHE, prebuildName);
+
+    if (!skipDownload) {
+      try {
+        await downloadFile(prebuildUrl, prebuildCache);
+      } catch (e) {
+        console.warn(`  WARNING: Could not download better-sqlite3 prebuild: ${e}`);
+      }
+    }
+
+    if (fs.existsSync(prebuildCache)) {
+      // Extract and replace the .node file
+      const extractDir = path.join(DOWNLOAD_CACHE, "bs3-extract");
+      if (fs.existsSync(extractDir)) fs.rmSync(extractDir, { recursive: true });
+      ensureDir(extractDir);
+      execSync(`tar xzf "${prebuildCache}" -C "${extractDir}"`, { stdio: "ignore" });
+      // The prebuild tarball contains build/Release/better_sqlite3.node
+      const srcNode = path.join(extractDir, "build", "Release", "better_sqlite3.node");
+      const destNode = path.join(bs3Dir, "build", "Release", "better_sqlite3.node");
+      if (fs.existsSync(srcNode)) {
+        ensureDir(path.dirname(destNode));
+        fs.cpSync(srcNode, destNode);
+        console.log(`  Replaced better-sqlite3 binary (${native.npm})`);
+      }
+      fs.rmSync(extractDir, { recursive: true });
+    }
+  }
+}
+
+async function getNpmTarballUrl(pkg: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://registry.npmjs.org/${pkg}/latest`);
+    if (!res.ok) return null;
+    const data = await res.json() as { dist?: { tarball?: string } };
+    return data.dist?.tarball || null;
+  } catch {
+    return null;
+  }
+}
+
 async function downloadNode(platform: Platform, outputDir: string, skipDownload: boolean) {
   console.log("\n[3/6] Setting up Node.js runtime...");
   const cfg = PLATFORMS[platform];
@@ -528,6 +643,7 @@ async function main() {
     console.log("\n[1/7] Skipping Next.js build (--skip-build)");
   }
   assembleServer(outputDir);
+  await swapNativeModules(platform, outputDir, skipDownload);
   await downloadNode(platform, outputDir, skipDownload);
   await downloadFfprobe(platform, outputDir, skipDownload);
   buildLauncher(platform, outputDir);
