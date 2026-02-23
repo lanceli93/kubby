@@ -8,13 +8,14 @@ import (
 //go:embed assets/tray_icon.png
 var iconDataMac []byte
 
-//go:embed assets/tray_icon_win.png
-var iconDataWin []byte
+//go:embed assets/icon.ico
+var iconDataWinICO []byte
 
-// iconData returns the platform-appropriate tray icon.
+// trayIcon returns the platform-appropriate tray icon bytes.
+// Windows systray requires ICO format; macOS/Linux use PNG.
 func trayIcon() []byte {
 	if runtime.GOOS == "windows" {
-		return iconDataWin
+		return iconDataWinICO
 	}
 	return iconDataMac
 }

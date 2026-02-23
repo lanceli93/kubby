@@ -12,7 +12,8 @@ func openBrowser(url string) error {
 	case "darwin":
 		return exec.Command("open", url).Start()
 	case "windows":
-		return exec.Command("cmd", "/c", "start", url).Start()
+		// Use rundll32 instead of "cmd /c start" to avoid a visible cmd.exe window flash
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	default: // linux
 		return exec.Command("xdg-open", url).Start()
 	}
