@@ -24,15 +24,21 @@ Open [http://localhost:3000](http://localhost:3000) — the setup wizard will gu
 
 ## Installation (macOS)
 
-### Download
+### 1. Download
 
-Download `Kubby.app` from the [Releases](https://github.com/kubby-app/kubby/releases) page.
+Download `Kubby.dmg` from the [Releases](https://github.com/kubby-app/kubby/releases) page.
 
-### First Launch
+### 2. Install
+
+1. Double-click `Kubby.dmg` to open
+2. Drag **Kubby.app** into the **Applications** folder
+3. Eject the DMG
+
+### 3. First Launch
 
 macOS will block unsigned apps downloaded from the internet. To open Kubby for the first time:
 
-1. **Right-click** `Kubby.app` → **Open**
+1. Open **Applications** folder, **right-click** Kubby → **Open**
 2. Click **Open** in the confirmation dialog
 
 This is only needed once. After that, Kubby opens normally by double-clicking.
@@ -43,18 +49,23 @@ Alternatively: System Settings → Privacy & Security → scroll down → click 
 
 - Kubby starts a local server at `http://localhost:3000`
 - Your browser opens automatically
-- A system tray icon appears in the menu bar (top right)
+- The Kubby icon appears in the Dock and the menu bar (top right)
 - Data is stored in `~/Library/Application Support/Kubby/`
 
 ### Quit
 
-Right-click the Kubby icon in the Dock → Quit, or click the tray icon in the menu bar → Quit.
+Right-click the Kubby icon in the Dock → **Quit**, or click the tray icon in the menu bar → **Quit**.
+
+### Uninstall
+
+1. Drag Kubby from Applications to Trash
+2. (Optional) Delete user data: `rm -rf ~/Library/Application\ Support/Kubby`
 
 ### About macOS Gatekeeper
 
 | Status | User Experience |
 |--------|----------------|
-| **Unsigned** (current) | "Can't be opened" dialog — use right-click → Open to bypass (once) |
+| **Unsigned** (current) | "Can't be opened" dialog — right-click → Open to bypass (once) |
 | **Signed** (Developer ID, $99/year) | "From an identified developer" — user can click Open directly |
 | **Signed + Notarized** | No warning at all, same as App Store apps |
 
@@ -73,13 +84,13 @@ npm install
 npx tsx scripts/package.ts
 ```
 
-This produces `dist/Kubby.app` containing:
+This produces `dist/Kubby.dmg` (~93 MB) and `dist/Kubby.app`, containing:
 - Go launcher (system tray + process management)
 - Node.js runtime
 - ffprobe binary
 - Next.js standalone server
 
-Add `--skip-download` to reuse cached Node.js/ffprobe binaries.
+Add `--skip-build` to skip Next.js rebuild, `--skip-download` to reuse cached Node.js/ffprobe binaries.
 
 ### Cross-platform Packaging
 
