@@ -221,9 +221,107 @@ npx tsx scripts/package.ts --skip-download    # 跳过 Node.js/ffprobe 下载
 npx tsx scripts/generate-icon.ts
 ```
 
+## Docker 镜像 (Linux / NAS)
+
+Docker 是 Linux 和 NAS（群晖、威联通、Unraid）用户的推荐部署方式。不需要 Go 启动器 — Docker 容器本身就是进程管理器。
+
+### 架构
+
+```
+Dockerfile (多阶段构建)
+  Stage 1: node:22-slim — npm ci + next build
+  Stage 2: node:22-slim — 仅复制 standalone 产物 + ffprobe
+```
+
+与桌面打包的区别：
+
+| | 桌面 (macOS/Windows) | Docker |
+|---|---|---|
+| 进程管理 | Go 启动器 (systray + 子进程) | Docker (`restart: unless-stopped`) |
+| Node.js | 内嵌二进制 (~116MB) | 基础镜像自带 |
+| ffprobe | 内嵌静态编译 | `apt install ffmpeg` |
+| Native 模块 | 需要手动替换目标平台 | 容器内 `npm ci` 自动编译正确架构 |
+| 数据目录 | OS 标准位置 | `/data` volume mount |
+| 多架构 | 每个架构单独打包 | `docker buildx` 一次构建 amd64 + arm64 |
+
+### 多架构支持 (amd64 + arm64)
+
+通过 `docker buildx` + QEMU 模拟实现交叉构建：
+
+```bash
+# 本地构建当前架构
+docker build -t kubby:test .
+
+# 构建并推送多架构镜像
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t ghcr.io/kubby-app/kubby:latest --push .
+```
+
+每一层都天然支持多架构：
+- `node:22-slim` — Docker Hub 提供 amd64/arm64 变体
+- `npm ci` — 在目标架构容器内编译 native 模块 (better-sqlite3, sharp)
+- `apt install ffmpeg` — 包管理器自动安装对应架构
+
+### standalone 路径处理
+
+Next.js standalone 输出会镜像项目路径（受 Turbopack workspace root 检测影响）。Dockerfile 中用 `find` 动态定位：
+
+```dockerfile
+RUN STANDALONE_ROOT=$(find .next/standalone -name "server.js" \
+      -not -path "*/node_modules/*" -exec dirname {} \; | head -1) && \
+    cp -r "$STANDALONE_ROOT"/. /standalone/
+```
+
+### AUTH_SECRET 自动管理
+
+Docker 环境下 AUTH_SECRET 处理方式与桌面略有不同：
+
+```dockerfile
+CMD if [ -z "$AUTH_SECRET" ]; then \
+      if [ -f /data/auth-secret ]; then \
+        export AUTH_SECRET=$(cat /data/auth-secret); \
+      else \
+        export AUTH_SECRET=$(head -c 32 /dev/urandom | xxd -p | tr -d '\n'); \
+        echo "$AUTH_SECRET" > /data/auth-secret; \
+      fi; \
+    fi && node server.js
+```
+
+优先级：环境变量 > /data/auth-secret 文件 > 自动生成并持久化。
+
+### Volume 挂载
+
+| Mount | 用途 | 必须? |
+|-------|------|------|
+| `/data` | 数据库、配置、日志、auth-secret、元数据 | 是（否则容器重建丢数据） |
+| `/media` (或自定义路径) | 用户的媒体库文件夹 | 是（只读即可） |
+
+### docker-compose.yml 示例
+
+```yaml
+services:
+  kubby:
+    image: ghcr.io/kubby-app/kubby:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - kubby-data:/data
+      - /path/to/your/movies:/media:ro
+    restart: unless-stopped
+
+volumes:
+  kubby-data:
+```
+
 ## CI/CD
 
+### 桌面安装包
+
 `.github/workflows/release.yml` 在 `v*` tag push 时自动构建四个平台（darwin-arm64, darwin-x64, win-x64, linux-x64），产出 GitHub Release。
+
+### Docker 镜像
+
+`.github/workflows/docker.yml` 在 `v*` tag push 时用 `docker buildx` 构建 amd64 + arm64 双架构镜像，推送到 GitHub Container Registry (ghcr.io)。
 
 ## 已知限制
 
