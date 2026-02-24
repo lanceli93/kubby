@@ -15,7 +15,7 @@ export default function NetworkingSettingsPage() {
   const tc = useTranslations("common");
 
   const [settings, setSettings] = useState<NetworkingSettings | null>(null);
-  const [port, setPort] = useState(3000);
+  const [portStr, setPortStr] = useState("3000");
   const [saving, setSaving] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
   const [error, setError] = useState("");
@@ -25,12 +25,14 @@ export default function NetworkingSettingsPage() {
       .then((r) => r.json())
       .then((data: NetworkingSettings) => {
         setSettings(data);
-        setPort(data.port);
+        setPortStr(String(data.port));
       })
       .catch(console.error);
   }, []);
 
-  const hasChanges = settings !== null && port !== settings.port;
+  const portNum = parseInt(portStr, 10);
+  const portValid = !isNaN(portNum) && portNum >= 1024 && portNum <= 65535;
+  const hasChanges = settings !== null && portValid && portNum !== settings.port;
 
   const handleSave = async () => {
     setSaving(true);
@@ -39,7 +41,7 @@ export default function NetworkingSettingsPage() {
       const res = await fetch("/api/settings/networking", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ port }),
+        body: JSON.stringify({ port: portNum }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -48,7 +50,7 @@ export default function NetworkingSettingsPage() {
       }
       if (data.restartRequired) {
         setRestartRequired(true);
-        setSettings((prev) => (prev ? { ...prev, port } : prev));
+        setSettings((prev) => (prev ? { ...prev, port: portNum } : prev));
       }
     } catch {
       setError("Failed to save");
@@ -71,6 +73,16 @@ export default function NetworkingSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 p-8 px-10">
+      {/* Restart required toast */}
+      {configDiffers && !isDocker && (
+        <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-950/90 px-4 py-2.5 text-sm text-amber-400 shadow-lg backdrop-blur-sm">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            {t("networkingRestartRequired")}
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold text-foreground">{t("networking")}</h1>
 
       {/* Docker mode banner */}
@@ -78,14 +90,6 @@ export default function NetworkingSettingsPage() {
         <div className="flex items-center gap-3 rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-400">
           <Info className="h-4 w-4 shrink-0" />
           {t("networkingDockerMode")}
-        </div>
-      )}
-
-      {/* Restart required banner */}
-      {configDiffers && !isDocker && (
-        <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          {t("networkingRestartRequired")}
         </div>
       )}
 
@@ -113,9 +117,9 @@ export default function NetworkingSettingsPage() {
             type="number"
             min={1024}
             max={65535}
-            value={port}
+            value={portStr}
             onChange={(e) => {
-              setPort(parseInt(e.target.value, 10) || 3000);
+              setPortStr(e.target.value);
               setError("");
             }}
             disabled={isDocker}
@@ -132,7 +136,7 @@ export default function NetworkingSettingsPage() {
         {!isDocker && (
           <button
             onClick={handleSave}
-            disabled={saving || !hasChanges}
+            disabled={saving || !hasChanges || !portValid}
             className="self-start rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {saving ? "..." : tc("save")}
