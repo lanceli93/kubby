@@ -180,7 +180,33 @@ go-winres make --arch amd64
 
 产出 `rsrc_windows_amd64.syso`，Go 编译时自动嵌入，使 kubby.exe 在资源管理器和任务栏显示图标。
 
-### 7. macOS .icns 图标生成
+### 7. Windows 系统托盘图标
+
+**踩坑：`getlantern/systray` 在 Windows 上只接受 ICO 格式，传 PNG 会导致托盘图标为空白。**
+
+解决方案：为 Windows 和 macOS 分别嵌入不同格式的图标：
+
+```go
+// icon.go
+//go:embed assets/tray_icon.png   // macOS menu bar: 白色线条 PNG
+var iconDataMac []byte
+
+//go:embed assets/icon.ico         // Windows taskbar: ICO 格式
+var iconDataWinICO []byte
+
+func trayIcon() []byte {
+    if runtime.GOOS == "windows" {
+        return iconDataWinICO     // Windows 必须用 ICO
+    }
+    return iconDataMac            // macOS/Linux 用 PNG
+}
+```
+
+ICO 文件生成：小尺寸（16/32/48）用 BMP 格式条目（NSIS 兼容），256px 用 PNG 压缩。`scripts/generate-icon.ts` 中通过 sharp 生成 RGBA 像素数据，手动构建 ICO 二进制格式（BITMAPINFOHEADER + 像素数据 + AND mask）。
+
+macOS 的 tray icon 使用白色线条 + 透明背景的 PNG（适配菜单栏浅色/深色模式），而 Windows 使用完整彩色 ICO（蓝色 K 深色背景，在任何任务栏主题下清晰可见）。
+
+### 8. macOS .icns 图标生成
 
 `scripts/generate-icon.ts` 用 sharp 库从 SVG 生成多分辨率 PNG，再用 `iconutil` 转 `.icns`：
 
