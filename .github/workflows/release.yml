@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,32 +16,13 @@ jobs:
         include:
           - os: macos-latest
             platform: darwin-arm64
-            goos: darwin
-            goarch: arm64
-            node_platform: darwin-arm64
-            ffprobe_url: "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-arm64.gz"
-            artifact: kubby-darwin-arm64
-          - os: macos-13  # Intel Mac
+            artifact_name: Kubby-arm64.dmg
+          - os: macos-13
             platform: darwin-x64
-            goos: darwin
-            goarch: amd64
-            node_platform: darwin-x64
-            ffprobe_url: "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-x64.gz"
-            artifact: kubby-darwin-x64
+            artifact_name: Kubby-x64.dmg
           - os: windows-latest
             platform: win-x64
-            goos: windows
-            goarch: amd64
-            node_platform: win-x64
-            ffprobe_url: "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-win32-x64.gz"
-            artifact: kubby-win-x64
-          - os: ubuntu-latest
-            platform: linux-x64
-            goos: linux
-            goarch: amd64
-            node_platform: linux-x64
-            ffprobe_url: "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-linux-x64.gz"
-            artifact: kubby-linux-x64
+            artifact_name: KubbySetup.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -57,8 +39,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version-file: launcher/go.mod
           cache-dependency-path: launcher/go.sum
+
+      - name: Install NSIS (Windows)
+        if: runner.os == 'Windows'
+        run: choco install nsis -y
 
       - name: Install dependencies
         run: npm ci
@@ -66,27 +52,25 @@ jobs:
       - name: Build and package
         run: npx tsx scripts/package.ts --platform ${{ matrix.platform }}
 
-      - name: Create archive (Unix)
-        if: runner.os != 'Windows'
+      - name: Rename DMG with arch suffix (macOS)
+        if: runner.os == 'macOS'
         run: |
-          cd dist
-          tar czf ${{ matrix.artifact }}.tar.gz ${{ matrix.artifact }}/
-
-      - name: Create archive (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          cd dist
-          Compress-Archive -Path ${{ matrix.artifact }}/ -DestinationPath ${{ matrix.artifact }}.zip
+          if [ "${{ matrix.platform }}" = "darwin-arm64" ]; then
+            mv dist/Kubby.dmg dist/Kubby-arm64.dmg
+          else
+            mv dist/Kubby.dmg dist/Kubby-x64.dmg
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: dist/${{ matrix.artifact }}.*
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.artifact_name }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Download all artifacts
@@ -100,5 +84,6 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            artifacts/**/*.tar.gz
-            artifacts/**/*.zip
+            artifacts/Kubby-arm64.dmg/Kubby-arm64.dmg
+            artifacts/Kubby-x64.dmg/Kubby-x64.dmg
+            artifacts/KubbySetup.exe/KubbySetup.exe
