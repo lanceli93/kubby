@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   console.log("[setup/complete] body:", JSON.stringify(body));
-  const { username, password, locale, libraryName, folderPath, folderPaths, jellyfinCompat } = body;
+  const { username, password, locale, libraryName, libraryType, folderPath, folderPaths, jellyfinCompat } = body;
 
   if (!username || !password) {
     return Response.json({ error: "Username and password are required" }, { status: 400 });
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     db.insert(mediaLibraries).values({
       id: libraryId,
       name: libraryName,
-      type: "movie",
+      type: libraryType || "movie",
       folderPath: serializeFolderPaths(paths),
       jellyfinCompat: jellyfinCompat ? true : false,
     }).run();

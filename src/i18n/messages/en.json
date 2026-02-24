@@ -56,6 +56,7 @@
     "enterAdminUsername": "Enter admin username",
     "enterPassword": "Enter password",
     "confirmYourPassword": "Confirm password",
+    "libraryType": "Library Type",
     "libraryNamePlaceholder": "e.g. Movies",
     "folderPathPlaceholder": "/path/to/media",
     "selectYourLanguage": "Select your preferred language",

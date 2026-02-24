@@ -56,6 +56,7 @@
     "enterAdminUsername": "输入管理员用户名",
     "enterPassword": "输入密码",
     "confirmYourPassword": "确认密码",
+    "libraryType": "媒体库类型",
     "libraryNamePlaceholder": "例如：电影",
     "folderPathPlaceholder": "/媒体文件路径",
     "selectYourLanguage": "选择您偏好的语言",

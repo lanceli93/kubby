@@ -33,6 +33,7 @@ export function SetupWizard() {
 
   // Step 3: Library
   const [libraryName, setLibraryName] = useState("");
+  const [libraryType, setLibraryType] = useState("movie");
   const [folderPaths, setFolderPaths] = useState<string[]>([]);
   const [newFolderPath, setNewFolderPath] = useState("");
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
@@ -85,6 +86,7 @@ export function SetupWizard() {
         : folderPaths;
       if (!skipLibrary && libraryName && allPaths.length > 0) {
         body.libraryName = libraryName;
+        body.libraryType = libraryType;
         body.folderPaths = allPaths;
         body.jellyfinCompat = jellyfinCompat;
       }
@@ -299,6 +301,23 @@ export function SetupWizard() {
                 placeholder={t("libraryNamePlaceholder")}
                 className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
+            </div>
+
+            {/* Library Type */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {t("libraryType")}
+              </label>
+              <select
+                value={libraryType}
+                onChange={(e) => setLibraryType(e.target.value)}
+                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                style={{ colorScheme: "dark" }}
+              >
+                <option value="movie">Movie</option>
+                <option value="tvshow" disabled>TV Shows (coming soon)</option>
+                <option value="music" disabled>Music (coming soon)</option>
+              </select>
             </div>
 
             {/* Folder Paths (multi-folder) */}
