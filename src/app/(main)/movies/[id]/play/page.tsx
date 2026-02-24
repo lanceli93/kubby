@@ -374,14 +374,16 @@ export default function PlayerPage() {
     const video = videoRef.current;
     if (!video || !video.videoWidth || !video.videoHeight) return null;
     const canvas = document.createElement("canvas");
-    // Preserve native aspect ratio: fixed width, proportional height
-    const scale = 320 / video.videoWidth;
-    canvas.width = 320;
+    // Capture at Retina resolution (2x–3x) so thumbnails look sharp on HiDPI screens
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const baseWidth = 320;
+    const scale = (baseWidth * dpr) / video.videoWidth;
+    canvas.width = Math.round(baseWidth * dpr);
     canvas.height = Math.round(video.videoHeight * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
   }
 
   function toggleFullscreen() {
