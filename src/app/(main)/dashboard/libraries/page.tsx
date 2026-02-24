@@ -472,18 +472,19 @@ export default function LibrariesPage() {
       </div>
 
       {/* Library cards grid — Jellyfin style with cover images */}
-      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="flex flex-wrap gap-6">
         {libraries.map((lib) => {
           const libScan = scansMap.get(lib.id);
           const isScanning = libScan?.scanning ?? false;
           const progress = libScan?.progress;
           return (
-            <div key={lib.id} className="group flex flex-col">
+            <div key={lib.id} className="group flex flex-col" style={{ width: 320 }}>
               {/* Cover image — click to edit */}
               <button
                 type="button"
                 onClick={() => openEditDialog(lib)}
-                className="relative w-full overflow-hidden rounded-lg bg-[var(--surface)] aspect-video cursor-pointer transition-transform hover:scale-[1.02]"
+                className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)] cursor-pointer transition-transform hover:scale-[1.03]"
+                style={{ height: 180 }}
               >
                 {lib.coverImage ? (
                   <Image
@@ -525,54 +526,58 @@ export default function LibrariesPage() {
                     )}
                   </div>
                 )}
+
+                {/* Hover: three-dot menu on cover */}
+                <div className="absolute inset-x-0 bottom-0 flex justify-end px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); }}
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20 outline-none"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenuItem
+                        disabled={isScanning}
+                        onClick={(e) => { e.stopPropagation(); startScan(lib.id); }}
+                      >
+                        <HardDriveDownload className="h-4 w-4" />
+                        Scan Library
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(lib); }}>
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteLibId(lib.id);
+                          setDeleteLibName(lib.name);
+                          setDeleteOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </button>
 
-              {/* Info row below cover */}
-              <div className="mt-1.5 flex items-start justify-between px-0.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">{lib.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {lib.type === "movie" ? "Movies" : lib.type} · {lib.movieCount ?? 0}
-                  </p>
-                </div>
-                {/* Three-dot menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white/[0.06] hover:text-foreground"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
-                  >
-                    <DropdownMenuItem
-                      disabled={isScanning}
-                      onClick={() => startScan(lib.id)}
-                    >
-                      <HardDriveDownload className="h-4 w-4" />
-                      Scan Library
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => openEditDialog(lib)}>
-                      <Pencil className="h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => {
-                        setDeleteLibId(lib.id);
-                        setDeleteLibName(lib.name);
-                        setDeleteOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              {/* Labels below cover — centered */}
+              <div className="mt-2 text-center">
+                <p className="truncate text-sm font-semibold text-foreground">{lib.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {lib.type === "movie" ? "Movies" : lib.type} · {lib.movieCount ?? 0}
+                </p>
               </div>
             </div>
           );
