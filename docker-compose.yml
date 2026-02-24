@@ -7,7 +7,7 @@ services:
       - "3000:3000"
     volumes:
       - kubby-data:/data
-      - /path/to/your/movies:/media:ro  # Mount your media library here
+      - /path/to/your/movies:/media  # Kubby writes NFO/poster files here
     restart: unless-stopped
 
 volumes:
