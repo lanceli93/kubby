@@ -372,13 +372,15 @@ export default function PlayerPage() {
 
   async function captureVideoFrame(): Promise<Blob | null> {
     const video = videoRef.current;
-    if (!video) return null;
+    if (!video || !video.videoWidth || !video.videoHeight) return null;
     const canvas = document.createElement("canvas");
+    // Preserve native aspect ratio: fixed width, proportional height
+    const scale = 320 / video.videoWidth;
     canvas.width = 320;
-    canvas.height = 180;
+    canvas.height = Math.round(video.videoHeight * scale);
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
-    ctx.drawImage(video, 0, 0, 320, 180);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
   }
 

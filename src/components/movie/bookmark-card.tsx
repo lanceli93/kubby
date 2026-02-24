@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Bookmark, Star, Clock, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -44,18 +43,18 @@ export function BookmarkCard({
 
   const card = (
     <div className="group relative flex-shrink-0 w-[320px]">
-      {/* Thumbnail */}
-      <div className="relative h-[180px] w-[320px] overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
+      {/* Thumbnail — height adapts to image's native aspect ratio */}
+      <div className="relative w-[320px] overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
         {bookmark.thumbnailPath ? (
-          <Image
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
             src={resolveImageSrc(bookmark.thumbnailPath)}
             alt={`Bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`}
-            fill
-            className="object-cover"
-            sizes="320px"
+            className="block w-full h-auto"
+            draggable={false}
           />
         ) : (
-          <div className="flex h-full items-center justify-center">
+          <div className="flex h-[180px] items-center justify-center">
             <Clock className="h-8 w-8 text-white/20" />
           </div>
         )}
