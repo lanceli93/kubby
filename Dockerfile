@@ -47,7 +47,7 @@ CMD if [ -z "$AUTH_SECRET" ]; then \
       if [ -f /data/auth-secret ]; then \
         export AUTH_SECRET=$(cat /data/auth-secret); \
       else \
-        export AUTH_SECRET=$(head -c 32 /dev/urandom | xxd -p | tr -d '\n'); \
+        export AUTH_SECRET=$(node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))"); \
         echo "$AUTH_SECRET" > /data/auth-secret; \
       fi; \
     fi && \
