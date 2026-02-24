@@ -27,5 +27,5 @@ export function getPeopleMetadataDir(): string {
 }
 
 export function getBookmarksDir(): string {
-  return path.join(getDataDir(), "bookmarks");
+  return path.join(getMetadataDir(), "bookmarks");
 }
