@@ -152,9 +152,16 @@ export default function LibrariesPage() {
                 <div className="flex flex-col gap-2">
                   {folderPaths.map((p, idx) => (
                     <div key={idx} className="flex items-center gap-2 min-w-0">
-                      <span title={p} className="min-w-0 flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground">
-                        {p}
-                      </span>
+                      <input
+                        type="text"
+                        value={p}
+                        onChange={(e) => {
+                          const updated = [...folderPaths];
+                          updated[idx] = e.target.value;
+                          setFolderPaths(updated);
+                        }}
+                        className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                      />
                       <button
                         type="button"
                         onClick={() => setFolderPaths(folderPaths.filter((_, i) => i !== idx))}

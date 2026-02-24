@@ -6,6 +6,14 @@ import { useTranslations } from "next-intl";
 import { setLocale } from "@/i18n/locale";
 import { Eye, EyeOff, FolderOpen, Check, X, Plus, Folder, Info } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export function SetupWizard() {
   const router = useRouter();
@@ -29,6 +37,7 @@ export function SetupWizard() {
   const [newFolderPath, setNewFolderPath] = useState("");
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [jellyfinCompat, setJellyfinCompat] = useState(false);
+  const [jellyfinCompatConfirmOpen, setJellyfinCompatConfirmOpen] = useState(false);
 
   // Errors & loading
   const [error, setError] = useState("");
@@ -300,9 +309,16 @@ export function SetupWizard() {
               <div className="flex flex-col gap-2">
                 {folderPaths.map((p, idx) => (
                   <div key={idx} className="flex items-center gap-2 min-w-0">
-                    <span title={p} className="min-w-0 flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground">
-                      {p}
-                    </span>
+                    <input
+                      type="text"
+                      value={p}
+                      onChange={(e) => {
+                        const updated = [...folderPaths];
+                        updated[idx] = e.target.value;
+                        setFolderPaths(updated);
+                      }}
+                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                    />
                     <button
                       type="button"
                       onClick={() => setFolderPaths(folderPaths.filter((_, i) => i !== idx))}
@@ -351,21 +367,58 @@ export function SetupWizard() {
             </div>
 
             {/* Jellyfin Compatibility Mode */}
-            <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
-              <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
-                <input
-                  type="checkbox"
-                  checked={jellyfinCompat}
-                  onChange={(e) => setJellyfinCompat(e.target.checked)}
-                  className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
-                />
-                <span className="text-sm text-foreground">{t("jellyfinCompatMode")}</span>
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {t("jellyfinCompatMode")}
               </label>
-              <div className="flex items-start gap-2 px-3.5 pb-2.5 pt-0">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#555568]" />
-                <p className="text-xs text-[#555568]">{t("jellyfinCompatDesc")}</p>
+              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={jellyfinCompat}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setJellyfinCompatConfirmOpen(true);
+                      } else {
+                        setJellyfinCompat(false);
+                      }
+                    }}
+                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                  />
+                  <span className="text-sm text-foreground">{t("jellyfinCompatMode")}</span>
+                </label>
               </div>
+              <p className="text-xs text-[#555568]">{t("jellyfinCompatDesc")}</p>
             </div>
+
+            {/* Jellyfin compat confirmation dialog */}
+            <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
+              <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+                <DialogHeader>
+                  <DialogTitle>{t("jellyfinCompatConfirmTitle")}</DialogTitle>
+                  <DialogDescription>{t("jellyfinCompatConfirmDesc")}</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <button
+                    type="button"
+                    onClick={() => setJellyfinCompatConfirmOpen(false)}
+                    className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {tc("cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setJellyfinCompat(true);
+                      setJellyfinCompatConfirmOpen(false);
+                    }}
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    {tc("enable")}
+                  </button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
