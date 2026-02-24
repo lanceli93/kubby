@@ -230,6 +230,21 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `external_player_mode` text DEFAULT 'local'",
   // 0014: Jellyfin compatibility mode per library
   "ALTER TABLE `media_libraries` ADD `jellyfin_compat` integer NOT NULL DEFAULT 0",
+  // 0015: movie bookmarks table
+  `CREATE TABLE IF NOT EXISTS \`movie_bookmarks\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+    \`movie_id\` text NOT NULL REFERENCES \`movies\`(\`id\`) ON DELETE CASCADE,
+    \`timestamp_seconds\` integer NOT NULL,
+    \`disc_number\` integer DEFAULT 1,
+    \`icon_type\` text DEFAULT 'bookmark',
+    \`tags\` text,
+    \`note\` text,
+    \`thumbnail_path\` text,
+    \`created_at\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+  "CREATE INDEX IF NOT EXISTS `idx_mb_user_movie` ON `movie_bookmarks` (`user_id`, `movie_id`)",
+  "CREATE INDEX IF NOT EXISTS `idx_mb_movie` ON `movie_bookmarks` (`movie_id`)",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

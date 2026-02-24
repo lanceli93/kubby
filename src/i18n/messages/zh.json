@@ -238,7 +238,20 @@
     "playExternal": "播放（{player}）",
     "launchedIn": "已在 {player} 中打开",
     "configureExternalPlayer": "请先在设置 → 播放设置中配置外部播放器",
-    "externalPlayerFailed": "启动外部播放器失败"
+    "externalPlayerFailed": "启动外部播放器失败",
+    "bookmarks": "书签",
+    "addBookmark": "添加书签",
+    "quickBookmark": "快速书签",
+    "detailedBookmark": "详细书签",
+    "bookmarkAdded": "已添加书签",
+    "bookmarkSaved": "书签已保存",
+    "deleteBookmark": "删除书签",
+    "bookmarkType": "类型",
+    "bookmarkTags": "标签",
+    "bookmarkNote": "备注",
+    "bookmarkNotePlaceholder": "可选备注...",
+    "saveBookmark": "保存书签",
+    "tagsPlaceholder": "输入后按 Enter 添加"
   },
   "search": {
     "search": "搜索",

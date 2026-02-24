@@ -19,6 +19,7 @@ export async function POST(
     const { id: movieId } = await params;
     const body = await request.json().catch(() => ({}));
     const discNumber = body.disc as number | undefined;
+    const overrideStartSeconds = body.startSeconds as number | undefined;
 
     // Get user's external player config
     const prefs = db
@@ -84,7 +85,7 @@ export async function POST(
       )
       .get();
 
-    const startSeconds = userData?.playbackPositionSeconds ?? 0;
+    const startSeconds = overrideStartSeconds ?? userData?.playbackPositionSeconds ?? 0;
     const playerName = prefs.externalPlayerName;
     const playerPath = prefs.externalPlayerPath;
     const platform = process.platform;

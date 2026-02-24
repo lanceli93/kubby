@@ -238,7 +238,20 @@
     "playExternal": "Play ({player})",
     "launchedIn": "Launched in {player}",
     "configureExternalPlayer": "Please configure your external player in Settings first",
-    "externalPlayerFailed": "Failed to launch external player"
+    "externalPlayerFailed": "Failed to launch external player",
+    "bookmarks": "Bookmarks",
+    "addBookmark": "Add Bookmark",
+    "quickBookmark": "Quick Bookmark",
+    "detailedBookmark": "Detailed Bookmark",
+    "bookmarkAdded": "Bookmark added",
+    "bookmarkSaved": "Bookmark saved",
+    "deleteBookmark": "Delete Bookmark",
+    "bookmarkType": "Type",
+    "bookmarkTags": "Tags",
+    "bookmarkNote": "Note",
+    "bookmarkNotePlaceholder": "Optional note...",
+    "saveBookmark": "Save Bookmark",
+    "tagsPlaceholder": "Type and press Enter to add"
   },
   "search": {
     "search": "Search",

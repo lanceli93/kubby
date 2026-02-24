@@ -127,6 +127,23 @@ export const userMovieData = sqliteTable("user_movie_data", {
   uniqueIndex("idx_umd_user_movie").on(table.userId, table.movieId),
 ]);
 
+// ─── Movie Bookmarks ──────────────────────────────────────────
+export const movieBookmarks = sqliteTable("movie_bookmarks", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  movieId: text("movie_id").notNull().references(() => movies.id, { onDelete: "cascade" }),
+  timestampSeconds: integer("timestamp_seconds").notNull(),
+  discNumber: integer("disc_number").default(1),
+  iconType: text("icon_type").default("bookmark"),
+  tags: text("tags"),
+  note: text("note"),
+  thumbnailPath: text("thumbnail_path"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_mb_user_movie").on(table.userId, table.movieId),
+  index("idx_mb_movie").on(table.movieId),
+]);
+
 // ─── User Person Data ──────────────────────────────────────────
 export const userPersonData = sqliteTable("user_person_data", {
   id: text("id").primaryKey(),

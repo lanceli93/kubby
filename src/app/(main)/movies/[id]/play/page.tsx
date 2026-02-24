@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useEffect, useCallback, useState } from "react";
 import {
   Play,
@@ -16,6 +16,9 @@ import {
   Gauge,
   HelpCircle,
   X,
+  Bookmark,
+  BookmarkPlus,
+  Star,
 } from "lucide-react";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -23,6 +26,16 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 interface DiscData {
   discNumber: number;
   label?: string;
+}
+
+interface BookmarkData {
+  id: string;
+  timestampSeconds: number;
+  discNumber?: number;
+  iconType?: string;
+  tags?: string[];
+  note?: string;
+  thumbnailPath?: string | null;
 }
 
 interface MovieData {
@@ -60,10 +73,22 @@ export default function PlayerPage() {
   const volumeAreaRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
+  const [bookmarkIconType, setBookmarkIconType] = useState<"bookmark" | "star">("bookmark");
+  const [bookmarkTags, setBookmarkTags] = useState<string[]>([]);
+  const [bookmarkNote, setBookmarkNote] = useState("");
+  const [tagInput, setTagInput] = useState("");
+
+  const queryClient = useQueryClient();
 
   const { data: movie } = useQuery<MovieData>({
     queryKey: ["movie-player", movieId],
     queryFn: () => fetch(`/api/movies/${movieId}`).then((r) => r.json()),
+  });
+
+  const { data: bookmarks } = useQuery<BookmarkData[]>({
+    queryKey: ["movie-bookmarks", movieId],
+    queryFn: () => fetch(`/api/movies/${movieId}/bookmarks`).then((r) => r.json()),
   });
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
@@ -93,6 +118,45 @@ export default function PlayerPage() {
       }),
   });
 
+  const addQuickBookmark = useMutation({
+    mutationFn: async () => {
+      const thumbnail = await captureVideoFrame();
+      const formData = new FormData();
+      formData.append("timestampSeconds", String(Math.floor(videoRef.current?.currentTime || 0)));
+      formData.append("discNumber", String(currentDisc));
+      formData.append("iconType", "bookmark");
+      if (thumbnail) formData.append("thumbnail", thumbnail, "thumb.jpg");
+      return fetch(`/api/movies/${movieId}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movie-bookmarks", movieId] });
+      showOsd("Bookmark added");
+    },
+  });
+
+  const saveDetailedBookmark = useMutation({
+    mutationFn: async () => {
+      const thumbnail = await captureVideoFrame();
+      const formData = new FormData();
+      formData.append("timestampSeconds", String(Math.floor(videoRef.current?.currentTime || 0)));
+      formData.append("discNumber", String(currentDisc));
+      formData.append("iconType", bookmarkIconType);
+      if (bookmarkTags.length > 0) formData.append("tags", JSON.stringify(bookmarkTags));
+      if (bookmarkNote) formData.append("note", bookmarkNote);
+      if (thumbnail) formData.append("thumbnail", thumbnail, "thumb.jpg");
+      return fetch(`/api/movies/${movieId}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movie-bookmarks", movieId] });
+      setShowBookmarkPanel(false);
+      setBookmarkIconType("bookmark");
+      setBookmarkTags([]);
+      setBookmarkNote("");
+      setTagInput("");
+      showOsd("Bookmark saved");
+    },
+  });
+
   // Auto-save progress every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
@@ -106,6 +170,12 @@ export default function PlayerPage() {
   // Restore position on load (only for the initial disc)
   useEffect(() => {
     if (!movie || !initializedRef.current) return;
+    // ?t= param takes priority (bookmark navigation)
+    const tParam = searchParams.get("t");
+    if (tParam && videoRef.current) {
+      videoRef.current.currentTime = parseInt(tParam, 10);
+      return;
+    }
     const pos = movie.userData?.playbackPositionSeconds;
     const savedDisc = movie.userData?.currentDisc ?? 1;
     // Only restore position if we're on the saved disc (resume scenario)
@@ -229,12 +299,26 @@ export default function PlayerPage() {
           e.preventDefault();
           cycleSpeed(-1);
           break;
+        case "b":
+        case "B":
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Detailed bookmark: pause + open panel
+            if (videoRef.current && !videoRef.current.paused) videoRef.current.pause();
+            setShowBookmarkPanel(true);
+          } else {
+            addQuickBookmark.mutate();
+          }
+          break;
         case "?":
           e.preventDefault();
           setShowHelp((v) => !v);
           break;
         case "Escape":
-          if (showHelp) {
+          if (showBookmarkPanel) {
+            e.preventDefault();
+            setShowBookmarkPanel(false);
+          } else if (showHelp) {
             e.preventDefault();
             setShowHelp(false);
           }
@@ -244,7 +328,7 @@ export default function PlayerPage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [volume, isMuted, playbackRate, isPlaying, showHelp]);
+  }, [volume, isMuted, playbackRate, isPlaying, showHelp, showBookmarkPanel]);
 
   // Track fullscreen changes
   useEffect(() => {
@@ -284,6 +368,18 @@ export default function PlayerPage() {
     const sec = Math.floor(s % 60);
     if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
     return `${m}:${sec.toString().padStart(2, "0")}`;
+  }
+
+  async function captureVideoFrame(): Promise<Blob | null> {
+    const video = videoRef.current;
+    if (!video) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 180;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(video, 0, 0, 320, 180);
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
   }
 
   function toggleFullscreen() {
@@ -441,6 +537,8 @@ export default function PlayerPage() {
                 ["F", "Toggle fullscreen"],
                 ["> or .", "Increase speed"],
                 ["< or ,", "Decrease speed"],
+                ["B", "Quick bookmark"],
+                ["Shift + B", "Detailed bookmark"],
                 ["?", "Show / Hide this help"],
                 ["Esc", "Close this help"],
               ].map(([key, desc]) => (
@@ -455,6 +553,132 @@ export default function PlayerPage() {
             <p className="mt-4 text-xs text-white/40">
               Click the speed button or use the volume hover slider for mouse controls.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Bookmark panel overlay */}
+      {showBookmarkPanel && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowBookmarkPanel(false);
+          }}
+        >
+          <div
+            className="w-[400px] rounded-xl bg-zinc-900 p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="mb-4 text-lg font-semibold text-white">Add Bookmark</h3>
+
+            {/* Timestamp */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm text-white/60">Timestamp</label>
+              <div className="rounded-md bg-white/10 px-3 py-2 text-sm text-white">
+                {formatTime(videoRef.current?.currentTime || 0)}
+              </div>
+            </div>
+
+            {/* Icon type */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm text-white/60">Type</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setBookmarkIconType("bookmark")}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                    bookmarkIconType === "bookmark"
+                      ? "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50"
+                      : "bg-white/10 text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Bookmark className="h-4 w-4" />
+                  Bookmark
+                </button>
+                <button
+                  onClick={() => setBookmarkIconType("star")}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                    bookmarkIconType === "star"
+                      ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/50"
+                      : "bg-white/10 text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Star className="h-4 w-4" />
+                  Star
+                </button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="mb-4">
+              <label className="mb-1 block text-sm text-white/60">Tags</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {bookmarkTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs text-white"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => setBookmarkTags(bookmarkTags.filter((t) => t !== tag))}
+                      className="text-white/50 hover:text-white"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && tagInput.trim()) {
+                    e.preventDefault();
+                    if (!bookmarkTags.includes(tagInput.trim())) {
+                      setBookmarkTags([...bookmarkTags, tagInput.trim()]);
+                    }
+                    setTagInput("");
+                  }
+                }}
+                placeholder="Type and press Enter to add"
+                className="w-full rounded-md bg-white/10 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:ring-1 focus:ring-white/30"
+              />
+            </div>
+
+            {/* Note */}
+            <div className="mb-5">
+              <label className="mb-1 block text-sm text-white/60">Note</label>
+              <textarea
+                value={bookmarkNote}
+                onChange={(e) => setBookmarkNote(e.target.value)}
+                placeholder="Optional note..."
+                rows={2}
+                className="w-full resize-none rounded-md bg-white/10 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:ring-1 focus:ring-white/30"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowBookmarkPanel(false);
+                  setBookmarkIconType("bookmark");
+                  setBookmarkTags([]);
+                  setBookmarkNote("");
+                  setTagInput("");
+                }}
+                className="rounded-md px-4 py-2 text-sm text-white/60 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => saveDetailedBookmark.mutate()}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+              >
+                Save Bookmark
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -483,6 +707,21 @@ export default function PlayerPage() {
             className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-primary opacity-0 transition-opacity group-hover:opacity-100"
             style={{ left: `${progress}%` }}
           />
+          {/* Bookmark markers */}
+          {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => (
+            <div
+              key={bm.id}
+              className={`absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full z-10 cursor-pointer ${
+                bm.iconType === "star" ? "bg-yellow-400" : "bg-blue-400"
+              }`}
+              style={{ left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%` }}
+              title={`${formatTime(bm.timestampSeconds)}${bm.note ? " - " + bm.note : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (videoRef.current) videoRef.current.currentTime = bm.timestampSeconds;
+              }}
+            />
+          ))}
         </div>
 
         <div className="flex items-center justify-between">
@@ -514,6 +753,25 @@ export default function PlayerPage() {
 
           {/* Right controls */}
           <div className="flex items-center gap-3">
+            {/* Quick bookmark */}
+            <button
+              onClick={() => addQuickBookmark.mutate()}
+              className="text-white/60 hover:text-blue-400 transition-colors"
+              title="Quick bookmark (B)"
+            >
+              <Bookmark className="h-5 w-5" />
+            </button>
+            {/* Detailed bookmark */}
+            <button
+              onClick={() => {
+                if (videoRef.current && !videoRef.current.paused) videoRef.current.pause();
+                setShowBookmarkPanel(true);
+              }}
+              className="text-white/60 hover:text-yellow-400 transition-colors"
+              title="Detailed bookmark (Shift+B)"
+            >
+              <BookmarkPlus className="h-5 w-5" />
+            </button>
             {/* Speed control */}
             <div className="relative">
               <button

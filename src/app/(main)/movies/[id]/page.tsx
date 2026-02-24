@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle } from "lucide-react";
+import { BookmarkCard } from "@/components/movie/bookmark-card";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -85,6 +86,16 @@ interface MovieDetail {
     personalRating?: number | null;
     dimensionRatings?: Record<string, number> | null;
   };
+}
+
+interface BookmarkData {
+  id: string;
+  timestampSeconds: number;
+  discNumber?: number;
+  iconType?: string;
+  tags?: string[];
+  note?: string;
+  thumbnailPath?: string | null;
 }
 
 interface RecommendedMovie {
@@ -196,7 +207,7 @@ export default function MovieDetailPage() {
       : `${window.location.origin}/api/movies/${movieId}/stream`;
   }
 
-  async function launchExternal(disc?: number) {
+  async function launchExternal(disc?: number, startSeconds?: number) {
     if (!externalEnabled) {
       setExternalToast(t("configureExternalPlayer"));
       setTimeout(() => setExternalToast(null), 3000);
@@ -207,9 +218,9 @@ export default function MovieDetailPage() {
       const streamUrl = getStreamUrl(disc);
       let protocolUrl = streamUrl;
       if (externalPlayerName === "IINA") {
-        protocolUrl = `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+        protocolUrl = `iina://weblink?url=${encodeURIComponent(streamUrl)}${startSeconds ? `&start=${startSeconds}` : ""}`;
       } else if (externalPlayerName === "PotPlayer") {
-        protocolUrl = `potplayer://${streamUrl}`;
+        protocolUrl = `potplayer://${streamUrl}${startSeconds ? ` /seek=${startSeconds * 1000}` : ""}`;
       }
       window.location.href = protocolUrl;
       setExternalToast(t("launchedIn", { player: externalPlayerName || "" }));
@@ -222,7 +233,7 @@ export default function MovieDetailPage() {
       const res = await fetch(`/api/movies/${movieId}/play-external`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ disc }),
+        body: JSON.stringify({ disc, startSeconds }),
       });
       if (res.ok) {
         setExternalToast(t("launchedIn", { player: externalPlayerName || "" }));
@@ -244,6 +255,17 @@ export default function MovieDetailPage() {
     queryKey: ["movies", "recommended", movieId],
     queryFn: () =>
       fetch(`/api/movies?exclude=${movieId}&limit=6`).then((r) => r.json()),
+  });
+
+  const { data: bookmarks = [] } = useQuery<BookmarkData[]>({
+    queryKey: ["movie-bookmarks", movieId],
+    queryFn: () => fetch(`/api/movies/${movieId}/bookmarks`).then((r) => r.json()),
+  });
+
+  const deleteBookmark = useMutation({
+    mutationFn: (bookmarkId: string) =>
+      fetch(`/api/movies/${movieId}/bookmarks/${bookmarkId}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie-bookmarks", movieId] }),
   });
 
   const toggleFavorite = useMutation({
@@ -781,6 +803,24 @@ export default function MovieDetailPage() {
               )
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Bookmarks Section */}
+      {bookmarks.length > 0 && (
+        <section className="px-20 mt-[10px]">
+          <ScrollRow title={`${t("bookmarks")} (${bookmarks.length})`}>
+            {bookmarks.map((bm) => (
+              <BookmarkCard
+                key={bm.id}
+                bookmark={bm}
+                movieId={movieId}
+                externalEnabled={externalEnabled}
+                onExternalLaunch={(disc, startSeconds) => launchExternal(disc, startSeconds)}
+                onDelete={(id) => deleteBookmark.mutate(id)}
+              />
+            ))}
+          </ScrollRow>
         </section>
       )}
 
