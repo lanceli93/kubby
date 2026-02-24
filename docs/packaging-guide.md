@@ -306,7 +306,7 @@ services:
       - "3000:3000"
     volumes:
       - kubby-data:/data
-      - /path/to/your/movies:/media:ro
+      - /path/to/your/movies:/media
     restart: unless-stopped
 
 volumes:
@@ -317,7 +317,7 @@ volumes:
 
 ### 桌面安装包
 
-`.github/workflows/release.yml` 在 `v*` tag push 时自动构建四个平台（darwin-arm64, darwin-x64, win-x64, linux-x64），产出 GitHub Release。
+`.github/workflows/release.yml` 在 `v*` tag push 时自动构建三个平台（darwin-arm64, darwin-x64, win-x64），产出 GitHub Release（draft）。支持 `workflow_dispatch` 手动触发测试构建。
 
 ### Docker 镜像
 

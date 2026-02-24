@@ -122,7 +122,7 @@ services:
       - "3000:3000"
     volumes:
       - kubby-data:/data
-      - /path/to/your/movies:/media:ro
+      - /path/to/your/movies:/media
     restart: unless-stopped
 
 volumes:
@@ -142,7 +142,7 @@ docker run -d \
   --name kubby \
   -p 3000:3000 \
   -v kubby-data:/data \
-  -v /path/to/your/movies:/media:ro \
+  -v /path/to/your/movies:/media \
   --restart unless-stopped \
   ghcr.io/kubby-app/kubby:latest
 ```
@@ -152,7 +152,7 @@ docker run -d \
 | Mount | Purpose |
 |-------|---------|
 | `/data` | Database, config, logs, metadata (persist this!) |
-| `/media` | Your media library folders (read-only is fine) |
+| `/media` | Your media library folders (read-write, Kubby writes NFO/poster files here) |
 
 ### Update
 
@@ -173,7 +173,7 @@ docker run -d -p 3000:3000 -v kubby-data:/data kubby
 ### Prerequisites
 
 - Node.js 22+
-- Go 1.22+
+- Go 1.25+
 - npm
 
 ### Package
@@ -198,7 +198,6 @@ Add `--skip-build` to skip Next.js rebuild, `--skip-download` to reuse cached bi
 npx tsx scripts/package.ts --platform darwin-arm64   # macOS Apple Silicon
 npx tsx scripts/package.ts --platform darwin-x64     # macOS Intel
 npx tsx scripts/package.ts --platform win-x64        # Windows
-npx tsx scripts/package.ts --platform linux-x64      # Linux
 ```
 
 ## Tech Stack
