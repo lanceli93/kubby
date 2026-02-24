@@ -538,3 +538,18 @@
 - NSIS uninstaller now shows a Yes/No MessageBox asking whether to delete `%LOCALAPPDATA%\Kubby` user data
 - Default is "No" (preserve data for future installations)
 - Only deletes data directory if user explicitly confirms
+
+## 2026-02-24: Dashboard Libraries Redesign & Scraper Icon Fix
+
+### Media Libraries dashboard page redesigned (Jellyfin-style)
+- Library cards now display cover images (fanart from random movie) in a responsive grid (2–5 columns)
+- Each card shows library name overlaid on cover image with dark backdrop
+- "Scan All Libraries" button added to header alongside "Add Library"
+- Three-dot (⋮) dropdown menu on each card with: Scan Library, Edit, Delete
+- Clicking cover image opens Edit Library dialog with full settings (name, folder paths, scraper, metadata language, Jellyfin compat)
+- Delete confirmation via proper Dialog instead of native `confirm()`
+- Scan progress overlay with progress bar shown directly on the card during scanning
+
+### Scraper sidebar icon changed
+- Replaced `Search` icon with `Wand2` (magic wand) icon in the admin sidebar for the Scraper Settings link
+- Eliminates confusion with the search functionality icon
