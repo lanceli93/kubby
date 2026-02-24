@@ -508,7 +508,7 @@ export default function LibrariesPage() {
 
                 {/* Library name overlay */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
-                  <h2 className="font-bold text-white drop-shadow-lg px-3 text-center leading-tight text-2xl">{lib.name}</h2>
+                  <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: 40 }}>{lib.name}</h2>
                 </div>
 
                 {/* Scanning overlay with progress */}
