@@ -121,60 +121,63 @@ function parseStream(raw: Record<string, unknown>): ProbeStream | null {
 export function probeVideo(filePath: string): Promise<ProbeResult | null> {
   const ffprobePath = process.env.FFPROBE_PATH || "ffprobe";
   return new Promise((resolve) => {
-    execFile(
-      ffprobePath,
-      [
-        "-v", "quiet",
-        "-print_format", "json",
-        "-show_streams",
-        "-show_format",
-        filePath,
-      ],
-      { timeout: 30000, maxBuffer: 10 * 1024 * 1024 },
-      (error, stdout) => {
-        if (error) {
-          console.warn(`ffprobe failed for ${filePath}:`, error.message);
-          resolve(null);
-          return;
-        }
-
-        try {
-          const data = JSON.parse(stdout);
-          const rawStreams: Array<Record<string, unknown>> = data.streams || [];
-          const format = data.format || {};
-
-          const streams: ProbeStream[] = [];
-          for (const raw of rawStreams) {
-            const parsed = parseStream(raw);
-            if (parsed) streams.push(parsed);
+    try {
+      execFile(
+        ffprobePath,
+        [
+          "-v", "quiet",
+          "-print_format", "json",
+          "-show_streams",
+          "-show_format",
+          filePath,
+        ],
+        { timeout: 30000, maxBuffer: 10 * 1024 * 1024 },
+        (error, stdout) => {
+          if (error) {
+            console.warn(`ffprobe failed for ${filePath}:`, error.message);
+            resolve(null);
+            return;
           }
 
-          const videoStream = streams.find((s) => s.streamType === "video");
-          const audioStream = streams.find((s) => s.streamType === "audio");
+          try {
+            const data = JSON.parse(stdout);
+            const rawStreams: Array<Record<string, unknown>> = data.streams || [];
+            const format = data.format || {};
 
-          const ext = path.extname(filePath).toLowerCase().replace(".", "");
-          const duration = format.duration ? parseFloat(format.duration) : null;
+            const streams: ProbeStream[] = [];
+            for (const raw of rawStreams) {
+              const parsed = parseStream(raw);
+              if (parsed) streams.push(parsed);
+            }
 
-          resolve({
-            // Legacy flat fields
-            videoCodec: videoStream?.codec || null,
-            videoWidth: videoStream?.width || null,
-            videoHeight: videoStream?.height || null,
-            audioCodec: audioStream?.codec || null,
-            audioChannels: audioStream?.channels || null,
-            durationSeconds: duration && !isNaN(duration) ? Math.round(duration) : null,
-            container: ext,
-            // Detailed fields
-            streams,
-            totalBitrate: format.bit_rate ? parseInt(String(format.bit_rate), 10) : null,
-            fileSize: format.size ? parseInt(String(format.size), 10) : null,
-            formatName: format.format_long_name || format.format_name || null,
-          });
-        } catch {
-          console.warn(`Failed to parse ffprobe output for ${filePath}`);
-          resolve(null);
+            const videoStream = streams.find((s) => s.streamType === "video");
+            const audioStream = streams.find((s) => s.streamType === "audio");
+
+            const ext = path.extname(filePath).toLowerCase().replace(".", "");
+            const duration = format.duration ? parseFloat(format.duration) : null;
+
+            resolve({
+              videoCodec: videoStream?.codec || null,
+              videoWidth: videoStream?.width || null,
+              videoHeight: videoStream?.height || null,
+              audioCodec: audioStream?.codec || null,
+              audioChannels: audioStream?.channels || null,
+              durationSeconds: duration && !isNaN(duration) ? Math.round(duration) : null,
+              container: ext,
+              streams,
+              totalBitrate: format.bit_rate ? parseInt(String(format.bit_rate), 10) : null,
+              fileSize: format.size ? parseInt(String(format.size), 10) : null,
+              formatName: format.format_long_name || format.format_name || null,
+            });
+          } catch {
+            console.warn(`Failed to parse ffprobe output for ${filePath}`);
+            resolve(null);
+          }
         }
-      }
-    );
+      );
+    } catch (err) {
+      console.warn(`ffprobe spawn failed:`, (err as Error).message);
+      resolve(null);
+    }
   });
 }

@@ -21,6 +21,7 @@ export async function POST(
         });
         send({ done: true, scannedCount: result.scannedCount });
       } catch (error) {
+        console.error("[scan] error:", error);
         send({
           error: error instanceof Error ? error.message : "Scan failed",
         });
