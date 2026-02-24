@@ -798,7 +798,7 @@ export default function MovieDetailPage() {
                 photoBlur={person.photoBlur}
                 personalRating={person.personalRating}
                 age={computeAgeAtRelease(person.birthYear, person.birthDate, movie.premiereDate, movie.year)}
-                size="sm"
+                size="movie"
               />
             ))}
           </ScrollRow>

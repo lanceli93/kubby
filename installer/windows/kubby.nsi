@@ -110,7 +110,7 @@ FunctionEnd
 
 ; ─── Uninstaller Section ────────────────────────────────
 Section "Uninstall"
-  ; Remove installed files (NOT user data in %LOCALAPPDATA%\Kubby)
+  ; Remove installed files
   RMDir /r "$INSTDIR\node"
   RMDir /r "$INSTDIR\bin"
   RMDir /r "$INSTDIR\server"
@@ -127,4 +127,12 @@ Section "Uninstall"
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Kubby"
   DeleteRegKey HKLM "Software\Kubby"
+
+  ; Ask user if they want to delete user data
+  MessageBox MB_YESNO|MB_ICONQUESTION \
+    "Do you want to delete all Kubby user data (database, settings, metadata)?$\n$\nData location: $LOCALAPPDATA\Kubby$\n$\nClick 'No' to keep your data for future installations." \
+    IDYES deleteData IDNO skipDelete
+  deleteData:
+    RMDir /r "$LOCALAPPDATA\Kubby"
+  skipDelete:
 SectionEnd

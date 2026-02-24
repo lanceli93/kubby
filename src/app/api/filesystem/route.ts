@@ -2,10 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { execSync } from "child_process";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { count } from "drizzle-orm";
+
+// Enumerate available Windows drive letters
+function getWindowsDrives(): { name: string; path: string }[] {
+  try {
+    const output = execSync(
+      "wmic logicaldisk get name",
+      { encoding: "utf-8", timeout: 5000 }
+    );
+    const drives: { name: string; path: string }[] = [];
+    for (const line of output.split("\n")) {
+      const trimmed = line.trim();
+      if (/^[A-Z]:$/.test(trimmed)) {
+        drives.push({ name: `${trimmed}\\`, path: `${trimmed}\\` });
+      }
+    }
+    return drives.sort((a, b) => a.name.localeCompare(b.name));
+  } catch {
+    // Fallback: check common drive letters
+    const drives: { name: string; path: string }[] = [];
+    for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+      const drivePath = `${letter}:\\`;
+      try {
+        fs.accessSync(drivePath, fs.constants.R_OK);
+        drives.push({ name: drivePath, path: drivePath });
+      } catch {
+        // Drive not available
+      }
+    }
+    return drives;
+  }
+}
 
 // GET /api/filesystem?path=/some/dir - List directories at given path
 export async function GET(request: NextRequest) {
@@ -18,7 +50,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);
-  const dirPath = searchParams.get("path") || os.homedir();
+  const requestedPath = searchParams.get("path");
+
+  // Special case: on Windows, if no path or path is "drives", show drive list
+  if (process.platform === "win32" && (!requestedPath || requestedPath === "drives")) {
+    const drives = getWindowsDrives();
+    return NextResponse.json({
+      current: "My Computer",
+      parent: null,
+      directories: drives,
+      isDriveList: true,
+    });
+  }
+
+  const dirPath = requestedPath || os.homedir();
 
   try {
     const normalized = path.resolve(dirPath);
@@ -53,10 +98,12 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => a.name.localeCompare(b.name));
 
     const parent = path.dirname(normalized);
+    // On Windows, if at drive root (e.g. C:\), parent should go to drive list
+    const isAtDriveRoot = process.platform === "win32" && /^[A-Z]:\\$/.test(normalized);
 
     return NextResponse.json({
       current: normalized,
-      parent: parent !== normalized ? parent : null,
+      parent: isAtDriveRoot ? "drives" : parent !== normalized ? parent : null,
       directories,
     });
   } catch (error) {

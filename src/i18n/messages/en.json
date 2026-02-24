@@ -57,7 +57,9 @@
     "confirmYourPassword": "Confirm password",
     "libraryNamePlaceholder": "e.g. Movies",
     "folderPathPlaceholder": "/path/to/media",
-    "selectYourLanguage": "Select your preferred language"
+    "selectYourLanguage": "Select your preferred language",
+    "jellyfinCompatMode": "Jellyfin Compatibility Mode",
+    "jellyfinCompatDesc": "Prevents writing to NFO files and imports actor photos from Jellyfin local paths. Recommended if Jellyfin also uses this library."
   },
   "nav": {
     "home": "Home",

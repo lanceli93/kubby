@@ -86,6 +86,8 @@ function findDiscPoster(movieDir: string, discInfo: DiscInfo): string | null {
     `poster-disc${n}`,
     `poster-cd${n}`,
     `${videoBaseName}-poster`,
+    // Jellyfin convention: moviename-cd1-poster
+    `${videoBaseName.replace(/[\s._\-]*(cd|disc|part)\d+$/i, "")}-cd${n}-poster`,
   ];
   for (const pattern of patterns) {
     const found = findFileByPattern(movieDir, pattern, IMAGE_EXTENSIONS);
@@ -300,12 +302,19 @@ export async function scanLibrary(
     }
 
     // Find poster and fanart (relative to movie dir)
+    // Standard names: poster.*, folder.*, cover.*
+    // Jellyfin/Kodi convention: moviename-poster.*, moviename-fanart.*
+    const videoBaseName = primaryVideo ? path.basename(primaryVideo, path.extname(primaryVideo)) : null;
     const posterFile = findFileByPattern(movieDir, "poster", IMAGE_EXTENSIONS)
       || findFileByPattern(movieDir, "folder", IMAGE_EXTENSIONS)
-      || findFileByPattern(movieDir, "cover", IMAGE_EXTENSIONS);
+      || findFileByPattern(movieDir, "cover", IMAGE_EXTENSIONS)
+      || (videoBaseName ? findFileByPattern(movieDir, `${videoBaseName}-poster`, IMAGE_EXTENSIONS) : null)
+      || (videoBaseName ? findFileByPattern(movieDir, `${entry.name}-poster`, IMAGE_EXTENSIONS) : null);
     const fanartFile = findFileByPattern(movieDir, "fanart", IMAGE_EXTENSIONS)
       || findFileByPattern(movieDir, "landscape", IMAGE_EXTENSIONS)
-      || findFileByPattern(movieDir, "backdrop", IMAGE_EXTENSIONS);
+      || findFileByPattern(movieDir, "backdrop", IMAGE_EXTENSIONS)
+      || (videoBaseName ? findFileByPattern(movieDir, `${videoBaseName}-fanart`, IMAGE_EXTENSIONS) : null)
+      || (videoBaseName ? findFileByPattern(movieDir, `${entry.name}-fanart`, IMAGE_EXTENSIONS) : null);
 
     const posterRelative = posterFile ? path.relative(movieDir, posterFile) : null;
     const fanartRelative = fanartFile ? path.relative(movieDir, fanartFile) : null;

@@ -487,3 +487,54 @@
 - Matrix builds: macOS arm64/x64, Windows x64, Linux x64
 - Creates tar.gz (Unix) / zip (Windows) archives
 - Publishes as draft GitHub Release with auto-generated notes
+
+## 2026-02-24: 9 Bug Fixes & UI Improvements
+
+### Windows folder picker: show all drives
+- Filesystem API (`/api/filesystem`) now enumerates Windows drive letters via `wmic logicaldisk` (fallback: probe A-Z)
+- When no path is specified on Windows, returns drive list (`isDriveList: true`) instead of defaulting to C:\Users\...
+- At drive root (e.g. `C:\`), parent navigates back to drive list
+- Folder picker UI shows HardDrive icon when viewing drives, disables "Select This Folder" on drive list
+
+### Setup wizard: multi-folder + Jellyfin compatibility mode
+- Setup wizard step 3 upgraded from single folder input to multi-folder support (same UI pattern as dashboard library creation)
+- Each added path shown with X remove button, text input with Enter key support + folder picker + Add button
+- Added Jellyfin Compatibility Mode toggle with description
+- Auto-includes pending text input path on submit (prevents paste-and-submit empty path bug)
+- Setup/complete API updated to accept `folderPaths[]` array and `jellyfinCompat` boolean (backward compatible with single `folderPath`)
+- i18n: Added `jellyfinCompatMode` and `jellyfinCompatDesc` keys (EN + ZH)
+
+### Scan progress after setup
+- Homepage auto-detects libraries with `lastScannedAt=null` and `movieCount=0`, triggers SSE scan automatically
+- Scan progress shown in global scan bar (bottom of page) via existing ScanProvider infrastructure
+- Removed fire-and-forget `scanLibrary()` call from setup/complete API to avoid double-scanning
+
+### Windows external player (PotPlayer) fix
+- `launchMac()` now checks `playerName` before appending IINA-specific `/Contents/MacOS/iina-cli` path — generic players use `open -a` instead
+- `launchWindows()` now handles PotPlayer, VLC (with `--start-time`), and generic players separately
+- Root cause: any player name on macOS was treated as IINA, causing `/Contents/MacOS/iina-cli` to be appended to non-IINA paths
+
+### Jellyfin poster/fanart naming conventions
+- Scanner now searches for `{videoBaseName}-poster.*` and `{folderName}-poster.*` after standard patterns (poster.*, folder.*, cover.*)
+- Scanner now searches for `{videoBaseName}-fanart.*` and `{folderName}-fanart.*` after standard patterns (fanart.*, landscape.*, backdrop.*)
+- Disc poster detection also supports `{baseName}-cd{N}-poster.*` pattern
+
+### Controller already closed error fix
+- Stream API (`/api/movies/[id]/stream`) now wraps ReadableStream controller calls in try/catch with a `closed` flag
+- Added `cancel()` callback to destroy the underlying fs.ReadStream when client disconnects
+- Prevents `TypeError: Invalid state: Controller is already closed` when browser seeks mid-stream
+
+### Library creation with pasted folder path
+- Dashboard "Add Library" dialog now auto-includes any text in the pending folder path input when submitting
+- Same fix applied to setup wizard — no more empty `folderPaths` when user pastes a path and clicks submit without pressing Enter
+
+### Cast cards enlarged
+- Movie detail page cast section: PersonCard size changed from "sm" (140x210) to "movie" (180x270) to match movie card dimensions
+
+### Person gallery images enlarged
+- Gallery target row height increased from 280px to 360px for better viewing
+
+### Windows uninstall data cleanup option
+- NSIS uninstaller now shows a Yes/No MessageBox asking whether to delete `%LOCALAPPDATA%\Kubby` user data
+- Default is "No" (preserve data for future installations)
+- Only deletes data directory if user explicitly confirms

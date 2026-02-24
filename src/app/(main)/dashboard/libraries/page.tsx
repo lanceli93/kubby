@@ -55,12 +55,17 @@ export default function LibrariesPage() {
   };
 
   const createLibrary = useMutation({
-    mutationFn: () =>
-      fetch("/api/libraries", {
+    mutationFn: () => {
+      // Auto-include any pending folder path that wasn't explicitly added
+      const allPaths = newFolderPath.trim()
+        ? [...folderPaths, newFolderPath.trim()]
+        : folderPaths;
+      return fetch("/api/libraries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, folderPaths, scraperEnabled, jellyfinCompat, metadataLanguage: metadataLanguage === "en" ? null : metadataLanguage }),
-      }),
+        body: JSON.stringify({ name, type, folderPaths: allPaths, scraperEnabled, jellyfinCompat, metadataLanguage: metadataLanguage === "en" ? null : metadataLanguage }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       setOpen(false);

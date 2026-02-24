@@ -3,7 +3,6 @@ import { users, mediaLibraries } from "@/lib/db/schema";
 import { count } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { v4 as uuid } from "uuid";
-import { scanLibrary } from "@/lib/scanner";
 import { serializeFolderPaths } from "@/lib/folder-paths";
 
 export async function POST(request: Request) {
@@ -14,7 +13,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { username, password, locale, libraryName, folderPath } = body;
+  const { username, password, locale, libraryName, folderPath, folderPaths, jellyfinCompat } = body;
 
   if (!username || !password) {
     return Response.json({ error: "Username and password are required" }, { status: 400 });
@@ -32,20 +31,24 @@ export async function POST(request: Request) {
   }).run();
 
   // Optionally create media library and trigger scan
-  if (libraryName && folderPath) {
-    const libraryId = uuid();
+  // Support both folderPaths array (new) and single folderPath (backward compat)
+  const paths: string[] = Array.isArray(folderPaths) && folderPaths.length > 0
+    ? folderPaths
+    : folderPath ? [folderPath] : [];
+
+  let libraryId: string | null = null;
+  if (libraryName && paths.length > 0) {
+    libraryId = uuid();
     db.insert(mediaLibraries).values({
       id: libraryId,
       name: libraryName,
       type: "movie",
-      folderPath: serializeFolderPaths([folderPath]),
+      folderPath: serializeFolderPaths(paths),
+      jellyfinCompat: jellyfinCompat ? true : false,
     }).run();
-
-    // Scan in background, don't block the response
-    scanLibrary(libraryId).catch((err) =>
-      console.error("Initial library scan failed:", err)
-    );
+    // Scan is NOT triggered here — the homepage auto-scans unscanned libraries
+    // via SSE so the user can see progress in the global scan bar.
   }
 
-  return Response.json({ success: true });
+  return Response.json({ success: true, libraryId });
 }

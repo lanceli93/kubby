@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { setLocale } from "@/i18n/locale";
-import { Eye, EyeOff, FolderOpen, Check } from "lucide-react";
+import { Eye, EyeOff, FolderOpen, Check, X, Plus, Folder, Info } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
 
 export function SetupWizard() {
@@ -25,8 +25,10 @@ export function SetupWizard() {
 
   // Step 3: Library
   const [libraryName, setLibraryName] = useState("");
-  const [folderPath, setFolderPath] = useState("");
+  const [folderPaths, setFolderPaths] = useState<string[]>([]);
+  const [newFolderPath, setNewFolderPath] = useState("");
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
+  const [jellyfinCompat, setJellyfinCompat] = useState(false);
 
   // Errors & loading
   const [error, setError] = useState("");
@@ -63,14 +65,19 @@ export function SetupWizard() {
     setLoading(true);
     setError("");
     try {
-      const body: Record<string, string> = {
+      const body: Record<string, unknown> = {
         username,
         password,
         locale: selectedLocale,
       };
-      if (!skipLibrary && libraryName && folderPath) {
+      // Auto-include any pending folder path that wasn't explicitly added
+      const allPaths = newFolderPath.trim()
+        ? [...folderPaths, newFolderPath.trim()]
+        : folderPaths;
+      if (!skipLibrary && libraryName && allPaths.length > 0) {
         body.libraryName = libraryName;
-        body.folderPath = folderPath;
+        body.folderPaths = allPaths;
+        body.jellyfinCompat = jellyfinCompat;
       }
 
       const res = await fetch("/api/setup/complete", {
@@ -285,25 +292,78 @@ export function SetupWizard() {
               />
             </div>
 
-            {/* Folder Path */}
+            {/* Folder Paths (multi-folder) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("folderPath")}
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
+                {folderPaths.map((p, idx) => (
+                  <div key={idx} className="flex items-center gap-2 min-w-0">
+                    <span title={p} className="min-w-0 flex-1 truncate rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground">
+                      {p}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFolderPaths(folderPaths.filter((_, i) => i !== idx))}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newFolderPath}
+                    onChange={(e) => setNewFolderPath(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newFolderPath.trim()) {
+                        e.preventDefault();
+                        setFolderPaths([...folderPaths, newFolderPath.trim()]);
+                        setNewFolderPath("");
+                      }
+                    }}
+                    placeholder={t("folderPathPlaceholder")}
+                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  />
+                  <button
+                    onClick={() => setFolderPickerOpen(true)}
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] bg-[var(--input-bg)] text-primary hover:bg-white/[0.04]"
+                  >
+                    <FolderOpen className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!newFolderPath.trim()}
+                    onClick={() => {
+                      if (newFolderPath.trim()) {
+                        setFolderPaths([...folderPaths, newFolderPath.trim()]);
+                        setNewFolderPath("");
+                      }
+                    }}
+                    className="flex h-11 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3.5 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Jellyfin Compatibility Mode */}
+            <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+              <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
                 <input
-                  type="text"
-                  value={folderPath}
-                  onChange={(e) => setFolderPath(e.target.value)}
-                  placeholder={t("folderPathPlaceholder")}
-                  className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  type="checkbox"
+                  checked={jellyfinCompat}
+                  onChange={(e) => setJellyfinCompat(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
                 />
-                <button
-                  onClick={() => setFolderPickerOpen(true)}
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] bg-[var(--input-bg)] text-primary hover:bg-white/[0.04]"
-                >
-                  <FolderOpen className="h-5 w-5" />
-                </button>
+                <span className="text-sm text-foreground">{t("jellyfinCompatMode")}</span>
+              </label>
+              <div className="flex items-start gap-2 px-3.5 pb-2.5 pt-0">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#555568]" />
+                <p className="text-xs text-[#555568]">{t("jellyfinCompatDesc")}</p>
               </div>
             </div>
           </div>
@@ -340,7 +400,7 @@ export function SetupWizard() {
           <FolderPicker
             open={folderPickerOpen}
             onOpenChange={setFolderPickerOpen}
-            onSelect={(path) => setFolderPath(path)}
+            onSelect={(p) => setFolderPaths([...folderPaths, p])}
           />
         </div>
       )}

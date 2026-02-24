@@ -57,7 +57,9 @@
     "confirmYourPassword": "确认密码",
     "libraryNamePlaceholder": "例如：电影",
     "folderPathPlaceholder": "/媒体文件路径",
-    "selectYourLanguage": "选择您偏好的语言"
+    "selectYourLanguage": "选择您偏好的语言",
+    "jellyfinCompatMode": "Jellyfin 兼容模式",
+    "jellyfinCompatDesc": "不会写入 NFO 文件，并从 Jellyfin 本地路径导入演员照片。如果 Jellyfin 也在使用此媒体库，建议启用。"
   },
   "nav": {
     "home": "首页",

@@ -135,13 +135,21 @@ function launchMac(
   filePath: string,
   startSeconds: number
 ) {
-  // IINA: use iina-cli which works whether IINA is already running or not
-  const appPath = playerPath || "/Applications/IINA.app";
-  const cli = appPath.replace(/\/?$/, "/Contents/MacOS/iina-cli");
-  const args: string[] = [];
-  if (startSeconds > 0) args.push(`--mpv-start=+${startSeconds}`);
-  args.push(filePath);
-  launchPlayer(cli, args);
+  if (playerName === "IINA") {
+    // IINA: use iina-cli which works whether IINA is already running or not
+    const appPath = playerPath || "/Applications/IINA.app";
+    const cli = appPath.replace(/\/?$/, "/Contents/MacOS/iina-cli");
+    const args: string[] = [];
+    if (startSeconds > 0) args.push(`--mpv-start=+${startSeconds}`);
+    args.push(filePath);
+    launchPlayer(cli, args);
+  } else {
+    // Generic macOS player: use "open -a" to launch the app with the file
+    const exe = playerPath || playerName;
+    execFile("open", ["-a", exe, filePath], (error) => {
+      if (error) console.error("[play-external] launch error:", error.message);
+    });
+  }
 }
 
 function launchWindows(
@@ -150,10 +158,22 @@ function launchWindows(
   filePath: string,
   startSeconds: number
 ) {
-  // PotPlayer
-  const exe = playerPath || "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe";
-  const args: string[] = [];
-  if (startSeconds > 0) args.push(`/seek=${startSeconds * 1000}`);
-  args.push(filePath);
-  launchPlayer(exe, args);
+  if (playerName === "PotPlayer") {
+    const exe = playerPath || "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe";
+    const args: string[] = [];
+    if (startSeconds > 0) args.push(`/seek=${startSeconds * 1000}`);
+    args.push(filePath);
+    launchPlayer(exe, args);
+  } else if (playerName === "VLC") {
+    const exe = playerPath || "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
+    const args: string[] = [];
+    if (startSeconds > 0) args.push(`--start-time=${startSeconds}`);
+    args.push(filePath);
+    launchPlayer(exe, args);
+  } else {
+    // Generic Windows player: just pass the file path
+    const exe = playerPath || playerName;
+    const args: string[] = [filePath];
+    launchPlayer(exe, args);
+  }
 }

@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Folder, FolderOpen, ArrowUp, Loader2 } from "lucide-react";
+import { Folder, FolderOpen, ArrowUp, Loader2, HardDrive } from "lucide-react";
 
 interface FolderPickerProps {
   open: boolean;
@@ -19,6 +19,7 @@ interface BrowseResult {
   current: string;
   parent: string | null;
   directories: { name: string; path: string }[];
+  isDriveList?: boolean;
 }
 
 export function FolderPicker({ open, onOpenChange, onSelect }: FolderPickerProps) {
@@ -63,7 +64,11 @@ export function FolderPicker({ open, onOpenChange, onSelect }: FolderPickerProps
 
         {/* Current path display */}
         <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2">
-          <FolderOpen className="h-4 w-4 flex-shrink-0 text-primary" />
+          {data?.isDriveList ? (
+            <HardDrive className="h-4 w-4 flex-shrink-0 text-primary" />
+          ) : (
+            <FolderOpen className="h-4 w-4 flex-shrink-0 text-primary" />
+          )}
           <span className="truncate font-mono text-sm text-foreground">
             {currentPath || "Loading..."}
           </span>
@@ -130,7 +135,7 @@ export function FolderPicker({ open, onOpenChange, onSelect }: FolderPickerProps
               onSelect(currentPath);
               onOpenChange(false);
             }}
-            disabled={!currentPath}
+            disabled={!currentPath || data?.isDriveList}
             className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             Select This Folder
