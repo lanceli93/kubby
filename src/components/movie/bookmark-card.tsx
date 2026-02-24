@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Bookmark, Star, Clock, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -36,6 +37,7 @@ export function BookmarkCard({
   onExternalLaunch,
   onDelete,
 }: BookmarkCardProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const IconComponent = bookmark.iconType === "star" ? Star : Bookmark;
   const iconColor = bookmark.iconType === "star" ? "text-yellow-400" : "text-blue-400";
   const discParam = bookmark.discNumber && bookmark.discNumber > 1 ? `&disc=${bookmark.discNumber}` : "";
@@ -88,19 +90,51 @@ export function BookmarkCard({
           </span>
         )}
 
-        {/* Delete button on hover */}
-        {onDelete && (
+        {/* Delete button on hover → confirm bar */}
+        {onDelete && !confirmDelete && (
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onDelete(bookmark.id);
+              setConfirmDelete(true);
             }}
             className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500/80 text-white opacity-0 transition-opacity hover:bg-red-500 group-hover:opacity-100 cursor-pointer"
             title="Delete bookmark"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
+        )}
+        {/* Delete confirmation overlay */}
+        {onDelete && confirmDelete && (
+          <div
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-lg bg-black/80"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          >
+            <p className="text-sm text-white/90">Delete this bookmark?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setConfirmDelete(false);
+                }}
+                className="rounded-md px-3 py-1.5 text-xs text-white/60 hover:text-white bg-white/10 hover:bg-white/20 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete(bookmark.id);
+                  setConfirmDelete(false);
+                }}
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-white bg-red-500/80 hover:bg-red-500 cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
