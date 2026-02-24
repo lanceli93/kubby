@@ -553,3 +553,47 @@
 ### Scraper sidebar icon changed
 - Replaced `Search` icon with `Wand2` (magic wand) icon in the admin sidebar for the Scraper Settings link
 - Eliminates confusion with the search functionality icon
+
+## 2026-02-25: Movie Bookmarks with Canvas Screenshot Capture
+
+### Database & backend
+- New `movie_bookmarks` table: id, userId, movieId, timestampSeconds, discNumber, iconType, tags (JSON), note, thumbnailPath, createdAt
+- Indexes on (userId, movieId) and (movieId) for efficient querying
+- `getBookmarksDir()` in paths.ts for bookmark thumbnail storage
+- Inline migration (0015) with CREATE TABLE + 2 indexes
+
+### API routes
+- `GET /api/movies/[id]/bookmarks`: List user's bookmarks for a movie, ordered by timestamp asc, tags parsed from JSON
+- `POST /api/movies/[id]/bookmarks`: Create bookmark via FormData (supports thumbnail file upload), saves JPG to `data/bookmarks/{userId}/{movieId}/{bookmarkId}.jpg`
+- `PUT /api/movies/[id]/bookmarks/[bookmarkId]`: Update bookmark (iconType, tags, note)
+- `DELETE /api/movies/[id]/bookmarks/[bookmarkId]`: Delete bookmark + cleanup thumbnail file
+
+### Player UI
+- Two bookmark buttons in right controls: Quick bookmark (Bookmark icon, blue) and Detailed bookmark (BookmarkPlus icon, yellow)
+- Quick bookmark (B key): captures canvas screenshot, uploads with default settings, shows OSD "Bookmark added"
+- Detailed bookmark (Shift+B): pauses video, opens overlay panel with type selector (bookmark/star), tag input (Enter to add, X to remove), note textarea
+- Canvas screenshot: 320×180 JPEG at 85% quality via `<canvas>.drawImage()` + `toBlob()`
+- Progress bar markers: colored dots (blue for bookmark, gold for star) at bookmark timestamps, with tooltip and click-to-seek
+- `?t=SECONDS` URL parameter support for bookmark navigation (takes priority over saved position)
+- Keyboard shortcuts added to help overlay
+
+### Movie detail page
+- Bookmarks section between Discs and Cast using ScrollRow with count display
+- BookmarkCard component: 320×180 thumbnail card with icon, timestamp, tags, note, delete-on-hover
+- Click navigates to player at bookmark timestamp (internal) or launches external player with start time
+- Delete bookmark via hover trash button
+
+### External player
+- `launchExternal()` now accepts optional `startSeconds` parameter
+- Stream mode: IINA gets `&start=` param, PotPlayer gets `/seek=` param in protocol URLs
+- Local mode: `startSeconds` passed in POST body to play-external API
+- `play-external` API: accepts `overrideStartSeconds` from body, falls back to saved position
+
+### BookmarkCard component
+- 320×180 card with thumbnail (or Clock icon fallback), bottom gradient with icon + timestamp
+- Tag pills (max 3) top-right, disc badge top-left for multi-disc movies
+- Delete button appears on hover (red circle with Trash2 icon)
+- Renders as Link (internal player) or button (external player) based on mode
+
+### i18n (EN + ZH)
+- 14 new keys in `movies` namespace: bookmarks, addBookmark, quickBookmark, detailedBookmark, bookmarkAdded, bookmarkSaved, deleteBookmark, bookmarkType, bookmarkTags, bookmarkNote, bookmarkNotePlaceholder, saveBookmark, tagsPlaceholder
