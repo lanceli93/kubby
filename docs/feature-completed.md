@@ -597,3 +597,46 @@
 
 ### i18n (EN + ZH)
 - 14 new keys in `movies` namespace: bookmarks, addBookmark, quickBookmark, detailedBookmark, bookmarkAdded, bookmarkSaved, deleteBookmark, bookmarkType, bookmarkTags, bookmarkNote, bookmarkNotePlaceholder, saveBookmark, tagsPlaceholder
+
+## 2026-02-25: Custom Bookmark Icons (9 Built-in + User-Uploaded)
+
+### Built-in icons library (`src/lib/bookmark-icons.ts`)
+- 9 built-in lucide icons with color theming: Bookmark (blue), Star (yellow), Zap/Action (orange), Music (violet), MessageSquare/Dialogue (emerald), Laugh/Funny (amber), Heart/Emotion (red), Eye/Visual (sky), Swords/Suspense (purple)
+- `BUILTIN_BOOKMARK_ICONS` array with id, label, icon component, color classes, and hex color for inline styles
+- `getBuiltinIcon(id)` helper for lookup
+
+### Database & backend
+- New `bookmark_icons` table: id, userId, label, imagePath, createdAt with user index
+- DB migration 0016 (CREATE TABLE + index)
+- `getBookmarkIconsDir()` in paths.ts for custom icon storage
+
+### Custom icon API routes
+- `GET /api/settings/bookmark-icons`: List user's custom icons
+- `POST /api/settings/bookmark-icons`: Upload icon (FormData: label + file), validates PNG/WebP, ≤256KB, max 20 per user, sharp resize to 64×64 PNG on transparent bg
+- `PUT /api/settings/bookmark-icons/[iconId]`: Update label
+- `DELETE /api/settings/bookmark-icons/[iconId]`: Remove file + DB row, reset bookmarks using this icon to "bookmark" default
+
+### Personal Metadata page — Bookmark Icons section
+- New frosted-glass card with built-in icons display (read-only grid) and custom icons management
+- Custom icons grid with hover X delete button, upload row with file input + label input + Upload button
+- Format hint and max count display
+
+### Player page icon selector
+- Replaced 2-button bookmark/star selector with scrollable icon grid showing all 9 built-in icons + custom icons
+- Each icon renders with its lucide component and color theme
+- Custom icons render as `<img>` from `/api/images/{path}`
+- Selected state: ring highlight with the icon's color
+
+### BookmarkCard dynamic icon rendering
+- Imports `BUILTIN_BOOKMARK_ICONS` and `getBuiltinIcon` for icon lookup
+- New `customIcons` prop for custom icon data
+- Bottom gradient bar: built-in icons render as colored lucide components, custom icons render as 16×16 `<img>`
+- Edit dialog: same scrollable icon grid as player panel
+- Progress bar markers: use `getBuiltinIcon(id)?.hexColor ?? "#ffffff"` for inline backgroundColor
+
+### Movie detail page wiring
+- Fetches custom icons via `useQuery` from `/api/settings/bookmark-icons`
+- Passes `customIcons` prop to each `<BookmarkCard>`
+
+### i18n (EN + ZH)
+- 12 new keys in `personalMetadata` namespace: bookmarkIcons, bookmarkIconsDesc, builtinIcons, customIcons, uploadIcon, iconLabel, iconLabelPlaceholder, iconFormatHint, maxCustomIcons, iconUploaded, iconDeleted
