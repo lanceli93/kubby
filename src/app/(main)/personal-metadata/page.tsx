@@ -318,7 +318,15 @@ export default function PersonalMetadataPage() {
                   ref={fileInputRef}
                   type="file"
                   accept=".png,.webp"
-                  onChange={(e) => setIconFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setIconFile(file);
+                    // Auto-fill label from filename if empty
+                    if (file && !iconLabel.trim()) {
+                      const name = file.name.replace(/\.[^.]+$/, "");
+                      setIconLabel(name);
+                    }
+                  }}
                   className="h-9 w-full text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-white/10 file:px-2.5 file:py-1.5 file:text-xs file:text-foreground file:cursor-pointer"
                 />
               </div>
