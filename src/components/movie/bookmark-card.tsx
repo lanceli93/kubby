@@ -130,7 +130,7 @@ export function BookmarkCard({
               e.stopPropagation();
               openEdit();
             }}
-            className="absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100 cursor-pointer"
+            className="absolute bottom-2 right-11 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100 cursor-pointer"
             title="Edit bookmark"
           >
             <MoreVertical className="h-3.5 w-3.5" />
