@@ -480,9 +480,11 @@ export default function LibrariesPage() {
           return (
             <div key={lib.id} className="group flex flex-col" style={{ width: 320 }}>
               {/* Cover image — click to edit */}
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => openEditDialog(lib)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openEditDialog(lib); }}
                 className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)] cursor-pointer transition-transform hover:scale-[1.03]"
                 style={{ height: 180 }}
               >
@@ -570,7 +572,7 @@ export default function LibrariesPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </button>
+              </div>
 
               {/* Labels below cover — centered */}
               <div className="mt-2 text-center">
