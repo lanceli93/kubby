@@ -18,6 +18,7 @@ import {
   X,
   Bookmark,
   BookmarkPlus,
+  PanelTop,
 } from "lucide-react";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -78,6 +79,7 @@ export default function PlayerPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
+  const [autoHideControls, setAutoHideControls] = useState(true);
   const [bookmarkIconType, setBookmarkIconType] = useState("bookmark");
   const [bookmarkTags, setBookmarkTags] = useState<string[]>([]);
   const [bookmarkNote, setBookmarkNote] = useState("");
@@ -204,6 +206,7 @@ export default function PlayerPage() {
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
     clearTimeout(controlsTimer.current);
+    if (!autoHideControls) return;
     controlsTimer.current = setTimeout(() => {
       if (isPlaying) {
         setShowControls(false);
@@ -211,18 +214,21 @@ export default function PlayerPage() {
         setShowVolumeSlider(false);
       }
     }, 3000);
-  }, [isPlaying]);
+  }, [isPlaying, autoHideControls]);
 
-  // Auto-hide controls when playback starts
+  // Auto-hide controls when playback starts or autoHide changes
   useEffect(() => {
-    if (isPlaying) {
+    if (!autoHideControls) {
+      clearTimeout(controlsTimer.current);
+      setShowControls(true);
+    } else if (isPlaying) {
       resetControlsTimer();
     } else {
       clearTimeout(controlsTimer.current);
       setShowControls(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying]);
+  }, [isPlaying, autoHideControls]);
 
   const showOsd = useCallback((msg: string) => {
     setOsdMessage(msg);
@@ -799,10 +805,20 @@ export default function PlayerPage() {
                 if (videoRef.current && !videoRef.current.paused) videoRef.current.pause();
                 setShowBookmarkPanel(true);
               }}
-              className="text-white/60 hover:text-yellow-400 transition-colors"
+              className="text-white/60 hover:text-yellow-400 transition-colors cursor-pointer"
               title="Detailed bookmark (Shift+B)"
             >
               <BookmarkPlus className="h-5 w-5" />
+            </button>
+            {/* Auto-hide controls toggle */}
+            <button
+              onClick={() => setAutoHideControls((v) => !v)}
+              className={`transition-colors cursor-pointer ${
+                autoHideControls ? "text-white/60 hover:text-white" : "text-blue-400 hover:text-blue-300"
+              }`}
+              title={autoHideControls ? "Auto-hide: on" : "Auto-hide: off (controls always visible)"}
+            >
+              <PanelTop className="h-5 w-5" />
             </button>
             {/* Speed control */}
             <div className="relative">
