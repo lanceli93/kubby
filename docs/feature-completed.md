@@ -640,3 +640,33 @@
 
 ### i18n (EN + ZH)
 - 12 new keys in `personalMetadata` namespace: bookmarkIcons, bookmarkIconsDesc, builtinIcons, customIcons, uploadIcon, iconLabel, iconLabelPlaceholder, iconFormatHint, maxCustomIcons, iconUploaded, iconDeleted
+
+## 2026-02-25: Auto-Scrape Actor Biography from TMDB Person API
+
+### TMDB Person Details API (`src/lib/tmdb.ts`)
+- New `TmdbPersonDetails` interface: birthday, deathday, biography, place_of_birth, imdb_id
+- New `fetchPersonDetails(tmdbPersonId, apiKey, language)` function calling `GET /person/{id}`
+- Reuses existing `fetchWithRetry()` for 429 rate-limit handling
+
+### Scraper integration (`src/lib/scraper/index.ts`)
+- During movie scraping, calls `fetchPersonDetails()` for each of the top 20 cast members
+- Returns `actorBios[]` in `ScrapeResult` alongside the movie data
+- 250ms rate limiting between person API calls
+- Non-critical: failures skip person details silently
+
+### Scanner person creation (`src/lib/scanner/index.ts`)
+- `getOrCreatePerson()` now accepts optional `PersonBioData` parameter: tmdbId, overview, birthDate, placeOfBirth, deathDate, imdbId
+- New records: all bio fields written on creation
+- Existing records: missing bio fields backfilled (same pattern as photo path updates)
+- `birthYear` auto-derived from `birthDate`
+- TMDB supplement path (NFO has tmdbId but no actors) also fetches person details
+
+### NFO tmdbid support
+- NFO writer: `<tmdbid>` tag added inside `<actor>` blocks (both `writeFullNfo` and `writeActorsToNfo`)
+- NFO parser: parses `<tmdbid>` from actor elements, stored as `actor.tmdbId`
+- When NFO has tmdbId but no scraped bio data, tmdbId still passed to `getOrCreatePerson()`
+
+### Data flow
+- Scraper path: scrapeMovie() → fetchPersonDetails() → actorBios → scanLibrary() → getOrCreatePerson(bio)
+- Supplement path: fetchMovieCredits() → fetchPersonDetails() → supplementBios → getOrCreatePerson(bio)
+- NFO-only path: parseNfo() → actor.tmdbId → getOrCreatePerson({ tmdbId })
