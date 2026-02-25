@@ -217,6 +217,15 @@ function SearchContent() {
     setCategory(cat);
   }
 
+  // Build /movies link with libraryId for genre/tag navigation
+  const defaultLibraryId = libraryId || libraries?.[0]?.id || "";
+  function genreHref(name: string) {
+    return `/movies?libraryId=${encodeURIComponent(defaultLibraryId)}&genre=${encodeURIComponent(name)}`;
+  }
+  function tagHref(name: string) {
+    return `/movies?libraryId=${encodeURIComponent(defaultLibraryId)}&tag=${encodeURIComponent(name)}`;
+  }
+
   function renderLoadMoreButton(section: "movies" | "people" | "bookmarks", hasMore: boolean) {
     if (!hasMore || category === "all") return null;
     const isLoading = loadingMore === section;
@@ -396,7 +405,7 @@ function SearchContent() {
                     {results.genres.map((genre) => (
                       <Link
                         key={genre.name}
-                        href={`/movies?genre=${encodeURIComponent(genre.name)}`}
+                        href={genreHref(genre.name)}
                         className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
                       >
                         <Tag className="h-3 w-3 text-primary" />
@@ -413,7 +422,7 @@ function SearchContent() {
                         <div className="mb-2 flex items-center gap-2">
                           <Tag className="h-4 w-4 text-primary" />
                           <Link
-                            href={`/movies?genre=${encodeURIComponent(genre.name)}`}
+                            href={genreHref(genre.name)}
                             className="text-sm font-medium text-foreground hover:text-primary hover:underline"
                           >
                             {genre.name}
@@ -463,7 +472,7 @@ function SearchContent() {
                     {results.tags.map((tag) => (
                       <Link
                         key={tag.name}
-                        href={`/movies?tag=${encodeURIComponent(tag.name)}`}
+                        href={tagHref(tag.name)}
                         className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
                       >
                         <Tag className="h-3 w-3 text-muted-foreground" />
@@ -480,7 +489,7 @@ function SearchContent() {
                         <div className="mb-2 flex items-center gap-2">
                           <Tag className="h-4 w-4 text-muted-foreground" />
                           <Link
-                            href={`/movies?tag=${encodeURIComponent(tag.name)}`}
+                            href={tagHref(tag.name)}
                             className="text-sm font-medium text-foreground hover:text-primary hover:underline"
                           >
                             {tag.name}
