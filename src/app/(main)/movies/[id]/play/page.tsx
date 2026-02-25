@@ -564,7 +564,7 @@ export default function PlayerPage() {
       {/* Bookmark panel overlay */}
       {showBookmarkPanel && (
         <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-black/80"
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/40"
           onClick={(e) => {
             e.stopPropagation();
             setShowBookmarkPanel(false);
