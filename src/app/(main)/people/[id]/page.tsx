@@ -350,7 +350,7 @@ export default function PersonDetailPage() {
 
             {/* Overview / Biography */}
             {person.overview && (
-              <p className="max-w-[700px] text-[15px] leading-relaxed text-white/80">
+              <p className="max-w-[700px] text-[15px] leading-relaxed text-white/80 line-clamp-5">
                 {person.overview}
               </p>
             )}
