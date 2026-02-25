@@ -371,6 +371,8 @@
     "overall": "Overall",
     "bookmarkIcons": "Bookmark Icons",
     "bookmarkIconsDesc": "Manage icons used for bookmarks",
+    "builtinIcons": "Built-in",
+    "customIcons": "Custom",
     "uploadIcon": "Upload Icon",
     "iconLabel": "Icon Name",
     "iconLabelPlaceholder": "e.g. Fight Scene",

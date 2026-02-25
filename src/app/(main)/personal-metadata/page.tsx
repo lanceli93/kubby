@@ -245,6 +245,11 @@ export default function PersonalMetadataPage() {
         </div>
 
         {/* Built-in icons */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 border-t border-white/[0.06]" />
+          <span className="text-[11px] text-muted-foreground/50">{t("builtinIcons")}</span>
+          <div className="flex-1 border-t border-white/[0.06]" />
+        </div>
         <div className="flex flex-wrap gap-2">
           {BUILTIN_BOOKMARK_ICONS.map((bi) => {
             const Icon = bi.icon;
@@ -274,10 +279,14 @@ export default function PersonalMetadataPage() {
           })}
         </div>
 
-        {/* Custom icons — separated by divider */}
+        {/* Custom icons — separated by labeled divider */}
         {customIcons.length > 0 && (
           <>
-            <div className="border-t border-white/[0.06]" />
+            <div className="flex items-center gap-3">
+              <div className="flex-1 border-t border-white/[0.06]" />
+              <span className="text-[11px] text-muted-foreground/50">{t("customIcons")}</span>
+              <div className="flex-1 border-t border-white/[0.06]" />
+            </div>
             <div className="flex flex-wrap gap-2">
               {customIcons.map((ci) => {
                 const isDisabled = disabledIcons.has(ci.id);
@@ -324,7 +333,7 @@ export default function PersonalMetadataPage() {
 
         {/* Upload custom icon */}
         {customIcons.length < 20 && (
-          <div className="flex items-end gap-3 border-t border-white/[0.06] pt-4">
+          <div className="flex items-end gap-3">
             <div className="flex-1">
               <label className="mb-1 block text-xs text-muted-foreground">
                 {t("iconLabel")}

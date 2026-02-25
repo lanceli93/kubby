@@ -371,6 +371,8 @@
     "overall": "综合",
     "bookmarkIcons": "书签图标",
     "bookmarkIconsDesc": "管理书签使用的图标",
+    "builtinIcons": "内置",
+    "customIcons": "自定义",
     "uploadIcon": "上传图标",
     "iconLabel": "图标名称",
     "iconLabelPlaceholder": "例如：打斗",
