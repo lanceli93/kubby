@@ -141,8 +141,13 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit}
     `);
 
-    // For each genre, get preview movies (top 6 by rating)
+    // Only fetch preview movies when in category mode (not "All" where we show chips)
     const genres = genreResults.map((g) => {
+      if (!category) {
+        // "All" mode — chips only, skip preview queries
+        return { name: g.name, movieCount: g.movie_count, previewMovies: [] };
+      }
+
       const previewMovies = db.all<{
         id: string;
         title: string;
@@ -199,6 +204,10 @@ export async function GET(request: NextRequest) {
     `);
 
     const tags = tagResults.map((t) => {
+      if (!category) {
+        return { name: t.name, movieCount: t.movie_count, previewMovies: [] };
+      }
+
       const previewMovies = db.all<{
         id: string;
         title: string;
