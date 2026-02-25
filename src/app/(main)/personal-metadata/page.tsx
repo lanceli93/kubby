@@ -337,7 +337,7 @@ export default function PersonalMetadataPage() {
                 className="h-9 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
-            <div className="flex-1">
+            <div className="flex h-9 flex-1 items-center">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -350,7 +350,7 @@ export default function PersonalMetadataPage() {
                     setIconLabel(name);
                   }
                 }}
-                className="h-9 w-full text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-white/10 file:px-2.5 file:py-1.5 file:text-xs file:text-foreground file:cursor-pointer"
+                className="w-full text-xs text-muted-foreground file:mr-2 file:h-9 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:text-xs file:text-foreground file:cursor-pointer"
               />
             </div>
             <button
