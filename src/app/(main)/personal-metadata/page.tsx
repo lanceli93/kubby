@@ -255,7 +255,7 @@ export default function PersonalMetadataPage() {
                   className="flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground"
                 >
                   <Icon className={`h-4 w-4 ${bi.color}`} />
-                  {bi.label}
+                  {t(`builtinIcon_${bi.id}`)}
                 </div>
               );
             })}

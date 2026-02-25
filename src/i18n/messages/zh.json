@@ -379,7 +379,16 @@
     "iconFormatHint": "PNG 或 WebP，最大 256KB，将缩放为 64\u00d764",
     "maxCustomIcons": "最多 {max} 个自定义图标",
     "iconUploaded": "图标已上传",
-    "iconDeleted": "图标已删除"
+    "iconDeleted": "图标已删除",
+    "builtinIcon_bookmark": "书签",
+    "builtinIcon_star": "星标",
+    "builtinIcon_zap": "动作",
+    "builtinIcon_music": "音乐",
+    "builtinIcon_message-square": "对白",
+    "builtinIcon_laugh": "搞笑",
+    "builtinIcon_heart": "情感",
+    "builtinIcon_eye": "视觉",
+    "builtinIcon_swords": "悬疑"
   },
   "mediaInfoDialog": {
     "title": "媒体信息",

@@ -379,7 +379,16 @@
     "iconFormatHint": "PNG or WebP, max 256KB. Resized to 64\u00d764.",
     "maxCustomIcons": "Up to {max} custom icons",
     "iconUploaded": "Icon uploaded",
-    "iconDeleted": "Icon deleted"
+    "iconDeleted": "Icon deleted",
+    "builtinIcon_bookmark": "Bookmark",
+    "builtinIcon_star": "Star",
+    "builtinIcon_zap": "Action",
+    "builtinIcon_music": "Music",
+    "builtinIcon_message-square": "Dialogue",
+    "builtinIcon_laugh": "Funny",
+    "builtinIcon_heart": "Emotion",
+    "builtinIcon_eye": "Visual",
+    "builtinIcon_swords": "Suspense"
   },
   "mediaInfoDialog": {
     "title": "Media Info",

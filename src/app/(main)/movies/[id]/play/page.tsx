@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { useTranslations } from "next-intl";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -55,6 +56,7 @@ export default function PlayerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const movieId = params.id as string;
+  const tPM = useTranslations("personalMetadata");
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -605,7 +607,7 @@ export default function PlayerPage() {
                       }`}
                     >
                       <BiIcon className="h-3.5 w-3.5" />
-                      {bi.label}
+                      {tPM(`builtinIcon_${bi.id}`)}
                     </button>
                   );
                 })}

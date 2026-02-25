@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Clock, Trash2, MoreVertical, X } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,7 @@ export function BookmarkCard({
   onUpdate,
   customIcons,
 }: BookmarkCardProps) {
+  const tPM = useTranslations("personalMetadata");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editIconType, setEditIconType] = useState(bookmark.iconType || "bookmark");
@@ -281,7 +283,7 @@ export function BookmarkCard({
                       }`}
                     >
                       <BiIcon className="h-3.5 w-3.5" />
-                      {bi.label}
+                      {tPM(`builtinIcon_${bi.id}`)}
                     </button>
                   );
                 })}
