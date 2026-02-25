@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle } from "lucide-react";
-import { BookmarkCard } from "@/components/movie/bookmark-card";
+import { BookmarkCard, type CustomIconData } from "@/components/movie/bookmark-card";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -260,6 +260,11 @@ export default function MovieDetailPage() {
   const { data: bookmarks = [] } = useQuery<BookmarkData[]>({
     queryKey: ["movie-bookmarks", movieId],
     queryFn: () => fetch(`/api/movies/${movieId}/bookmarks`).then((r) => r.json()),
+  });
+
+  const { data: customIcons = [] } = useQuery<CustomIconData[]>({
+    queryKey: ["bookmark-icons"],
+    queryFn: () => fetch("/api/settings/bookmark-icons").then((r) => r.json()),
   });
 
   const deleteBookmark = useMutation({
@@ -829,6 +834,7 @@ export default function MovieDetailPage() {
                 onExternalLaunch={(disc, startSeconds) => launchExternal(disc, startSeconds)}
                 onUpdate={(id, data) => updateBookmark.mutate({ bookmarkId: id, data })}
                 onDelete={(id) => deleteBookmark.mutate(id)}
+                customIcons={customIcons}
               />
             ))}
           </ScrollRow>

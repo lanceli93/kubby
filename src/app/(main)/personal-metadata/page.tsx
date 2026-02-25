@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, Check, AlertCircle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { X, Check, AlertCircle, Upload, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { BUILTIN_BOOKMARK_ICONS } from "@/lib/bookmark-icons";
+import { resolveImageSrc } from "@/lib/image-utils";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
+
+interface CustomIcon {
+  id: string;
+  label: string;
+  imagePath: string;
+}
 
 export default function PersonalMetadataPage() {
   const t = useTranslations("personalMetadata");
@@ -17,6 +25,11 @@ export default function PersonalMetadataPage() {
       fetch("/api/settings/personal-metadata").then((r) => r.json()),
   });
 
+  const { data: customIcons = [] } = useQuery<CustomIcon[]>({
+    queryKey: ["bookmark-icons"],
+    queryFn: () => fetch("/api/settings/bookmark-icons").then((r) => r.json()),
+  });
+
   const [movieDims, setMovieDims] = useState<string[]>([]);
   const [personDims, setPersonDims] = useState<string[]>([]);
   const [movieInput, setMovieInput] = useState("");
@@ -24,6 +37,11 @@ export default function PersonalMetadataPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Custom icon upload state
+  const [iconLabel, setIconLabel] = useState("");
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (text: string, success: boolean) => {
     clearTimeout(toastTimer.current);
@@ -87,6 +105,47 @@ export default function PersonalMetadataPage() {
       setSaving(false);
     }
   };
+
+  const uploadIcon = useMutation({
+    mutationFn: async ({ label, file }: { label: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("label", label);
+      formData.append("file", file);
+      const res = await fetch("/api/settings/bookmark-icons", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Upload failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookmark-icons"] });
+      setIconLabel("");
+      setIconFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      showToast(t("iconUploaded"), true);
+    },
+    onError: (err: Error) => {
+      showToast(err.message, false);
+    },
+  });
+
+  const deleteIcon = useMutation({
+    mutationFn: async (iconId: string) => {
+      const res = await fetch(`/api/settings/bookmark-icons/${iconId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookmark-icons"] });
+      showToast(t("iconDeleted"), true);
+    },
+    onError: () => {
+      showToast(t("failedToSave"), false);
+    },
+  });
 
   return (
     <div className="h-full overflow-y-scroll">
@@ -169,6 +228,119 @@ export default function PersonalMetadataPage() {
         {personDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
         )}
+      </div>
+
+      {/* Bookmark Icons */}
+      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">
+            {t("bookmarkIcons")}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("bookmarkIconsDesc")}
+          </p>
+        </div>
+
+        {/* Built-in icons (read-only) */}
+        <div>
+          <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+            {t("builtinIcons")}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {BUILTIN_BOOKMARK_ICONS.map((bi) => {
+              const Icon = bi.icon;
+              return (
+                <div
+                  key={bi.id}
+                  className="flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground"
+                >
+                  <Icon className={`h-4 w-4 ${bi.color}`} />
+                  {bi.label}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Custom icons */}
+        <div>
+          <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+            {t("customIcons")} ({customIcons.length}/20)
+          </h3>
+
+          {/* Custom icons grid */}
+          {customIcons.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {customIcons.map((ci) => (
+                <div
+                  key={ci.id}
+                  className="group/icon relative flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolveImageSrc(ci.imagePath)}
+                    alt={ci.label}
+                    className="h-5 w-5 object-contain"
+                  />
+                  {ci.label}
+                  <button
+                    onClick={() => deleteIcon.mutate(ci.id)}
+                    className="ml-1 text-red-400/0 group-hover/icon:text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload row */}
+          {customIcons.length < 20 && (
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  {t("iconLabel")}
+                </label>
+                <input
+                  value={iconLabel}
+                  onChange={(e) => setIconLabel(e.target.value)}
+                  placeholder={t("iconLabelPlaceholder")}
+                  maxLength={20}
+                  className="h-9 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  {t("iconFormatHint")}
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.webp"
+                  onChange={(e) => setIconFile(e.target.files?.[0] || null)}
+                  className="h-9 w-full text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-white/10 file:px-2.5 file:py-1.5 file:text-xs file:text-foreground file:cursor-pointer"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (iconLabel.trim() && iconFile) {
+                    uploadIcon.mutate({ label: iconLabel.trim(), file: iconFile });
+                  }
+                }}
+                disabled={!iconLabel.trim() || !iconFile || uploadIcon.isPending}
+                className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {t("uploadIcon")}
+              </button>
+            </div>
+          )}
+
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t("maxCustomIcons", { max: 20 })}
+          </p>
+        </div>
       </div>
 
       {/* Save button */}

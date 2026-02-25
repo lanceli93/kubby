@@ -144,6 +144,17 @@ export const movieBookmarks = sqliteTable("movie_bookmarks", {
   index("idx_mb_movie").on(table.movieId),
 ]);
 
+// ─── Bookmark Icons (custom user-uploaded) ────────────────────
+export const bookmarkIcons = sqliteTable("bookmark_icons", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  label: text("label").notNull(),
+  imagePath: text("image_path").notNull(),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_bi_user").on(table.userId),
+]);
+
 // ─── User Person Data ──────────────────────────────────────────
 export const userPersonData = sqliteTable("user_person_data", {
   id: text("id").primaryKey(),

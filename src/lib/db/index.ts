@@ -245,6 +245,15 @@ const pending = [
   )`,
   "CREATE INDEX IF NOT EXISTS `idx_mb_user_movie` ON `movie_bookmarks` (`user_id`, `movie_id`)",
   "CREATE INDEX IF NOT EXISTS `idx_mb_movie` ON `movie_bookmarks` (`movie_id`)",
+  // 0016: bookmark icons table (custom user-uploaded icons)
+  `CREATE TABLE IF NOT EXISTS \`bookmark_icons\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+    \`label\` text NOT NULL,
+    \`image_path\` text NOT NULL,
+    \`created_at\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+  "CREATE INDEX IF NOT EXISTS `idx_bi_user` ON `bookmark_icons` (`user_id`)",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

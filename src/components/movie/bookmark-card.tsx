@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bookmark, Star, Clock, Trash2, MoreVertical, X } from "lucide-react";
+import { Clock, Trash2, MoreVertical, X } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,12 @@ interface BookmarkData {
   thumbnailPath?: string | null;
 }
 
+export interface CustomIconData {
+  id: string;
+  label: string;
+  imagePath: string;
+}
+
 interface BookmarkCardProps {
   bookmark: BookmarkData;
   movieId: string;
@@ -29,6 +36,7 @@ interface BookmarkCardProps {
   onExternalLaunch?: (disc?: number, startSeconds?: number) => void;
   onDelete?: (bookmarkId: string) => void;
   onUpdate?: (bookmarkId: string, data: { iconType?: string; tags?: string[]; note?: string }) => void;
+  customIcons?: CustomIconData[];
 }
 
 function formatTimestamp(seconds: number): string {
@@ -45,6 +53,7 @@ export function BookmarkCard({
   onExternalLaunch,
   onDelete,
   onUpdate,
+  customIcons,
 }: BookmarkCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -53,8 +62,9 @@ export function BookmarkCard({
   const [editNote, setEditNote] = useState(bookmark.note || "");
   const [editTagInput, setEditTagInput] = useState("");
 
-  const IconComponent = bookmark.iconType === "star" ? Star : Bookmark;
-  const iconColor = bookmark.iconType === "star" ? "text-yellow-400" : "text-blue-400";
+  // Resolve icon for display
+  const builtin = getBuiltinIcon(bookmark.iconType || "bookmark");
+  const customIcon = !builtin ? customIcons?.find((c) => c.id === bookmark.iconType) : undefined;
   const discParam = bookmark.discNumber && bookmark.discNumber > 1 ? `&disc=${bookmark.discNumber}` : "";
   const href = `/movies/${movieId}/play?t=${bookmark.timestampSeconds}${discParam}`;
 
@@ -73,6 +83,32 @@ export function BookmarkCard({
       note: editNote || undefined,
     });
     setEditOpen(false);
+  }
+
+  // Render the icon in the bottom gradient bar
+  function renderCardIcon() {
+    if (builtin) {
+      const Icon = builtin.icon;
+      return (
+        <Icon
+          className={`h-4 w-4 ${builtin.color} ${builtin.id === "star" ? "fill-yellow-400" : builtin.id === "heart" ? "fill-red-400" : ""}`}
+        />
+      );
+    }
+    if (customIcon) {
+      return (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={resolveImageSrc(customIcon.imagePath)}
+          alt={customIcon.label}
+          className="h-4 w-4 object-contain"
+        />
+      );
+    }
+    // Fallback to default bookmark icon
+    const fallback = getBuiltinIcon("bookmark")!;
+    const FallbackIcon = fallback.icon;
+    return <FallbackIcon className={`h-4 w-4 ${fallback.color}`} />;
   }
 
   const card = (
@@ -95,7 +131,7 @@ export function BookmarkCard({
 
         {/* Bottom gradient bar */}
         <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6">
-          <IconComponent className={`h-4 w-4 ${iconColor} ${bookmark.iconType === "star" ? "fill-yellow-400" : ""}`} />
+          {renderCardIcon()}
           <span className="text-sm font-medium text-white">
             {formatTimestamp(bookmark.timestampSeconds)}
           </span>
@@ -215,7 +251,7 @@ export function BookmarkCard({
       {/* Edit bookmark dialog — rendered outside Link/button via portal */}
       {editOpen && (
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="border-white/10 bg-black/70 backdrop-blur-xl sm:max-w-[400px]">
+          <DialogContent className="border-white/10 bg-black/70 backdrop-blur-xl sm:max-w-[440px]">
             <DialogHeader>
               <DialogTitle>Edit Bookmark</DialogTitle>
             </DialogHeader>
@@ -228,32 +264,42 @@ export function BookmarkCard({
               </div>
             </div>
 
-            {/* Icon type */}
+            {/* Icon type - scrollable grid */}
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">Type</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setEditIconType("bookmark")}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors cursor-pointer ${
-                    editIconType === "bookmark"
-                      ? "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50"
-                      : "bg-white/10 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Bookmark className="h-4 w-4" />
-                  Bookmark
-                </button>
-                <button
-                  onClick={() => setEditIconType("star")}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors cursor-pointer ${
-                    editIconType === "star"
-                      ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/50"
-                      : "bg-white/10 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Star className="h-4 w-4" />
-                  Star
-                </button>
+              <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto">
+                {BUILTIN_BOOKMARK_ICONS.map((bi) => {
+                  const BiIcon = bi.icon;
+                  return (
+                    <button
+                      key={bi.id}
+                      onClick={() => setEditIconType(bi.id)}
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors cursor-pointer ${
+                        editIconType === bi.id
+                          ? `${bi.bgSelected} ${bi.color} ring-1 ${bi.ringSelected}`
+                          : "bg-white/10 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <BiIcon className="h-3.5 w-3.5" />
+                      {bi.label}
+                    </button>
+                  );
+                })}
+                {customIcons?.map((ci) => (
+                  <button
+                    key={ci.id}
+                    onClick={() => setEditIconType(ci.id)}
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors cursor-pointer ${
+                      editIconType === ci.id
+                        ? "bg-white/20 text-foreground ring-1 ring-white/50"
+                        : "bg-white/10 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={resolveImageSrc(ci.imagePath)} alt={ci.label} className="h-3.5 w-3.5 object-contain" />
+                    {ci.label}
+                  </button>
+                ))}
               </div>
             </div>
 

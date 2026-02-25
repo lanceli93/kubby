@@ -18,8 +18,9 @@ import {
   X,
   Bookmark,
   BookmarkPlus,
-  Star,
 } from "lucide-react";
+import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
+import { resolveImageSrc } from "@/lib/image-utils";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -74,7 +75,7 @@ export default function PlayerPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
-  const [bookmarkIconType, setBookmarkIconType] = useState<"bookmark" | "star">("bookmark");
+  const [bookmarkIconType, setBookmarkIconType] = useState("bookmark");
   const [bookmarkTags, setBookmarkTags] = useState<string[]>([]);
   const [bookmarkNote, setBookmarkNote] = useState("");
   const [tagInput, setTagInput] = useState("");
@@ -89,6 +90,11 @@ export default function PlayerPage() {
   const { data: bookmarks } = useQuery<BookmarkData[]>({
     queryKey: ["movie-bookmarks", movieId],
     queryFn: () => fetch(`/api/movies/${movieId}/bookmarks`).then((r) => r.json()),
+  });
+
+  const { data: customIcons = [] } = useQuery<{ id: string; label: string; imagePath: string }[]>({
+    queryKey: ["bookmark-icons"],
+    queryFn: () => fetch("/api/settings/bookmark-icons").then((r) => r.json()),
   });
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
@@ -585,29 +591,39 @@ export default function PlayerPage() {
             {/* Icon type */}
             <div className="mb-4">
               <label className="mb-1 block text-sm text-white/60">Type</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setBookmarkIconType("bookmark")}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    bookmarkIconType === "bookmark"
-                      ? "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50"
-                      : "bg-white/10 text-white/60 hover:text-white"
-                  }`}
-                >
-                  <Bookmark className="h-4 w-4" />
-                  Bookmark
-                </button>
-                <button
-                  onClick={() => setBookmarkIconType("star")}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    bookmarkIconType === "star"
-                      ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/50"
-                      : "bg-white/10 text-white/60 hover:text-white"
-                  }`}
-                >
-                  <Star className="h-4 w-4" />
-                  Star
-                </button>
+              <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto">
+                {BUILTIN_BOOKMARK_ICONS.map((bi) => {
+                  const BiIcon = bi.icon;
+                  return (
+                    <button
+                      key={bi.id}
+                      onClick={() => setBookmarkIconType(bi.id)}
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                        bookmarkIconType === bi.id
+                          ? `${bi.bgSelected} ${bi.color} ring-1 ${bi.ringSelected}`
+                          : "bg-white/10 text-white/60 hover:text-white"
+                      }`}
+                    >
+                      <BiIcon className="h-3.5 w-3.5" />
+                      {bi.label}
+                    </button>
+                  );
+                })}
+                {customIcons.map((ci) => (
+                  <button
+                    key={ci.id}
+                    onClick={() => setBookmarkIconType(ci.id)}
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                      bookmarkIconType === ci.id
+                        ? "bg-white/20 text-white ring-1 ring-white/50"
+                        : "bg-white/10 text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={resolveImageSrc(ci.imagePath)} alt={ci.label} className="h-3.5 w-3.5 object-contain" />
+                    {ci.label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -710,20 +726,24 @@ export default function PlayerPage() {
             style={{ left: `${progress}%` }}
           />
           {/* Bookmark markers */}
-          {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => (
-            <div
-              key={bm.id}
-              className={`absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full z-10 cursor-pointer ${
-                bm.iconType === "star" ? "bg-yellow-400" : "bg-blue-400"
-              }`}
-              style={{ left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%` }}
-              title={`${formatTime(bm.timestampSeconds)}${bm.note ? " - " + bm.note : ""}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (videoRef.current) videoRef.current.currentTime = bm.timestampSeconds;
-              }}
-            />
-          ))}
+          {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => {
+            const markerColor = getBuiltinIcon(bm.iconType || "bookmark")?.hexColor ?? "#ffffff";
+            return (
+              <div
+                key={bm.id}
+                className="absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full z-10 cursor-pointer"
+                style={{
+                  left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%`,
+                  backgroundColor: markerColor,
+                }}
+                title={`${formatTime(bm.timestampSeconds)}${bm.note ? " - " + bm.note : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (videoRef.current) videoRef.current.currentTime = bm.timestampSeconds;
+                }}
+              />
+            );
+          })}
         </div>
 
         <div className="flex items-center justify-between">

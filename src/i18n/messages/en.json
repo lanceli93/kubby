@@ -368,7 +368,18 @@
     "failedToSave": "Failed to save settings",
     "maxDimensions": "Maximum 10 dimensions",
     "maxDimensionLength": "Maximum {max} characters per dimension name",
-    "overall": "Overall"
+    "overall": "Overall",
+    "bookmarkIcons": "Bookmark Icons",
+    "bookmarkIconsDesc": "Manage icons used for bookmarks",
+    "builtinIcons": "Built-in Icons",
+    "customIcons": "Custom Icons",
+    "uploadIcon": "Upload Icon",
+    "iconLabel": "Icon Name",
+    "iconLabelPlaceholder": "e.g. Fight Scene",
+    "iconFormatHint": "PNG or WebP, max 256KB. Resized to 64\u00d764.",
+    "maxCustomIcons": "Up to {max} custom icons",
+    "iconUploaded": "Icon uploaded",
+    "iconDeleted": "Icon deleted"
   },
   "mediaInfoDialog": {
     "title": "Media Info",

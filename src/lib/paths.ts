@@ -29,3 +29,7 @@ export function getPeopleMetadataDir(): string {
 export function getBookmarksDir(): string {
   return path.join(getMetadataDir(), "bookmarks");
 }
+
+export function getBookmarkIconsDir(): string {
+  return path.join(getMetadataDir(), "bookmark-icons");
+}

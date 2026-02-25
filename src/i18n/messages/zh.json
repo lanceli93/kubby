@@ -368,7 +368,18 @@
     "failedToSave": "保存设置失败",
     "maxDimensions": "最多 10 个维度",
     "maxDimensionLength": "每个维度名称最多 {max} 个字符",
-    "overall": "综合"
+    "overall": "综合",
+    "bookmarkIcons": "书签图标",
+    "bookmarkIconsDesc": "管理书签使用的图标",
+    "builtinIcons": "内置图标",
+    "customIcons": "自定义图标",
+    "uploadIcon": "上传图标",
+    "iconLabel": "图标名称",
+    "iconLabelPlaceholder": "例如：打斗",
+    "iconFormatHint": "PNG 或 WebP，最大 256KB，将缩放为 64\u00d764",
+    "maxCustomIcons": "最多 {max} 个自定义图标",
+    "iconUploaded": "图标已上传",
+    "iconDeleted": "图标已删除"
   },
   "mediaInfoDialog": {
     "title": "媒体信息",
