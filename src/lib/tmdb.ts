@@ -117,6 +117,7 @@ export interface TmdbMovieDetails {
   poster_path: string | null;
   backdrop_path: string | null;
   credits: TmdbCredits;
+  keywords: { keywords: { id: number; name: string }[] };
 }
 
 export async function searchMovie(
@@ -139,7 +140,7 @@ export async function getMovieDetails(
   apiKey: string,
   language?: string
 ): Promise<TmdbMovieDetails> {
-  let url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${apiKey}&append_to_response=credits`;
+  let url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${apiKey}&append_to_response=credits,keywords`;
   if (language) url += `&language=${encodeURIComponent(language)}`;
   const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error(`TMDb details error: ${res.status} ${res.statusText}`);

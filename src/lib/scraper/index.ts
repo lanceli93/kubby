@@ -148,7 +148,10 @@ export async function scrapeMovie(
       .filter((c) => c.job === "Director")
       .map((c) => c.name);
 
-    // 8. Generate NFO
+    // 8. Extract keywords as tags
+    const tags = (details.keywords?.keywords ?? []).map((k) => k.name);
+
+    // 9. Generate NFO
     const releaseYear = details.release_date
       ? parseInt(details.release_date.split("-")[0], 10)
       : undefined;
@@ -169,6 +172,7 @@ export async function scrapeMovie(
       imdbId: details.imdb_id || undefined,
       actors,
       directors,
+      tags,
     });
 
     // Collect actor bios for the scanner to store in DB
