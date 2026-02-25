@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight, Maximize2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
@@ -69,6 +70,7 @@ function formatDate(dateStr: string): string {
 
 export default function PersonDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const personId = params.id as string;
   const t = useTranslations("movies");
   const tPerson = useTranslations("person");
@@ -78,6 +80,8 @@ export default function PersonDetailPage() {
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
+  const [deletePersonOpen, setDeletePersonOpen] = useState(false);
+  const [deletePersonFiles, setDeletePersonFiles] = useState(false);
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
 
@@ -215,6 +219,16 @@ export default function PersonDetailPage() {
     return rows;
   })();
 
+  const deletePerson = useMutation({
+    mutationFn: (opts?: { deleteFiles?: boolean }) =>
+      fetch(`/api/people/${personId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+      router.push("/");
+    },
+  });
+
   const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
     await fetch(`/api/people/${personId}/user-data`, {
       method: "PUT",
@@ -344,6 +358,11 @@ export default function PersonDetailPage() {
                   <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
                     <ImageIcon className="h-4 w-4" />
                     {tMeta("editImages")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={() => setDeletePersonOpen(true)}>
+                    <Trash2 className="h-4 w-4" />
+                    {tPerson("deletePerson")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -618,6 +637,48 @@ export default function PersonDetailPage() {
         dimensionRatings={person.userData?.dimensionRatings}
         showTier
       />
+
+      {/* Delete person confirmation dialog */}
+      <Dialog open={deletePersonOpen} onOpenChange={(open) => { setDeletePersonOpen(open); if (!open) setDeletePersonFiles(false); }}>
+        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{tPerson("deletePerson")}</DialogTitle>
+            <DialogDescription>{tPerson("confirmDeletePerson")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 px-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deletePersonFiles}
+                onChange={(e) => setDeletePersonFiles(e.target.checked)}
+                className="h-4 w-4 rounded border-white/20 accent-destructive"
+              />
+              <span className="text-sm text-foreground">{tPerson("deleteLocalFiles")}</span>
+            </label>
+            {deletePersonFiles && (
+              <p className="text-xs text-destructive pl-6">{tPerson("deleteLocalFilesWarning")}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setDeletePersonOpen(false)}
+              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              onClick={() => {
+                deletePerson.mutate({ deleteFiles: deletePersonFiles });
+                setDeletePersonOpen(false);
+                setDeletePersonFiles(false);
+              }}
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </div>
   );

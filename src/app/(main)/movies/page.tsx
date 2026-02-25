@@ -869,6 +869,24 @@ interface PeopleFiltersData {
 
 const TIERS = ["SSS", "SS", "S", "A", "B", "C", "D", "E"] as const;
 
+function usePersonMutations() {
+  const queryClient = useQueryClient();
+
+  const deletePerson = useMutation({
+    mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
+      fetch(`/api/people/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+    },
+  });
+
+  return {
+    handleDeletePerson: (id: string, deleteFiles?: boolean) =>
+      deletePerson.mutate({ id, deleteFiles }),
+  };
+}
+
 function ActorsTabContent({ libraryId }: { libraryId: string }) {
   const t = useTranslations("movies");
   const [sort, setSort] = useState("name");
@@ -887,6 +905,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
   const filterRef = useRef<HTMLDivElement>(null);
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
+  const { handleDeletePerson } = usePersonMutations();
 
   const sortOptions = [
     { value: "name", label: t("nameAZ"), icon: ArrowDownAZ },
@@ -1342,6 +1361,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
             photoBlur={person.photoBlur}
             personalRating={person.personalRating}
             size="movie"
+            onDelete={(deleteFiles) => handleDeletePerson(person.id, deleteFiles)}
           />
         ))}
 

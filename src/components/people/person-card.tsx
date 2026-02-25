@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MoreHorizontal, ImageIcon, Pencil } from "lucide-react";
+import { Star, MoreHorizontal, ImageIcon, Pencil, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -13,7 +13,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 
@@ -26,6 +35,7 @@ interface PersonCardProps {
   personalRating?: number | null;
   age?: number | null;
   size?: "sm" | "md" | "lg" | "movie";
+  onDelete?: (deleteFiles: boolean) => void;
 }
 
 const sizeConfig = {
@@ -44,15 +54,19 @@ export function PersonCard({
   personalRating,
   age,
   size = "sm",
+  onDelete,
 }: PersonCardProps) {
   const { width, height } = sizeConfig[size];
   const t = useTranslations("person");
   const tMeta = useTranslations("metadata");
+  const tCommon = useTranslations("common");
   const { data: prefs } = useUserPreferences();
   const showTierBadge = prefs?.showPersonTierBadge !== false;
   const showRatingBadge = prefs?.showPersonRatingBadge !== false;
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteFiles, setDeleteFiles] = useState(false);
 
   return (
     <div className="group flex-shrink-0 transition-transform hover:scale-[1.03]" style={{ width }}>
@@ -139,6 +153,21 @@ export function PersonCard({
                 <ImageIcon className="h-4 w-4" />
                 {tMeta("editImages")}
               </DropdownMenuItem>
+              {onDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {t("deletePerson")}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -172,6 +201,48 @@ export function PersonCard({
           entityId={id}
           entityName={name}
         />
+      )}
+      {deleteOpen && (
+        <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
+          <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>{t("deletePerson")}</DialogTitle>
+              <DialogDescription>{t("confirmDeletePerson")}</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2 px-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteFiles}
+                  onChange={(e) => setDeleteFiles(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 accent-destructive"
+                />
+                <span className="text-sm text-foreground">{t("deleteLocalFiles")}</span>
+              </label>
+              {deleteFiles && (
+                <p className="text-xs text-destructive pl-6">{t("deleteLocalFilesWarning")}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <button
+                onClick={() => setDeleteOpen(false)}
+                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  onDelete?.(deleteFiles);
+                  setDeleteOpen(false);
+                  setDeleteFiles(false);
+                }}
+                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+              >
+                {tCommon("confirm")}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

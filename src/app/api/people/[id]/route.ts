@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import fs from "fs";
+import fsPromises from "fs/promises";
 import { db } from "@/lib/db";
 import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -18,6 +19,44 @@ const stampPathFs = (p: string | null) => {
   if (!p) return null;
   try { return `${p}|${fs.statSync(p).mtimeMs}`; } catch { return p; }
 };
+
+// DELETE /api/people/[id]
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const deleteFiles = request.nextUrl.searchParams.get("deleteFiles") === "true";
+
+  try {
+    const person = db.select().from(people).where(eq(people.id, id)).get();
+    if (!person) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // CASCADE auto-deletes movie_people and user_person_data rows
+    db.delete(people).where(eq(people.id, id)).run();
+
+    if (deleteFiles) {
+      const personDir = getPersonDir(person);
+      try {
+        await fsPromises.rm(personDir, { recursive: true, force: true });
+      } catch (fsError) {
+        console.error("Failed to delete person folder:", personDir, fsError);
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete person error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
 
 // PUT /api/people/[id]
 export async function PUT(
