@@ -3,8 +3,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bookmarkIcons, movieBookmarks } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getDataDir } from "@/lib/paths";
-import path from "path";
 import fs from "fs/promises";
 
 export async function PUT(
@@ -71,10 +69,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Icon not found" }, { status: 404 });
     }
 
-    // Delete file from disk
+    // Delete file from disk (imagePath is already absolute)
     try {
-      const fullPath = path.join(getDataDir(), icon.imagePath);
-      await fs.unlink(fullPath);
+      await fs.unlink(icon.imagePath);
     } catch { /* file may not exist */ }
 
     // Reset bookmarks using this icon to default "bookmark"

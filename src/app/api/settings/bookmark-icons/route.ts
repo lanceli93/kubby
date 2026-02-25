@@ -91,16 +91,13 @@ export async function POST(req: Request) {
     const filePath = path.join(userDir, `${iconId}.png`);
     await fs.writeFile(filePath, outputBuffer);
 
-    // Relative path for DB (relative to data dir)
-    const relativePath = `metadata/bookmark-icons/${session.user.id}/${iconId}.png`;
-
-    // Insert into DB
+    // Store absolute path in DB (matches pattern used by bookmark thumbnails)
     db.insert(bookmarkIcons)
       .values({
         id: iconId,
         userId: session.user.id,
         label: label.trim(),
-        imagePath: relativePath,
+        imagePath: filePath,
       })
       .run();
 
@@ -108,7 +105,7 @@ export async function POST(req: Request) {
       id: iconId,
       userId: session.user.id,
       label: label.trim(),
-      imagePath: relativePath,
+      imagePath: filePath,
     });
   } catch (err) {
     console.error("POST /api/settings/bookmark-icons error:", err);
