@@ -605,7 +605,7 @@ export default function MovieDetailPage() {
             )}
 
             {/* Metadata list — vertical label: value pairs */}
-            <div className="flex flex-col gap-1.5 pt-1 text-sm">
+            <div className="flex flex-col gap-1.5 pt-1 text-sm max-w-[80%]">
               {tags.length > 0 && (
                 <div>
                   <span className="text-white/50">{t("tags")}: </span>

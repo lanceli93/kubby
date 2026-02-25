@@ -356,7 +356,7 @@ export default function PersonDetailPage() {
             )}
 
             {/* Metadata list */}
-            <div className="flex flex-col gap-1.5 pt-1 text-sm">
+            <div className="flex flex-col gap-1.5 pt-1 text-sm max-w-[80%]">
               {(person.birthDate || person.birthYear) && (
                 <div>
                   <span className="text-white/50">{tPerson("born")}: </span>
