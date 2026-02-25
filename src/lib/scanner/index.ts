@@ -555,11 +555,32 @@ export async function scanLibrary(
     scannedCount++;
   }
 
+  // ─── Cleanup: remove movies no longer present on disk or in configured paths ───
+  const scannedFolderPaths = new Set(dirs.map((d) => d.fullPath));
+  const existingMovies = db
+    .select({ id: movies.id, folderPath: movies.folderPath })
+    .from(movies)
+    .where(eq(movies.mediaLibraryId, libraryId))
+    .all();
+
+  let removedCount = 0;
+  for (const movie of existingMovies) {
+    // Movie's folder is not in the set of directories we just scanned
+    // This covers: path removed from library config, or directory deleted from disk
+    if (!scannedFolderPaths.has(movie.folderPath)) {
+      db.delete(movies).where(eq(movies.id, movie.id)).run();
+      removedCount++;
+    }
+  }
+  if (removedCount > 0) {
+    console.log(`Removed ${removedCount} movies no longer found in library paths`);
+  }
+
   // Update last scanned timestamp
   db.update(mediaLibraries)
     .set({ lastScannedAt: new Date().toISOString() })
     .where(eq(mediaLibraries.id, libraryId))
     .run();
 
-  return { scannedCount };
+  return { scannedCount, removedCount };
 }
