@@ -118,6 +118,15 @@ function MovieBrowseContent() {
   const personId = searchParams.get("personId") || "";
   const t = useTranslations("movies");
 
+  // Derive active tab: if URL has genre/tag/studio filter, force "movies" tab
+  const urlHasFilter = searchParams.get("genre") || searchParams.get("tag") || searchParams.get("studio");
+  const [activeTab, setActiveTab] = useState(urlHasFilter ? "movies" : "movies");
+
+  // Switch to "movies" tab when filter params appear in URL
+  useEffect(() => {
+    if (urlHasFilter) setActiveTab("movies");
+  }, [urlHasFilter]);
+
   // Person filmography mode — no tabs, just a movie grid
   if (personId) {
     return (
@@ -143,15 +152,6 @@ function MovieBrowseContent() {
       </div>
     );
   }
-
-  // Derive active tab: if URL has genre/tag/studio filter, force "movies" tab
-  const urlHasFilter = searchParams.get("genre") || searchParams.get("tag") || searchParams.get("studio");
-  const [activeTab, setActiveTab] = useState(urlHasFilter ? "movies" : "movies");
-
-  // Switch to "movies" tab when filter params appear in URL
-  useEffect(() => {
-    if (urlHasFilter) setActiveTab("movies");
-  }, [urlHasFilter]);
 
   return (
     <div className="flex h-full flex-col">
