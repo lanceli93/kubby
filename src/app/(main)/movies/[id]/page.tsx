@@ -599,7 +599,7 @@ export default function MovieDetailPage() {
 
             {/* Overview */}
             {movie.overview && (
-              <p className="max-w-[800px] text-[15px] leading-relaxed text-white/80 line-clamp-5">
+              <p className="max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
                 {movie.overview}
               </p>
             )}
