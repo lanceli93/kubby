@@ -218,12 +218,14 @@ function SearchContent() {
   }
 
   // Build /movies link with libraryId for genre/tag navigation
-  const defaultLibraryId = libraryId || libraries?.[0]?.id || "";
-  function genreHref(name: string) {
-    return `/movies?libraryId=${encodeURIComponent(defaultLibraryId)}&genre=${encodeURIComponent(name)}`;
+  // Only available when a specific library is selected; otherwise stay in search
+  function genreHref(name: string): string | null {
+    if (!libraryId) return null;
+    return `/movies?libraryId=${encodeURIComponent(libraryId)}&genre=${encodeURIComponent(name)}`;
   }
-  function tagHref(name: string) {
-    return `/movies?libraryId=${encodeURIComponent(defaultLibraryId)}&tag=${encodeURIComponent(name)}`;
+  function tagHref(name: string): string | null {
+    if (!libraryId) return null;
+    return `/movies?libraryId=${encodeURIComponent(libraryId)}&tag=${encodeURIComponent(name)}`;
   }
 
   function renderLoadMoreButton(section: "movies" | "people" | "bookmarks", hasMore: boolean) {
@@ -402,48 +404,68 @@ function SearchContent() {
                 {category === "all" ? (
                   /* Compact chips in All mode */
                   <div className="flex flex-wrap gap-2">
-                    {results.genres.map((genre) => (
-                      <Link
-                        key={genre.name}
-                        href={genreHref(genre.name)}
-                        className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
-                      >
-                        <Tag className="h-3 w-3 text-primary" />
-                        <span className="font-medium text-foreground">{genre.name}</span>
-                        <span className="text-xs text-muted-foreground">({genre.movieCount})</span>
-                      </Link>
-                    ))}
+                    {results.genres.map((genre) => {
+                      const href = genreHref(genre.name);
+                      const chipClass = "flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20";
+                      const inner = (
+                        <>
+                          <Tag className="h-3 w-3 text-primary" />
+                          <span className="font-medium text-foreground">{genre.name}</span>
+                          <span className="text-xs text-muted-foreground">({genre.movieCount})</span>
+                        </>
+                      );
+                      return href ? (
+                        <Link key={genre.name} href={href} className={chipClass}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <button
+                          key={genre.name}
+                          onClick={() => handleSeeAll("genres")}
+                          className={`${chipClass} cursor-pointer`}
+                        >
+                          {inner}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   /* Full ScrollRow per genre in category mode */
                   <div className="flex flex-col gap-4">
-                    {results.genres.map((genre) => (
-                      <div key={genre.name}>
-                        <div className="mb-2 flex items-center gap-2">
-                          <Tag className="h-4 w-4 text-primary" />
-                          <Link
-                            href={genreHref(genre.name)}
-                            className="text-sm font-medium text-foreground hover:text-primary hover:underline"
-                          >
-                            {genre.name}
-                          </Link>
-                          <span className="text-xs text-muted-foreground">
-                            {t("moviesInGenre", { count: genre.movieCount })}
-                          </span>
+                    {results.genres.map((genre) => {
+                      const href = genreHref(genre.name);
+                      return (
+                        <div key={genre.name}>
+                          <div className="mb-2 flex items-center gap-2">
+                            <Tag className="h-4 w-4 text-primary" />
+                            {href ? (
+                              <Link
+                                href={href}
+                                className="text-sm font-medium text-foreground hover:text-primary hover:underline"
+                              >
+                                {genre.name}
+                              </Link>
+                            ) : (
+                              <span className="text-sm font-medium text-foreground">{genre.name}</span>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {t("moviesInGenre", { count: genre.movieCount })}
+                            </span>
+                          </div>
+                          <ScrollRow>
+                            {genre.previewMovies.map((movie) => (
+                              <MovieCard
+                                key={movie.id}
+                                id={movie.id}
+                                title={movie.title}
+                                year={movie.year ?? undefined}
+                                posterPath={movie.posterPath}
+                              />
+                            ))}
+                          </ScrollRow>
                         </div>
-                        <ScrollRow>
-                          {genre.previewMovies.map((movie) => (
-                            <MovieCard
-                              key={movie.id}
-                              id={movie.id}
-                              title={movie.title}
-                              year={movie.year ?? undefined}
-                              posterPath={movie.posterPath}
-                            />
-                          ))}
-                        </ScrollRow>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </section>
@@ -469,48 +491,68 @@ function SearchContent() {
                 {category === "all" ? (
                   /* Compact chips in All mode */
                   <div className="flex flex-wrap gap-2">
-                    {results.tags.map((tag) => (
-                      <Link
-                        key={tag.name}
-                        href={tagHref(tag.name)}
-                        className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
-                      >
-                        <Tag className="h-3 w-3 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{tag.name}</span>
-                        <span className="text-xs text-muted-foreground">({tag.movieCount})</span>
-                      </Link>
-                    ))}
+                    {results.tags.map((tag) => {
+                      const href = tagHref(tag.name);
+                      const chipClass = "flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20";
+                      const inner = (
+                        <>
+                          <Tag className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-medium text-foreground">{tag.name}</span>
+                          <span className="text-xs text-muted-foreground">({tag.movieCount})</span>
+                        </>
+                      );
+                      return href ? (
+                        <Link key={tag.name} href={href} className={chipClass}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <button
+                          key={tag.name}
+                          onClick={() => handleSeeAll("tags")}
+                          className={`${chipClass} cursor-pointer`}
+                        >
+                          {inner}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   /* Full ScrollRow per tag in category mode */
                   <div className="flex flex-col gap-4">
-                    {results.tags.map((tag) => (
-                      <div key={tag.name}>
-                        <div className="mb-2 flex items-center gap-2">
-                          <Tag className="h-4 w-4 text-muted-foreground" />
-                          <Link
-                            href={tagHref(tag.name)}
-                            className="text-sm font-medium text-foreground hover:text-primary hover:underline"
-                          >
-                            {tag.name}
-                          </Link>
-                          <span className="text-xs text-muted-foreground">
-                            {t("moviesInGenre", { count: tag.movieCount })}
-                          </span>
+                    {results.tags.map((tag) => {
+                      const href = tagHref(tag.name);
+                      return (
+                        <div key={tag.name}>
+                          <div className="mb-2 flex items-center gap-2">
+                            <Tag className="h-4 w-4 text-muted-foreground" />
+                            {href ? (
+                              <Link
+                                href={href}
+                                className="text-sm font-medium text-foreground hover:text-primary hover:underline"
+                              >
+                                {tag.name}
+                              </Link>
+                            ) : (
+                              <span className="text-sm font-medium text-foreground">{tag.name}</span>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {t("moviesInGenre", { count: tag.movieCount })}
+                            </span>
+                          </div>
+                          <ScrollRow>
+                            {tag.previewMovies.map((movie) => (
+                              <MovieCard
+                                key={movie.id}
+                                id={movie.id}
+                                title={movie.title}
+                                year={movie.year ?? undefined}
+                                posterPath={movie.posterPath}
+                              />
+                            ))}
+                          </ScrollRow>
                         </div>
-                        <ScrollRow>
-                          {tag.previewMovies.map((movie) => (
-                            <MovieCard
-                              key={movie.id}
-                              id={movie.id}
-                              title={movie.title}
-                              year={movie.year ?? undefined}
-                              posterPath={movie.posterPath}
-                            />
-                          ))}
-                        </ScrollRow>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </section>
