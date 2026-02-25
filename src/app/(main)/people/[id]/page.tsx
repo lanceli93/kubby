@@ -428,7 +428,7 @@ export default function PersonDetailPage() {
           </Link>
         </div>
 
-        <div className="flex gap-4 overflow-hidden">
+        <div className="flex gap-4 overflow-hidden pb-2">
           {person.movies.map((movie) => (
             <div key={movie.id} className="flex-shrink-0" style={{ width: 180 }}>
               <MovieCard
