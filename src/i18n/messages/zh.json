@@ -388,7 +388,8 @@
     "builtinIcon_laugh": "搞笑",
     "builtinIcon_heart": "情感",
     "builtinIcon_eye": "视觉",
-    "builtinIcon_swords": "悬疑"
+    "builtinIcon_swords": "悬疑",
+    "iconEnabledHint": "点击启用/禁用图标"
   },
   "mediaInfoDialog": {
     "title": "媒体信息",

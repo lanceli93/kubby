@@ -22,6 +22,7 @@ import {
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -98,6 +99,9 @@ export default function PlayerPage() {
     queryKey: ["bookmark-icons"],
     queryFn: () => fetch("/api/settings/bookmark-icons").then((r) => r.json()),
   });
+
+  const { data: userPrefs } = useUserPreferences();
+  const disabledIconIds = new Set(userPrefs?.disabledBookmarkIcons ?? []);
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
   const totalDiscs = movie?.discCount ?? 1;
@@ -594,7 +598,7 @@ export default function PlayerPage() {
             <div className="mb-4">
               <label className="mb-1 block text-sm text-white/60">Type</label>
               <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto">
-                {BUILTIN_BOOKMARK_ICONS.map((bi) => {
+                {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIconIds.has(bi.id)).map((bi) => {
                   const BiIcon = bi.icon;
                   return (
                     <button
@@ -611,7 +615,7 @@ export default function PlayerPage() {
                     </button>
                   );
                 })}
-                {customIcons.map((ci) => (
+                {customIcons.filter((ci) => !disabledIconIds.has(ci.id)).map((ci) => (
                   <button
                     key={ci.id}
                     onClick={() => setBookmarkIconType(ci.id)}

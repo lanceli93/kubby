@@ -180,6 +180,7 @@ export const userPreferences = sqliteTable("user_preferences", {
   externalPlayerName: text("external_player_name"),
   externalPlayerPath: text("external_player_path"),
   externalPlayerMode: text("external_player_mode").default("local"), // "local" | "stream"
+  disabledBookmarkIcons: text("disabled_bookmark_icons"), // JSON array of disabled icon IDs
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────

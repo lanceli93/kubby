@@ -388,7 +388,8 @@
     "builtinIcon_laugh": "Funny",
     "builtinIcon_heart": "Emotion",
     "builtinIcon_eye": "Visual",
-    "builtinIcon_swords": "Suspense"
+    "builtinIcon_swords": "Suspense",
+    "iconEnabledHint": "Click to enable/disable icons"
   },
   "mediaInfoDialog": {
     "title": "Media Info",

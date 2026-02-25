@@ -835,6 +835,7 @@ export default function MovieDetailPage() {
                 onUpdate={(id, data) => updateBookmark.mutate({ bookmarkId: id, data })}
                 onDelete={(id) => deleteBookmark.mutate(id)}
                 customIcons={customIcons}
+                disabledIconIds={prefs?.disabledBookmarkIcons}
               />
             ))}
           </ScrollRow>

@@ -38,6 +38,7 @@ interface BookmarkCardProps {
   onDelete?: (bookmarkId: string) => void;
   onUpdate?: (bookmarkId: string, data: { iconType?: string; tags?: string[]; note?: string }) => void;
   customIcons?: CustomIconData[];
+  disabledIconIds?: string[];
 }
 
 function formatTimestamp(seconds: number): string {
@@ -55,6 +56,7 @@ export function BookmarkCard({
   onDelete,
   onUpdate,
   customIcons,
+  disabledIconIds,
 }: BookmarkCardProps) {
   const tPM = useTranslations("personalMetadata");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -270,7 +272,7 @@ export function BookmarkCard({
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">Type</label>
               <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto">
-                {BUILTIN_BOOKMARK_ICONS.map((bi) => {
+                {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIconIds?.includes(bi.id)).map((bi) => {
                   const BiIcon = bi.icon;
                   return (
                     <button
@@ -287,7 +289,7 @@ export function BookmarkCard({
                     </button>
                   );
                 })}
-                {customIcons?.map((ci) => (
+                {customIcons?.filter((ci) => !disabledIconIds?.includes(ci.id)).map((ci) => (
                   <button
                     key={ci.id}
                     onClick={() => setEditIconType(ci.id)}

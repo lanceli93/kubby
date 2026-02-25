@@ -33,6 +33,7 @@ export async function GET() {
         externalPlayerName: null,
         externalPlayerPath: null,
         externalPlayerMode: "local",
+        disabledBookmarkIcons: [],
         serverPlatform,
       });
     }
@@ -52,6 +53,9 @@ export async function GET() {
       externalPlayerName: row.externalPlayerName,
       externalPlayerPath: row.externalPlayerPath,
       externalPlayerMode: row.externalPlayerMode ?? "local",
+      disabledBookmarkIcons: row.disabledBookmarkIcons
+        ? JSON.parse(row.disabledBookmarkIcons)
+        : [],
       serverPlatform,
     });
   } catch (error) {
@@ -129,6 +133,9 @@ export async function PUT(request: NextRequest) {
       externalPlayerMode: body.externalPlayerMode !== undefined
         ? body.externalPlayerMode
         : existing?.externalPlayerMode ?? "local",
+      disabledBookmarkIcons: body.disabledBookmarkIcons !== undefined
+        ? JSON.stringify(body.disabledBookmarkIcons)
+        : existing?.disabledBookmarkIcons ?? "[]",
     };
 
     if (existing) {

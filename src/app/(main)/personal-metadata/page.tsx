@@ -32,6 +32,7 @@ export default function PersonalMetadataPage() {
 
   const [movieDims, setMovieDims] = useState<string[]>([]);
   const [personDims, setPersonDims] = useState<string[]>([]);
+  const [disabledIcons, setDisabledIcons] = useState<Set<string>>(new Set());
   const [movieInput, setMovieInput] = useState("");
   const [personInput, setPersonInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -53,6 +54,7 @@ export default function PersonalMetadataPage() {
     if (prefs) {
       setMovieDims(prefs.movieRatingDimensions || []);
       setPersonDims(prefs.personRatingDimensions || []);
+      setDisabledIcons(new Set(prefs.disabledBookmarkIcons || []));
     }
   }, [prefs]);
 
@@ -91,6 +93,7 @@ export default function PersonalMetadataPage() {
         body: JSON.stringify({
           movieRatingDimensions: movieDims,
           personRatingDimensions: personDims,
+          disabledBookmarkIcons: Array.from(disabledIcons),
         }),
       });
       if (res.ok) {
@@ -241,22 +244,37 @@ export default function PersonalMetadataPage() {
           </p>
         </div>
 
-        {/* Built-in icons (read-only) */}
+        {/* Built-in icons (click to toggle) */}
         <div>
           <h3 className="mb-2 text-sm font-medium text-muted-foreground">
             {t("builtinIcons")}
           </h3>
+          <p className="mb-2 text-xs text-muted-foreground">{t("iconEnabledHint")}</p>
           <div className="flex flex-wrap gap-2">
             {BUILTIN_BOOKMARK_ICONS.map((bi) => {
               const Icon = bi.icon;
+              const isDisabled = disabledIcons.has(bi.id);
               return (
-                <div
+                <button
                   key={bi.id}
-                  className="flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground"
+                  type="button"
+                  onClick={() => {
+                    setDisabledIcons((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(bi.id)) next.delete(bi.id);
+                      else next.add(bi.id);
+                      return next;
+                    });
+                  }}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
+                    isDisabled
+                      ? "bg-white/5 opacity-30 line-through text-muted-foreground"
+                      : "bg-white/5 text-muted-foreground hover:bg-white/10"
+                  }`}
                 >
-                  <Icon className={`h-4 w-4 ${bi.color}`} />
+                  <Icon className={`h-4 w-4 ${isDisabled ? "text-muted-foreground" : bi.color}`} />
                   {t(`builtinIcon_${bi.id}`)}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -271,27 +289,45 @@ export default function PersonalMetadataPage() {
           {/* Custom icons grid */}
           {customIcons.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
-              {customIcons.map((ci) => (
-                <div
-                  key={ci.id}
-                  className="group/icon relative flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={resolveImageSrc(ci.imagePath)}
-                    alt={ci.label}
-                    className="h-5 w-5 object-contain"
-                  />
-                  {ci.label}
-                  <button
-                    onClick={() => deleteIcon.mutate(ci.id)}
-                    className="ml-1 text-red-400/0 group-hover/icon:text-red-400 hover:text-red-300 transition-colors cursor-pointer"
-                    title="Delete"
+              {customIcons.map((ci) => {
+                const isDisabled = disabledIcons.has(ci.id);
+                return (
+                  <div
+                    key={ci.id}
+                    className={`group/icon relative flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground transition-all ${
+                      isDisabled ? "opacity-30 line-through" : ""
+                    }`}
                   >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDisabledIcons((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(ci.id)) next.delete(ci.id);
+                          else next.add(ci.id);
+                          return next;
+                        });
+                      }}
+                      className="flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={resolveImageSrc(ci.imagePath)}
+                        alt={ci.label}
+                        className="h-5 w-5 object-contain"
+                      />
+                      {ci.label}
+                    </button>
+                    <button
+                      onClick={() => deleteIcon.mutate(ci.id)}
+                      className="ml-1 text-red-400/0 group-hover/icon:text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
 
