@@ -14,19 +14,19 @@ const stampPath = (p: string | null, mtime?: number | null) => {
 type Category = "movies" | "genres" | "tags" | "people" | "bookmarks";
 
 const ALL_LIMITS: Record<Category, number> = {
-  movies: 12,
-  genres: 5,
-  tags: 5,
-  people: 12,
-  bookmarks: 12,
+  movies: 24,
+  genres: 10,
+  tags: 10,
+  people: 24,
+  bookmarks: 24,
 };
 
 const CATEGORY_LIMITS: Record<Category, number> = {
-  movies: 50,
-  genres: 20,
-  tags: 20,
-  people: 50,
-  bookmarks: 50,
+  movies: 100,
+  genres: 40,
+  tags: 40,
+  people: 100,
+  bookmarks: 100,
 };
 
 // GET /api/search?q=...&category=...&libraryId=...
@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
   const q = searchParams.get("q")?.trim() || "";
   const category = searchParams.get("category") as Category | null;
   const libraryId = searchParams.get("libraryId") || null;
+  const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")!, 10) : 0;
 
   if (!q) {
     return NextResponse.json({
@@ -87,6 +88,7 @@ export async function GET(request: NextRequest) {
       ${libraryCondition}
       ORDER BY m.community_rating DESC NULLS LAST
       LIMIT ${limit + 1}
+      OFFSET ${offset}
     `);
 
     const items = results.slice(0, limit).map((r) => ({
@@ -103,15 +105,15 @@ export async function GET(request: NextRequest) {
       videoHeight: r.video_height,
     }));
 
-    // Get total count if there are more results than the limit
-    let totalCount = items.length;
-    if (results.length > limit) {
+    // Get total count if paginating or there are more results than the limit
+    let totalCount = offset + items.length;
+    if (results.length > limit || offset > 0) {
       const countResult = db.all<{ total: number }>(sql`
         SELECT COUNT(*) as total FROM movies m
         WHERE LOWER(m.title) LIKE LOWER(${searchPattern})
         ${libraryCondition}
       `);
-      totalCount = countResult[0]?.total ?? items.length;
+      totalCount = countResult[0]?.total ?? totalCount;
     }
 
     return { items, totalCount };
@@ -258,6 +260,7 @@ export async function GET(request: NextRequest) {
       GROUP BY p.id
       ORDER BY movie_count DESC
       LIMIT ${limit + 1}
+      OFFSET ${offset}
     `);
 
     const items = results.slice(0, limit).map((r) => ({
@@ -269,8 +272,8 @@ export async function GET(request: NextRequest) {
       movieCount: r.movie_count,
     }));
 
-    let totalCount = items.length;
-    if (results.length > limit) {
+    let totalCount = offset + items.length;
+    if (results.length > limit || offset > 0) {
       const countResult = db.all<{ total: number }>(sql`
         SELECT COUNT(*) as total FROM (
           SELECT p.id
@@ -280,7 +283,7 @@ export async function GET(request: NextRequest) {
           GROUP BY p.id
         )
       `);
-      totalCount = countResult[0]?.total ?? items.length;
+      totalCount = countResult[0]?.total ?? totalCount;
     }
 
     return { items, totalCount };
@@ -363,6 +366,7 @@ export async function GET(request: NextRequest) {
       )
       ORDER BY mb.created_at DESC
       LIMIT ${limit + 1}
+      OFFSET ${offset}
     `);
 
     const items = results.slice(0, limit).map((r) => ({
@@ -384,8 +388,8 @@ export async function GET(request: NextRequest) {
       matchReason: r.match_reason as "tag" | "icon" | "note" | "movieTitle" | "actor",
     }));
 
-    let totalCount = items.length;
-    if (results.length > limit) {
+    let totalCount = offset + items.length;
+    if (results.length > limit || offset > 0) {
       const countResult = db.all<{ total: number }>(sql`
         SELECT COUNT(DISTINCT mb.id) as total
         FROM movie_bookmarks mb
@@ -401,7 +405,7 @@ export async function GET(request: NextRequest) {
           OR LOWER(p.name) LIKE LOWER(${searchPattern})
         )
       `);
-      totalCount = countResult[0]?.total ?? items.length;
+      totalCount = countResult[0]?.total ?? totalCount;
     }
 
     return { items, totalCount };

@@ -277,7 +277,9 @@
     "matchViaIcon": "icon: {icon}",
     "matchViaNote": "note match",
     "allLibraries": "All Libraries",
-    "noResultsForCategory": "No {category} found for \"{query}\""
+    "noResultsForCategory": "No {category} found for \"{query}\"",
+    "loadMore": "Load more",
+    "loading": "Loading..."
   },
   "person": {
     "born": "Born",

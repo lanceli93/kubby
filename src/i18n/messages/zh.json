@@ -277,7 +277,9 @@
     "matchViaIcon": "图标: {icon}",
     "matchViaNote": "备注匹配",
     "allLibraries": "全部媒体库",
-    "noResultsForCategory": "未找到与\"{query}\"相关的{category}"
+    "noResultsForCategory": "未找到与\"{query}\"相关的{category}",
+    "loadMore": "加载更多",
+    "loading": "加载中..."
   },
   "person": {
     "born": "出生",
