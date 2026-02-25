@@ -752,11 +752,10 @@ export default function PlayerPage() {
             return (
               <div
                 key={bm.id}
-                className={`absolute z-10 flex flex-col items-center cursor-pointer ${subtleMarkers ? "opacity-40" : ""}`}
+                className={`absolute z-10 flex flex-col items-center cursor-pointer -translate-x-1/2 transition-transform duration-150 hover:scale-150 ${subtleMarkers ? "opacity-40 hover:opacity-80" : "hover:opacity-100"}`}
                 style={{
                   left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%`,
                   bottom: "-2px",
-                  transform: "translateX(-50%)",
                 }}
                 title={`${formatTime(bm.timestampSeconds)}${bm.note ? " - " + bm.note : ""}`}
                 onClick={(e) => {
