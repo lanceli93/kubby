@@ -13,6 +13,7 @@ export interface UserPreferences {
   externalPlayerMode: string | null; // "local" | "stream"
   disabledBookmarkIcons: string[];
   quickBookmarkTemplate: { iconType?: string; tags?: string[]; note?: string } | null;
+  subtleBookmarkMarkers: boolean;
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 

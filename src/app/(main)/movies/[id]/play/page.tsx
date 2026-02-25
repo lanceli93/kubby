@@ -104,6 +104,7 @@ export default function PlayerPage() {
 
   const { data: userPrefs } = useUserPreferences();
   const disabledIconIds = new Set(userPrefs?.disabledBookmarkIcons ?? []);
+  const subtleMarkers = userPrefs?.subtleBookmarkMarkers ?? false;
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
   const totalDiscs = movie?.discCount ?? 1;
@@ -744,13 +745,13 @@ export default function PlayerPage() {
           {/* Bookmark markers */}
           {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => {
             const builtin = getBuiltinIcon(bm.iconType || "bookmark");
-            const markerColor = builtin?.hexColor ?? "#ffffff";
+            const markerColor = subtleMarkers ? "#ffffff" : (builtin?.hexColor ?? "#ffffff");
             const customIcon = !builtin ? customIcons.find((c) => c.id === bm.iconType) : undefined;
             const MarkerIcon = builtin?.icon;
             return (
               <div
                 key={bm.id}
-                className="absolute z-10 flex flex-col items-center cursor-pointer"
+                className={`absolute z-10 flex flex-col items-center cursor-pointer ${subtleMarkers ? "opacity-40" : ""}`}
                 style={{
                   left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%`,
                   bottom: "-2px",
@@ -768,7 +769,7 @@ export default function PlayerPage() {
                     <MarkerIcon className="h-5 w-5" style={{ color: markerColor }} />
                   ) : customIcon ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={resolveImageSrc(customIcon.imagePath)} alt="" className="h-5 w-5 object-contain" />
+                    <img src={resolveImageSrc(customIcon.imagePath)} alt="" className={`h-5 w-5 object-contain ${subtleMarkers ? "brightness-200 grayscale" : ""}`} />
                   ) : null}
                 </div>
                 {/* Colored dot */}

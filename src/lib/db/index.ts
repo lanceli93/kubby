@@ -258,6 +258,8 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `disabled_bookmark_icons` text",
   // 0018: quick bookmark template
   "ALTER TABLE `user_preferences` ADD `quick_bookmark_template` text",
+  // 0019: subtle bookmark markers preference
+  "ALTER TABLE `user_preferences` ADD `subtle_bookmark_markers` integer NOT NULL DEFAULT 0",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

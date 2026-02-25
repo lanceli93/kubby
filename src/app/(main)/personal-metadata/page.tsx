@@ -33,6 +33,7 @@ export default function PersonalMetadataPage() {
   const [movieDims, setMovieDims] = useState<string[]>([]);
   const [personDims, setPersonDims] = useState<string[]>([]);
   const [disabledIcons, setDisabledIcons] = useState<Set<string>>(new Set());
+  const [subtleMarkers, setSubtleMarkers] = useState(false);
   const [qbIconType, setQbIconType] = useState("bookmark");
   const [qbTags, setQbTags] = useState<string[]>([]);
   const [qbNote, setQbNote] = useState("");
@@ -59,6 +60,7 @@ export default function PersonalMetadataPage() {
       setMovieDims(prefs.movieRatingDimensions || []);
       setPersonDims(prefs.personRatingDimensions || []);
       setDisabledIcons(new Set(prefs.disabledBookmarkIcons || []));
+      setSubtleMarkers(prefs.subtleBookmarkMarkers ?? false);
       const tpl = prefs.quickBookmarkTemplate;
       setQbIconType(tpl?.iconType || "bookmark");
       setQbTags(tpl?.tags || []);
@@ -102,6 +104,7 @@ export default function PersonalMetadataPage() {
           movieRatingDimensions: movieDims,
           personRatingDimensions: personDims,
           disabledBookmarkIcons: Array.from(disabledIcons),
+          subtleBookmarkMarkers: subtleMarkers,
           quickBookmarkTemplate: (qbIconType !== "bookmark" || qbTags.length > 0 || qbNote)
             ? { iconType: qbIconType, tags: qbTags, note: qbNote || undefined }
             : null,
@@ -390,6 +393,63 @@ export default function PersonalMetadataPage() {
         <p className="text-xs text-muted-foreground">
           {t("iconFormatHint")} · {t("maxCustomIcons", { max: 20 })}
         </p>
+
+        {/* Subtle bookmark markers toggle + preview */}
+        <div className="border-t border-white/[0.06] pt-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t("subtleMarkers")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("subtleMarkersDesc")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubtleMarkers((v) => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                subtleMarkers ? "bg-primary" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                  subtleMarkers ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Preview */}
+          <div className="mt-3 flex items-center gap-6">
+            {/* Normal preview */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[10px] text-muted-foreground/60">{t("subtleMarkersOff")}</span>
+              <div className="relative flex h-10 w-28 items-end justify-center rounded bg-zinc-800">
+                <div className="absolute bottom-1 left-1/3 flex flex-col items-center">
+                  {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[0].icon; return <Icon className="h-4 w-4" style={{ color: BUILTIN_BOOKMARK_ICONS[0].hexColor }} />; })()}
+                  <div className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: BUILTIN_BOOKMARK_ICONS[0].hexColor }} />
+                </div>
+                <div className="absolute bottom-1 left-2/3 flex flex-col items-center">
+                  {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[2].icon; return <Icon className="h-4 w-4" style={{ color: BUILTIN_BOOKMARK_ICONS[2].hexColor }} />; })()}
+                  <div className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: BUILTIN_BOOKMARK_ICONS[2].hexColor }} />
+                </div>
+                <div className="absolute bottom-0 h-[3px] w-full rounded-full bg-white/30" />
+              </div>
+            </div>
+            {/* Subtle preview */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[10px] text-muted-foreground/60">{t("subtleMarkersOn")}</span>
+              <div className="relative flex h-10 w-28 items-end justify-center rounded bg-zinc-800">
+                <div className="absolute bottom-1 left-1/3 flex flex-col items-center opacity-40">
+                  {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[0].icon; return <Icon className="h-4 w-4 text-white" />; })()}
+                  <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white" />
+                </div>
+                <div className="absolute bottom-1 left-2/3 flex flex-col items-center opacity-40">
+                  {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[2].icon; return <Icon className="h-4 w-4 text-white" />; })()}
+                  <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white" />
+                </div>
+                <div className="absolute bottom-0 h-[3px] w-full rounded-full bg-white/30" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Quick Bookmark Template */}
