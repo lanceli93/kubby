@@ -2,8 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bookmark, Star, Clock, Trash2 } from "lucide-react";
+import { Bookmark, Star, Clock, Trash2, MoreVertical, X } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface BookmarkData {
   id: string;
@@ -21,6 +28,7 @@ interface BookmarkCardProps {
   externalEnabled?: boolean;
   onExternalLaunch?: (disc?: number, startSeconds?: number) => void;
   onDelete?: (bookmarkId: string) => void;
+  onUpdate?: (bookmarkId: string, data: { iconType?: string; tags?: string[]; note?: string }) => void;
 }
 
 function formatTimestamp(seconds: number): string {
@@ -36,12 +44,36 @@ export function BookmarkCard({
   externalEnabled,
   onExternalLaunch,
   onDelete,
+  onUpdate,
 }: BookmarkCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editIconType, setEditIconType] = useState(bookmark.iconType || "bookmark");
+  const [editTags, setEditTags] = useState<string[]>(bookmark.tags || []);
+  const [editNote, setEditNote] = useState(bookmark.note || "");
+  const [editTagInput, setEditTagInput] = useState("");
+
   const IconComponent = bookmark.iconType === "star" ? Star : Bookmark;
   const iconColor = bookmark.iconType === "star" ? "text-yellow-400" : "text-blue-400";
   const discParam = bookmark.discNumber && bookmark.discNumber > 1 ? `&disc=${bookmark.discNumber}` : "";
   const href = `/movies/${movieId}/play?t=${bookmark.timestampSeconds}${discParam}`;
+
+  function openEdit() {
+    setEditIconType(bookmark.iconType || "bookmark");
+    setEditTags(bookmark.tags || []);
+    setEditNote(bookmark.note || "");
+    setEditTagInput("");
+    setEditOpen(true);
+  }
+
+  function handleSave() {
+    onUpdate?.(bookmark.id, {
+      iconType: editIconType,
+      tags: editTags,
+      note: editNote || undefined,
+    });
+    setEditOpen(false);
+  }
 
   const card = (
     <div className="group relative flex-shrink-0 w-[320px]">
@@ -90,7 +122,22 @@ export function BookmarkCard({
           </span>
         )}
 
-        {/* Delete button on hover → confirm bar */}
+        {/* Edit button on hover (bottom-left) */}
+        {onUpdate && !confirmDelete && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openEdit();
+            }}
+            className="absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100 cursor-pointer"
+            title="Edit bookmark"
+          >
+            <MoreVertical className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {/* Delete button on hover (bottom-right) */}
         {onDelete && !confirmDelete && (
           <button
             onClick={(e) => {
@@ -104,6 +151,7 @@ export function BookmarkCard({
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         )}
+
         {/* Delete confirmation overlay */}
         {onDelete && confirmDelete && (
           <div
@@ -147,20 +195,134 @@ export function BookmarkCard({
     </div>
   );
 
-  if (externalEnabled && onExternalLaunch) {
-    return (
-      <button
-        onClick={() => onExternalLaunch(bookmark.discNumber, bookmark.timestampSeconds)}
-        className="text-left cursor-pointer"
-      >
-        {card}
-      </button>
-    );
-  }
-
-  return (
+  const wrappedCard = externalEnabled && onExternalLaunch ? (
+    <button
+      onClick={() => onExternalLaunch(bookmark.discNumber, bookmark.timestampSeconds)}
+      className="text-left cursor-pointer"
+    >
+      {card}
+    </button>
+  ) : (
     <Link href={href}>
       {card}
     </Link>
+  );
+
+  return (
+    <>
+      {wrappedCard}
+
+      {/* Edit bookmark dialog — rendered outside Link/button via portal */}
+      {editOpen && (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="border-white/10 bg-black/70 backdrop-blur-xl sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Edit Bookmark</DialogTitle>
+            </DialogHeader>
+
+            {/* Timestamp (read-only) */}
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">Timestamp</label>
+              <div className="rounded-md bg-white/10 px-3 py-2 text-sm text-foreground">
+                {formatTimestamp(bookmark.timestampSeconds)}
+              </div>
+            </div>
+
+            {/* Icon type */}
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">Type</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditIconType("bookmark")}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors cursor-pointer ${
+                    editIconType === "bookmark"
+                      ? "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50"
+                      : "bg-white/10 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Bookmark className="h-4 w-4" />
+                  Bookmark
+                </button>
+                <button
+                  onClick={() => setEditIconType("star")}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors cursor-pointer ${
+                    editIconType === "star"
+                      ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/50"
+                      : "bg-white/10 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Star className="h-4 w-4" />
+                  Star
+                </button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">Tags</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {editTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs text-foreground"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => setEditTags(editTags.filter((t) => t !== tag))}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={editTagInput}
+                onChange={(e) => setEditTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && editTagInput.trim()) {
+                    e.preventDefault();
+                    if (!editTags.includes(editTagInput.trim())) {
+                      setEditTags([...editTags, editTagInput.trim()]);
+                    }
+                    setEditTagInput("");
+                  }
+                }}
+                placeholder="Type and press Enter to add"
+                className="w-full rounded-md bg-white/10 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:ring-1 focus:ring-white/30"
+              />
+            </div>
+
+            {/* Note */}
+            <div>
+              <label className="mb-1 block text-sm text-muted-foreground">Note</label>
+              <textarea
+                value={editNote}
+                onChange={(e) => setEditNote(e.target.value)}
+                placeholder="Optional note..."
+                rows={2}
+                className="w-full resize-none rounded-md bg-white/10 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:ring-1 focus:ring-white/30"
+              />
+            </div>
+
+            <DialogFooter>
+              <button
+                onClick={() => setEditOpen(false)}
+                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 cursor-pointer"
+              >
+                Save
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }

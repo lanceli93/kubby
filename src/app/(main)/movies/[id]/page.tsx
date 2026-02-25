@@ -268,6 +268,16 @@ export default function MovieDetailPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie-bookmarks", movieId] }),
   });
 
+  const updateBookmark = useMutation({
+    mutationFn: ({ bookmarkId, data }: { bookmarkId: string; data: { iconType?: string; tags?: string[]; note?: string } }) =>
+      fetch(`/api/movies/${movieId}/bookmarks/${bookmarkId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie-bookmarks", movieId] }),
+  });
+
   const toggleFavorite = useMutation({
     mutationFn: () =>
       fetch(`/api/movies/${movieId}/user-data`, {
@@ -817,6 +827,7 @@ export default function MovieDetailPage() {
                 movieId={movieId}
                 externalEnabled={externalEnabled}
                 onExternalLaunch={(disc, startSeconds) => launchExternal(disc, startSeconds)}
+                onUpdate={(id, data) => updateBookmark.mutate({ bookmarkId: id, data })}
                 onDelete={(id) => deleteBookmark.mutate(id)}
               />
             ))}
