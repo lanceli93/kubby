@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, Tag, ChevronRight, Loader2 } from "lucide-react";
+import { Search, Tag, ChevronRight, Loader2, ChevronDown, Library, Check } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { PersonCard } from "@/components/people/person-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -13,6 +13,12 @@ import {
   type BookmarkSearchResult,
 } from "@/components/search/bookmark-search-card";
 import { useTranslations } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 // ── Types ───────────────────────────────────────────────────────
 interface Movie {
@@ -102,13 +108,15 @@ function SearchContent() {
     setExtraBookmarks([]);
   }, [debouncedQuery, category, libraryId]);
 
-  // Fetch libraries
-  const { data: libraries } = useQuery<Library[]>({
+  // Fetch libraries — placeholderData keeps previous value across re-renders to avoid layout shift
+  const { data: libraries, isLoading: librariesLoading } = useQuery<Library[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
     staleTime: 5 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
-  const showLibraryFilter = libraries && libraries.length > 1;
+  const showLibraryFilter = !librariesLoading && libraries && libraries.length > 1;
+  const selectedLibraryName = libraries?.find((l) => l.id === libraryId)?.name;
 
   // Update URL when search params change
   useEffect(() => {
@@ -317,18 +325,30 @@ function SearchContent() {
           </div>
 
           {showLibraryFilter && (
-            <select
-              value={libraryId}
-              onChange={(e) => setLibraryId(e.target.value)}
-              className="h-8 rounded-md border border-white/[0.08] bg-[var(--surface)] px-2 text-sm text-foreground focus:border-primary focus:outline-none cursor-pointer"
-            >
-              <option value="">{t("allLibraries")}</option>
-              {libraries.map((lib) => (
-                <option key={lib.id} value={lib.id}>
-                  {lib.name}
-                </option>
-              ))}
-            </select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/10 px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/15 hover:text-foreground cursor-pointer">
+                  <Library className="h-3.5 w-3.5" />
+                  <span>{selectedLibraryName || t("allLibraries")}</span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="center"
+                className="min-w-[160px] border-white/10 bg-black/70 backdrop-blur-xl"
+              >
+                <DropdownMenuItem onClick={() => setLibraryId("")}>
+                  {!libraryId && <Check className="h-3.5 w-3.5 text-primary" />}
+                  <span className={!libraryId ? "text-primary font-medium" : ""}>{t("allLibraries")}</span>
+                </DropdownMenuItem>
+                {libraries!.map((lib) => (
+                  <DropdownMenuItem key={lib.id} onClick={() => setLibraryId(lib.id)}>
+                    {libraryId === lib.id && <Check className="h-3.5 w-3.5 text-primary" />}
+                    <span className={libraryId === lib.id ? "text-primary font-medium" : ""}>{lib.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
