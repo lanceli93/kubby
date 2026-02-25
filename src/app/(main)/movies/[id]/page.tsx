@@ -611,7 +611,7 @@ export default function MovieDetailPage() {
                   <span className="text-white/50">{t("tags")}: </span>
                   <span className="text-white/90">
                     {tags.map((tag, i) => (
-                      <span key={tag}>
+                      <span key={`${tag}-${i}`}>
                         {i > 0 && ", "}
                         <Link
                           href={`/movies?libraryId=${movie.mediaLibraryId}&tag=${encodeURIComponent(tag)}`}
