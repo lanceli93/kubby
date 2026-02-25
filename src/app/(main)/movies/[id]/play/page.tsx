@@ -764,7 +764,7 @@ export default function PlayerPage() {
                 }}
               >
                 {/* Icon above the dot */}
-                <div className="mb-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                <div className="mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                   {MarkerIcon ? (
                     <MarkerIcon className="h-5 w-5" style={{ color: markerColor }} />
                   ) : customIcon ? (
