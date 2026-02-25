@@ -234,68 +234,58 @@ export default function PersonalMetadataPage() {
       </div>
 
       {/* Bookmark Icons */}
-      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
             {t("bookmarkIcons")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("bookmarkIconsDesc")}
+            {t("iconEnabledHint")}
           </p>
         </div>
 
-        {/* Built-in icons (click to toggle) */}
-        <div>
-          <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-            {t("builtinIcons")}
-          </h3>
-          <p className="mb-2 text-xs text-muted-foreground">{t("iconEnabledHint")}</p>
-          <div className="flex flex-wrap gap-2">
-            {BUILTIN_BOOKMARK_ICONS.map((bi) => {
-              const Icon = bi.icon;
-              const isDisabled = disabledIcons.has(bi.id);
-              return (
-                <button
-                  key={bi.id}
-                  type="button"
-                  onClick={() => {
-                    setDisabledIcons((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(bi.id)) next.delete(bi.id);
-                      else next.add(bi.id);
-                      return next;
-                    });
-                  }}
-                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
-                    isDisabled
-                      ? "bg-white/5 opacity-30 line-through text-muted-foreground"
-                      : "bg-white/5 text-muted-foreground hover:bg-white/10"
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 ${isDisabled ? "text-muted-foreground" : bi.color}`} />
-                  {t(`builtinIcon_${bi.id}`)}
-                </button>
-              );
-            })}
-          </div>
+        {/* Built-in icons */}
+        <div className="flex flex-wrap gap-2">
+          {BUILTIN_BOOKMARK_ICONS.map((bi) => {
+            const Icon = bi.icon;
+            const isDisabled = disabledIcons.has(bi.id);
+            return (
+              <button
+                key={bi.id}
+                type="button"
+                onClick={() => {
+                  setDisabledIcons((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(bi.id)) next.delete(bi.id);
+                    else next.add(bi.id);
+                    return next;
+                  });
+                }}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
+                  isDisabled
+                    ? "bg-white/5 opacity-30 line-through text-muted-foreground"
+                    : "bg-white/5 text-muted-foreground hover:bg-white/10"
+                }`}
+              >
+                <Icon className={`h-4 w-4 ${isDisabled ? "text-muted-foreground" : bi.color}`} />
+                {t(`builtinIcon_${bi.id}`)}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Custom icons */}
-        <div>
-          <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-            {t("customIcons")} ({customIcons.length}/20)
-          </h3>
-
-          {/* Custom icons grid */}
-          {customIcons.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+        {/* Custom icons — separated by divider */}
+        {customIcons.length > 0 && (
+          <>
+            <div className="border-t border-white/[0.06]" />
+            <div className="flex flex-wrap gap-2">
               {customIcons.map((ci) => {
                 const isDisabled = disabledIcons.has(ci.id);
                 return (
                   <div
                     key={ci.id}
-                    className={`group/icon relative flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground transition-all ${
-                      isDisabled ? "opacity-30 line-through" : ""
+                    className={`group/icon flex items-center gap-1.5 rounded-md bg-white/5 px-2.5 py-1.5 text-xs text-muted-foreground transition-all ${
+                      isDisabled ? "opacity-30 line-through" : "hover:bg-white/10"
                     }`}
                   >
                     <button
@@ -314,13 +304,13 @@ export default function PersonalMetadataPage() {
                       <img
                         src={resolveImageSrc(ci.imagePath)}
                         alt={ci.label}
-                        className="h-5 w-5 object-contain"
+                        className="h-4 w-4 object-contain"
                       />
                       {ci.label}
                     </button>
                     <button
                       onClick={() => deleteIcon.mutate(ci.id)}
-                      className="ml-1 text-red-400/0 group-hover/icon:text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                      className="text-red-400/0 group-hover/icon:text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                       title="Delete"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -329,62 +319,57 @@ export default function PersonalMetadataPage() {
                 );
               })}
             </div>
-          )}
+          </>
+        )}
 
-          {/* Upload row */}
-          {customIcons.length < 20 && (
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">
-                  {t("iconLabel")}
-                </label>
-                <input
-                  value={iconLabel}
-                  onChange={(e) => setIconLabel(e.target.value)}
-                  placeholder={t("iconLabelPlaceholder")}
-                  maxLength={20}
-                  className="h-9 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="mb-1 block text-xs text-muted-foreground">
-                  {t("iconFormatHint")}
-                </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".png,.webp"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null;
-                    setIconFile(file);
-                    // Auto-fill label from filename if empty
-                    if (file && !iconLabel.trim()) {
-                      const name = file.name.replace(/\.[^.]+$/, "");
-                      setIconLabel(name);
-                    }
-                  }}
-                  className="h-9 w-full text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-white/10 file:px-2.5 file:py-1.5 file:text-xs file:text-foreground file:cursor-pointer"
-                />
-              </div>
-              <button
-                onClick={() => {
-                  if (iconLabel.trim() && iconFile) {
-                    uploadIcon.mutate({ label: iconLabel.trim(), file: iconFile });
+        {/* Upload custom icon */}
+        {customIcons.length < 20 && (
+          <div className="flex items-end gap-3 border-t border-white/[0.06] pt-4">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs text-muted-foreground">
+                {t("iconLabel")}
+              </label>
+              <input
+                value={iconLabel}
+                onChange={(e) => setIconLabel(e.target.value)}
+                placeholder={t("iconLabelPlaceholder")}
+                maxLength={20}
+                className="h-9 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".png,.webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setIconFile(file);
+                  if (file && !iconLabel.trim()) {
+                    const name = file.name.replace(/\.[^.]+$/, "");
+                    setIconLabel(name);
                   }
                 }}
-                disabled={!iconLabel.trim() || !iconFile || uploadIcon.isPending}
-                className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
-              >
-                <Upload className="h-3.5 w-3.5" />
-                {t("uploadIcon")}
-              </button>
+                className="h-9 w-full text-xs text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-white/10 file:px-2.5 file:py-1.5 file:text-xs file:text-foreground file:cursor-pointer"
+              />
             </div>
-          )}
-
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t("maxCustomIcons", { max: 20 })}
-          </p>
-        </div>
+            <button
+              onClick={() => {
+                if (iconLabel.trim() && iconFile) {
+                  uploadIcon.mutate({ label: iconLabel.trim(), file: iconFile });
+                }
+              }}
+              disabled={!iconLabel.trim() || !iconFile || uploadIcon.isPending}
+              className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {t("uploadIcon")}
+            </button>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {t("iconFormatHint")} · {t("maxCustomIcons", { max: 20 })}
+        </p>
       </div>
 
       {/* Save button */}

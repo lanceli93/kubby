@@ -371,8 +371,6 @@
     "overall": "Overall",
     "bookmarkIcons": "Bookmark Icons",
     "bookmarkIconsDesc": "Manage icons used for bookmarks",
-    "builtinIcons": "Built-in Icons",
-    "customIcons": "Custom Icons",
     "uploadIcon": "Upload Icon",
     "iconLabel": "Icon Name",
     "iconLabelPlaceholder": "e.g. Fight Scene",
@@ -389,7 +387,7 @@
     "builtinIcon_heart": "Emotion",
     "builtinIcon_eye": "Visual",
     "builtinIcon_swords": "Suspense",
-    "iconEnabledHint": "Click to enable/disable icons"
+    "iconEnabledHint": "Click icons to enable or disable them for bookmark selectors"
   },
   "mediaInfoDialog": {
     "title": "Media Info",

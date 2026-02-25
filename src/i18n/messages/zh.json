@@ -371,8 +371,6 @@
     "overall": "综合",
     "bookmarkIcons": "书签图标",
     "bookmarkIconsDesc": "管理书签使用的图标",
-    "builtinIcons": "内置图标",
-    "customIcons": "自定义图标",
     "uploadIcon": "上传图标",
     "iconLabel": "图标名称",
     "iconLabelPlaceholder": "例如：打斗",
@@ -389,7 +387,7 @@
     "builtinIcon_heart": "情感",
     "builtinIcon_eye": "视觉",
     "builtinIcon_swords": "悬疑",
-    "iconEnabledHint": "点击启用/禁用图标"
+    "iconEnabledHint": "点击图标可在书签选择器中启用或禁用"
   },
   "mediaInfoDialog": {
     "title": "媒体信息",
