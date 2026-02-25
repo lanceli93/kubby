@@ -2,6 +2,7 @@ import path from "path";
 import {
   searchMovie,
   getMovieDetails,
+  fetchPersonDetails,
   downloadTmdbImage,
   getPersonPhotoPath,
   sanitizePersonName,
@@ -18,10 +19,21 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export interface ScrapedActorBio {
+  name: string;
+  tmdbId: number;
+  birthday?: string;
+  deathday?: string;
+  biography?: string;
+  placeOfBirth?: string;
+  imdbId?: string;
+}
+
 export interface ScrapeResult {
   success: boolean;
   title?: string;
   error?: string;
+  actorBios?: ScrapedActorBio[];
 }
 
 /**
@@ -83,8 +95,10 @@ export async function scrapeMovie(
       }
     }
 
-    // 5. Download actor photos
+    // 5. Download actor photos and fetch person details
     const topCast = (details.credits?.cast ?? []).slice(0, 20);
+    const actorPersonDetails: Map<number, { birthday: string | null; deathday: string | null; biography: string; placeOfBirth: string | null; imdbId: string | null }> = new Map();
+
     for (const actor of topCast) {
       if (actor.profile_path) {
         try {
@@ -94,17 +108,40 @@ export async function scrapeMovie(
           // non-critical, skip
         }
       }
+      // Fetch person biography details
+      try {
+        const personDetails = await fetchPersonDetails(actor.id, apiKey, language);
+        actorPersonDetails.set(actor.id, {
+          birthday: personDetails.birthday,
+          deathday: personDetails.deathday,
+          biography: personDetails.biography,
+          placeOfBirth: personDetails.place_of_birth,
+          imdbId: personDetails.imdb_id,
+        });
+        await delay(RATE_LIMIT_MS);
+      } catch {
+        // non-critical, skip person details
+      }
     }
 
-    // 6. Build actors list for NFO (with local thumb paths)
-    const actors = topCast.map((actor) => ({
-      name: actor.name,
-      role: actor.character,
-      thumb: actor.profile_path
-        ? getPersonPhotoPath(metadataDir, actor.name)
-        : undefined,
-      order: actor.order,
-    }));
+    // 6. Build actors list for NFO (with local thumb paths and bio data)
+    const actors = topCast.map((actor) => {
+      const bio = actorPersonDetails.get(actor.id);
+      return {
+        name: actor.name,
+        role: actor.character,
+        thumb: actor.profile_path
+          ? getPersonPhotoPath(metadataDir, actor.name)
+          : undefined,
+        order: actor.order,
+        tmdbId: actor.id,
+        birthday: bio?.birthday ?? undefined,
+        deathday: bio?.deathday ?? undefined,
+        biography: bio?.biography ?? undefined,
+        placeOfBirth: bio?.placeOfBirth ?? undefined,
+        imdbId: bio?.imdbId ?? undefined,
+      };
+    });
 
     // 7. Extract directors
     const directors = (details.credits?.crew ?? [])
@@ -134,7 +171,23 @@ export async function scrapeMovie(
       directors,
     });
 
-    return { success: true, title: details.title };
+    // Collect actor bios for the scanner to store in DB
+    const actorBios: ScrapedActorBio[] = topCast
+      .filter((actor) => actorPersonDetails.has(actor.id))
+      .map((actor) => {
+        const bio = actorPersonDetails.get(actor.id)!;
+        return {
+          name: actor.name,
+          tmdbId: actor.id,
+          birthday: bio.birthday ?? undefined,
+          deathday: bio.deathday ?? undefined,
+          biography: bio.biography ?? undefined,
+          placeOfBirth: bio.placeOfBirth ?? undefined,
+          imdbId: bio.imdbId ?? undefined,
+        };
+      });
+
+    return { success: true, title: details.title, actorBios };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return { success: false, error: `Scrape failed for "${title}": ${msg}` };

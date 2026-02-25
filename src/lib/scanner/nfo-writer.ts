@@ -6,6 +6,7 @@ export interface NfoActorEntry {
   role: string;
   thumb?: string;
   order: number;
+  tmdbId?: number;
 }
 
 export interface NfoStreamDetail {
@@ -83,6 +84,7 @@ export function writeFullNfo(nfoPath: string, data: NfoMovieData): void {
     xml += `    <role>${escapeXml(actor.role)}</role>\n`;
     if (actor.thumb) xml += `    <thumb>${escapeXml(actor.thumb)}</thumb>\n`;
     xml += `    <order>${actor.order}</order>\n`;
+    if (actor.tmdbId != null) xml += `    <tmdbid>${actor.tmdbId}</tmdbid>\n`;
     xml += `  </actor>\n`;
   }
   for (const director of data.directors ?? []) {
@@ -190,6 +192,7 @@ export function writeActorsToNfo(
         xml += `    <thumb>${escapeXml(actor.thumb)}</thumb>\n`;
       }
       xml += `    <order>${actor.order}</order>\n`;
+      if (actor.tmdbId != null) xml += `    <tmdbid>${actor.tmdbId}</tmdbid>\n`;
       xml += `  </actor>\n`;
       return xml;
     })

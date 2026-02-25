@@ -63,6 +63,33 @@ export function getImageUrl(profilePath: string, size: string = TMDB_PROFILE_SIZ
   return `${TMDB_IMAGE_BASE}/${size}${profilePath}`;
 }
 
+// ─── Person Details ──────────────────────────────────────────
+
+export interface TmdbPersonDetails {
+  id: number;
+  name: string;
+  birthday: string | null;
+  deathday: string | null;
+  biography: string;
+  place_of_birth: string | null;
+  imdb_id: string | null;
+  profile_path: string | null;
+}
+
+export async function fetchPersonDetails(
+  tmdbPersonId: number,
+  apiKey: string,
+  language?: string
+): Promise<TmdbPersonDetails> {
+  let url = `${TMDB_BASE_URL}/person/${tmdbPersonId}?api_key=${apiKey}`;
+  if (language) url += `&language=${encodeURIComponent(language)}`;
+  const res = await fetchWithRetry(url);
+  if (!res.ok) {
+    throw new Error(`TMDb person API error: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 // ─── Search & Details ──────────────────────────────────────────
 
 export interface TmdbSearchResult {

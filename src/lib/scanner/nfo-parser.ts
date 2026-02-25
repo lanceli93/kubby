@@ -14,7 +14,7 @@ export interface NfoData {
   genres: string[];
   studios: string[];
   country?: string;
-  actors: { name: string; role?: string; thumb?: string; order?: number }[];
+  actors: { name: string; role?: string; thumb?: string; order?: number; tmdbId?: number }[];
   directors: string[];
   tmdbId?: string;
   imdbId?: string;
@@ -48,6 +48,7 @@ export function parseNfo(xml: string): NfoData {
     role: a.role ? String(a.role) : undefined,
     thumb: a.thumb ? String(a.thumb) : undefined,
     order: a.order !== undefined ? Number(a.order) : undefined,
+    tmdbId: a.tmdbid !== undefined ? Number(a.tmdbid) : undefined,
   }));
 
   // Extract unique IDs: support both <uniqueid type="tmdb"> and <tmdbid> formats

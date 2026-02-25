@@ -6,9 +6,9 @@ import { movies, people, moviePeople, mediaLibraries, settings, mediaStreams, mo
 import { eq, and } from "drizzle-orm";
 import { parseNfo } from "./nfo-parser";
 import { probeVideo } from "./probe";
-import { scrapeMovie } from "@/lib/scraper";
+import { scrapeMovie, type ScrapedActorBio } from "@/lib/scraper";
 import { writeActorsToNfo } from "./nfo-writer";
-import { fetchMovieCredits, downloadTmdbImage, getPersonPhotoPath, TMDB_PROFILE_SIZE } from "@/lib/tmdb";
+import { fetchMovieCredits, fetchPersonDetails, downloadTmdbImage, getPersonPhotoPath, TMDB_PROFILE_SIZE } from "@/lib/tmdb";
 import { parseFolderPaths } from "@/lib/folder-paths";
 import { generateBlurDataURL, getFileMtime } from "@/lib/blur-utils";
 import { getPeopleMetadataDir } from "@/lib/paths";
@@ -96,12 +96,22 @@ function findDiscPoster(movieDir: string, discInfo: DiscInfo): string | null {
   return null;
 }
 
+interface PersonBioData {
+  tmdbId?: number;
+  overview?: string;
+  birthDate?: string;
+  placeOfBirth?: string;
+  deathDate?: string;
+  imdbId?: string;
+}
+
 function getOrCreatePerson(
   name: string,
   type: "actor" | "director" | "writer" | "producer",
   photoPath?: string,
   photoMtime?: number | null,
   photoBlur?: string | null,
+  bio?: PersonBioData,
 ): string {
   // Case-insensitive lookup
   const existing = db
@@ -116,10 +126,27 @@ function getOrCreatePerson(
     .get();
 
   if (existing) {
+    const updates: Record<string, unknown> = {};
     // Update photoPath if we now have one and the existing record doesn't
     if (photoPath && !existing.photoPath) {
+      updates.photoPath = photoPath;
+      updates.photoMtime = photoMtime ?? null;
+      updates.photoBlur = photoBlur ?? null;
+    }
+    // Fill in biography fields if the existing record lacks them
+    if (bio?.tmdbId && !existing.tmdbId) updates.tmdbId = String(bio.tmdbId);
+    if (bio?.overview && !existing.overview) updates.overview = bio.overview;
+    if (bio?.birthDate && !existing.birthDate) {
+      updates.birthDate = bio.birthDate;
+      updates.birthYear = parseInt(bio.birthDate.split("-")[0], 10) || null;
+    }
+    if (bio?.placeOfBirth && !existing.placeOfBirth) updates.placeOfBirth = bio.placeOfBirth;
+    if (bio?.deathDate && !existing.deathDate) updates.deathDate = bio.deathDate;
+    if (bio?.imdbId && !existing.imdbId) updates.imdbId = bio.imdbId;
+
+    if (Object.keys(updates).length > 0) {
       db.update(people)
-        .set({ photoPath, photoMtime: photoMtime ?? null, photoBlur: photoBlur ?? null })
+        .set(updates)
         .where(eq(people.id, existing.id))
         .run();
     }
@@ -127,8 +154,23 @@ function getOrCreatePerson(
   }
 
   const id = uuidv4();
+  const birthYear = bio?.birthDate ? (parseInt(bio.birthDate.split("-")[0], 10) || null) : null;
   db.insert(people)
-    .values({ id, name, type, photoPath: photoPath || null, photoMtime: photoMtime ?? null, photoBlur: photoBlur ?? null })
+    .values({
+      id,
+      name,
+      type,
+      photoPath: photoPath || null,
+      photoMtime: photoMtime ?? null,
+      photoBlur: photoBlur ?? null,
+      tmdbId: bio?.tmdbId ? String(bio.tmdbId) : null,
+      overview: bio?.overview || null,
+      birthDate: bio?.birthDate || null,
+      birthYear,
+      placeOfBirth: bio?.placeOfBirth || null,
+      deathDate: bio?.deathDate || null,
+      imdbId: bio?.imdbId || null,
+    })
     .run();
   return id;
 }
@@ -225,11 +267,13 @@ export async function scanLibrary(
 
     // If no NFO and scraper is enabled, try to scrape from TMDB
     // Skip scraper NFO creation in Jellyfin compat mode (would write NFO files)
+    let scrapedActorBios: ScrapedActorBio[] | undefined;
     if (!fs.existsSync(nfoPath) && library.scraperEnabled && apiKey && !library.jellyfinCompat) {
       try {
         const result = await scrapeMovie(movieDir, apiKey, metadataDir, metadataLanguage);
         if (result.success) {
           console.log(`Scraped metadata for: ${result.title}`);
+          scrapedActorBios = result.actorBios;
         } else {
           console.warn(`Scraper skipped ${entry.name}: ${result.error}`);
         }
@@ -262,6 +306,7 @@ export async function scanLibrary(
       try {
         const credits = await fetchMovieCredits(nfoData.tmdbId, apiKey, metadataLanguage);
         const topCast = (credits.cast ?? []).slice(0, 20);
+        const supplementBios: ScrapedActorBio[] = [];
 
         for (const actor of topCast) {
           if (actor.profile_path) {
@@ -272,6 +317,21 @@ export async function scanLibrary(
               // non-critical
             }
           }
+          // Fetch person biography details
+          try {
+            const personDetails = await fetchPersonDetails(actor.id, apiKey, metadataLanguage);
+            supplementBios.push({
+              name: actor.name,
+              tmdbId: actor.id,
+              birthday: personDetails.birthday ?? undefined,
+              deathday: personDetails.deathday ?? undefined,
+              biography: personDetails.biography ?? undefined,
+              placeOfBirth: personDetails.place_of_birth ?? undefined,
+              imdbId: personDetails.imdb_id ?? undefined,
+            });
+          } catch {
+            // non-critical, skip person details
+          }
         }
 
         const actorEntries = topCast.map((actor) => ({
@@ -281,6 +341,7 @@ export async function scanLibrary(
             ? getPersonPhotoPath(metadataDir, actor.name)
             : undefined,
           order: actor.order,
+          tmdbId: actor.id,
         }));
 
         // Skip NFO write in Jellyfin compat mode
@@ -293,8 +354,10 @@ export async function scanLibrary(
           role: a.role,
           thumb: a.thumb,
           order: a.order,
+          tmdbId: a.tmdbId,
         }));
 
+        scrapedActorBios = supplementBios;
         console.log(`Supplemented ${topCast.length} actors for: ${nfoData.title}`);
       } catch (e) {
         console.warn(`Failed to supplement actors for ${entry.name}:`, e);
@@ -501,6 +564,14 @@ export async function scanLibrary(
     // Clear existing people associations for this movie
     db.delete(moviePeople).where(eq(moviePeople.movieId, movieId)).run();
 
+    // Build a lookup map for actor bio data (from scraper or supplement)
+    const actorBioMap = new Map<string, ScrapedActorBio>();
+    if (scrapedActorBios) {
+      for (const bio of scrapedActorBios) {
+        actorBioMap.set(bio.name, bio);
+      }
+    }
+
     // Add actors
     for (const actor of nfoData.actors) {
       if (!actor.name) continue;
@@ -523,9 +594,24 @@ export async function scanLibrary(
         }
       }
 
+      // Build bio data from scraped bios or NFO tmdbId
+      const scrapedBio = actorBioMap.get(actor.name);
+      const bioData: PersonBioData | undefined = scrapedBio
+        ? {
+            tmdbId: scrapedBio.tmdbId,
+            overview: scrapedBio.biography,
+            birthDate: scrapedBio.birthday,
+            placeOfBirth: scrapedBio.placeOfBirth,
+            deathDate: scrapedBio.deathday,
+            imdbId: scrapedBio.imdbId,
+          }
+        : actor.tmdbId
+          ? { tmdbId: actor.tmdbId }
+          : undefined;
+
       const actorMtime = actor.thumb ? getFileMtime(actor.thumb) : null;
       const actorBlur = actor.thumb ? await generateBlurDataURL(actor.thumb) : null;
-      const personId = getOrCreatePerson(actor.name, "actor", actor.thumb, actorMtime, actorBlur);
+      const personId = getOrCreatePerson(actor.name, "actor", actor.thumb, actorMtime, actorBlur, bioData);
       db.insert(moviePeople)
         .values({
           id: uuidv4(),
