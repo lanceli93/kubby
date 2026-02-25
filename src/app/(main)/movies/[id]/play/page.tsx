@@ -475,7 +475,7 @@ export default function PlayerPage() {
               if (videoRef.current) saveProgress.mutate({ seconds: videoRef.current.currentTime, disc: currentDisc });
               router.back();
             }}
-            className="text-white/80 hover:text-white"
+            className="text-white/80 hover:text-white cursor-pointer"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
