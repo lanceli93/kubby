@@ -237,12 +237,14 @@ export function BookmarkCard({
   );
 
   const wrappedCard = externalEnabled && onExternalLaunch ? (
-    <button
+    <div
       onClick={() => onExternalLaunch(bookmark.discNumber, bookmark.timestampSeconds)}
       className="text-left cursor-pointer"
+      role="button"
+      tabIndex={0}
     >
       {card}
-    </button>
+    </div>
   ) : (
     <Link href={href}>
       {card}
