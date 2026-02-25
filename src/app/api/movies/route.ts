@@ -279,6 +279,12 @@ export async function GET(request: NextRequest) {
       case "runtime":
         orderClause = orderFn(movies.runtimeMinutes);
         break;
+      case "ageAtRelease":
+        // Only meaningful when personId is set (joins moviePeople)
+        rawOrderClause = sortOrder === "asc"
+          ? sql`COALESCE(${moviePeople.ageAtRelease}, 999) ASC`
+          : sql`COALESCE(${moviePeople.ageAtRelease}, -1) DESC`;
+        break;
       case "dateAdded":
       default:
         orderClause = orderFn(movies.dateAdded);
@@ -351,6 +357,16 @@ export async function GET(request: NextRequest) {
 
     const results = orderedQuery.limit(pageLimit).offset(offset ?? 0).all();
 
+    // When viewing a specific person's filmography, look up ageAtRelease
+    let ageMap: Map<string, number | null> | null = null;
+    if (personId) {
+      const ageRows = db.select({ movieId: moviePeople.movieId, ageAtRelease: moviePeople.ageAtRelease })
+        .from(moviePeople)
+        .where(eq(moviePeople.personId, personId))
+        .all();
+      ageMap = new Map(ageRows.map((r) => [r.movieId, r.ageAtRelease]));
+    }
+
     // Resolve relative paths to absolute
     const movieResults = results.map((r) => ({
       ...r,
@@ -361,6 +377,7 @@ export async function GET(request: NextRequest) {
       ...(includeGenres && r.tags ? { tags: JSON.parse(r.tags) } : {}),
       isFavorite: r.isFavorite ?? false,
       isWatched: r.isWatched ?? false,
+      ...(ageMap ? { ageAtRelease: ageMap.get(r.id) ?? null } : {}),
     }));
 
     // If includepeople=true and there's a search query, also search people

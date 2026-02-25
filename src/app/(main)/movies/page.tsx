@@ -42,6 +42,7 @@ interface Movie {
   isWatched?: boolean;
   genres?: string[];
   tags?: string[];
+  ageAtRelease?: number | null;
 }
 
 interface PaginatedResponse<T> {
@@ -895,7 +896,6 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
     { value: "personalRating", label: t("personalRating"), icon: Star },
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "movieCount", label: t("movieCount"), icon: Hash },
-    { value: "ageAtRelease", label: t("ageAtRelease"), icon: Cake },
   ];
 
   useEffect(() => {
@@ -1366,6 +1366,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
 
 function PersonMoviesContent({ personId }: { personId: string }) {
   const t = useTranslations("movies");
+  const tPerson = useTranslations("person");
   const [sort, setSort] = useState("releaseDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [sortDimension, setSortDimension] = useState<string | null>(null);
@@ -1392,6 +1393,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
     { value: "runtime", label: t("runtime"), icon: Timer },
+    { value: "ageAtRelease", label: t("ageAtRelease"), icon: Cake },
   ];
 
   useEffect(() => {
@@ -1752,27 +1754,33 @@ function PersonMoviesContent({ personId }: { personId: string }) {
 
       {/* Movie Cards — direct grid children */}
       {movies.map((movie) => (
-        <MovieCard
-          key={movie.id}
-          id={movie.id}
-          title={movie.title}
-          year={movie.year}
-          posterPath={movie.posterPath}
-          posterBlur={movie.posterBlur}
-          rating={movie.communityRating}
-          personalRating={movie.personalRating}
-          videoWidth={movie.videoWidth}
-          videoHeight={movie.videoHeight}
-          isFavorite={movie.isFavorite}
-          isWatched={movie.isWatched}
-          onToggleFavorite={() =>
-            handleToggleFavorite(movie.id, !!movie.isFavorite)
-          }
-          onToggleWatched={() =>
-            handleToggleWatched(movie.id, !!movie.isWatched)
-          }
-          onDelete={() => handleDeleteMovie(movie.id)}
-        />
+        <div key={movie.id}>
+          <MovieCard
+            id={movie.id}
+            title={movie.title}
+            year={movie.year}
+            posterPath={movie.posterPath}
+            posterBlur={movie.posterBlur}
+            rating={movie.communityRating}
+            personalRating={movie.personalRating}
+            videoWidth={movie.videoWidth}
+            videoHeight={movie.videoHeight}
+            isFavorite={movie.isFavorite}
+            isWatched={movie.isWatched}
+            onToggleFavorite={() =>
+              handleToggleFavorite(movie.id, !!movie.isFavorite)
+            }
+            onToggleWatched={() =>
+              handleToggleWatched(movie.id, !!movie.isWatched)
+            }
+            onDelete={() => handleDeleteMovie(movie.id)}
+          />
+          {movie.ageAtRelease != null && (
+            <p className="mt-1 truncate text-xs text-muted-foreground/70 text-center">
+              {tPerson("filmedAtAge", { age: movie.ageAtRelease })}
+            </p>
+          )}
+        </div>
       ))}
 
       {movies.length === 0 && (

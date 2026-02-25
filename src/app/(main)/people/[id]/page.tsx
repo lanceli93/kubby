@@ -443,7 +443,7 @@ export default function PersonDetailPage() {
               />
               {movie.ageAtRelease != null && (
                 <p className="mt-1 truncate text-xs text-muted-foreground/70 text-center">
-                  {t("filmedAtAge", { age: movie.ageAtRelease })}
+                  {tPerson("filmedAtAge", { age: movie.ageAtRelease })}
                 </p>
               )}
             </div>

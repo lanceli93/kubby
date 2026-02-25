@@ -116,11 +116,6 @@ export async function GET(request: NextRequest) {
           ? sql`ORDER BY movie_count ASC`
           : sql`ORDER BY movie_count DESC`;
         break;
-      case "ageAtRelease":
-        orderClause = sortOrder === "asc"
-          ? sql`ORDER BY COALESCE(AVG(mp.age_at_release), 999) ASC`
-          : sql`ORDER BY COALESCE(AVG(mp.age_at_release), -1) DESC`;
-        break;
       case "name":
       default:
         orderClause = sortOrder === "asc"
