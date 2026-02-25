@@ -260,6 +260,8 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `quick_bookmark_template` text",
   // 0019: subtle bookmark markers preference
   "ALTER TABLE `user_preferences` ADD `subtle_bookmark_markers` integer NOT NULL DEFAULT 0",
+  // 0020: dot color for custom bookmark icons
+  "ALTER TABLE `bookmark_icons` ADD `dot_color` text DEFAULT '#ffffff'",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

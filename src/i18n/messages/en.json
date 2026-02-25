@@ -390,6 +390,7 @@
     "builtinIcon_eye": "Visual",
     "builtinIcon_swords": "Suspense",
     "iconEnabledHint": "Click icons to enable or disable them for bookmark selectors",
+    "dotColor": "Dot color",
     "subtleMarkers": "Subtle Seek Bar Markers",
     "subtleMarkersDesc": "Show bookmark markers as translucent white to reduce visual interference",
     "subtleMarkersOff": "Normal",

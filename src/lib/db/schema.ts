@@ -150,6 +150,7 @@ export const bookmarkIcons = sqliteTable("bookmark_icons", {
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   label: text("label").notNull(),
   imagePath: text("image_path").notNull(),
+  dotColor: text("dot_color").default("#ffffff"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 }, (table) => [
   index("idx_bi_user").on(table.userId),

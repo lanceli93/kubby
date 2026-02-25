@@ -38,6 +38,7 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const label = formData.get("label") as string | null;
     const file = formData.get("file") as File | null;
+    const dotColor = (formData.get("dotColor") as string | null) || "#ffffff";
 
     if (!label || !label.trim()) {
       return NextResponse.json({ error: "Label is required" }, { status: 400 });
@@ -98,6 +99,7 @@ export async function POST(req: Request) {
         userId: session.user.id,
         label: label.trim(),
         imagePath: filePath,
+        dotColor,
       })
       .run();
 
@@ -106,6 +108,7 @@ export async function POST(req: Request) {
       userId: session.user.id,
       label: label.trim(),
       imagePath: filePath,
+      dotColor,
     });
   } catch (err) {
     console.error("POST /api/settings/bookmark-icons error:", err);

@@ -97,7 +97,7 @@ export default function PlayerPage() {
     queryFn: () => fetch(`/api/movies/${movieId}/bookmarks`).then((r) => r.json()),
   });
 
-  const { data: customIcons = [] } = useQuery<{ id: string; label: string; imagePath: string }[]>({
+  const { data: customIcons = [] } = useQuery<{ id: string; label: string; imagePath: string; dotColor?: string }[]>({
     queryKey: ["bookmark-icons"],
     queryFn: () => fetch("/api/settings/bookmark-icons").then((r) => r.json()),
   });
@@ -745,8 +745,9 @@ export default function PlayerPage() {
           {/* Bookmark markers */}
           {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => {
             const builtin = getBuiltinIcon(bm.iconType || "bookmark");
-            const markerColor = subtleMarkers ? "#ffffff" : (builtin?.hexColor ?? "#ffffff");
             const customIcon = !builtin ? customIcons.find((c) => c.id === bm.iconType) : undefined;
+            const naturalColor = builtin?.hexColor ?? customIcon?.dotColor ?? "#ffffff";
+            const markerColor = subtleMarkers ? "#ffffff" : naturalColor;
             const MarkerIcon = builtin?.icon;
             return (
               <div

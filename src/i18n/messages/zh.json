@@ -390,6 +390,7 @@
     "builtinIcon_eye": "视觉",
     "builtinIcon_swords": "悬疑",
     "iconEnabledHint": "点击图标可在书签选择器中启用或禁用",
+    "dotColor": "圆点颜色",
     "subtleMarkers": "低调进度条标记",
     "subtleMarkersDesc": "书签标记显示为半透明白色，减少对画面的干扰",
     "subtleMarkersOff": "正常",

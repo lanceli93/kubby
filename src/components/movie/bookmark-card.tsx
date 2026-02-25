@@ -28,6 +28,7 @@ export interface CustomIconData {
   id: string;
   label: string;
   imagePath: string;
+  dotColor?: string;
 }
 
 interface BookmarkCardProps {

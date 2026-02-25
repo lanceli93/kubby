@@ -12,7 +12,19 @@ interface CustomIcon {
   id: string;
   label: string;
   imagePath: string;
+  dotColor?: string;
 }
+
+const DOT_COLOR_OPTIONS = [
+  { value: "#ffffff", label: "White" },
+  { value: "#60a5fa", label: "Blue" },
+  { value: "#facc15", label: "Yellow" },
+  { value: "#f97316", label: "Orange" },
+  { value: "#f87171", label: "Red" },
+  { value: "#34d399", label: "Green" },
+  { value: "#a78bfa", label: "Violet" },
+  { value: "#c084fc", label: "Purple" },
+];
 
 export default function PersonalMetadataPage() {
   const t = useTranslations("personalMetadata");
@@ -47,6 +59,7 @@ export default function PersonalMetadataPage() {
   // Custom icon upload state
   const [iconLabel, setIconLabel] = useState("");
   const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconDotColor, setIconDotColor] = useState("#ffffff");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (text: string, success: boolean) => {
@@ -124,10 +137,11 @@ export default function PersonalMetadataPage() {
   };
 
   const uploadIcon = useMutation({
-    mutationFn: async ({ label, file }: { label: string; file: File }) => {
+    mutationFn: async ({ label, file, dotColor }: { label: string; file: File; dotColor: string }) => {
       const formData = new FormData();
       formData.append("label", label);
       formData.append("file", file);
+      formData.append("dotColor", dotColor);
       const res = await fetch("/api/settings/bookmark-icons", {
         method: "POST",
         body: formData,
@@ -142,11 +156,27 @@ export default function PersonalMetadataPage() {
       queryClient.invalidateQueries({ queryKey: ["bookmark-icons"] });
       setIconLabel("");
       setIconFile(null);
+      setIconDotColor("#ffffff");
       if (fileInputRef.current) fileInputRef.current.value = "";
       showToast(t("iconUploaded"), true);
     },
     onError: (err: Error) => {
       showToast(err.message, false);
+    },
+  });
+
+  const updateIconColor = useMutation({
+    mutationFn: async ({ iconId, dotColor }: { iconId: string; dotColor: string }) => {
+      const icon = customIcons.find((c) => c.id === iconId);
+      const res = await fetch(`/api/settings/bookmark-icons/${iconId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: icon?.label || "", dotColor }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookmark-icons"] });
     },
   });
 
@@ -331,6 +361,18 @@ export default function PersonalMetadataPage() {
                       />
                       {ci.label}
                     </button>
+                    {/* Dot color cycler */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const idx = DOT_COLOR_OPTIONS.findIndex((o) => o.value === (ci.dotColor || "#ffffff"));
+                        const next = DOT_COLOR_OPTIONS[(idx + 1) % DOT_COLOR_OPTIONS.length];
+                        updateIconColor.mutate({ iconId: ci.id, dotColor: next.value });
+                      }}
+                      className="h-3 w-3 rounded-full cursor-pointer ring-1 ring-white/20 hover:ring-white/50 transition-all"
+                      style={{ backgroundColor: ci.dotColor || "#ffffff" }}
+                      title={t("dotColor")}
+                    />
                     <button
                       onClick={() => deleteIcon.mutate(ci.id)}
                       className="text-red-400/0 group-hover/icon:text-red-400 hover:text-red-300 transition-colors cursor-pointer"
@@ -347,47 +389,65 @@ export default function PersonalMetadataPage() {
 
         {/* Upload custom icon */}
         {customIcons.length < 20 && (
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <label className="mb-1 block text-xs text-muted-foreground">
-                {t("iconLabel")}
-              </label>
-              <input
-                value={iconLabel}
-                onChange={(e) => setIconLabel(e.target.value)}
-                placeholder={t("iconLabelPlaceholder")}
-                maxLength={20}
-                className="h-9 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-              />
-            </div>
-            <div className="flex h-9 flex-1 items-center">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".png,.webp"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  setIconFile(file);
-                  if (file && !iconLabel.trim()) {
-                    const name = file.name.replace(/\.[^.]+$/, "");
-                    setIconLabel(name);
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  {t("iconLabel")}
+                </label>
+                <input
+                  value={iconLabel}
+                  onChange={(e) => setIconLabel(e.target.value)}
+                  placeholder={t("iconLabelPlaceholder")}
+                  maxLength={20}
+                  className="h-9 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div className="flex h-9 flex-1 items-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setIconFile(file);
+                    if (file && !iconLabel.trim()) {
+                      const name = file.name.replace(/\.[^.]+$/, "");
+                      setIconLabel(name);
+                    }
+                  }}
+                  className="w-full text-xs text-muted-foreground file:mr-2 file:h-9 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:text-xs file:text-foreground file:cursor-pointer"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (iconLabel.trim() && iconFile) {
+                    uploadIcon.mutate({ label: iconLabel.trim(), file: iconFile, dotColor: iconDotColor });
                   }
                 }}
-                className="w-full text-xs text-muted-foreground file:mr-2 file:h-9 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:text-xs file:text-foreground file:cursor-pointer"
-              />
+                disabled={!iconLabel.trim() || !iconFile || uploadIcon.isPending}
+                className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {t("uploadIcon")}
+              </button>
             </div>
-            <button
-              onClick={() => {
-                if (iconLabel.trim() && iconFile) {
-                  uploadIcon.mutate({ label: iconLabel.trim(), file: iconFile });
-                }
-              }}
-              disabled={!iconLabel.trim() || !iconFile || uploadIcon.isPending}
-              className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {t("uploadIcon")}
-            </button>
+            {/* Dot color picker */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{t("dotColor")}</span>
+              {DOT_COLOR_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setIconDotColor(opt.value)}
+                  className={`h-5 w-5 rounded-full cursor-pointer transition-all ${
+                    iconDotColor === opt.value ? "ring-2 ring-white/70 ring-offset-1 ring-offset-black" : "hover:ring-1 hover:ring-white/30"
+                  }`}
+                  style={{ backgroundColor: opt.value }}
+                  title={opt.label}
+                />
+              ))}
+            </div>
           </div>
         )}
         <p className="text-xs text-muted-foreground">

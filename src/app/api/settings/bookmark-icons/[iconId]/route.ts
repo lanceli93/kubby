@@ -17,7 +17,7 @@ export async function PUT(
 
     const { iconId } = await params;
     const body = await req.json();
-    const { label } = body;
+    const { label, dotColor } = body;
 
     if (!label || !label.trim()) {
       return NextResponse.json({ error: "Label is required" }, { status: 400 });
@@ -34,8 +34,10 @@ export async function PUT(
       return NextResponse.json({ error: "Icon not found" }, { status: 404 });
     }
 
+    const updateData: { label: string; dotColor?: string } = { label: label.trim() };
+    if (dotColor) updateData.dotColor = dotColor;
     db.update(bookmarkIcons)
-      .set({ label: label.trim() })
+      .set(updateData)
       .where(eq(bookmarkIcons.id, iconId))
       .run();
 
