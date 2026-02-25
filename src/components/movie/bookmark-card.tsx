@@ -50,7 +50,7 @@ export function BookmarkCard({
         {bookmark.thumbnailPath ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
-            src={resolveImageSrc(bookmark.thumbnailPath)}
+            src={resolveImageSrc(bookmark.thumbnailPath, 640)}
             alt={`Bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`}
             className="block w-full h-auto"
             draggable={false}
