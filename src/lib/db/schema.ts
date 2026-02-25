@@ -181,6 +181,7 @@ export const userPreferences = sqliteTable("user_preferences", {
   externalPlayerPath: text("external_player_path"),
   externalPlayerMode: text("external_player_mode").default("local"), // "local" | "stream"
   disabledBookmarkIcons: text("disabled_bookmark_icons"), // JSON array of disabled icon IDs
+  quickBookmarkTemplate: text("quick_bookmark_template"), // JSON: { iconType?, tags?, note? }
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────

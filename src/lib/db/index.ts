@@ -256,6 +256,8 @@ const pending = [
   "CREATE INDEX IF NOT EXISTS `idx_bi_user` ON `bookmark_icons` (`user_id`)",
   // 0017: disabled bookmark icons preference
   "ALTER TABLE `user_preferences` ADD `disabled_bookmark_icons` text",
+  // 0018: quick bookmark template
+  "ALTER TABLE `user_preferences` ADD `quick_bookmark_template` text",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

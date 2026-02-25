@@ -33,6 +33,10 @@ export default function PersonalMetadataPage() {
   const [movieDims, setMovieDims] = useState<string[]>([]);
   const [personDims, setPersonDims] = useState<string[]>([]);
   const [disabledIcons, setDisabledIcons] = useState<Set<string>>(new Set());
+  const [qbIconType, setQbIconType] = useState("bookmark");
+  const [qbTags, setQbTags] = useState<string[]>([]);
+  const [qbNote, setQbNote] = useState("");
+  const [qbTagInput, setQbTagInput] = useState("");
   const [movieInput, setMovieInput] = useState("");
   const [personInput, setPersonInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -55,6 +59,10 @@ export default function PersonalMetadataPage() {
       setMovieDims(prefs.movieRatingDimensions || []);
       setPersonDims(prefs.personRatingDimensions || []);
       setDisabledIcons(new Set(prefs.disabledBookmarkIcons || []));
+      const tpl = prefs.quickBookmarkTemplate;
+      setQbIconType(tpl?.iconType || "bookmark");
+      setQbTags(tpl?.tags || []);
+      setQbNote(tpl?.note || "");
     }
   }, [prefs]);
 
@@ -94,6 +102,9 @@ export default function PersonalMetadataPage() {
           movieRatingDimensions: movieDims,
           personRatingDimensions: personDims,
           disabledBookmarkIcons: Array.from(disabledIcons),
+          quickBookmarkTemplate: (qbIconType !== "bookmark" || qbTags.length > 0 || qbNote)
+            ? { iconType: qbIconType, tags: qbTags, note: qbNote || undefined }
+            : null,
         }),
       });
       if (res.ok) {
@@ -379,6 +390,109 @@ export default function PersonalMetadataPage() {
         <p className="text-xs text-muted-foreground">
           {t("iconFormatHint")} · {t("maxCustomIcons", { max: 20 })}
         </p>
+      </div>
+
+      {/* Quick Bookmark Template */}
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">
+            {t("quickBookmarkTemplate")}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("quickBookmarkTemplateDesc")}
+          </p>
+        </div>
+
+        {/* Icon type */}
+        <div>
+          <label className="mb-1.5 block text-sm text-muted-foreground">{t("templateType")}</label>
+          <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto">
+            {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIcons.has(bi.id)).map((bi) => {
+              const BiIcon = bi.icon;
+              return (
+                <button
+                  key={bi.id}
+                  type="button"
+                  onClick={() => setQbIconType(bi.id)}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors cursor-pointer ${
+                    qbIconType === bi.id
+                      ? `${bi.bgSelected} ${bi.color} ring-1 ${bi.ringSelected}`
+                      : "bg-white/10 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <BiIcon className="h-3.5 w-3.5" />
+                  {t(`builtinIcon_${bi.id}`)}
+                </button>
+              );
+            })}
+            {customIcons.filter((ci) => !disabledIcons.has(ci.id)).map((ci) => (
+              <button
+                key={ci.id}
+                type="button"
+                onClick={() => setQbIconType(ci.id)}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors cursor-pointer ${
+                  qbIconType === ci.id
+                    ? "bg-white/20 text-foreground ring-1 ring-white/50"
+                    : "bg-white/10 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={resolveImageSrc(ci.imagePath)} alt={ci.label} className="h-3.5 w-3.5 object-contain" />
+                {ci.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="mb-1.5 block text-sm text-muted-foreground">{t("templateTags")}</label>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {qbTags.map((tag) => (
+              <span
+                key={tag}
+                className="flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs text-foreground"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => setQbTags(qbTags.filter((t2) => t2 !== tag))}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={qbTagInput}
+            onChange={(e) => setQbTagInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && qbTagInput.trim()) {
+                e.preventDefault();
+                if (!qbTags.includes(qbTagInput.trim())) {
+                  setQbTags([...qbTags, qbTagInput.trim()]);
+                }
+                setQbTagInput("");
+              }
+            }}
+            placeholder={t("addDimensionPlaceholder")}
+            className="w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
+          />
+        </div>
+
+        {/* Note */}
+        <div>
+          <label className="mb-1.5 block text-sm text-muted-foreground">{t("templateNote")}</label>
+          <textarea
+            value={qbNote}
+            onChange={(e) => setQbNote(e.target.value)}
+            placeholder={t("templateNotePlaceholder")}
+            rows={2}
+            className="w-full resize-none rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
+          />
+        </div>
       </div>
 
       {/* Save button */}

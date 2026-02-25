@@ -389,7 +389,13 @@
     "builtinIcon_heart": "Emotion",
     "builtinIcon_eye": "Visual",
     "builtinIcon_swords": "Suspense",
-    "iconEnabledHint": "Click icons to enable or disable them for bookmark selectors"
+    "iconEnabledHint": "Click icons to enable or disable them for bookmark selectors",
+    "quickBookmarkTemplate": "Quick Bookmark Template",
+    "quickBookmarkTemplateDesc": "Pre-fill icon, tags, and note for quick bookmarks (B key in player)",
+    "templateType": "Type",
+    "templateTags": "Tags",
+    "templateNote": "Note",
+    "templateNotePlaceholder": "Optional note..."
   },
   "mediaInfoDialog": {
     "title": "Media Info",

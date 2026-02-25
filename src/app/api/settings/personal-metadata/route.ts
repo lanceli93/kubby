@@ -34,6 +34,7 @@ export async function GET() {
         externalPlayerPath: null,
         externalPlayerMode: "local",
         disabledBookmarkIcons: [],
+        quickBookmarkTemplate: null,
         serverPlatform,
       });
     }
@@ -56,6 +57,9 @@ export async function GET() {
       disabledBookmarkIcons: row.disabledBookmarkIcons
         ? JSON.parse(row.disabledBookmarkIcons)
         : [],
+      quickBookmarkTemplate: row.quickBookmarkTemplate
+        ? JSON.parse(row.quickBookmarkTemplate)
+        : null,
       serverPlatform,
     });
   } catch (error) {
@@ -136,6 +140,9 @@ export async function PUT(request: NextRequest) {
       disabledBookmarkIcons: body.disabledBookmarkIcons !== undefined
         ? JSON.stringify(body.disabledBookmarkIcons)
         : existing?.disabledBookmarkIcons ?? "[]",
+      quickBookmarkTemplate: body.quickBookmarkTemplate !== undefined
+        ? (body.quickBookmarkTemplate ? JSON.stringify(body.quickBookmarkTemplate) : null)
+        : existing?.quickBookmarkTemplate ?? null,
     };
 
     if (existing) {

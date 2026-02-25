@@ -130,13 +130,17 @@ export default function PlayerPage() {
       }),
   });
 
+  const qbTemplate = userPrefs?.quickBookmarkTemplate;
+
   const addQuickBookmark = useMutation({
     mutationFn: async () => {
       const thumbnail = await captureVideoFrame();
       const formData = new FormData();
       formData.append("timestampSeconds", String(Math.floor(videoRef.current?.currentTime || 0)));
       formData.append("discNumber", String(currentDisc));
-      formData.append("iconType", "bookmark");
+      formData.append("iconType", qbTemplate?.iconType || "bookmark");
+      if (qbTemplate?.tags && qbTemplate.tags.length > 0) formData.append("tags", JSON.stringify(qbTemplate.tags));
+      if (qbTemplate?.note) formData.append("note", qbTemplate.note);
       if (thumbnail) formData.append("thumbnail", thumbnail, "thumb.jpg");
       return fetch(`/api/movies/${movieId}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
     },

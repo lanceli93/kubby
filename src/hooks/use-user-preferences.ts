@@ -12,6 +12,7 @@ export interface UserPreferences {
   externalPlayerPath: string | null;
   externalPlayerMode: string | null; // "local" | "stream"
   disabledBookmarkIcons: string[];
+  quickBookmarkTemplate: { iconType?: string; tags?: string[]; note?: string } | null;
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 

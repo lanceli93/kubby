@@ -389,7 +389,13 @@
     "builtinIcon_heart": "情感",
     "builtinIcon_eye": "视觉",
     "builtinIcon_swords": "悬疑",
-    "iconEnabledHint": "点击图标可在书签选择器中启用或禁用"
+    "iconEnabledHint": "点击图标可在书签选择器中启用或禁用",
+    "quickBookmarkTemplate": "快速书签模板",
+    "quickBookmarkTemplateDesc": "预设快速书签（播放器中按 B 键）的图标、标签和备注",
+    "templateType": "类型",
+    "templateTags": "标签",
+    "templateNote": "备注",
+    "templateNotePlaceholder": "可选备注..."
   },
   "mediaInfoDialog": {
     "title": "媒体信息",
