@@ -673,15 +673,15 @@ function SearchContent() {
                 <div className="flex flex-col gap-4">
                   {(category === "all" ? bookmarksByMovie.slice(0, 3) : bookmarksByMovie).map((group) => (
                     <div key={group.movieId}>
-                      <div className="mb-2 flex items-center gap-2">
+                      <div className="mb-2 flex items-center gap-2 min-w-0">
                         <Link
                           href={`/movies/${group.movieId}`}
-                          className="text-sm font-medium text-foreground hover:text-primary hover:underline"
+                          className="truncate text-sm font-medium text-foreground hover:text-primary hover:underline"
                         >
                           {group.movieTitle}
                           {group.movieYear ? ` (${group.movieYear})` : ""}
                         </Link>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="flex-shrink-0 text-xs text-muted-foreground">
                           {group.bookmarks.length} clips
                         </span>
                       </div>
