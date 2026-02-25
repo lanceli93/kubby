@@ -752,7 +752,7 @@ export default function PlayerPage() {
             return (
               <div
                 key={bm.id}
-                className={`absolute z-10 flex flex-col items-center cursor-pointer -translate-x-1/2 transition-transform duration-150 hover:scale-150 ${subtleMarkers ? "opacity-40 hover:opacity-80" : "hover:opacity-100"}`}
+                className={`group/marker absolute z-10 flex flex-col items-center cursor-pointer -translate-x-1/2 ${subtleMarkers ? "opacity-40 hover:opacity-80" : "hover:opacity-100"}`}
                 style={{
                   left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%`,
                   bottom: "-2px",
@@ -764,7 +764,7 @@ export default function PlayerPage() {
                 }}
               >
                 {/* Icon above the dot */}
-                <div className="mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                <div className="mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] transition-transform duration-150 group-hover/marker:scale-150">
                   {MarkerIcon ? (
                     <MarkerIcon className="h-5 w-5" style={{ color: markerColor }} />
                   ) : customIcon ? (
