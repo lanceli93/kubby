@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getBuiltinIcon } from "@/lib/bookmark-icons";
-import { useTranslations } from "next-intl";
 
 export interface BookmarkSearchResult {
   id: string;
@@ -42,8 +41,6 @@ function formatTimestamp(seconds: number): string {
 }
 
 export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCardProps) {
-  const t = useTranslations("search");
-
   const builtin = getBuiltinIcon(bookmark.iconType || "bookmark");
   const customIcon = !builtin
     ? customIcons?.find((c) => c.id === bookmark.iconType)
@@ -92,43 +89,6 @@ export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCard
     return <FallbackIcon className={`h-3.5 w-3.5 ${fallback.color}`} />;
   }
 
-  function renderMatchReason() {
-    switch (bookmark.matchReason) {
-      case "actor":
-        return (
-          <span className="text-[10px] text-white/50">
-            {t("matchViaActor", { name: "" }).replace(/\s*$/, "")}
-          </span>
-        );
-      case "movieTitle":
-        return (
-          <span className="text-[10px] text-white/50">
-            {t("matchViaMovie", { title: bookmark.movieTitle })}
-          </span>
-        );
-      case "tag":
-        return (
-          <span className="text-[10px] text-white/50">
-            {t("matchViaTag", { tag: "" }).replace(/:\s*$/, "")}
-          </span>
-        );
-      case "icon":
-        return (
-          <span className="text-[10px] text-white/50">
-            {t("matchViaIcon", { icon: "" }).replace(/:\s*$/, "")}
-          </span>
-        );
-      case "note":
-        return (
-          <span className="text-[10px] text-white/50">
-            {t("matchViaNote")}
-          </span>
-        );
-      default:
-        return null;
-    }
-  }
-
   return (
     <Link href={href} className="group flex-shrink-0">
       <div className="relative w-[280px] overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
@@ -161,8 +121,6 @@ export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCard
           <span className="text-xs font-medium text-white">
             {formatTimestamp(bookmark.timestampSeconds)}
           </span>
-          <span className="flex-1" />
-          {renderMatchReason()}
         </div>
 
         {/* Tags - top right */}
