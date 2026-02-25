@@ -107,14 +107,6 @@ export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCard
           </div>
         )}
 
-        {/* Movie title overlay at top */}
-        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 to-transparent px-3 pt-2 pb-6">
-          <p className="truncate text-xs font-medium text-white/90">
-            {bookmark.movieTitle}
-            {bookmark.movieYear ? ` (${bookmark.movieYear})` : ""}
-          </p>
-        </div>
-
         {/* Bottom gradient bar with icon + timestamp */}
         <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6">
           {renderIcon()}
@@ -125,7 +117,7 @@ export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCard
 
         {/* Tags - top right */}
         {bookmark.tags && bookmark.tags.length > 0 && (
-          <div className="absolute right-2 top-7 flex gap-1">
+          <div className="absolute right-2 top-2 flex gap-1">
             {bookmark.tags.slice(0, 2).map((tag) => (
               <span
                 key={tag}
@@ -139,7 +131,7 @@ export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCard
 
         {/* Disc badge */}
         {bookmark.discNumber && bookmark.discNumber > 1 && (
-          <span className="absolute left-2 top-7 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+          <span className="absolute left-2 top-2 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
             Disc {bookmark.discNumber}
           </span>
         )}

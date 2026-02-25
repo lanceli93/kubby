@@ -174,6 +174,21 @@ function SearchContent() {
     return [...results.bookmarks.items, ...extraBookmarks];
   }, [results?.bookmarks?.items, extraBookmarks]);
 
+  // Group bookmarks by movie
+  const bookmarksByMovie = useMemo(() => {
+    if (allBookmarkItems.length === 0) return [];
+    const map = new Map<string, { movieId: string; movieTitle: string; moviePosterPath?: string | null; movieYear?: number | null; bookmarks: BookmarkSearchResult[] }>();
+    for (const b of allBookmarkItems) {
+      let group = map.get(b.movieId);
+      if (!group) {
+        group = { movieId: b.movieId, movieTitle: b.movieTitle, moviePosterPath: b.moviePosterPath, movieYear: b.movieYear, bookmarks: [] };
+        map.set(b.movieId, group);
+      }
+      group.bookmarks.push(b);
+    }
+    return Array.from(map.values());
+  }, [allBookmarkItems]);
+
   // Load more handler
   const loadMore = useCallback(async (section: "movies" | "people" | "bookmarks") => {
     if (!results || loadingMore) return;
@@ -638,49 +653,50 @@ function SearchContent() {
               </section>
             )}
 
-            {/* Bookmarks/Clips section */}
+            {/* Bookmarks/Clips section — grouped by movie */}
             {hasBookmarks && (category === "all" || category === "bookmarks") && (
               <section>
-                {category === "all" ? (
-                  <ScrollRow
-                    title={
-                      <div className="flex items-center gap-2">
-                        <span>{t("bookmarksCount", { count: bookmarksTotalCount })}</span>
-                        {bookmarksTotalCount > allBookmarkItems.length && (
-                          <button
-                            onClick={() => handleSeeAll("bookmarks")}
-                            className="flex items-center gap-0.5 text-sm font-normal text-primary hover:underline cursor-pointer"
-                          >
-                            {t("seeAll")}
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                <div className="mb-3 flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {t("bookmarksCount", { count: bookmarksTotalCount })}
+                  </h2>
+                  {category === "all" && bookmarksTotalCount > allBookmarkItems.length && (
+                    <button
+                      onClick={() => handleSeeAll("bookmarks")}
+                      className="flex items-center gap-0.5 text-sm font-normal text-primary hover:underline cursor-pointer"
+                    >
+                      {t("seeAll")}
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-col gap-4">
+                  {bookmarksByMovie.map((group) => (
+                    <div key={group.movieId}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <Link
+                          href={`/movies/${group.movieId}`}
+                          className="text-sm font-medium text-foreground hover:text-primary hover:underline"
+                        >
+                          {group.movieTitle}
+                          {group.movieYear ? ` (${group.movieYear})` : ""}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">
+                          {group.bookmarks.length} clips
+                        </span>
                       </div>
-                    }
-                  >
-                    {allBookmarkItems.map((bookmark) => (
-                      <BookmarkSearchCard
-                        key={bookmark.id}
-                        bookmark={bookmark}
-                      />
-                    ))}
-                  </ScrollRow>
-                ) : (
-                  <>
-                    <h2 className="mb-3 text-lg font-semibold text-foreground">
-                      {t("bookmarksCount", { count: bookmarksTotalCount })}
-                    </h2>
-                    <div className="flex flex-wrap gap-4">
-                      {allBookmarkItems.map((bookmark) => (
-                        <BookmarkSearchCard
-                          key={bookmark.id}
-                          bookmark={bookmark}
-                        />
-                      ))}
+                      <ScrollRow>
+                        {group.bookmarks.map((bookmark) => (
+                          <BookmarkSearchCard
+                            key={bookmark.id}
+                            bookmark={bookmark}
+                          />
+                        ))}
+                      </ScrollRow>
                     </div>
-                    {renderLoadMoreButton("bookmarks", hasMoreBookmarks)}
-                  </>
-                )}
+                  ))}
+                </div>
+                {category !== "all" && renderLoadMoreButton("bookmarks", hasMoreBookmarks)}
               </section>
             )}
           </div>
