@@ -43,8 +43,8 @@ interface GenreResult {
 
 interface SearchResults {
   movies: { items: Movie[]; totalCount: number };
-  genres: GenreResult[];
-  tags: GenreResult[]; // same shape as genres
+  genres: { items: GenreResult[]; totalCount: number };
+  tags: { items: GenreResult[]; totalCount: number };
   people: { items: Person[]; totalCount: number };
   bookmarks: { items: BookmarkSearchResult[]; totalCount: number };
 }
@@ -204,14 +204,16 @@ function SearchContent() {
 
   // Section visibility
   const hasMovies = allMovieItems.length > 0;
-  const hasGenres = results && results.genres?.length > 0;
-  const hasTags = results && results.tags?.length > 0;
+  const hasGenres = results && results.genres?.items?.length > 0;
+  const hasTags = results && results.tags?.items?.length > 0;
   const hasPeople = allPeopleItems.length > 0;
   const hasBookmarks = allBookmarkItems.length > 0;
   const hasResults = hasMovies || hasGenres || hasTags || hasPeople || hasBookmarks;
 
   // "Has more" checks
   const moviesTotalCount = results?.movies?.totalCount ?? 0;
+  const genresTotalCount = results?.genres?.totalCount ?? 0;
+  const tagsTotalCount = results?.tags?.totalCount ?? 0;
   const peopleTotalCount = results?.people?.totalCount ?? 0;
   const bookmarksTotalCount = results?.bookmarks?.totalCount ?? 0;
   const hasMoreMovies = allMovieItems.length < moviesTotalCount;
@@ -404,8 +406,9 @@ function SearchContent() {
                 <div className="mb-3 flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-foreground">
                     {t("genresCount")}
+                    {genresTotalCount > 0 && ` (${genresTotalCount})`}
                   </h2>
-                  {category === "all" && (
+                  {category === "all" && genresTotalCount > results.genres.items.length && (
                     <button
                       onClick={() => handleSeeAll("genres")}
                       className="flex items-center gap-0.5 text-sm font-normal text-primary hover:underline cursor-pointer"
@@ -418,7 +421,7 @@ function SearchContent() {
                 {category === "all" ? (
                   /* Compact chips in All mode */
                   <div className="flex flex-wrap gap-2">
-                    {results.genres.map((genre) => {
+                    {results.genres.items.map((genre) => {
                       const href = genreHref(genre.name);
                       const chipClass = "flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20";
                       const inner = (
@@ -449,7 +452,7 @@ function SearchContent() {
                 ) : (
                   /* Full ScrollRow per genre in category mode */
                   <div className="flex flex-col gap-4">
-                    {results.genres.map((genre) => {
+                    {results.genres.items.map((genre) => {
                       const href = genreHref(genre.name);
                       return (
                         <div key={genre.name} id={`genre-${genre.name}`}>
@@ -494,8 +497,9 @@ function SearchContent() {
                 <div className="mb-3 flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-foreground">
                     {t("tagsCount")}
+                    {tagsTotalCount > 0 && ` (${tagsTotalCount})`}
                   </h2>
-                  {category === "all" && (
+                  {category === "all" && tagsTotalCount > results.tags.items.length && (
                     <button
                       onClick={() => handleSeeAll("tags")}
                       className="flex items-center gap-0.5 text-sm font-normal text-primary hover:underline cursor-pointer"
@@ -508,7 +512,7 @@ function SearchContent() {
                 {category === "all" ? (
                   /* Compact chips in All mode */
                   <div className="flex flex-wrap gap-2">
-                    {results.tags.map((tag) => {
+                    {results.tags.items.map((tag) => {
                       const href = tagHref(tag.name);
                       const chipClass = "flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20";
                       const inner = (
@@ -539,7 +543,7 @@ function SearchContent() {
                 ) : (
                   /* Full ScrollRow per tag in category mode */
                   <div className="flex flex-col gap-4">
-                    {results.tags.map((tag) => {
+                    {results.tags.items.map((tag) => {
                       const href = tagHref(tag.name);
                       return (
                         <div key={tag.name} id={`tag-${tag.name}`}>

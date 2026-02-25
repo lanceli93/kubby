@@ -15,8 +15,8 @@ type Category = "movies" | "genres" | "tags" | "people" | "bookmarks";
 
 const ALL_LIMITS: Record<Category, number> = {
   movies: 24,
-  genres: 10,
-  tags: 10,
+  genres: 40,
+  tags: 40,
   people: 24,
   bookmarks: 24,
 };
@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
   if (!q) {
     return NextResponse.json({
       movies: { items: [], totalCount: 0 },
-      genres: [],
-      tags: [],
+      genres: { items: [], totalCount: 0 },
+      tags: { items: [], totalCount: 0 },
       people: { items: [], totalCount: 0 },
       bookmarks: { items: [], totalCount: 0 },
     });
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
   }
 
   async function searchGenres() {
-    if (!shouldQuery("genres")) return [];
+    if (!shouldQuery("genres")) return { items: [], totalCount: 0 };
     const limit = limits.genres;
 
     const libraryCondition = libraryId
@@ -138,11 +138,10 @@ export async function GET(request: NextRequest) {
       ${libraryCondition}
       GROUP BY je.value
       ORDER BY movie_count DESC
-      LIMIT ${limit}
+      LIMIT ${limit + 1}
     `);
 
-    // Only fetch preview movies when in category mode (not "All" where we show chips)
-    const genres = genreResults.map((g) => {
+    const items = genreResults.slice(0, limit).map((g) => {
       if (!category) {
         // "All" mode — chips only, skip preview queries
         return { name: g.name, movieCount: g.movie_count, previewMovies: [] };
@@ -179,11 +178,25 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return genres;
+    let totalCount = items.length;
+    if (genreResults.length > limit) {
+      const countResult = db.all<{ total: number }>(sql`
+        SELECT COUNT(*) as total FROM (
+          SELECT je.value
+          FROM movies m, json_each(m.genres) je
+          WHERE LOWER(je.value) LIKE LOWER(${searchPattern})
+          ${libraryCondition}
+          GROUP BY je.value
+        )
+      `);
+      totalCount = countResult[0]?.total ?? totalCount;
+    }
+
+    return { items, totalCount };
   }
 
   async function searchTags() {
-    if (!shouldQuery("tags")) return [];
+    if (!shouldQuery("tags")) return { items: [], totalCount: 0 };
     const limit = limits.tags;
 
     const libraryCondition = libraryId
@@ -200,10 +213,10 @@ export async function GET(request: NextRequest) {
       ${libraryCondition}
       GROUP BY je.value
       ORDER BY movie_count DESC
-      LIMIT ${limit}
+      LIMIT ${limit + 1}
     `);
 
-    const tags = tagResults.map((t) => {
+    const items = tagResults.slice(0, limit).map((t) => {
       if (!category) {
         return { name: t.name, movieCount: t.movie_count, previewMovies: [] };
       }
@@ -239,7 +252,21 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return tags;
+    let totalCount = items.length;
+    if (tagResults.length > limit) {
+      const countResult = db.all<{ total: number }>(sql`
+        SELECT COUNT(*) as total FROM (
+          SELECT je.value
+          FROM movies m, json_each(m.tags) je
+          WHERE LOWER(je.value) LIKE LOWER(${searchPattern})
+          ${libraryCondition}
+          GROUP BY je.value
+        )
+      `);
+      totalCount = countResult[0]?.total ?? totalCount;
+    }
+
+    return { items, totalCount };
   }
 
   async function searchPeople() {
