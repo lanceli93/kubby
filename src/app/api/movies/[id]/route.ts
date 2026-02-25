@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
+import fs from "fs/promises";
 import { db } from "@/lib/db";
 import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams, movieDiscs, mediaLibraries } from "@/lib/db/schema";
 import { eq, and, asc, sql } from "drizzle-orm";
@@ -14,7 +15,7 @@ const stampPath = (p: string | null, mtime?: number | null) => {
 
 // DELETE /api/movies/[id]
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -23,6 +24,8 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  const deleteFiles = request.nextUrl.searchParams.get("deleteFiles") === "true";
+
   try {
     const movie = db.select().from(movies).where(eq(movies.id, id)).get();
     if (!movie) {
@@ -30,6 +33,15 @@ export async function DELETE(
     }
 
     db.delete(movies).where(eq(movies.id, id)).run();
+
+    if (deleteFiles && movie.folderPath) {
+      try {
+        await fs.rm(movie.folderPath, { recursive: true, force: true });
+      } catch (fsError) {
+        console.error("Failed to delete movie folder:", movie.folderPath, fsError);
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete movie error:", error);

@@ -64,7 +64,7 @@ interface MovieCardProps {
   subtitle?: string;
   onToggleFavorite?: () => void;
   onToggleWatched?: () => void;
-  onDelete?: () => void;
+  onDelete?: (deleteFiles: boolean) => void;
 }
 
 export function MovieCard({
@@ -91,6 +91,7 @@ export function MovieCard({
   const tCommon = useTranslations("common");
   const tMeta = useTranslations("metadata");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteFiles, setDeleteFiles] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
@@ -328,12 +329,26 @@ export function MovieCard({
       )}
 
       {deleteOpen && (
-        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
           <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
             <DialogHeader>
               <DialogTitle>{t("deleteMovie")}</DialogTitle>
               <DialogDescription>{t("confirmDeleteMovie")}</DialogDescription>
             </DialogHeader>
+            <div className="flex flex-col gap-2 px-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteFiles}
+                  onChange={(e) => setDeleteFiles(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 accent-destructive"
+                />
+                <span className="text-sm text-foreground">{t("deleteLocalFiles")}</span>
+              </label>
+              {deleteFiles && (
+                <p className="text-xs text-destructive pl-6">{t("deleteLocalFilesWarning")}</p>
+              )}
+            </div>
             <DialogFooter>
               <button
                 onClick={() => setDeleteOpen(false)}
@@ -343,8 +358,9 @@ export function MovieCard({
               </button>
               <button
                 onClick={() => {
-                  onDelete?.();
+                  onDelete?.(deleteFiles);
                   setDeleteOpen(false);
+                  setDeleteFiles(false);
                 }}
                 className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
               >

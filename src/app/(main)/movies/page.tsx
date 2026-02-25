@@ -95,8 +95,8 @@ function useMovieMutations() {
   });
 
   const deleteMovie = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/movies/${id}`, { method: "DELETE" }),
+    mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
+      fetch(`/api/movies/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
@@ -107,7 +107,8 @@ function useMovieMutations() {
       toggleFavorite.mutate({ id, current }),
     handleToggleWatched: (id: string, current: boolean) =>
       toggleWatched.mutate({ id, current }),
-    handleDeleteMovie: (id: string) => deleteMovie.mutate(id),
+    handleDeleteMovie: (id: string, deleteFiles?: boolean) =>
+      deleteMovie.mutate({ id, deleteFiles }),
   };
 }
 
@@ -643,7 +644,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             onToggleWatched={() =>
               handleToggleWatched(movie.id, !!movie.isWatched)
             }
-            onDelete={() => handleDeleteMovie(movie.id)}
+            onDelete={(deleteFiles) => handleDeleteMovie(movie.id, deleteFiles)}
           />
         ))}
 
@@ -725,7 +726,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
               onToggleWatched={() =>
                 handleToggleWatched(movie.id, !!movie.isWatched)
               }
-              onDelete={() => handleDeleteMovie(movie.id)}
+              onDelete={(deleteFiles) => handleDeleteMovie(movie.id, deleteFiles)}
             />
           ))}
         </div>
@@ -841,7 +842,7 @@ function GenreScrollRow({ genre, libraryId }: { genre: string; libraryId: string
             onToggleWatched={() =>
               handleToggleWatched(movie.id, !!movie.isWatched)
             }
-            onDelete={() => handleDeleteMovie(movie.id)}
+            onDelete={(deleteFiles) => handleDeleteMovie(movie.id, deleteFiles)}
           />
         ))}
       </ScrollRow>
@@ -1771,7 +1772,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
           onToggleWatched={() =>
             handleToggleWatched(movie.id, !!movie.isWatched)
           }
-          onDelete={() => handleDeleteMovie(movie.id)}
+          onDelete={(deleteFiles) => handleDeleteMovie(movie.id, deleteFiles)}
         />
       ))}
 

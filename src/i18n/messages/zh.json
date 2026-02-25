@@ -253,7 +253,9 @@
     "bookmarkNote": "备注",
     "bookmarkNotePlaceholder": "可选备注...",
     "saveBookmark": "保存书签",
-    "tagsPlaceholder": "输入后按 Enter 添加"
+    "tagsPlaceholder": "输入后按 Enter 添加",
+    "deleteLocalFiles": "同时删除本地文件",
+    "deleteLocalFilesWarning": "影片文件夹及其所有内容将从磁盘永久删除"
   },
   "search": {
     "search": "搜索",

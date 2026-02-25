@@ -253,7 +253,9 @@
     "bookmarkNote": "Note",
     "bookmarkNotePlaceholder": "Optional note...",
     "saveBookmark": "Save Bookmark",
-    "tagsPlaceholder": "Type and press Enter to add"
+    "tagsPlaceholder": "Type and press Enter to add",
+    "deleteLocalFiles": "Also delete local files",
+    "deleteLocalFilesWarning": "The movie folder and all its contents will be permanently removed from disk"
   },
   "search": {
     "search": "Search",
