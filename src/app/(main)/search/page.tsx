@@ -93,6 +93,7 @@ function SearchContent() {
   const [extraPeople, setExtraPeople] = useState<Person[]>([]);
   const [extraBookmarks, setExtraBookmarks] = useState<BookmarkSearchResult[]>([]);
   const [loadingMore, setLoadingMore] = useState<string | null>(null);
+  const [scrollTarget, setScrollTarget] = useState<string | null>(null);
 
   // Reset extras when query/category/library changes
   useEffect(() => {
@@ -130,6 +131,19 @@ function SearchContent() {
     },
     enabled: debouncedQuery.length > 0,
   });
+
+  // Scroll to target genre/tag after tab switch and data render
+  useEffect(() => {
+    if (!scrollTarget || !results) return;
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(scrollTarget);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setScrollTarget(null);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [scrollTarget, results]);
 
   // Suggestions for empty state
   const { data: allMovies } = useQuery<Movie[]>({
@@ -421,7 +435,10 @@ function SearchContent() {
                       ) : (
                         <button
                           key={genre.name}
-                          onClick={() => handleSeeAll("genres")}
+                          onClick={() => {
+                            setScrollTarget(`genre-${genre.name}`);
+                            handleSeeAll("genres");
+                          }}
                           className={`${chipClass} cursor-pointer`}
                         >
                           {inner}
@@ -435,7 +452,7 @@ function SearchContent() {
                     {results.genres.map((genre) => {
                       const href = genreHref(genre.name);
                       return (
-                        <div key={genre.name}>
+                        <div key={genre.name} id={`genre-${genre.name}`}>
                           <div className="mb-2 flex items-center gap-2">
                             <Tag className="h-4 w-4 text-primary" />
                             {href ? (
@@ -508,7 +525,10 @@ function SearchContent() {
                       ) : (
                         <button
                           key={tag.name}
-                          onClick={() => handleSeeAll("tags")}
+                          onClick={() => {
+                            setScrollTarget(`tag-${tag.name}`);
+                            handleSeeAll("tags");
+                          }}
                           className={`${chipClass} cursor-pointer`}
                         >
                           {inner}
@@ -522,7 +542,7 @@ function SearchContent() {
                     {results.tags.map((tag) => {
                       const href = tagHref(tag.name);
                       return (
-                        <div key={tag.name}>
+                        <div key={tag.name} id={`tag-${tag.name}`}>
                           <div className="mb-2 flex items-center gap-2">
                             <Tag className="h-4 w-4 text-muted-foreground" />
                             {href ? (
