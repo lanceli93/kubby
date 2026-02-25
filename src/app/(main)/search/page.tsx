@@ -660,7 +660,7 @@ function SearchContent() {
                   <h2 className="text-lg font-semibold text-foreground">
                     {t("bookmarksCount", { count: bookmarksTotalCount })}
                   </h2>
-                  {category === "all" && bookmarksTotalCount > allBookmarkItems.length && (
+                  {category === "all" && (bookmarksByMovie.length > 3 || bookmarksTotalCount > allBookmarkItems.length) && (
                     <button
                       onClick={() => handleSeeAll("bookmarks")}
                       className="flex items-center gap-0.5 text-sm font-normal text-primary hover:underline cursor-pointer"
@@ -671,7 +671,7 @@ function SearchContent() {
                   )}
                 </div>
                 <div className="flex flex-col gap-4">
-                  {bookmarksByMovie.map((group) => (
+                  {(category === "all" ? bookmarksByMovie.slice(0, 3) : bookmarksByMovie).map((group) => (
                     <div key={group.movieId}>
                       <div className="mb-2 flex items-center gap-2">
                         <Link
