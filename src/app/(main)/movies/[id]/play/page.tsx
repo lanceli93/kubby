@@ -571,7 +571,7 @@ export default function PlayerPage() {
           }}
         >
           <div
-            className="w-[400px] rounded-xl bg-zinc-900 p-6 shadow-2xl"
+            className="w-[400px] rounded-xl border border-white/10 bg-black/70 p-6 shadow-2xl backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="mb-4 text-lg font-semibold text-white">Add Bookmark</h3>
