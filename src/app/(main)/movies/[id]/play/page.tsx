@@ -504,7 +504,7 @@ export default function PlayerPage() {
 
       {/* Center play button (on pause) */}
       {!isPlaying && !osdMessage && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white/20">
             <Play className="h-8 w-8 text-white" />
           </div>
