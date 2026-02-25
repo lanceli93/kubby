@@ -307,48 +307,49 @@ function SearchContent() {
         </div>
 
         {/* Category chips + library filter */}
-        <div className="flex items-center justify-center gap-3">
-          <div className="flex gap-1.5">
-            {categories.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setCategory(cat.key)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
-                  category === cat.key
-                    ? "bg-primary text-white"
-                    : "bg-white/10 text-muted-foreground hover:bg-white/15 hover:text-foreground"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center justify-center gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat.key}
+              onClick={() => setCategory(cat.key)}
+              className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer ${
+                category === cat.key
+                  ? "border-primary/40 bg-primary/20 text-primary backdrop-blur-sm"
+                  : "border-white/[0.08] bg-white/[0.06] text-muted-foreground backdrop-blur-sm hover:bg-white/[0.12] hover:text-foreground hover:border-white/[0.15]"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
 
           {showLibraryFilter && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/10 px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/15 hover:text-foreground cursor-pointer">
-                  <Library className="h-3.5 w-3.5" />
-                  <span>{selectedLibraryName || t("allLibraries")}</span>
-                  <ChevronDown className="h-3 w-3 opacity-60" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="center"
-                className="min-w-[160px] border-white/10 bg-black/70 backdrop-blur-xl"
-              >
-                <DropdownMenuItem onClick={() => setLibraryId("")}>
-                  {!libraryId && <Check className="h-3.5 w-3.5 text-primary" />}
-                  <span className={!libraryId ? "text-primary font-medium" : ""}>{t("allLibraries")}</span>
-                </DropdownMenuItem>
-                {libraries!.map((lib) => (
-                  <DropdownMenuItem key={lib.id} onClick={() => setLibraryId(lib.id)}>
-                    {libraryId === lib.id && <Check className="h-3.5 w-3.5 text-primary" />}
-                    <span className={libraryId === lib.id ? "text-primary font-medium" : ""}>{lib.name}</span>
+            <>
+              <div className="mx-1 h-5 w-px bg-white/10" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.06] px-3.5 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-all hover:bg-white/[0.12] hover:text-foreground hover:border-white/[0.15] cursor-pointer">
+                    <Library className="h-3.5 w-3.5" />
+                    <span>{selectedLibraryName || t("allLibraries")}</span>
+                    <ChevronDown className="h-3 w-3 opacity-60" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="center"
+                  className="min-w-[160px] border-white/10 bg-black/70 backdrop-blur-xl"
+                >
+                  <DropdownMenuItem onClick={() => setLibraryId("")} className="flex items-center justify-between">
+                    <span className={!libraryId ? "text-primary font-medium" : ""}>{t("allLibraries")}</span>
+                    {!libraryId && <Check className="h-3.5 w-3.5 text-primary" />}
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {libraries!.map((lib) => (
+                    <DropdownMenuItem key={lib.id} onClick={() => setLibraryId(lib.id)} className="flex items-center justify-between">
+                      <span className={libraryId === lib.id ? "text-primary font-medium" : ""}>{lib.name}</span>
+                      {libraryId === lib.id && <Check className="h-3.5 w-3.5 text-primary" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           )}
         </div>
 
