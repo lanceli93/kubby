@@ -601,7 +601,7 @@ export default function PlayerPage() {
             {/* Icon type */}
             <div className="mb-4">
               <label className="mb-1 block text-sm text-white/60">Type</label>
-              <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto">
+              <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto p-0.5">
                 {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIconIds.has(bi.id)).map((bi) => {
                   const BiIcon = bi.icon;
                   return (

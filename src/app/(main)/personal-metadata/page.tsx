@@ -406,7 +406,7 @@ export default function PersonalMetadataPage() {
         {/* Icon type */}
         <div>
           <label className="mb-1.5 block text-sm text-muted-foreground">{t("templateType")}</label>
-          <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto">
+          <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto p-0.5">
             {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIcons.has(bi.id)).map((bi) => {
               const BiIcon = bi.icon;
               return (

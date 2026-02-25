@@ -271,7 +271,7 @@ export function BookmarkCard({
             {/* Icon type - scrollable grid */}
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">Type</label>
-              <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto">
+              <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto p-0.5">
                 {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIconIds?.includes(bi.id)).map((bi) => {
                   const BiIcon = bi.icon;
                   return (
