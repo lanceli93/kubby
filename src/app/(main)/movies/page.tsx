@@ -1754,33 +1754,28 @@ function PersonMoviesContent({ personId }: { personId: string }) {
 
       {/* Movie Cards — direct grid children */}
       {movies.map((movie) => (
-        <div key={movie.id}>
-          <MovieCard
-            id={movie.id}
-            title={movie.title}
-            year={movie.year}
-            posterPath={movie.posterPath}
-            posterBlur={movie.posterBlur}
-            rating={movie.communityRating}
-            personalRating={movie.personalRating}
-            videoWidth={movie.videoWidth}
-            videoHeight={movie.videoHeight}
-            isFavorite={movie.isFavorite}
-            isWatched={movie.isWatched}
-            onToggleFavorite={() =>
-              handleToggleFavorite(movie.id, !!movie.isFavorite)
-            }
-            onToggleWatched={() =>
-              handleToggleWatched(movie.id, !!movie.isWatched)
-            }
-            onDelete={() => handleDeleteMovie(movie.id)}
-          />
-          {movie.ageAtRelease != null && (
-            <p className="mt-1 truncate text-xs text-muted-foreground/70 text-center">
-              {tPerson("filmedAtAge", { age: movie.ageAtRelease })}
-            </p>
-          )}
-        </div>
+        <MovieCard
+          key={movie.id}
+          id={movie.id}
+          title={movie.title}
+          year={movie.year}
+          posterPath={movie.posterPath}
+          posterBlur={movie.posterBlur}
+          rating={movie.communityRating}
+          personalRating={movie.personalRating}
+          videoWidth={movie.videoWidth}
+          videoHeight={movie.videoHeight}
+          isFavorite={movie.isFavorite}
+          isWatched={movie.isWatched}
+          subtitle={movie.ageAtRelease != null ? tPerson("filmedAtAge", { age: movie.ageAtRelease }) : undefined}
+          onToggleFavorite={() =>
+            handleToggleFavorite(movie.id, !!movie.isFavorite)
+          }
+          onToggleWatched={() =>
+            handleToggleWatched(movie.id, !!movie.isWatched)
+          }
+          onDelete={() => handleDeleteMovie(movie.id)}
+        />
       ))}
 
       {movies.length === 0 && (

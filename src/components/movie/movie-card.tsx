@@ -61,6 +61,7 @@ interface MovieCardProps {
   isWatched?: boolean;
   progress?: number; // 0-100
   showProgress?: boolean;
+  subtitle?: string;
   onToggleFavorite?: () => void;
   onToggleWatched?: () => void;
   onDelete?: () => void;
@@ -80,6 +81,7 @@ export function MovieCard({
   isWatched,
   progress,
   showProgress,
+  subtitle,
   onToggleFavorite,
   onToggleWatched,
   onDelete,
@@ -291,6 +293,9 @@ export function MovieCard({
         <p className="truncate text-sm font-medium text-foreground">{title}</p>
         {year && (
           <p className="text-xs text-muted-foreground">{year}</p>
+        )}
+        {subtitle && (
+          <p className="truncate text-xs text-muted-foreground/70">{subtitle}</p>
         )}
       </div>
     </Link>

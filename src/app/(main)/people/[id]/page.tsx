@@ -440,12 +440,8 @@ export default function PersonDetailPage() {
                 personalRating={movie.personalRating}
                 videoWidth={movie.videoWidth}
                 videoHeight={movie.videoHeight}
+                subtitle={movie.ageAtRelease != null ? tPerson("filmedAtAge", { age: movie.ageAtRelease }) : undefined}
               />
-              {movie.ageAtRelease != null && (
-                <p className="mt-1 truncate text-xs text-muted-foreground/70 text-center">
-                  {tPerson("filmedAtAge", { age: movie.ageAtRelease })}
-                </p>
-              )}
             </div>
           ))}
         </div>
