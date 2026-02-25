@@ -389,7 +389,7 @@ export default function PersonalMetadataPage() {
 
         {/* Upload custom icon */}
         {customIcons.length < 20 && (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-4">
             <div className="flex items-end gap-3">
               <div className="flex-1">
                 <label className="mb-1 block text-xs text-muted-foreground">
