@@ -244,11 +244,14 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   }}
                   placeholder="1990-05-15 or 1990"
                 />
-                <div className="relative flex-shrink-0">
+                <div
+                  className="relative flex-shrink-0 cursor-pointer"
+                  onClick={() => datePickerRef.current?.showPicker()}
+                >
                   <input
                     ref={datePickerRef}
                     type="date"
-                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    className="absolute inset-0 h-full w-full opacity-0 pointer-events-none"
                     style={{ colorScheme: "dark" }}
                     tabIndex={-1}
                     onChange={(e) => {
