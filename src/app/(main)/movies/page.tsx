@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { MovieCard } from "@/components/movie/movie-card";
@@ -113,7 +113,6 @@ function useMovieMutations() {
 
 function MovieBrowseContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const libraryId = searchParams.get("libraryId") || "";
   const personId = searchParams.get("personId") || "";
   const t = useTranslations("movies");
@@ -132,23 +131,6 @@ function MovieBrowseContent() {
     return (
       <div className="h-full overflow-y-scroll px-12">
           <PersonMoviesContent personId={personId} />
-      </div>
-    );
-  }
-
-  // If no libraryId, redirect to home
-  if (!libraryId) {
-    return (
-      <div className="flex h-96 flex-col items-center justify-center gap-4 text-center px-12">
-        <p className="text-lg text-muted-foreground">
-          {t("selectLibrary")}
-        </p>
-        <button
-          onClick={() => router.push("/")}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          {t("allMovies")}
-        </button>
       </div>
     );
   }
@@ -242,9 +224,11 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   // Fetch available filters
   const { data: filters } = useQuery<FiltersData>({
     queryKey: ["filters", libraryId],
-    queryFn: () =>
-      fetch(`/api/libraries/${libraryId}/filters`).then((r) => r.json()),
-    enabled: !!libraryId,
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (libraryId) params.set("libraryId", libraryId);
+      return fetch(`/api/filters?${params}`).then((r) => r.json());
+    },
   });
 
   const {
@@ -257,7 +241,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
     queryKey: ["movies", { libraryId, sort, sortOrder, sortDimension, selectedGenres, selectedTags, selectedYears, urlTag, urlStudio }],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams();
-      params.set("libraryId", libraryId);
+      if (libraryId) params.set("libraryId", libraryId);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
       params.set("offset", String(pageParam));
@@ -693,10 +677,13 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
     isLoading,
   } = useInfiniteQuery<PaginatedResponse<Movie>>({
     queryKey: ["movies", "favorites", libraryId],
-    queryFn: ({ pageParam }) =>
-      fetch(
-        `/api/movies?filter=favorites&libraryId=${libraryId}&offset=${pageParam}`
-      ).then((r) => r.json()),
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams();
+      params.set("filter", "favorites");
+      if (libraryId) params.set("libraryId", libraryId);
+      params.set("offset", String(pageParam));
+      return fetch(`/api/movies?${params}`).then((r) => r.json());
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.offset + lastPage.limit : undefined,
@@ -768,9 +755,11 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
 
   const { data: filters } = useQuery<FiltersData>({
     queryKey: ["filters", libraryId],
-    queryFn: () =>
-      fetch(`/api/libraries/${libraryId}/filters`).then((r) => r.json()),
-    enabled: !!libraryId,
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (libraryId) params.set("libraryId", libraryId);
+      return fetch(`/api/filters?${params}`).then((r) => r.json());
+    },
   });
 
   const genres = filters?.genres ?? [];
@@ -807,18 +796,25 @@ function GenreScrollRow({ genre, libraryId }: { genre: string; libraryId: string
 
   const { data: movies = [] } = useQuery<Movie[]>({
     queryKey: ["movies", "genre-row", libraryId, genre],
-    queryFn: () =>
-      fetch(
-        `/api/movies?libraryId=${libraryId}&genre=${encodeURIComponent(genre)}&limit=50`
-      ).then((r) => r.json()),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (libraryId) params.set("libraryId", libraryId);
+      params.set("genre", genre);
+      params.set("limit", "50");
+      return fetch(`/api/movies?${params}`).then((r) => r.json());
+    },
   });
+
+  const genreHref = libraryId
+    ? `/movies?libraryId=${libraryId}&genre=${encodeURIComponent(genre)}`
+    : `/movies?genre=${encodeURIComponent(genre)}`;
 
   return (
     <section className="flex flex-col gap-3">
       <ScrollRow
         title={
           <Link
-            href={`/movies?libraryId=${libraryId}&genre=${encodeURIComponent(genre)}`}
+            href={genreHref}
             className="hover:text-white hover:underline transition-colors"
           >
             {genre}
@@ -913,9 +909,11 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
 
   const { data: filters } = useQuery<PeopleFiltersData>({
     queryKey: ["people-filters", libraryId],
-    queryFn: () =>
-      fetch(`/api/libraries/${libraryId}/people-filters`).then((r) => r.json()),
-    enabled: !!libraryId,
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (libraryId) params.set("libraryId", libraryId);
+      return fetch(`/api/people-filters?${params}`).then((r) => r.json());
+    },
   });
 
   const {
@@ -928,7 +926,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
     queryKey: ["people", { libraryId, sort, sortOrder, sortDimension, selectedTypes, selectedTags, selectedTiers }],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams();
-      params.set("libraryId", libraryId);
+      if (libraryId) params.set("libraryId", libraryId);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
       params.set("offset", String(pageParam));
@@ -941,7 +939,6 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.offset + lastPage.limit : undefined,
-    enabled: !!libraryId,
   });
 
   const actors = actorsData?.pages.flatMap((p) => p.items) ?? [];

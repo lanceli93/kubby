@@ -33,7 +33,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
   ];
 
   const mediaItems = [
-    { href: "/movies", label: tNav("movies"), icon: Film, matchPrefix: true },
+    { href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true },
     { href: "/personal-metadata", label: tNav("personalMetadata"), icon: SlidersHorizontal },
     { href: "/card-badges", label: tNav("cardBadges"), icon: BadgeCheck },
   ];

@@ -25,16 +25,14 @@ export async function GET(request: NextRequest) {
     const offsetParam = searchParams.get("offset");
     const offset = offsetParam !== null ? parseInt(offsetParam, 10) : null;
 
-    if (!libraryId) {
-      return NextResponse.json({ error: "libraryId is required" }, { status: 400 });
-    }
-
     const session = await auth();
     const userId = session?.user?.id;
 
     // Build conditions using raw SQL strings with parameterized values
     const conditions: ReturnType<typeof sql>[] = [];
-    conditions.push(sql`m.media_library_id = ${libraryId}`);
+    if (libraryId) {
+      conditions.push(sql`m.media_library_id = ${libraryId}`);
+    }
 
     if (search) {
       conditions.push(sql`p.name LIKE ${"%" + search + "%"}`);
@@ -89,7 +87,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const whereClause = sql`WHERE ${sql.join(conditions, sql` AND `)}`;
+    const whereClause = conditions.length > 0
+      ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
+      : sql``;
 
     // Sort clause
     let orderClause: ReturnType<typeof sql>;
