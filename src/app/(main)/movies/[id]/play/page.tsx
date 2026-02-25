@@ -743,21 +743,40 @@ export default function PlayerPage() {
           />
           {/* Bookmark markers */}
           {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => {
-            const markerColor = getBuiltinIcon(bm.iconType || "bookmark")?.hexColor ?? "#ffffff";
+            const builtin = getBuiltinIcon(bm.iconType || "bookmark");
+            const markerColor = builtin?.hexColor ?? "#ffffff";
+            const customIcon = !builtin ? customIcons.find((c) => c.id === bm.iconType) : undefined;
+            const MarkerIcon = builtin?.icon;
             return (
               <div
                 key={bm.id}
-                className="absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full z-10 cursor-pointer"
+                className="absolute z-10 flex flex-col items-center cursor-pointer"
                 style={{
                   left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%`,
-                  backgroundColor: markerColor,
+                  bottom: "-2px",
+                  transform: "translateX(-50%)",
                 }}
                 title={`${formatTime(bm.timestampSeconds)}${bm.note ? " - " + bm.note : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (videoRef.current) videoRef.current.currentTime = bm.timestampSeconds;
                 }}
-              />
+              >
+                {/* Icon above the dot */}
+                <div className="mb-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                  {MarkerIcon ? (
+                    <MarkerIcon className="h-5 w-5" style={{ color: markerColor }} />
+                  ) : customIcon ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={resolveImageSrc(customIcon.imagePath)} alt="" className="h-5 w-5 object-contain" />
+                  ) : null}
+                </div>
+                {/* Colored dot */}
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: markerColor }}
+                />
+              </div>
             );
           })}
         </div>
