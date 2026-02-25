@@ -417,11 +417,11 @@ export default function PersonalMetadataPage() {
           </div>
 
           {/* Preview */}
-          <div className="mt-3 flex items-center gap-6">
+          <div className="mt-3 grid grid-cols-2 gap-4">
             {/* Normal preview */}
             <div className="flex flex-col items-center gap-1">
               <span className="text-[10px] text-muted-foreground/60">{t("subtleMarkersOff")}</span>
-              <div className="relative flex h-10 w-28 items-end justify-center rounded bg-zinc-800">
+              <div className="relative flex h-10 w-full items-end justify-center rounded bg-zinc-800">
                 <div className="absolute bottom-1 left-1/3 flex flex-col items-center">
                   {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[0].icon; return <Icon className="h-4 w-4" style={{ color: BUILTIN_BOOKMARK_ICONS[0].hexColor }} />; })()}
                   <div className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: BUILTIN_BOOKMARK_ICONS[0].hexColor }} />
@@ -436,7 +436,7 @@ export default function PersonalMetadataPage() {
             {/* Subtle preview */}
             <div className="flex flex-col items-center gap-1">
               <span className="text-[10px] text-muted-foreground/60">{t("subtleMarkersOn")}</span>
-              <div className="relative flex h-10 w-28 items-end justify-center rounded bg-zinc-800">
+              <div className="relative flex h-10 w-full items-end justify-center rounded bg-zinc-800">
                 <div className="absolute bottom-1 left-1/3 flex flex-col items-center opacity-40">
                   {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[0].icon; return <Icon className="h-4 w-4 text-white" />; })()}
                   <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white" />
