@@ -226,6 +226,7 @@
     "actorsCount": "{count} actors",
     "nameAZ": "Name (A\u2013Z)",
     "movieCount": "Movie Count",
+    "ageAtRelease": "Age at Release",
     "personalRating": "Personal Rating",
     "type": "Type",
     "allTypes": "All Types",

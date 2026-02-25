@@ -57,6 +57,7 @@ interface PersonDetail {
     videoWidth?: number | null;
     videoHeight?: number | null;
     role?: string;
+    ageAtRelease?: number | null;
   }[];
 }
 
@@ -440,6 +441,11 @@ export default function PersonDetailPage() {
                 videoWidth={movie.videoWidth}
                 videoHeight={movie.videoHeight}
               />
+              {movie.ageAtRelease != null && (
+                <p className="mt-1 truncate text-xs text-muted-foreground/70 text-center">
+                  {t("filmedAtAge", { age: movie.ageAtRelease })}
+                </p>
+              )}
             </div>
           ))}
         </div>

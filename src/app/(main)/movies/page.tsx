@@ -24,6 +24,7 @@ import {
   Hash,
   UserRound,
   Loader2,
+  Cake,
 } from "lucide-react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
@@ -894,6 +895,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
     { value: "personalRating", label: t("personalRating"), icon: Star },
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "movieCount", label: t("movieCount"), icon: Hash },
+    { value: "ageAtRelease", label: t("ageAtRelease"), icon: Cake },
   ];
 
   useEffect(() => {
@@ -1487,9 +1489,19 @@ function PersonMoviesContent({ personId }: { personId: string }) {
   };
 
   return (
-    <div>
+    <div
+      className="grid gap-x-4 gap-y-4"
+      style={{
+        gridTemplateColumns: "repeat(auto-fill, 180px)",
+        justifyContent: "center",
+      }}
+    >
       {/* Sort & Filter Toolbar */}
-      <div className="py-[18px] flex items-center justify-center gap-6">
+      <div className="py-[18px] flex items-center gap-6" style={{ gridColumn: "1 / -1" }}>
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {t("moviesCount", { count: movies.length })}
+        </span>
+        <div className="flex flex-1 items-center justify-center gap-6">
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => {
@@ -1735,43 +1747,36 @@ function PersonMoviesContent({ personId }: { personId: string }) {
             </div>
           )}
         </div>
+        </div>
       </div>
 
-      {/* Movie Grid */}
-      <div
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: "repeat(auto-fill, 180px)",
-          justifyContent: "center",
-        }}
-      >
-        {movies.map((movie) => (
-          <MovieCard
-            key={movie.id}
-            id={movie.id}
-            title={movie.title}
-            year={movie.year}
-            posterPath={movie.posterPath}
-            posterBlur={movie.posterBlur}
-            rating={movie.communityRating}
-            personalRating={movie.personalRating}
-            videoWidth={movie.videoWidth}
-            videoHeight={movie.videoHeight}
-            isFavorite={movie.isFavorite}
-            isWatched={movie.isWatched}
-            onToggleFavorite={() =>
-              handleToggleFavorite(movie.id, !!movie.isFavorite)
-            }
-            onToggleWatched={() =>
-              handleToggleWatched(movie.id, !!movie.isWatched)
-            }
-            onDelete={() => handleDeleteMovie(movie.id)}
-          />
-        ))}
-      </div>
+      {/* Movie Cards — direct grid children */}
+      {movies.map((movie) => (
+        <MovieCard
+          key={movie.id}
+          id={movie.id}
+          title={movie.title}
+          year={movie.year}
+          posterPath={movie.posterPath}
+          posterBlur={movie.posterBlur}
+          rating={movie.communityRating}
+          personalRating={movie.personalRating}
+          videoWidth={movie.videoWidth}
+          videoHeight={movie.videoHeight}
+          isFavorite={movie.isFavorite}
+          isWatched={movie.isWatched}
+          onToggleFavorite={() =>
+            handleToggleFavorite(movie.id, !!movie.isFavorite)
+          }
+          onToggleWatched={() =>
+            handleToggleWatched(movie.id, !!movie.isWatched)
+          }
+          onDelete={() => handleDeleteMovie(movie.id)}
+        />
+      ))}
 
       {movies.length === 0 && (
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
+        <div className="flex h-64 items-center justify-center text-muted-foreground" style={{ gridColumn: "1 / -1" }}>
           {t("noMovies")}
         </div>
       )}

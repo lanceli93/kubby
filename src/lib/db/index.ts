@@ -262,6 +262,8 @@ const pending = [
   "ALTER TABLE `user_preferences` ADD `subtle_bookmark_markers` integer NOT NULL DEFAULT 0",
   // 0020: dot color for custom bookmark icons
   "ALTER TABLE `bookmark_icons` ADD `dot_color` text DEFAULT '#ffffff'",
+  // 0021: age at release on movie_people
+  "ALTER TABLE `movie_people` ADD `age_at_release` integer",
 ];
 for (const sql of pending) {
   try { sqlite.exec(sql); } catch { /* column already exists */ }

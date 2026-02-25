@@ -226,6 +226,7 @@
     "actorsCount": "{count} 位演员",
     "nameAZ": "姓名 (A\u2013Z)",
     "movieCount": "出演数量",
+    "ageAtRelease": "出演年龄",
     "personalRating": "个人评分",
     "type": "类型",
     "allTypes": "全部类型",

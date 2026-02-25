@@ -105,6 +105,7 @@ export const moviePeople = sqliteTable("movie_people", {
   personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
   role: text("role"),
   sortOrder: integer("sort_order"),
+  ageAtRelease: integer("age_at_release"),
 }, (table) => [
   index("idx_mp_movie").on(table.movieId),
   index("idx_mp_person").on(table.personId),

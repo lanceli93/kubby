@@ -175,6 +175,30 @@ function getOrCreatePerson(
   return id;
 }
 
+/**
+ * Compute an actor's age at the time a movie was released.
+ * Returns null if either birthDate or release info is missing.
+ */
+function computeAgeAtRelease(
+  birthDate: string | null | undefined,
+  premiereDate: string | null | undefined,
+  movieYear: number | null | undefined
+): number | null {
+  if (!birthDate) return null;
+  let releaseYear: number | null = null;
+  if (premiereDate) {
+    releaseYear = parseInt(premiereDate.split("-")[0], 10) || null;
+  }
+  if (!releaseYear && movieYear) {
+    releaseYear = movieYear;
+  }
+  if (!releaseYear) return null;
+  const birthYear = parseInt(birthDate.split("-")[0], 10);
+  if (!birthYear) return null;
+  const age = releaseYear - birthYear;
+  return age >= 0 ? age : null;
+}
+
 export type ScanProgress = { current: number; total: number; title: string };
 
 export async function scanLibrary(
@@ -612,6 +636,11 @@ export async function scanLibrary(
       const actorMtime = actor.thumb ? getFileMtime(actor.thumb) : null;
       const actorBlur = actor.thumb ? await generateBlurDataURL(actor.thumb) : null;
       const personId = getOrCreatePerson(actor.name, "actor", actor.thumb, actorMtime, actorBlur, bioData);
+
+      // Compute age at release from person's birthDate and movie's release info
+      const personRecord = db.select({ birthDate: people.birthDate }).from(people).where(eq(people.id, personId)).get();
+      const ageAtRelease = computeAgeAtRelease(personRecord?.birthDate, nfoData.premiereDate, nfoData.year);
+
       db.insert(moviePeople)
         .values({
           id: uuidv4(),
@@ -619,6 +648,7 @@ export async function scanLibrary(
           personId,
           role: actor.role || null,
           sortOrder: actor.order ?? null,
+          ageAtRelease,
         })
         .run();
     }

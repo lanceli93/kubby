@@ -241,8 +241,7 @@ export async function GET(
         photoBlur: people.photoBlur,
         sortOrder: moviePeople.sortOrder,
         personalRating: userPersonData.personalRating,
-        birthDate: people.birthDate,
-        birthYear: people.birthYear,
+        ageAtRelease: moviePeople.ageAtRelease,
       })
       .from(moviePeople)
       .innerJoin(people, eq(moviePeople.personId, people.id))

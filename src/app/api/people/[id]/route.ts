@@ -88,6 +88,7 @@ export async function GET(
         videoWidth: movies.videoWidth,
         videoHeight: movies.videoHeight,
         role: moviePeople.role,
+        ageAtRelease: moviePeople.ageAtRelease,
       })
       .from(moviePeople)
       .innerJoin(movies, eq(moviePeople.movieId, movies.id))

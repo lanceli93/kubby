@@ -76,7 +76,7 @@ interface MovieDetail {
   mediaLibraryId?: string;
   discCount?: number;
   discs?: DiscInfo[];
-  cast: { id: string; name: string; role?: string; photoPath?: string | null; photoBlur?: string | null; personalRating?: number | null; birthDate?: string | null; birthYear?: number | null }[];
+  cast: { id: string; name: string; role?: string; photoPath?: string | null; photoBlur?: string | null; personalRating?: number | null; ageAtRelease?: number | null }[];
   directors: { id: string; name: string }[];
   userData?: {
     isPlayed: boolean;
@@ -142,38 +142,6 @@ function formatChannels(channels?: number | null): string | null {
   if (channels === 2) return "Stereo";
   if (channels === 1) return "Mono";
   return `${channels}ch`;
-}
-
-function computeAgeAtRelease(
-  birthYear?: number | null,
-  birthDate?: string | null,
-  premiereDate?: string,
-  movieYear?: number
-): number | null {
-  // Prefer birthYear (simple year subtraction)
-  if (birthYear) {
-    const releaseYear = movieYear || (premiereDate ? new Date(premiereDate).getFullYear() : null);
-    if (!releaseYear) return null;
-    const age = releaseYear - birthYear;
-    return age >= 0 ? age : null;
-  }
-  // Fall back to birthDate for precise calculation
-  if (!birthDate) return null;
-  let releaseDate: Date | null = null;
-  if (premiereDate) {
-    releaseDate = new Date(premiereDate);
-  } else if (movieYear) {
-    releaseDate = new Date(movieYear, 6, 1);
-  }
-  if (!releaseDate) return null;
-  const birth = new Date(birthDate);
-  if (isNaN(birth.getTime()) || isNaN(releaseDate.getTime())) return null;
-  let age = releaseDate.getFullYear() - birth.getFullYear();
-  const monthDiff = releaseDate.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && releaseDate.getDate() < birth.getDate())) {
-    age--;
-  }
-  return age >= 0 ? age : null;
 }
 
 export default function MovieDetailPage() {
@@ -855,7 +823,7 @@ export default function MovieDetailPage() {
                 photoPath={person.photoPath}
                 photoBlur={person.photoBlur}
                 personalRating={person.personalRating}
-                age={computeAgeAtRelease(person.birthYear, person.birthDate, movie.premiereDate, movie.year)}
+                age={person.ageAtRelease}
                 size="movie"
               />
             ))}
