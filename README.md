@@ -1,26 +1,75 @@
+[English](README.md) | [中文](README.zh-CN.md)
+
 # Kubby
 
-A self-hosted media server for managing and streaming your personal movie collection. Inspired by Jellyfin, built with Next.js.
+A self-hosted movie server with personal metadata features that Jellyfin doesn't have. Built with Next.js.
 
-## Features
+![Kubby screenshot](docs/screenshots/hero.png)
 
-- NFO + folder-based media library scanning (Kodi/Jellyfin compatible)
-- TMDB scraper for automatic metadata, posters, and actor photos
-- In-browser video playback with progress tracking
-- Multi-disc movie support
-- Personal rating system with custom dimensions
-- Actor detail pages with photo gallery
-- i18n support (English / Chinese)
-- External player integration (IINA, PotPlayer)
+## Basics
 
-## Quick Start (Development)
+- Jellyfin-style dark UI with familiar browse/detail/play layout
+- Drop-in compatible with existing Jellyfin and Kodi movie libraries (NFO + folder structure)
+- TMDB scraper for automatic metadata, posters, actor photos, and biographies
+- In-browser playback with progress tracking and multi-disc support
+- English / Chinese interface
+
+## What Kubby adds
+
+### Multi-dimension ratings
+
+Rate movies on your own dimensions — plot, cinematography, soundtrack, whatever you care about. Then sort your entire library by any single dimension.
+
+Got 500 movies and want something with great cinematography tonight? Sort by that dimension and pick from the top.
+
+![Multi-dimension ratings](docs/screenshots/dimension-ratings.png)
+
+### Poster and actor badges
+
+Your personal rating, resolution (4K/1080p/etc.), and actor tier (S/A/B/...) show directly on cards while browsing. All configurable per-user — turn off what you don't need.
+
+![Card badges](docs/screenshots/card-badges.png)
+
+### Actor photo gallery
+
+Upload photos for actors you follow. Justified row layout (Google Photos style) with a lightbox viewer. Not much more to say — it just works.
+
+![Actor gallery](docs/screenshots/actor-gallery.png)
+
+### Filmography sorted by age
+
+On actor detail pages, sort their filmography by the age they were at time of release. Useful when you want to trace someone's career chronologically or just curious what they looked like at 25.
+
+![Filmography by age](docs/screenshots/filmography-age.png)
+
+### External player
+
+Browser can't handle HEVC or DTS? One click opens IINA (macOS) or PotPlayer (Windows). Toggle between local file playback and streaming from server, depending on whether the player is on the same machine.
+
+![External player](docs/screenshots/external-player.png)
+
+### Video bookmarks
+
+Mark scenes with B (quick) or Shift+B (with icon, tags, note). Bookmarks show as colored dots on the progress bar. 9 built-in icons plus support for custom uploaded icons.
+
+Find your bookmarked scenes later from the movie detail page.
+
+![Video bookmarks](docs/screenshots/bookmarks.png)
+
+### Search with categories
+
+Search across movies, actors, and your bookmarks in one place. Filter by category to narrow results.
+
+![Enhanced search](docs/screenshots/search.png)
+
+## Quick start (development)
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — the setup wizard will guide you through creating an admin account and adding your first media library.
+Open [http://localhost:3000](http://localhost:3000) — the setup wizard handles admin account creation and media library setup.
 
 ## Installation (macOS)
 
@@ -34,9 +83,9 @@ Download `Kubby.dmg` from the [Releases](https://github.com/kubby-app/kubby/rele
 2. Drag **Kubby.app** into the **Applications** folder
 3. Eject the DMG
 
-### 3. First Launch
+### 3. First launch
 
-macOS will block unsigned apps downloaded from the internet. To open Kubby for the first time:
+macOS blocks unsigned apps by default. To open Kubby the first time:
 
 1. Open **Applications** folder, **right-click** Kubby → **Open**
 2. Click **Open** in the confirmation dialog
@@ -45,12 +94,12 @@ This is only needed once. After that, Kubby opens normally by double-clicking.
 
 Alternatively: System Settings → Privacy & Security → scroll down → click **Open Anyway**.
 
-### What Happens on Launch
+### What happens on launch
 
-- Kubby starts a local server at `http://localhost:3000`
-- Your browser opens automatically
-- The Kubby icon appears in the Dock and the menu bar (top right)
-- Data is stored in `~/Library/Application Support/Kubby/`
+- Starts a local server at `http://localhost:3000`
+- Opens your browser automatically
+- Shows a Kubby icon in the Dock and menu bar (top right)
+- Stores data in `~/Library/Application Support/Kubby/`
 
 ### Quit
 
@@ -61,7 +110,7 @@ Right-click the Kubby icon in the Dock → **Quit**, or click the tray icon in t
 1. Drag Kubby from Applications to Trash
 2. (Optional) Delete user data: `rm -rf ~/Library/Application\ Support/Kubby`
 
-### About macOS Gatekeeper
+### About macOS gatekeeper
 
 | Status | User Experience |
 |--------|----------------|
@@ -83,16 +132,16 @@ Download `KubbySetup.exe` from the [Releases](https://github.com/kubby-app/kubby
 
 The installer creates Start Menu and Desktop shortcuts.
 
-### 3. First Launch
+### 3. First launch
 
-Windows SmartScreen may show a warning for unsigned apps. Click **More info** → **Run anyway**.
+Windows SmartScreen may warn about unsigned apps. Click **More info** → **Run anyway**.
 
-### What Happens on Launch
+### What happens on launch
 
-- Kubby starts a local server at `http://localhost:3000`
-- Your browser opens automatically
-- The Kubby icon appears in the system tray (bottom-right)
-- Data is stored in `%LOCALAPPDATA%\Kubby\`
+- Starts a local server at `http://localhost:3000`
+- Opens your browser automatically
+- Shows a Kubby icon in the system tray (bottom-right)
+- Stores data in `%LOCALAPPDATA%\Kubby\`
 
 ### Quit
 
@@ -100,17 +149,17 @@ Right-click the Kubby icon in the system tray → **Quit**. This stops all backg
 
 ### Upgrade
 
-Run the new `KubbySetup.exe` — it automatically closes the running instance and overwrites the old installation. Your data is preserved.
+Run the new `KubbySetup.exe`. It closes the running instance, overwrites the old install, and keeps your data.
 
 ### Uninstall
 
 Control Panel → Programs and Features → Kubby → Uninstall. Or use the **Uninstall Kubby** shortcut in Start Menu.
 
-User data in `%LOCALAPPDATA%\Kubby\` is preserved. Delete it manually if you want a clean removal.
+User data in `%LOCALAPPDATA%\Kubby\` is kept. Delete it manually if you want a clean removal.
 
 ## Installation (Docker / Linux / NAS)
 
-Supports **amd64** and **arm64** — works on Synology, QNAP, Unraid, and any Linux server.
+Supports **amd64** and **arm64**. Works on Synology, QNAP, Unraid, and any Linux server.
 
 ### Docker Compose (recommended)
 
@@ -160,7 +209,7 @@ docker run -d \
 docker compose pull && docker compose up -d
 ```
 
-### Build Image Locally
+### Build image locally
 
 ```bash
 git clone <repo> && cd kubby
@@ -168,7 +217,7 @@ docker build -t kubby .
 docker run -d -p 3000:3000 -v kubby-data:/data kubby
 ```
 
-## Build from Source
+## Build from source
 
 ### Prerequisites
 
@@ -192,7 +241,7 @@ Each package (~80-90 MB) contains:
 
 Add `--skip-build` to skip Next.js rebuild, `--skip-download` to reuse cached binaries. Windows can be cross-built from macOS (native modules are automatically swapped).
 
-### Cross-platform Packaging
+### Cross-platform packaging
 
 ```bash
 npx tsx scripts/package.ts --platform darwin-arm64   # macOS Apple Silicon
@@ -200,7 +249,7 @@ npx tsx scripts/package.ts --platform darwin-x64     # macOS Intel
 npx tsx scripts/package.ts --platform win-x64        # Windows
 ```
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -212,4 +261,4 @@ npx tsx scripts/package.ts --platform win-x64        # Windows
 
 ## License
 
-MIT
+GPL-2.0

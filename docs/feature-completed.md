@@ -670,3 +670,34 @@
 - Scraper path: scrapeMovie() → fetchPersonDetails() → actorBios → scanLibrary() → getOrCreatePerson(bio)
 - Supplement path: fetchMovieCredits() → fetchPersonDetails() → supplementBios → getOrCreatePerson(bio)
 - NFO-only path: parseNfo() → actor.tmdbId → getOrCreatePerson({ tmdbId })
+
+## 2026-02-26: README Overhaul — Bilingual, Feature Showcase, Humanized, GPL-2.0
+
+### Bilingual README with language switcher
+- `README.md` (English) and `README.zh-CN.md` (Chinese) with cross-links at the top
+- Both files share identical structure and screenshot placeholders
+
+### Feature showcase restructure
+- New "Basics" section: Jellyfin-style UI, Kodi/Jellyfin library compatibility, TMDB scraper
+- New "What Kubby adds" section with 7 enhanced features (each with scenario description + screenshot placeholder):
+  1. Multi-dimension ratings with per-dimension sorting
+  2. Poster and actor card badges (rating/resolution/tier)
+  3. Actor photo gallery (justified row + lightbox)
+  4. Filmography sorted by actor age at release
+  5. External player integration (IINA/PotPlayer, local/stream toggle)
+  6. Video bookmarks with custom icons
+  7. Category-based search (movies/actors/bookmarks)
+- Created `docs/screenshots/` directory for future screenshot assets
+- GitHub GIF support confirmed for animated demos
+
+### Humanizer pass (AI writing pattern removal)
+- Applied humanizer skill to both English and Chinese versions
+- Sentence-case headings throughout (pattern #16)
+- Removed "Kubby" subject repetition in bullet lists
+- Chinese version uses conversational tone: "跑一下"、"排个序"、"关掉就好" instead of formal phrasing
+- No promotional language, no vague attributions
+
+### License change
+- Changed from MIT to GPL-2.0
+- Created `LICENSE` file with GPL-2.0 full text
+- Updated license in both README.md and README.zh-CN.md
