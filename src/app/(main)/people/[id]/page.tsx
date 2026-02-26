@@ -247,7 +247,7 @@ export default function PersonDetailPage() {
   }
 
   return (
-    <div className="h-full overflow-y-scroll">
+    <div className="h-full overflow-y-scroll scrollbar-hide">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — matches movie detail layout */}
       <div className="relative min-h-[750px] w-full overflow-hidden">

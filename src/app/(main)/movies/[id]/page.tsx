@@ -313,7 +313,7 @@ export default function MovieDetailPage() {
       : movie.tags || [];
 
   return (
-    <div className="h-full overflow-y-scroll">
+    <div className="h-full overflow-y-scroll scrollbar-hide">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — Jellyfin style */}
       <div className="relative min-h-[750px] w-full overflow-hidden">
@@ -649,7 +649,7 @@ export default function MovieDetailPage() {
 
       {/* Discs Section (multi-disc movies only) */}
       {(movie.discCount ?? 1) > 1 && movie.discs && movie.discs.length > 0 && (
-        <section className="px-20 mt-[10px]">
+        <section className="px-20 mt-4">
           <h2 className="text-xl font-semibold text-foreground mb-4">
             {t("discs")} ({movie.discs.length})
           </h2>
@@ -793,7 +793,7 @@ export default function MovieDetailPage() {
 
       {/* Bookmarks Section */}
       {bookmarks.length > 0 && (
-        <section className="px-20 mt-[10px]">
+        <section className="px-20 mt-4">
           <ScrollRow title={`${t("bookmarks")} (${bookmarks.length})`}>
             {bookmarks.map((bm) => (
               <BookmarkCard
@@ -814,7 +814,7 @@ export default function MovieDetailPage() {
 
       {/* Cast Section */}
       {movie.cast.length > 0 && (
-        <section className="px-20 mt-[10px]">
+        <section className="px-20 mt-4">
           <ScrollRow title={t("cast")}>
             {movie.cast.map((person) => (
               <PersonCard
@@ -835,7 +835,7 @@ export default function MovieDetailPage() {
 
       {/* Recommended Movies */}
       {recommended.length > 0 && (
-        <section className={`flex flex-col gap-4 px-20 pb-12 ${movie.cast.length > 0 ? "pt-4" : "mt-[10px]"}`}>
+        <section className={`flex flex-col gap-4 px-20 pb-12 ${movie.cast.length > 0 ? "pt-4" : "mt-4"}`}>
           <h2 className="text-xl font-semibold text-foreground">
             {t("youMayAlsoLike")}
           </h2>
