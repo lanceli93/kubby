@@ -1,1 +1,1 @@
-(no pending feature requests)
+在搜索界面再点击搜索图标应该跳转到最上方

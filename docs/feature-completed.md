@@ -701,3 +701,18 @@
 - Changed from MIT to GPL-2.0
 - Created `LICENSE` file with GPL-2.0 full text
 - Updated license in both README.md and README.zh-CN.md
+
+## 2026-02-26: Search Genre/Tag Badge Fix & Backdrop Quality Improvement
+
+### Search genre/tag preview badges
+- Genre and tag preview movies in search results now show rating and resolution badges (previously missing)
+- Search API: genre/tag preview queries now JOIN `user_movie_data` for `personal_rating` and SELECT `community_rating`, `video_width`, `video_height`
+- Frontend: `GenreResult.previewMovies` type extended, `MovieCard` receives `rating`, `personalRating`, `videoWidth`, `videoHeight` props
+- Badges now respect user badge settings consistently across all views
+
+### TMDB backdrop resolution upgrade
+- Changed `TMDB_BACKDROP_SIZE` from `w1280` (1280×720) to `original` (typically 1920×1080+)
+- Matches Jellyfin's approach of downloading full-resolution backdrop images from TMDB
+
+### Library cover card size increase
+- Library cover cards enlarged from 320×180 to 360×200 (16:9 ratio preserved)

@@ -326,7 +326,7 @@ function SearchContent() {
   }
 
   return (
-    <div className="h-full overflow-y-scroll">
+    <div id="search-scroll-container" className="h-full overflow-y-scroll">
       <div className="flex flex-col gap-4 px-12 pt-12 pb-6">
         {/* Search bar */}
         <div className="flex items-center justify-center gap-3 pt-10">

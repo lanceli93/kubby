@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Search, ArrowLeft, House, Menu, User } from "lucide-react";
@@ -126,6 +126,13 @@ export function AppHeader() {
       <div className="flex items-center gap-4">
         <Link
           href="/search"
+          onClick={(e) => {
+            if (pathname === "/search") {
+              e.preventDefault();
+              const el = document.getElementById("search-scroll-container");
+              if (el) el.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
           className={`transition-colors ${
             isTransparent
               ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
