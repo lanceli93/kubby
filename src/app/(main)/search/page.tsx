@@ -45,7 +45,7 @@ interface Person {
 interface GenreResult {
   name: string;
   movieCount: number;
-  previewMovies: { id: string; title: string; posterPath?: string | null; year?: number | null }[];
+  previewMovies: { id: string; title: string; posterPath?: string | null; year?: number | null; communityRating?: number | null; personalRating?: number | null; videoWidth?: number | null; videoHeight?: number | null }[];
 }
 
 interface SearchResults {
@@ -551,6 +551,10 @@ function SearchContent() {
                                 title={movie.title}
                                 year={movie.year ?? undefined}
                                 posterPath={movie.posterPath}
+                                rating={movie.communityRating}
+                                personalRating={movie.personalRating}
+                                videoWidth={movie.videoWidth}
+                                videoHeight={movie.videoHeight}
                               />
                             ))}
                           </ScrollRow>
@@ -642,6 +646,10 @@ function SearchContent() {
                                 title={movie.title}
                                 year={movie.year ?? undefined}
                                 posterPath={movie.posterPath}
+                                rating={movie.communityRating}
+                                personalRating={movie.personalRating}
+                                videoWidth={movie.videoWidth}
+                                videoHeight={movie.videoHeight}
                               />
                             ))}
                           </ScrollRow>

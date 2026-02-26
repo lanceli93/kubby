@@ -147,6 +147,10 @@ export async function GET(request: NextRequest) {
         return { name: g.name, movieCount: g.movie_count, previewMovies: [] };
       }
 
+      const userJoin = userId
+        ? sql`LEFT JOIN user_movie_data umd ON umd.movie_id = m.id AND umd.user_id = ${userId}`
+        : sql`LEFT JOIN user_movie_data umd ON 0`;
+
       const previewMovies = db.all<{
         id: string;
         title: string;
@@ -154,10 +158,17 @@ export async function GET(request: NextRequest) {
         folder_path: string;
         poster_mtime: number | null;
         year: number | null;
+        community_rating: number | null;
+        personal_rating: number | null;
+        video_width: number | null;
+        video_height: number | null;
       }>(sql`
-        SELECT m.id, m.title, m.poster_path, m.folder_path, m.poster_mtime, m.year
-        FROM movies m, json_each(m.genres) je
-        WHERE je.value = ${g.name}
+        SELECT m.id, m.title, m.poster_path, m.folder_path, m.poster_mtime, m.year,
+               m.community_rating, umd.personal_rating, m.video_width, m.video_height
+        FROM movies m
+        JOIN json_each(m.genres) je ON je.value = ${g.name}
+        ${userJoin}
+        WHERE 1=1
         ${libraryCondition}
         ORDER BY m.community_rating DESC NULLS LAST
         LIMIT 6
@@ -174,6 +185,10 @@ export async function GET(request: NextRequest) {
             m.poster_mtime
           ),
           year: m.year,
+          communityRating: m.community_rating,
+          personalRating: m.personal_rating,
+          videoWidth: m.video_width,
+          videoHeight: m.video_height,
         })),
       };
     });
@@ -221,6 +236,10 @@ export async function GET(request: NextRequest) {
         return { name: t.name, movieCount: t.movie_count, previewMovies: [] };
       }
 
+      const userJoin = userId
+        ? sql`LEFT JOIN user_movie_data umd ON umd.movie_id = m.id AND umd.user_id = ${userId}`
+        : sql`LEFT JOIN user_movie_data umd ON 0`;
+
       const previewMovies = db.all<{
         id: string;
         title: string;
@@ -228,10 +247,17 @@ export async function GET(request: NextRequest) {
         folder_path: string;
         poster_mtime: number | null;
         year: number | null;
+        community_rating: number | null;
+        personal_rating: number | null;
+        video_width: number | null;
+        video_height: number | null;
       }>(sql`
-        SELECT m.id, m.title, m.poster_path, m.folder_path, m.poster_mtime, m.year
-        FROM movies m, json_each(m.tags) je
-        WHERE je.value = ${t.name}
+        SELECT m.id, m.title, m.poster_path, m.folder_path, m.poster_mtime, m.year,
+               m.community_rating, umd.personal_rating, m.video_width, m.video_height
+        FROM movies m
+        JOIN json_each(m.tags) je ON je.value = ${t.name}
+        ${userJoin}
+        WHERE 1=1
         ${libraryCondition}
         ORDER BY m.community_rating DESC NULLS LAST
         LIMIT 6
@@ -248,6 +274,10 @@ export async function GET(request: NextRequest) {
             m.poster_mtime
           ),
           year: m.year,
+          communityRating: m.community_rating,
+          personalRating: m.personal_rating,
+          videoWidth: m.video_width,
+          videoHeight: m.video_height,
         })),
       };
     });
