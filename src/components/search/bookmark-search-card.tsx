@@ -31,6 +31,8 @@ export interface CustomIconData {
 interface BookmarkSearchCardProps {
   bookmark: BookmarkSearchResult;
   customIcons?: CustomIconData[];
+  externalEnabled?: boolean;
+  onExternalLaunch?: (movieId: string, disc?: number, startSeconds?: number) => void;
 }
 
 function formatTimestamp(seconds: number): string {
@@ -40,7 +42,7 @@ function formatTimestamp(seconds: number): string {
   return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCardProps) {
+export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onExternalLaunch }: BookmarkSearchCardProps) {
   const builtin = getBuiltinIcon(bookmark.iconType || "bookmark");
   const customIcon = !builtin
     ? customIcons?.find((c) => c.id === bookmark.iconType)
@@ -89,8 +91,8 @@ export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCard
     return <FallbackIcon className={`h-3.5 w-3.5 ${fallback.color}`} />;
   }
 
-  return (
-    <Link href={href} className="group flex-shrink-0">
+  const card = (
+    <>
       <div className="relative w-[280px] overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
         {/* Image */}
         {imageSrc ? (
@@ -143,6 +145,31 @@ export function BookmarkSearchCard({ bookmark, customIcons }: BookmarkSearchCard
           {bookmark.note}
         </p>
       )}
+    </>
+  );
+
+  if (externalEnabled && onExternalLaunch) {
+    return (
+      <div
+        onClick={() => onExternalLaunch(bookmark.movieId, bookmark.discNumber ?? undefined, bookmark.timestampSeconds)}
+        className="group flex-shrink-0 cursor-pointer text-left"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onExternalLaunch(bookmark.movieId, bookmark.discNumber ?? undefined, bookmark.timestampSeconds);
+          }
+        }}
+      >
+        {card}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={href} className="group flex-shrink-0">
+      {card}
     </Link>
   );
 }

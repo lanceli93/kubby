@@ -770,7 +770,10 @@ export default function PlayerPage() {
                   ) : customIcon ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={resolveImageSrc(customIcon.imagePath)} alt="" className={`h-5 w-5 object-contain ${subtleMarkers ? "brightness-200 grayscale" : ""}`} />
-                  ) : null}
+                  ) : (() => {
+                    const FallbackIcon = BUILTIN_BOOKMARK_ICONS[0].icon;
+                    return <FallbackIcon className="h-5 w-5" style={{ color: markerColor }} />;
+                  })()}
                 </div>
                 {/* Colored dot */}
                 <div

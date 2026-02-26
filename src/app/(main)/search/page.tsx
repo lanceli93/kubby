@@ -13,6 +13,7 @@ import {
   type BookmarkSearchResult,
 } from "@/components/search/bookmark-search-card";
 import { useTranslations } from "next-intl";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -93,6 +94,40 @@ function SearchContent() {
   const [libraryId, setLibraryId] = useState(initialLibraryId);
   const debouncedQuery = useDebounce(query, 300);
   const t = useTranslations("search");
+
+  // External player
+  const { data: prefs } = useUserPreferences();
+  const SUPPORTED_PLAYERS = ["IINA", "PotPlayer"];
+  const externalPlayerName = SUPPORTED_PLAYERS.includes(prefs?.externalPlayerName || "") ? prefs!.externalPlayerName : null;
+  const externalEnabled = !!(prefs?.externalPlayerEnabled && externalPlayerName);
+  const isLocalhost = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "::1");
+  const externalPlayerMode = (!isLocalhost || (prefs?.externalPlayerMode || "local") === "stream") ? "stream" : "local";
+
+  const launchExternalForMovie = useCallback(async (movieId: string, disc?: number, startSeconds?: number) => {
+    if (!externalEnabled) return;
+
+    if (externalPlayerMode === "stream") {
+      const streamUrl = disc && disc > 1
+        ? `${window.location.origin}/api/movies/${movieId}/stream?disc=${disc}`
+        : `${window.location.origin}/api/movies/${movieId}/stream`;
+      let protocolUrl = streamUrl;
+      if (externalPlayerName === "IINA") {
+        protocolUrl = `iina://weblink?url=${encodeURIComponent(streamUrl)}${startSeconds ? `&start=${startSeconds}` : ""}`;
+      } else if (externalPlayerName === "PotPlayer") {
+        protocolUrl = `potplayer://${streamUrl}${startSeconds ? ` /seek=${startSeconds * 1000}` : ""}`;
+      }
+      window.location.href = protocolUrl;
+      return;
+    }
+
+    // Local mode: server-side launch
+    await fetch(`/api/movies/${movieId}/play-external`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ disc, startSeconds }),
+    });
+  }, [externalEnabled, externalPlayerMode, externalPlayerName]);
 
   // "Load more" state — accumulated extra items per section
   const [extraMovies, setExtraMovies] = useState<Movie[]>([]);
@@ -711,6 +746,8 @@ function SearchContent() {
                           <BookmarkSearchCard
                             key={bookmark.id}
                             bookmark={bookmark}
+                            externalEnabled={externalEnabled}
+                            onExternalLaunch={launchExternalForMovie}
                           />
                         ))}
                       </ScrollRow>
