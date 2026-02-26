@@ -388,9 +388,14 @@ export default function SettingsPage() {
           </div>
         )}
         {playerName && (
-          <p className="text-xs text-yellow-500/80">
-            {t("externalPlayerWarning")}
-          </p>
+          <>
+            <p className="text-xs text-yellow-500/80">
+              {t("externalPlayerWarning")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("externalPlayerToggleHint")}
+            </p>
+          </>
         )}
         <button
           type="button"

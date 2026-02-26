@@ -148,6 +148,7 @@
     "playerModeLocalDesc": "Launch player on the server machine with local file path. Only works when browsing from the same machine.",
     "playerModeStreamDesc": "Open player via URL protocol (iina://, potplayer://). Works from any device with the player installed.",
     "externalPlayerWarning": "External players cannot report playback progress back to Kubby. Your watch progress will only be tracked up to when you switch to the default web player.",
+    "externalPlayerToggleHint": "Tip: You can quickly toggle the external player on/off via the monitor icon on each movie's detail page. When the icon is dimmed, the web player will be used even if an external player is configured here.",
     "saving": "Saving...",
     "savePlaybackSettings": "Save",
     "playbackSettingsSaved": "Playback settings saved"

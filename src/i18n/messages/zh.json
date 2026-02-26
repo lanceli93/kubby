@@ -148,6 +148,7 @@
     "playerModeLocalDesc": "在服务器本机通过本地文件路径启动播放器。仅在服务器本机浏览时可用。",
     "playerModeStreamDesc": "通过 URL 协议（iina://、potplayer://）唤起播放器。任何安装了该播放器的设备均可使用。",
     "externalPlayerWarning": "外部播放器无法将播放进度回传给 Kubby。观看进度仅记录到切换回默认 Web 播放器时的位置。",
+    "externalPlayerToggleHint": "提示：你可以在每部影片的详情页通过显示器图标快速开关外部播放器。当图标变暗时，即使此处已配置外部播放器，也会使用网页播放器。",
     "saving": "保存中...",
     "savePlaybackSettings": "保存",
     "playbackSettingsSaved": "播放设置已保存"
