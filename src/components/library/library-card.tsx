@@ -95,17 +95,17 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
     <Link
       href={`/movies?libraryId=${id}`}
       className="group flex-shrink-0 transition-transform hover:scale-[1.03]"
-      style={{ width: 320 }}
+      style={{ width: 360 }}
     >
       {/* Cover image area */}
-      <div className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)]" style={{ height: 180 }}>
+      <div className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)]" style={{ height: 200 }}>
         {coverImage ? (
           <Image
             src={resolveImageSrc(coverImage)}
             alt={name}
             fill
             className="object-cover"
-            sizes="320px"
+            sizes="360px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

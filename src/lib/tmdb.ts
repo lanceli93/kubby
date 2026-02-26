@@ -21,7 +21,7 @@ async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<Respo
 }
 
 export const TMDB_POSTER_SIZE = "w500";
-export const TMDB_BACKDROP_SIZE = "w1280";
+export const TMDB_BACKDROP_SIZE = "original";
 export const TMDB_PROFILE_SIZE = "w185";
 
 export interface TmdbCastMember {
