@@ -2,6 +2,8 @@ import path from "path";
 import {
   searchMovie,
   getMovieDetails,
+  fetchMovieImages,
+  pickBestBackdrop,
   fetchPersonDetails,
   downloadTmdbImage,
   getPersonPhotoPath,
@@ -82,16 +84,30 @@ export async function scrapeMovie(
       }
     }
 
-    // 4. Download backdrop/fanart
-    if (details.backdrop_path) {
-      try {
+    // 4. Download backdrop/fanart — pick the best from all available backdrops
+    try {
+      const images = await fetchMovieImages(bestMatch.id, apiKey);
+      await delay(RATE_LIMIT_MS);
+      const bestBackdrop = pickBestBackdrop(images, details.backdrop_path);
+      if (bestBackdrop) {
         await downloadTmdbImage(
-          details.backdrop_path,
+          bestBackdrop,
           path.join(movieDir, "fanart.jpg"),
           TMDB_BACKDROP_SIZE
         );
-      } catch (e) {
-        console.warn(`Failed to download fanart for ${title}:`, e);
+      }
+    } catch (e) {
+      // Fallback to default backdrop_path if images endpoint fails
+      if (details.backdrop_path) {
+        try {
+          await downloadTmdbImage(
+            details.backdrop_path,
+            path.join(movieDir, "fanart.jpg"),
+            TMDB_BACKDROP_SIZE
+          );
+        } catch (e2) {
+          console.warn(`Failed to download fanart for ${title}:`, e2);
+        }
       }
     }
 

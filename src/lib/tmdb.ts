@@ -147,6 +147,61 @@ export async function getMovieDetails(
   return res.json();
 }
 
+// ─── Movie Images (for best backdrop selection) ────────────────
+
+export interface TmdbImage {
+  aspect_ratio: number;
+  height: number;
+  width: number;
+  iso_639_1: string | null;
+  file_path: string;
+  vote_average: number;
+  vote_count: number;
+}
+
+export interface TmdbMovieImages {
+  backdrops: TmdbImage[];
+  posters: TmdbImage[];
+  logos: TmdbImage[];
+}
+
+export async function fetchMovieImages(
+  tmdbId: number,
+  apiKey: string
+): Promise<TmdbMovieImages> {
+  // No language param — this returns images in ALL languages
+  const url = `${TMDB_BASE_URL}/movie/${tmdbId}/images?api_key=${apiKey}`;
+  const res = await fetchWithRetry(url);
+  if (!res.ok) throw new Error(`TMDb images error: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+/**
+ * Select the best backdrop from TMDB images.
+ * Priority: no-text images (iso_639_1 is null) with highest vote_average.
+ * Falls back to the default backdrop_path if no good candidate.
+ */
+export function pickBestBackdrop(
+  images: TmdbMovieImages,
+  fallbackPath: string | null
+): string | null {
+  const backdrops = images.backdrops;
+  if (!backdrops || backdrops.length === 0) return fallbackPath;
+
+  // Prefer textless backdrops (iso_639_1 === null), sorted by vote_average desc
+  const textless = backdrops
+    .filter((img) => img.iso_639_1 === null)
+    .sort((a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count);
+
+  if (textless.length > 0) return textless[0].file_path;
+
+  // Fall back to highest-voted backdrop regardless of language
+  const sorted = [...backdrops].sort(
+    (a, b) => b.vote_average - a.vote_average || b.vote_count - a.vote_count
+  );
+  return sorted[0].file_path;
+}
+
 export async function validateApiKey(apiKey: string): Promise<boolean> {
   try {
     const url = `${TMDB_BASE_URL}/configuration?api_key=${apiKey}`;
