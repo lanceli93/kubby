@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+import os from "os";
 import { db } from "@/lib/db";
 import { userPreferences } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -19,7 +20,7 @@ export async function GET() {
       .where(eq(userPreferences.userId, session.user.id))
       .get();
 
-    const serverPlatform = process.platform; // "darwin" | "win32" | "linux"
+    const serverPlatform = os.platform(); // "darwin" | "win32" | "linux"
 
     if (!row) {
       return NextResponse.json({

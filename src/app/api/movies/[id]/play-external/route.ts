@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { execFile } from "child_process";
 import { existsSync } from "fs";
+import os from "os";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, userPreferences, userMovieData } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -88,7 +89,7 @@ export async function POST(
     const startSeconds = overrideStartSeconds ?? userData?.playbackPositionSeconds ?? 0;
     const playerName = prefs.externalPlayerName;
     const playerPath = prefs.externalPlayerPath;
-    const platform = process.platform;
+    const platform = os.platform();
 
     // Build and execute launch command
     try {

@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
   const requestedPath = searchParams.get("path");
 
   // Special case: on Windows, if no path or path is "drives", show drive list
-  if (process.platform === "win32" && (!requestedPath || requestedPath === "drives")) {
+  if (os.platform() === "win32" && (!requestedPath || requestedPath === "drives")) {
     const drives = getWindowsDrives();
     return NextResponse.json({
       current: "My Computer",
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
 
     const parent = path.dirname(normalized);
     // On Windows, if at drive root (e.g. C:\), parent should go to drive list
-    const isAtDriveRoot = process.platform === "win32" && /^[A-Z]:\\$/.test(normalized);
+    const isAtDriveRoot = os.platform() === "win32" && /^[A-Z]:\\$/.test(normalized);
 
     return NextResponse.json({
       current: normalized,
