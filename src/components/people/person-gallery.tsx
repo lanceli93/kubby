@@ -28,7 +28,6 @@ import {
   rectSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 interface GalleryImage {
   filename: string;
@@ -39,58 +38,68 @@ const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".g
 const GALLERY_ROW_HEIGHT = 360;
 const GALLERY_GAP = 6;
 
-// ── Sortable grid item ──
-function SortableGalleryItem({
+// ── Justified-layout sortable item ──
+// Participates in DndContext for long-press drag activation,
+// but does NOT apply dnd-kit transform — the justified layout stays stable.
+function JustifiedSortableItem({
   image,
-  gridSize,
+  width,
+  height,
+  isDragActive,
+  onClick,
   onDelete,
+  deleteTitle,
 }: {
   image: GalleryImage;
-  gridSize: number;
+  width: number;
+  height: number;
+  isDragActive: boolean;
+  onClick: () => void;
   onDelete: (filename: string) => void;
+  deleteTitle: string;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: image.filename });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    width: gridSize,
-    height: gridSize,
-    opacity: isDragging ? 0.3 : 1,
-  };
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
+    id: image.filename,
+  });
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
-      className="group relative overflow-hidden flex-shrink-0 touch-none"
+      className="group relative cursor-pointer overflow-hidden flex-shrink-0 touch-none"
+      style={{
+        width,
+        height,
+        // Dim the original item in-place when it's being dragged
+        opacity: isDragging ? 0.25 : 1,
+        // Dashed outline placeholder when being dragged
+        outline: isDragging ? "2px dashed rgba(255,255,255,0.2)" : "none",
+        outlineOffset: "-2px",
+        transition: "opacity 0.2s ease",
+      }}
+      onClick={isDragActive ? undefined : onClick}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={resolveImageSrc(image.path)}
         alt={image.filename}
-        className="h-full w-full object-cover"
+        className={`h-full w-full object-cover ${isDragActive ? "" : "transition-transform group-hover:scale-105"}`}
         draggable={false}
       />
-      <button
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(image.filename);
-        }}
-        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
-      >
-        <X className="h-4 w-4" />
-      </button>
+      {!isDragActive && (
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(image.filename);
+          }}
+          className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
+          title={deleteTitle}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -118,16 +127,15 @@ export function PersonGallery({
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Drag state
-  const [isDragging, setIsDragging] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [localOrder, setLocalOrder] = useState<string[]>([]);
 
   // Sync localOrder from galleryImages when not dragging
   useEffect(() => {
-    if (!isDragging) {
+    if (!activeId) {
       setLocalOrder(galleryImages.map((img) => img.filename));
     }
-  }, [galleryImages, isDragging]);
+  }, [galleryImages, activeId]);
 
   // Build filename→image lookup
   const imageMap = new Map(galleryImages.map((img) => [img.filename, img]));
@@ -224,7 +232,7 @@ export function PersonGallery({
     }
   }, []);
 
-  // ── Justified layout rows (normal mode) ──
+  // ── Justified layout rows ──
   const justifiedRows = (() => {
     if (containerWidth <= 0) return [];
     const rows: { filename: string; path: string; width: number; height: number }[][] = [];
@@ -270,13 +278,16 @@ export function PersonGallery({
     return rows;
   })();
 
-  // ── Grid size for drag mode ──
-  const GRID_COLS = containerWidth > 0 ? Math.max(2, Math.floor((containerWidth + GALLERY_GAP) / (200 + GALLERY_GAP))) : 4;
-  const gridSize = containerWidth > 0 ? Math.floor((containerWidth - (GRID_COLS - 1) * GALLERY_GAP) / GRID_COLS) : 200;
+  // Build a lookup for justified dimensions per filename (used for DragOverlay)
+  const justifiedSizeMap = new Map<string, { width: number; height: number }>();
+  for (const row of justifiedRows) {
+    for (const img of row) {
+      justifiedSizeMap.set(img.filename, { width: img.width, height: img.height });
+    }
+  }
 
   // ── DnD handlers ──
   const handleDragStart = (event: DragStartEvent) => {
-    setIsDragging(true);
     setActiveId(event.active.id as string);
   };
 
@@ -299,16 +310,15 @@ export function PersonGallery({
         return next;
       });
     }
-    setIsDragging(false);
     setActiveId(null);
   };
 
   const handleDragCancel = () => {
-    setIsDragging(false);
     setActiveId(null);
   };
 
   const activeImage = activeId ? imageMap.get(activeId) : null;
+  const activeSize = activeId ? justifiedSizeMap.get(activeId) : null;
 
   return (
     <>
@@ -356,49 +366,7 @@ export function PersonGallery({
 
         {galleryImages.length === 0 ? (
           <p className="text-sm text-muted-foreground">{tPerson("noPhotos")}</p>
-        ) : isDragging ? (
-          /* ── Grid layout during drag ── */
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <SortableContext items={localOrder} strategy={rectSortingStrategy}>
-              <div
-                className="flex flex-wrap"
-                style={{ gap: GALLERY_GAP }}
-              >
-                {orderedImages.map((img) => (
-                  <SortableGalleryItem
-                    key={img.filename}
-                    image={img}
-                    gridSize={gridSize}
-                    onDelete={setDeleteTarget}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-            <DragOverlay>
-              {activeImage ? (
-                <div
-                  style={{ width: gridSize, height: gridSize }}
-                  className="overflow-hidden opacity-80 shadow-2xl ring-2 ring-primary"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={resolveImageSrc(activeImage.path)}
-                    alt={activeImage.filename}
-                    className="h-full w-full object-cover"
-                    draggable={false}
-                  />
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
         ) : (
-          /* ── Normal justified layout with DndContext for long-press activation ── */
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -416,6 +384,7 @@ export function PersonGallery({
                         image={img}
                         width={img.width}
                         height={img.height}
+                        isDragActive={activeId !== null}
                         onClick={() =>
                           setLightboxIndex(
                             orderedImages.findIndex((g) => g.filename === img.filename)
@@ -429,6 +398,25 @@ export function PersonGallery({
                 ))}
               </div>
             </SortableContext>
+            <DragOverlay dropAnimation={null}>
+              {activeImage && activeSize ? (
+                <div
+                  style={{
+                    width: activeSize.width,
+                    height: activeSize.height,
+                  }}
+                  className="overflow-hidden rounded-md shadow-[0_12px_40px_rgba(0,0,0,0.6)] ring-2 ring-white/30"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolveImageSrc(activeImage.path)}
+                    alt={activeImage.filename}
+                    className="h-full w-full object-cover"
+                    draggable={false}
+                  />
+                </div>
+              ) : null}
+            </DragOverlay>
           </DndContext>
         )}
       </section>
@@ -506,59 +494,5 @@ export function PersonGallery({
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-// ── Justified-layout sortable wrapper ──
-// In normal (justified) mode each item still participates in DndContext
-// so a long-press can activate drag. Once drag starts the parent switches
-// to the grid layout.
-function JustifiedSortableItem({
-  image,
-  width,
-  height,
-  onClick,
-  onDelete,
-  deleteTitle,
-}: {
-  image: GalleryImage;
-  width: number;
-  height: number;
-  onClick: () => void;
-  onDelete: (filename: string) => void;
-  deleteTitle: string;
-}) {
-  const { attributes, listeners, setNodeRef } = useSortable({
-    id: image.filename,
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className="group relative cursor-pointer overflow-hidden flex-shrink-0 touch-none"
-      style={{ width, height }}
-      onClick={onClick}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={resolveImageSrc(image.path)}
-        alt={image.filename}
-        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-        draggable={false}
-      />
-      <button
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(image.filename);
-        }}
-        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
-        title={deleteTitle}
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
   );
 }
