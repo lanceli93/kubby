@@ -716,3 +716,11 @@
 
 ### Library cover card size increase
 - Library cover cards enlarged from 320×180 to 360×200 (16:9 ratio preserved)
+
+## 2026-02-27: Dimension Label Display Width Increase
+
+### Wider dimension label truncation limits
+- StarRatingDialog (movie + person): `w-[5rem]` → `w-[8rem]` (80px → 128px) — longer dimension names now visible in the popup rating dialog
+- MovieMetadataEditor "Personal" tab: `max-w-[12rem]` → `max-w-[16rem]` (192px → 256px)
+- PersonMetadataEditor "Personal" tab: `max-w-[12rem]` → `max-w-[16rem]` (192px → 256px)
+- Full text still available via hover tooltip on all truncated labels
