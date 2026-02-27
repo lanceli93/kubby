@@ -785,14 +785,14 @@ export default function PlayerPage() {
           })}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="relative flex items-center justify-between">
           {/* Time */}
           <span className="min-w-[120px] text-sm text-white/80">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
-          {/* Center controls */}
-          <div className="flex items-center gap-4">
+          {/* Center controls — absolutely centered regardless of left/right width */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
             <button
               onClick={() => { skip(-10); showOsd("−10s"); }}
               className="text-white/80 hover:text-white"
