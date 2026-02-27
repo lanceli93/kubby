@@ -190,6 +190,7 @@ export default function MovieDetailPage() {
       } else if (externalPlayerName === "PotPlayer") {
         protocolUrl = `potplayer://${streamUrl}${startSeconds ? ` /seek=${startSeconds * 1000}` : ""}`;
       }
+      console.log("[external-player] protocol URL:", protocolUrl);
       window.location.href = protocolUrl;
       setExternalToast(t("launchedIn", { player: externalPlayerName || "" }));
       setTimeout(() => setExternalToast(null), 3000);

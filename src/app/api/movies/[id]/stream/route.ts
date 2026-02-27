@@ -52,6 +52,8 @@ export async function GET(
     const contentType = mimeTypes[ext] || "video/mp4";
 
     const range = request.headers.get("range");
+    const ua = request.headers.get("user-agent") || "";
+    console.log(`[stream] ${id} | Range: ${range || "none"} | UA: ${ua} | Size: ${fileSize}`);
 
     if (range) {
       const parts = range.replace(/bytes=/, "").split("-");
