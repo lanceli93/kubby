@@ -10,33 +10,39 @@ import { count } from "drizzle-orm";
 
 // Enumerate available Windows drive letters
 function getWindowsDrives(): { name: string; path: string }[] {
+  // Try PowerShell first (reliable on Windows 10/11)
   try {
     const output = execSync(
-      "wmic logicaldisk get name",
-      { encoding: "utf-8", timeout: 5000 }
+      'powershell -NoProfile -Command "Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Root"',
+      { encoding: "utf-8", timeout: 10000 }
     );
     const drives: { name: string; path: string }[] = [];
     for (const line of output.split("\n")) {
-      const trimmed = line.trim();
-      if (/^[A-Z]:$/.test(trimmed)) {
-        drives.push({ name: `${trimmed}\\`, path: `${trimmed}\\` });
-      }
-    }
-    return drives.sort((a, b) => a.name.localeCompare(b.name));
-  } catch {
-    // Fallback: check common drive letters
-    const drives: { name: string; path: string }[] = [];
-    for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-      const drivePath = `${letter}:\\`;
-      try {
-        fs.accessSync(drivePath, fs.constants.R_OK);
+      const trimmed = line.trim().replace(/\\/g, "\\");
+      if (/^[A-Z]:\\?$/.test(trimmed)) {
+        const drivePath = trimmed.endsWith("\\") ? trimmed : `${trimmed}\\`;
         drives.push({ name: drivePath, path: drivePath });
-      } catch {
-        // Drive not available
       }
     }
-    return drives;
+    if (drives.length > 0) {
+      return drives.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  } catch {
+    // PowerShell not available, fall through
   }
+
+  // Fallback: probe all drive letters directly
+  const drives: { name: string; path: string }[] = [];
+  for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+    const drivePath = `${letter}:\\`;
+    try {
+      fs.accessSync(drivePath, fs.constants.R_OK);
+      drives.push({ name: drivePath, path: drivePath });
+    } catch {
+      // Drive not available
+    }
+  }
+  return drives;
 }
 
 // GET /api/filesystem?path=/some/dir - List directories at given path
