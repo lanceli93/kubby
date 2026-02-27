@@ -8,6 +8,51 @@ import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
+const ORDER_FILE = "order.json";
+
+function getGalleryDir(person: { photoPath: string | null; name: string }) {
+  return path.join(getPersonDir(person), "gallery");
+}
+
+/** Read order.json, reconcile with actual disk files, return final order */
+function reconcileOrder(galleryDir: string): string[] {
+  const diskFiles = fs.readdirSync(galleryDir)
+    .filter((f) => IMAGE_EXTENSIONS.has(path.extname(f).toLowerCase()))
+    .sort();
+
+  const orderPath = path.join(galleryDir, ORDER_FILE);
+  let saved: string[] = [];
+  if (fs.existsSync(orderPath)) {
+    try {
+      saved = JSON.parse(fs.readFileSync(orderPath, "utf-8"));
+      if (!Array.isArray(saved)) saved = [];
+    } catch {
+      saved = [];
+    }
+  }
+
+  const diskSet = new Set(diskFiles);
+  // Keep only files that still exist on disk
+  const kept = saved.filter((f) => diskSet.has(f));
+  // Append new files not in saved order
+  const keptSet = new Set(kept);
+  const appended = diskFiles.filter((f) => !keptSet.has(f));
+  const finalOrder = [...kept, ...appended];
+
+  // Persist reconciled order if it changed
+  if (
+    saved.length !== finalOrder.length ||
+    saved.some((f, i) => f !== finalOrder[i])
+  ) {
+    fs.writeFileSync(orderPath, JSON.stringify(finalOrder, null, 2));
+  }
+
+  return finalOrder;
+}
+
+function writeOrder(galleryDir: string, order: string[]) {
+  fs.writeFileSync(path.join(galleryDir, ORDER_FILE), JSON.stringify(order, null, 2));
+}
 
 // GET /api/people/[id]/gallery — list gallery images
 export async function GET(
@@ -21,18 +66,14 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const personDir = getPersonDir(person);
-    const galleryDir = path.join(personDir, "gallery");
+    const galleryDir = getGalleryDir(person);
 
     if (!fs.existsSync(galleryDir)) {
       return NextResponse.json({ images: [] });
     }
 
-    const files = fs.readdirSync(galleryDir)
-      .filter((f) => IMAGE_EXTENSIONS.has(path.extname(f).toLowerCase()))
-      .sort();
-
-    const images = files.map((filename) => ({
+    const order = reconcileOrder(galleryDir);
+    const images = order.map((filename) => ({
       filename,
       path: path.join(galleryDir, filename),
     }));
@@ -40,6 +81,53 @@ export async function GET(
     return NextResponse.json({ images });
   } catch (error) {
     console.error("Get gallery error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// PUT /api/people/[id]/gallery — save reordered gallery
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  try {
+    const person = db.select().from(people).where(eq(people.id, id)).get();
+    if (!person) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const order = body.order as string[];
+    if (!Array.isArray(order) || order.some((f) => typeof f !== "string")) {
+      return NextResponse.json({ error: "Invalid order" }, { status: 400 });
+    }
+
+    const galleryDir = getGalleryDir(person);
+    if (!fs.existsSync(galleryDir)) {
+      return NextResponse.json({ error: "Gallery not found" }, { status: 404 });
+    }
+
+    // Validate: only allow filenames that exist on disk
+    const diskFiles = new Set(
+      fs.readdirSync(galleryDir).filter((f) => IMAGE_EXTENSIONS.has(path.extname(f).toLowerCase()))
+    );
+    const validOrder = order.filter((f) => diskFiles.has(f));
+    // Append any disk files missing from the submitted order
+    const validSet = new Set(validOrder);
+    for (const f of diskFiles) {
+      if (!validSet.has(f)) validOrder.push(f);
+    }
+
+    writeOrder(galleryDir, validOrder);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Save gallery order error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -61,8 +149,7 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const personDir = getPersonDir(person);
-    const galleryDir = path.join(personDir, "gallery");
+    const galleryDir = getGalleryDir(person);
     fs.mkdirSync(galleryDir, { recursive: true });
 
     // Find the current max number prefix
@@ -92,6 +179,22 @@ export async function POST(
       fs.writeFileSync(destPath, buffer);
       created.push({ filename, path: destPath });
     }
+
+    // Append new filenames to order.json
+    const orderPath = path.join(galleryDir, ORDER_FILE);
+    let currentOrder: string[] = [];
+    if (fs.existsSync(orderPath)) {
+      try {
+        currentOrder = JSON.parse(fs.readFileSync(orderPath, "utf-8"));
+        if (!Array.isArray(currentOrder)) currentOrder = [];
+      } catch {
+        currentOrder = [];
+      }
+    }
+    for (const c of created) {
+      currentOrder.push(c.filename);
+    }
+    writeOrder(galleryDir, currentOrder);
 
     return NextResponse.json({ images: created });
   } catch (error) {
@@ -123,11 +226,25 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
 
-    const personDir = getPersonDir(person);
-    const filePath = path.join(personDir, "gallery", filename);
+    const galleryDir = getGalleryDir(person);
+    const filePath = path.join(galleryDir, filename);
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
+    }
+
+    // Remove from order.json
+    const orderPath = path.join(galleryDir, ORDER_FILE);
+    if (fs.existsSync(orderPath)) {
+      try {
+        let order: string[] = JSON.parse(fs.readFileSync(orderPath, "utf-8"));
+        if (Array.isArray(order)) {
+          order = order.filter((f) => f !== filename);
+          writeOrder(galleryDir, order);
+        }
+      } catch {
+        // ignore
+      }
     }
 
     return NextResponse.json({ success: true });

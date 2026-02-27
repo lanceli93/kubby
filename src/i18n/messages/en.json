@@ -306,7 +306,9 @@
     "deletePerson": "Delete Person",
     "confirmDeletePerson": "Are you sure you want to delete this person? All movie associations and personal ratings will be removed.",
     "deleteLocalFiles": "Also delete local files",
-    "deleteLocalFilesWarning": "The person's photo, fanart, and gallery folder will be permanently removed from disk"
+    "deleteLocalFilesWarning": "The person's photo, fanart, and gallery folder will be permanently removed from disk",
+    "reorderPhotos": "Hold to reorder",
+    "reorderSaved": "Order saved"
   },
   "metadata": {
     "editMetadata": "Edit Metadata",

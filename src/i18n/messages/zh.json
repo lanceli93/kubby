@@ -306,7 +306,9 @@
     "deletePerson": "删除人物",
     "confirmDeletePerson": "确定要删除此人物吗？所有电影关联和个人评分都将被移除。",
     "deleteLocalFiles": "同时删除本地文件",
-    "deleteLocalFilesWarning": "人物的头像、背景图和照片墙文件夹将从磁盘永久删除"
+    "deleteLocalFilesWarning": "人物的头像、背景图和照片墙文件夹将从磁盘永久删除",
+    "reorderPhotos": "长按拖拽排序",
+    "reorderSaved": "排序已保存"
   },
   "metadata": {
     "editMetadata": "编辑元数据",

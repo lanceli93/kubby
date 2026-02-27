@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight, Maximize2, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, Maximize2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
+import { PersonGallery } from "@/components/people/person-gallery";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import {
   Dialog,
@@ -86,14 +87,6 @@ export default function PersonDetailPage() {
   const personDimensions = prefs?.personRatingDimensions ?? [];
 
   const [fanartMode, setFanartMode] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
-  const galleryContainerRef = useRef<HTMLElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [imageDims, setImageDims] = useState<Record<string, { w: number; h: number }>>({});
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const { data: person } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
@@ -106,118 +99,6 @@ export default function PersonDetailPage() {
   });
   const galleryImages = galleryData?.images ?? [];
 
-  const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif", ".bmp"]);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const formData = new FormData();
-    for (const file of Array.from(files)) {
-      const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-      if (!IMAGE_EXTENSIONS.has(ext)) continue;
-      formData.append("file", file);
-    }
-    if (!formData.has("file")) return;
-    await fetch(`/api/people/${personId}/gallery`, { method: "POST", body: formData });
-    queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    if (folderInputRef.current) folderInputRef.current.value = "";
-  };
-
-  const handleDeleteGalleryImage = async () => {
-    if (!deleteTarget) return;
-    await fetch(`/api/people/${personId}/gallery`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename: deleteTarget }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
-    setDeleteTarget(null);
-  };
-
-  const handleLightboxKeyDown = useCallback((e: KeyboardEvent) => {
-    if (lightboxIndex === null) return;
-    if (e.key === "Escape") setLightboxIndex(null);
-    if (e.key === "ArrowLeft") setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i));
-    if (e.key === "ArrowRight") setLightboxIndex((i) => (i !== null && i < galleryImages.length - 1 ? i + 1 : i));
-  }, [lightboxIndex, galleryImages.length]);
-
-  useEffect(() => {
-    if (lightboxIndex !== null) {
-      document.addEventListener("keydown", handleLightboxKeyDown);
-      return () => document.removeEventListener("keydown", handleLightboxKeyDown);
-    }
-  }, [lightboxIndex, handleLightboxKeyDown]);
-
-  // Preload gallery image dimensions
-  useEffect(() => {
-    galleryImages.forEach((img) => {
-      if (imageDims[img.filename]) return;
-      const image = new window.Image();
-      image.onload = () => {
-        setImageDims((prev) => ({ ...prev, [img.filename]: { w: image.naturalWidth, h: image.naturalHeight } }));
-      };
-      image.src = resolveImageSrc(img.path);
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [galleryImages]);
-
-  // Track gallery container width via callback ref
-  const galleryRefCallback = useCallback((el: HTMLElement | null) => {
-    if (resizeObserverRef.current) {
-      resizeObserverRef.current.disconnect();
-      resizeObserverRef.current = null;
-    }
-    galleryContainerRef.current = el;
-    if (el) {
-      const observer = new ResizeObserver((entries) => {
-        setContainerWidth(entries[0].contentRect.width);
-      });
-      observer.observe(el);
-      resizeObserverRef.current = observer;
-    }
-  }, []);
-
-  const GALLERY_ROW_HEIGHT = 360;
-  const GALLERY_GAP = 6;
-
-  const justifiedRows = (() => {
-    if (containerWidth <= 0) return [];
-    const rows: { filename: string; path: string; width: number; height: number }[][] = [];
-    let currentRow: { filename: string; path: string; ratio: number }[] = [];
-    let currentRowWidth = 0;
-
-    for (const img of galleryImages) {
-      const d = imageDims[img.filename];
-      if (!d) continue;
-      const ratio = d.w / d.h;
-      currentRow.push({ ...img, ratio });
-      currentRowWidth += ratio * GALLERY_ROW_HEIGHT + (currentRow.length > 1 ? GALLERY_GAP : 0);
-
-      if (currentRowWidth >= containerWidth && currentRow.length > 1) {
-        const totalGap = (currentRow.length - 1) * GALLERY_GAP;
-        const totalRatio = currentRow.reduce((s, r) => s + r.ratio, 0);
-        const rowH = (containerWidth - totalGap) / totalRatio;
-        rows.push(currentRow.map((r) => ({
-          filename: r.filename, path: r.path,
-          width: Math.floor(r.ratio * rowH), height: Math.floor(rowH),
-        })));
-        currentRow = [];
-        currentRowWidth = 0;
-      }
-    }
-    // Last row — cap at target height so it doesn't stretch
-    if (currentRow.length > 0) {
-      const totalGap = (currentRow.length - 1) * GALLERY_GAP;
-      const totalRatio = currentRow.reduce((s, r) => s + r.ratio, 0);
-      const rowH = Math.min((containerWidth - totalGap) / totalRatio, GALLERY_ROW_HEIGHT);
-      rows.push(currentRow.map((r) => ({
-        filename: r.filename, path: r.path,
-        width: Math.floor(r.ratio * rowH), height: Math.floor(rowH),
-      })));
-    }
-    return rows;
-  })();
 
   const deletePerson = useMutation({
     mutationFn: (opts?: { deleteFiles?: boolean }) =>
@@ -467,149 +348,7 @@ export default function PersonDetailPage() {
       </section>
 
       {/* Photo Gallery */}
-      <section ref={galleryRefCallback} className="flex flex-col gap-4 px-20 pb-12">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-foreground">
-            {tPerson("photos")}
-          </h2>
-          <span className="text-sm text-[#666680]">
-            ({tPerson("photosCount", { count: galleryImages.length })})
-          </span>
-          <button
-            onClick={() => folderInputRef.current?.click()}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
-          >
-            <FolderOpen className="h-4 w-4" />
-            {tPerson("uploadFolder")}
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
-          >
-            <ImagePlus className="h-4 w-4" />
-            {tPerson("uploadPhotos")}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={handleUpload}
-          />
-          <input
-            ref={folderInputRef}
-            type="file"
-            className="hidden"
-            onChange={handleUpload}
-            {...{ webkitdirectory: "" } as React.InputHTMLAttributes<HTMLInputElement>}
-          />
-        </div>
-
-        {galleryImages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{tPerson("noPhotos")}</p>
-        ) : (
-          <div className="flex flex-col" style={{ gap: GALLERY_GAP }}>
-            {justifiedRows.map((row, rowIdx) => (
-              <div key={rowIdx} className="flex" style={{ gap: GALLERY_GAP }}>
-                {row.map((img) => (
-                  <div
-                    key={img.filename}
-                    className="group relative cursor-pointer overflow-hidden flex-shrink-0"
-                    style={{ width: img.width, height: img.height }}
-                    onClick={() => setLightboxIndex(galleryImages.findIndex((g) => g.filename === img.filename))}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={resolveImageSrc(img.path)}
-                      alt={img.filename}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTarget(img.filename);
-                      }}
-                      className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
-                      title={tPerson("deletePhoto")}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Lightbox */}
-      {lightboxIndex !== null && galleryImages[lightboxIndex] && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-          onClick={() => setLightboxIndex(null)}
-        >
-          <button
-            className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full text-white/70 hover:text-white cursor-pointer"
-            onClick={() => setLightboxIndex(null)}
-          >
-            <X className="h-6 w-6" />
-          </button>
-          {lightboxIndex > 0 && (
-            <button
-              className="absolute left-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxIndex(lightboxIndex - 1);
-              }}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-          )}
-          {lightboxIndex < galleryImages.length - 1 && (
-            <button
-              className="absolute right-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxIndex(lightboxIndex + 1);
-              }}
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={resolveImageSrc(galleryImages[lightboxIndex].path)}
-            alt={galleryImages[lightboxIndex].filename}
-            className="max-h-[90vh] max-w-[90vw] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
-
-      {/* Delete photo confirmation dialog */}
-      <Dialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>{tPerson("deletePhoto")}</DialogTitle>
-            <DialogDescription>{tPerson("confirmDeletePhoto")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={() => setDeleteTarget(null)}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              onClick={handleDeleteGalleryImage}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
-            >
-              {tCommon("confirm")}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PersonGallery personId={personId} galleryImages={galleryImages} />
 
       {/* Metadata editor dialog */}
       <PersonMetadataEditor
