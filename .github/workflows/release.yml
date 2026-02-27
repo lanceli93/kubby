@@ -12,12 +12,13 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macos-latest
             platform: darwin-arm64
             artifact_name: Kubby-arm64.dmg
-          - os: macos-13
+          - os: macos-latest
             platform: darwin-x64
             artifact_name: Kubby-x64.dmg
           - os: windows-latest
