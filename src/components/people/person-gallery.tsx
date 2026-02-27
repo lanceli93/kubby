@@ -420,10 +420,10 @@ export function PersonGallery({
           100% { background-position: 0% -100%; }
         }
         .gallery-indicator-beam {
-          animation: galleryIndicatorBeam 1.2s ease-in-out infinite;
+          animation: galleryIndicatorBeam 6s ease-in-out infinite;
         }
         .gallery-indicator-flow {
-          animation: galleryIndicatorPulse 2s ease-in-out infinite;
+          animation: galleryIndicatorPulse 7s ease-in-out infinite;
         }
         @keyframes galleryIndicatorPulse {
           0%, 100% { box-shadow: 0 0 8px 1px rgba(96,165,250,0.35); }
