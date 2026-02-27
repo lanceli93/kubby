@@ -1579,13 +1579,6 @@
           "width": "fill_container",
           "height": 64,
           "fill": "#111118",
-          "stroke": {
-            "align": "inside",
-            "thickness": {
-              "bottom": 1
-            },
-            "fill": "#ffffff15"
-          },
           "padding": [
             0,
             32
@@ -1662,13 +1655,13 @@
           "name": "TabBar",
           "width": "fill_container",
           "height": 44,
-          "fill": "#0d0d14",
+          "fill": "#111118",
           "stroke": {
             "align": "inside",
             "thickness": {
               "bottom": 1
             },
-            "fill": "#ffffff15"
+            "fill": "#ffffff10"
           },
           "justifyContent": "center",
           "alignItems": "end",
@@ -3332,13 +3325,6 @@
           "width": 1440,
           "height": 64,
           "fill": "#111118",
-          "stroke": {
-            "align": "inside",
-            "thickness": {
-              "bottom": 1
-            },
-            "fill": "#ffffff15"
-          },
           "padding": [
             0,
             32
@@ -4556,13 +4542,13 @@
           "name": "TabBar",
           "width": 1440,
           "height": 44,
-          "fill": "#0d0d14",
+          "fill": "#111118",
           "stroke": {
             "align": "inside",
             "thickness": {
               "bottom": 1
             },
-            "fill": "#ffffff15"
+            "fill": "#ffffff10"
           },
           "justifyContent": "center",
           "alignItems": "end",
@@ -9778,13 +9764,6 @@
           "width": "fill_container",
           "height": 64,
           "fill": "#111118",
-          "stroke": {
-            "align": "inside",
-            "thickness": {
-              "bottom": 1
-            },
-            "fill": "#ffffff15"
-          },
           "padding": [
             0,
             32
@@ -9861,13 +9840,13 @@
           "name": "TabBar",
           "width": "fill_container",
           "height": 44,
-          "fill": "#0d0d14",
+          "fill": "#111118",
           "stroke": {
             "align": "inside",
             "thickness": {
               "bottom": 1
             },
-            "fill": "#ffffff15"
+            "fill": "#ffffff10"
           },
           "justifyContent": "center",
           "alignItems": "end",
@@ -10535,13 +10514,6 @@
           "width": "fill_container",
           "height": 64,
           "fill": "#111118",
-          "stroke": {
-            "align": "inside",
-            "thickness": {
-              "bottom": 1
-            },
-            "fill": "#ffffff15"
-          },
           "padding": [
             0,
             32
@@ -10651,7 +10623,15 @@
               "id": "yZcjU",
               "name": "gTabBar",
               "width": "fill_container",
-              "height": 34,
+              "height": 44,
+              "fill": "#111118",
+              "stroke": {
+                "align": "inside",
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "#ffffff10"
+              },
               "justifyContent": "center",
               "alignItems": "end",
               "children": [
@@ -11691,13 +11671,6 @@
           "width": "fill_container",
           "height": 64,
           "fill": "#111118",
-          "stroke": {
-            "align": "inside",
-            "thickness": {
-              "bottom": 1
-            },
-            "fill": "#ffffff15"
-          },
           "padding": [
             0,
             32
@@ -11807,7 +11780,15 @@
               "id": "14OUR",
               "name": "lfTabBar",
               "width": "fill_container",
-              "height": 34,
+              "height": 44,
+              "fill": "#111118",
+              "stroke": {
+                "align": "inside",
+                "thickness": {
+                  "bottom": 1
+                },
+                "fill": "#ffffff10"
+              },
               "justifyContent": "center",
               "alignItems": "end",
               "children": [

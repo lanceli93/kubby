@@ -4,6 +4,12 @@
 
 A self-hosted movie server with personal metadata features that Jellyfin doesn't have. Built with Next.js.
 
+I've been using Jellyfin since 2022 and check the release notes every week, hoping to see long-requested features finally land. Unfortunately, development moves very slowly — for example, the highly requested lazy loading feature was first proposed in 2020 and still hasn't been implemented. That's understandable given Jellyfin's history: it evolved from Media Browser to Emby to Jellyfin over many years, so every change has ripple effects. So I decided to rebuild a similar local media system from scratch using AI and a modern tech stack — that's how Kubby was born.
+
+The UI was designed with [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev) (vibe design tool). All code was written by [Claude Code](https://claude.ai/claude-code) (with AWS Bedrock API) + Kiro. I didn't write a single line of code. Feature suggestions and discussions are always welcome!
+
+> **Important:** If you share a media library with Jellyfin, enable **Jellyfin Compatibility Mode** when adding the library (available in the setup wizard and library settings). Without it, Kubby will write and modify NFO files in your library folders, which can overwrite Jellyfin's metadata. With compatibility mode on, Kubby treats the library as read-only (no NFO writes) and copies actor photos to its own metadata directory instead of referencing Jellyfin's local paths.
+
 ![Kubby screenshot](docs/screenshots/hero.png)
 
 ## Basics
@@ -18,49 +24,57 @@ A self-hosted movie server with personal metadata features that Jellyfin doesn't
 
 ### Multi-dimension ratings
 
-Rate movies on your own dimensions — plot, cinematography, soundtrack, whatever you care about. Then sort your entire library by any single dimension.
-
-Got 500 movies and want something with great cinematography tonight? Sort by that dimension and pick from the top.
+Define your own rating dimensions for movies (plot, cinematography, soundtrack, ...) and actors (looks, acting skill, ...). Scores average into an overall rating that maps to a tier (SSS/S/A/B/...) on cards. You can sort your entire library by any single dimension, so finding "best cinematography" or "best acting skill" is one click.
 
 ![Multi-dimension ratings](docs/screenshots/dimension-ratings.png)
 
+![movie ratings](docs/screenshots/movie-rating.gif)
+
+![person ratings](docs/screenshots/person-rating.gif)
+
+![Sort library by any dimension](docs/screenshots/personal-rating-sort.png)
+
 ### Poster and actor badges
 
-Your personal rating, resolution (4K/1080p/etc.), and actor tier (S/A/B/...) show directly on cards while browsing. All configurable per-user — turn off what you don't need.
+Personal rating, resolution (4K/1080p/etc.), and actor tier show directly on cards. Turn off the ones you don't care about in settings.
 
-![Card badges](docs/screenshots/card-badges.png)
+![Badge settings](docs/screenshots/badge-settings.gif)
 
 ### Actor photo gallery
 
-Upload photos for actors you follow. Justified row layout (Google Photos style) with a lightbox viewer. Not much more to say — it just works.
+Upload photos for actors. Justified row layout (like Google Photos) with a lightbox viewer.
 
-![Actor gallery](docs/screenshots/actor-gallery.png)
+![Actor gallery](docs/screenshots/actor-gallery.gif)
 
 ### Filmography sorted by age
 
-On actor detail pages, sort their filmography by the age they were at time of release. Useful when you want to trace someone's career chronologically or just curious what they looked like at 25.
+Actor detail pages show how old they were in each film. Sort by age to trace their career chronologically, or just to see what they looked like at 25 vs 45.
 
 ![Filmography by age](docs/screenshots/filmography-age.png)
 
 ### External player
 
-Browser can't handle HEVC or DTS? One click opens IINA (macOS) or PotPlayer (Windows). Toggle between local file playback and streaming from server, depending on whether the player is on the same machine.
+For HEVC, DTS, or anything else the browser won't play — one click opens IINA (macOS) or PotPlayer (Windows). Supports both local file mode and streaming from server.
 
 ![External player](docs/screenshots/external-player.png)
 
 ### Video bookmarks
 
-Mark scenes with B (quick) or Shift+B (with icon, tags, note). Bookmarks show as colored dots on the progress bar. 9 built-in icons plus support for custom uploaded icons.
+Press B during playback for a quick bookmark, or Shift+B to pick an icon, add tags, and write a note. Bookmarks appear as colored dots on the progress bar. 9 built-in icons, and you can upload your own. All bookmarks are browsable from the movie detail page.
 
-Find your bookmarked scenes later from the movie detail page.
+![Custom bookmarks](docs/screenshots/custom-bookmark.gif)
 
-![Video bookmarks](docs/screenshots/bookmarks.png)
+![Bookmark settings](docs/screenshots/bookmark-settings.png)
 
 ### Search with categories
 
-Search across movies, actors, and your bookmarks in one place. Filter by category to narrow results.
+One search box for movies, actors, and bookmarks. Filter by category if you're looking for something specific.
 
-![Enhanced search](docs/screenshots/search.png)
+![Enhanced search](docs/screenshots/search.gif)
+
+### Lazy loading
+
+All movie and actor cards use lazy loading instead of pagination — a [long-requested Jellyfin feature](https://features.jellyfin.org/posts/216/remove-pagination-use-lazy-loading-for-library-view) since 2020 that still hasn't shipped as of February 2026.
 
 ## Quick start (development)
 
@@ -255,7 +269,7 @@ npx tsx scripts/package.ts --platform win-x64        # Windows
 |-------|-----------|
 | Framework | Next.js 16 (App Router) + TypeScript |
 | UI | shadcn/ui + Tailwind CSS v4 |
-| Database | SQLite (better-sqlite3, WAL mode) |
+| Database | SQLite (better-sqlite3, WAL mode) + Drizzle ORM |
 | Auth | NextAuth.js v5 (Credentials + JWT) |
 | Launcher | Go (getlantern/systray) |
 

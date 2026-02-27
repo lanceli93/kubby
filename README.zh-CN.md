@@ -2,13 +2,19 @@
 
 # Kubby
 
-自托管电影服务器，在 Jellyfin 的基础上加了一些它没有的个人元数据功能。用 Next.js 写的。
+自托管个人影音服务器，在 Jellyfin 的基础上加了一些它没有的个人元数据功能。用 Next.js 写的。
+
+本人从 2022 年开始使用 Jellyfin，每周都会关注 release update，想看看 feature request 中的新功能是否有加入。但不幸的是 Jellyfin 的更新实在太慢了，比如社区呼声很高的 lazy loading 功能 2020 年就有人提出，但至今仍未实现。不过也可以理解，毕竟 Jellyfin 已迭代多年，从 Media Browser 到 Emby 再到 Jellyfin，可谓牵一发而动全身。于是我决定自行用 AI + 现代技术栈重写一个类似的本地影音系统，这就是本项目 Kubby。
+
+本项目 UI 界面由 [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev)（Vibe design tool）设计，代码部分全部由 [Claude Code](https://claude.ai/claude-code)（with AWS Bedrock API）+ Kiro 编写。我没有写任何一行代码。如有任何 feature 建议欢迎随时讨论！
+
+> **注意：** 如果你的媒体库和 Jellyfin 共用，添加媒体库时务必开启 **Jellyfin 兼容模式**（设置向导和媒体库设置中均可开启）。不开的话，Kubby 会往媒体库文件夹写入和修改 NFO 文件，可能覆盖 Jellyfin 的元数据。开启兼容模式后，Kubby 对媒体库只读（不写 NFO），演员照片会复制到 Kubby 自己的元数据目录，不影响 Jellyfin。
 
 ![Kubby 截图](docs/screenshots/hero.png)
 
 ## 基础功能
 
-- Jellyfin 风格的深色 UI，浏览/详情/播放的布局都比较熟悉
+- Jellyfin 风格的深色 UI，布局类似
 - 直接兼容已有的 Jellyfin 和 Kodi 媒体库（NFO + 文件夹结构，不用重新整理）
 - TMDB 刮削器，自动拉取元数据、海报、演员照片和传记
 - 浏览器内播放，带进度记录，支持多碟电影
@@ -18,49 +24,57 @@
 
 ### 自定义多维度评分
 
-按你自己定义的维度给电影打分——剧情、摄影、配乐，随你定。然后可以按任意单个维度排序整个片库。
-
-库里有 500 部电影，今晚想看摄影好的？按"摄影"排个序，从头挑就行。
+自己定义评分维度，例如电影可以按剧情、摄影、配乐打分，演员可以按颜值、演技打分。综合分会自动算出一个等级（SSS/S/A/B/...）显示在卡片上。整个片库可以按任意单个维度排序，找"摄影最好的电影"或"演技最强的演员"都是一键的事。
 
 ![多维度评分](docs/screenshots/dimension-ratings.png)
 
+![电影评分](docs/screenshots/movie-rating.gif)
+
+![演员评分](docs/screenshots/person-rating.gif)
+
+![按维度排序片库](docs/screenshots/personal-rating-sort.png)
+
 ### 海报和演员徽章
 
-浏览时卡片上直接显示你的个人评分、分辨率（4K/1080p 等）、演员等级（S/A/B/...）。每个用户可以分别配置，不想看的关掉就好。
+卡片上直接显示个人评分、分辨率（4K/1080p 等）、演员等级。不想看的在设置里关掉就好。
 
-![卡片徽章](docs/screenshots/card-badges.png)
+![徽章设置](docs/screenshots/badge-settings.gif)
 
 ### 演员照片墙
 
-给你关注的演员上传照片。瀑布流布局（类似 Google Photos），点开有灯箱查看器。
+给演员上传照片，瀑布流布局（类似 Google Photos），点开有灯箱查看器。
 
-![演员照片墙](docs/screenshots/actor-gallery.png)
+![演员照片墙](docs/screenshots/actor-gallery.gif)
 
 ### 按出演年龄排序影片
 
-演员详情页里，可以按出演时的年龄排序影片列表。想追溯某个演员的生涯轨迹，或者好奇他们 25 岁时演了什么，排一下就知道了。
+演员详情页会显示每部电影出演时的年龄。按年龄排序可以追溯生涯轨迹，或者看看他们 25 岁和 45 岁时分别演了什么。
 
 ![按年龄排序](docs/screenshots/filmography-age.png)
 
 ### 外部播放器
 
-浏览器放不了 HEVC 或 DTS？一键打开 IINA（macOS）或 PotPlayer（Windows）。可以切换本地文件播放和串流播放，看播放器和服务器是不是同一台机器。
+HEVC、DTS 这些浏览器放不了的格式，一键打开 IINA（macOS）或 PotPlayer（Windows）。支持本地文件播放和串流两种模式。
 
 ![外部播放器](docs/screenshots/external-player.png)
 
 ### 视频书签
 
-播放时按 B 快速书签，Shift+B 打开详细面板（选图标、加标签、写备注）。书签在进度条上显示为彩色圆点。内置 9 个图标，也可以自己上传。
+播放时按 B 快速书签，Shift+B 可以选图标、加标签、写备注。进度条上会显示彩色圆点标记。内置 9 个图标，也可以自己上传。所有书签都能在电影详情页回看。
 
-在电影详情页可以回看所有书签。
+![自定义书签](docs/screenshots/custom-bookmark.gif)
 
-![视频书签](docs/screenshots/bookmarks.png)
+![书签设置](docs/screenshots/bookmark-settings.png)
 
 ### 分类搜索
 
-在一个搜索框里同时搜电影、演员和你的书签。按分类过滤缩小范围。
+一个搜索框搜电影、演员和书签。想缩小范围的话按分类过滤。
 
-![搜索增强](docs/screenshots/search.png)
+![搜索增强](docs/screenshots/search.gif)
+
+### Lazy loading
+
+所有影片卡片和演员卡片均支持 lazy loading，替代 Jellyfin 的分页功能——这是一个 [2020 年就提出的 Jellyfin feature request](https://features.jellyfin.org/posts/216/remove-pagination-use-lazy-loading-for-library-view)，截至 2026 年 2 月仍未实现。
 
 ## 快速开始（开发）
 
@@ -255,7 +269,7 @@ npx tsx scripts/package.ts --platform win-x64        # Windows
 |----|------|
 | 框架 | Next.js 16 (App Router) + TypeScript |
 | UI | shadcn/ui + Tailwind CSS v4 |
-| 数据库 | SQLite (better-sqlite3, WAL 模式) |
+| 数据库 | SQLite (better-sqlite3, WAL 模式) + Drizzle ORM |
 | 认证 | NextAuth.js v5 (Credentials + JWT) |
 | 启动器 | Go (getlantern/systray) |
 

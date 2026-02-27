@@ -36,10 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# database
-/data/*.db
-/data/*.db-wal
-/data/*.db-shm
+# database & runtime data
+/data/*
+!/data/.gitkeep
 
 # typescript
 *.tsbuildinfo
