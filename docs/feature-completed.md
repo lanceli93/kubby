@@ -724,3 +724,14 @@
 - MovieMetadataEditor "Personal" tab: `max-w-[12rem]` → `max-w-[16rem]` (192px → 256px)
 - PersonMetadataEditor "Personal" tab: `max-w-[12rem]` → `max-w-[16rem]` (192px → 256px)
 - Full text still available via hover tooltip on all truncated labels
+
+## 2026-02-27: Search Title Truncation & Player Controls Centering
+
+### Search suggestion titles truncated to one line
+- Movie title links in search suggestions limited to `max-w-[280px]` with `truncate`
+- Prevents long titles from wrapping to two lines, shows `...` overflow
+- Full title available via hover tooltip
+
+### Player play/skip buttons absolutely centered
+- Changed from `justify-between` flex layout to absolute centering (`left-1/2 -translate-x-1/2`)
+- Play/pause, skip back, skip forward buttons now visually centered in the control bar regardless of left (time display) and right (bookmarks/volume/etc) group widths
