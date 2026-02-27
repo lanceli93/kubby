@@ -21,6 +21,7 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
   DragOverlay,
 } from "@dnd-kit/core";
 import {
@@ -39,13 +40,13 @@ const GALLERY_ROW_HEIGHT = 360;
 const GALLERY_GAP = 6;
 
 // ── Justified-layout sortable item ──
-// Participates in DndContext for long-press drag activation,
-// but does NOT apply dnd-kit transform — the justified layout stays stable.
 function JustifiedSortableItem({
   image,
   width,
   height,
   isDragActive,
+  insertIndicator,
+  isHighlighted,
   onClick,
   onDelete,
   deleteTitle,
@@ -54,6 +55,8 @@ function JustifiedSortableItem({
   width: number;
   height: number;
   isDragActive: boolean;
+  insertIndicator: "left" | "right" | null;
+  isHighlighted: boolean;
   onClick: () => void;
   onDelete: (filename: string) => void;
   deleteTitle: string;
@@ -61,6 +64,15 @@ function JustifiedSortableItem({
   const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id: image.filename,
   });
+
+  // Insertion line: 3px glow sitting in the middle of the gap
+  const lineOffset = Math.floor(GALLERY_GAP / 2) + 1;
+  const lineShadow =
+    insertIndicator === "left"
+      ? `-${lineOffset}px 0 0 0 #60a5fa, -${lineOffset}px 0 16px 3px rgba(96,165,250,0.55)`
+      : insertIndicator === "right"
+        ? `${lineOffset}px 0 0 0 #60a5fa, ${lineOffset}px 0 16px 3px rgba(96,165,250,0.55)`
+        : "none";
 
   return (
     <div
@@ -71,12 +83,16 @@ function JustifiedSortableItem({
       style={{
         width,
         height,
-        // Dim the original item in-place when it's being dragged
-        opacity: isDragging ? 0.25 : 1,
-        // Dashed outline placeholder when being dragged
-        outline: isDragging ? "2px dashed rgba(255,255,255,0.2)" : "none",
+        opacity: isDragging ? 0.15 : 1,
+        outline: isDragging
+          ? "2px dashed rgba(255,255,255,0.15)"
+          : isHighlighted
+            ? "2px solid rgba(96,165,250,0.5)"
+            : "none",
         outlineOffset: "-2px",
-        transition: "opacity 0.2s ease",
+        boxShadow: lineShadow,
+        filter: isHighlighted ? "brightness(1.15)" : "none",
+        transition: "opacity 0.15s, outline 0.15s, filter 0.15s, box-shadow 0.15s",
       }}
       onClick={isDragActive ? undefined : onClick}
     >
@@ -128,14 +144,24 @@ export function PersonGallery({
 
   // Drag state
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overInfo, setOverInfo] = useState<{
+    id: string;
+    side: "left" | "right";
+  } | null>(null);
   const [localOrder, setLocalOrder] = useState<string[]>([]);
 
-  // Sync localOrder from galleryImages when not dragging
+  // BUG FIX: Only sync localOrder from server data when galleryImages
+  // content actually changes — NOT on every activeId toggle.
+  // Otherwise the useEffect resets the optimistic reorder immediately
+  // after drag ends (activeId → null).
+  const prevGalleryKeyRef = useRef("");
   useEffect(() => {
-    if (!activeId) {
+    const key = galleryImages.map((img) => img.filename).join("\0");
+    if (key !== prevGalleryKeyRef.current) {
+      prevGalleryKeyRef.current = key;
       setLocalOrder(galleryImages.map((img) => img.filename));
     }
-  }, [galleryImages, activeId]);
+  }, [galleryImages]);
 
   // Build filename→image lookup
   const imageMap = new Map(galleryImages.map((img) => [img.filename, img]));
@@ -286,13 +312,51 @@ export function PersonGallery({
     }
   }
 
+  // ── Compute highlighted neighbours of the insertion line ──
+  const highlightedSet = new Set<string>();
+  if (overInfo && activeId) {
+    const overIdx = localOrder.indexOf(overInfo.id);
+    // The item the cursor is over is always highlighted
+    highlightedSet.add(overInfo.id);
+    if (overInfo.side === "left") {
+      // Line is on left of overItem → also highlight the previous item (if exists & not dragged)
+      if (overIdx > 0) {
+        const prev = localOrder[overIdx - 1];
+        if (prev !== activeId) highlightedSet.add(prev);
+      }
+    } else {
+      // Line is on right of overItem → also highlight the next item (if exists & not dragged)
+      if (overIdx < localOrder.length - 1) {
+        const next = localOrder[overIdx + 1];
+        if (next !== activeId) highlightedSet.add(next);
+      }
+    }
+  }
+
   // ── DnD handlers ──
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || over.id === active.id) {
+      setOverInfo(null);
+      return;
+    }
+    const activeIdx = localOrder.indexOf(active.id as string);
+    const overIdx = localOrder.indexOf(over.id as string);
+    // Dragging backward → line on left (insert before)
+    // Dragging forward  → line on right (insert after)
+    setOverInfo({
+      id: over.id as string,
+      side: activeIdx > overIdx ? "left" : "right",
+    });
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setOverInfo(null);
     if (over && active.id !== over.id) {
       setLocalOrder((prev) => {
         const oldIndex = prev.indexOf(active.id as string);
@@ -314,6 +378,7 @@ export function PersonGallery({
   };
 
   const handleDragCancel = () => {
+    setOverInfo(null);
     setActiveId(null);
   };
 
@@ -371,6 +436,7 @@ export function PersonGallery({
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
           >
@@ -385,6 +451,10 @@ export function PersonGallery({
                         width={img.width}
                         height={img.height}
                         isDragActive={activeId !== null}
+                        insertIndicator={
+                          overInfo?.id === img.filename ? overInfo.side : null
+                        }
+                        isHighlighted={highlightedSet.has(img.filename)}
                         onClick={() =>
                           setLightboxIndex(
                             orderedImages.findIndex((g) => g.filename === img.filename)
