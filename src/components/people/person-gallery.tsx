@@ -65,56 +65,82 @@ function JustifiedSortableItem({
     id: image.filename,
   });
 
-  // Insertion line: 3px glow sitting in the middle of the gap
-  const lineOffset = Math.floor(GALLERY_GAP / 2) + 1;
-  const lineShadow =
-    insertIndicator === "left"
-      ? `-${lineOffset}px 0 0 0 #60a5fa, -${lineOffset}px 0 16px 3px rgba(96,165,250,0.55)`
-      : insertIndicator === "right"
-        ? `${lineOffset}px 0 0 0 #60a5fa, ${lineOffset}px 0 16px 3px rgba(96,165,250,0.55)`
-        : "none";
+  // The indicator bar sits centred in the gap between items.
+  // offset = half gap + half bar width → centres the 4px bar in the 6px gap.
+  const barW = GALLERY_GAP; // fill the entire gap
+  const barOffset = Math.ceil(GALLERY_GAP / 2 + barW / 2); // from item edge
 
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className="group relative cursor-pointer overflow-hidden flex-shrink-0 touch-none"
-      style={{
-        width,
-        height,
-        opacity: isDragging ? 0.15 : 1,
-        outline: isDragging
-          ? "2px dashed rgba(255,255,255,0.15)"
-          : isHighlighted
-            ? "2px solid rgba(96,165,250,0.5)"
-            : "none",
-        outlineOffset: "-2px",
-        boxShadow: lineShadow,
-        filter: isHighlighted ? "brightness(1.15)" : "none",
-        transition: "opacity 0.15s, outline 0.15s, filter 0.15s, box-shadow 0.15s",
-      }}
+      className="group relative flex-shrink-0 touch-none"
+      style={{ width, height }}
       onClick={isDragActive ? undefined : onClick}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={resolveImageSrc(image.path)}
-        alt={image.filename}
-        className={`h-full w-full object-cover ${isDragActive ? "" : "transition-transform group-hover:scale-105"}`}
-        draggable={false}
-      />
-      {!isDragActive && (
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(image.filename);
+      {/* Inner container: clips image zoom, carries highlight styles */}
+      <div
+        className="h-full w-full overflow-hidden"
+        style={{
+          opacity: isDragging ? 0.15 : 1,
+          outline: isDragging
+            ? "2px dashed rgba(255,255,255,0.15)"
+            : isHighlighted
+              ? "2px solid rgba(96,165,250,0.45)"
+              : "none",
+          outlineOffset: "-2px",
+          filter: isHighlighted ? "brightness(1.2)" : "none",
+          transition: "opacity 0.15s, outline 0.15s, filter 0.15s",
+          cursor: isDragActive ? "grabbing" : "pointer",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={resolveImageSrc(image.path)}
+          alt={image.filename}
+          className={`h-full w-full object-cover ${isDragActive ? "" : "transition-transform group-hover:scale-105"}`}
+          draggable={false}
+        />
+        {!isDragActive && (
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(image.filename);
+            }}
+            className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
+            title={deleteTitle}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Solid insertion indicator bar — real DOM element filling the gap */}
+      {insertIndicator === "left" && (
+        <div
+          className="absolute top-0 bottom-0 z-10 pointer-events-none"
+          style={{
+            width: barW,
+            left: -barOffset,
+            background: "linear-gradient(180deg, rgba(96,165,250,0.1) 0%, #60a5fa 8%, #60a5fa 92%, rgba(96,165,250,0.1) 100%)",
+            boxShadow: "0 0 12px 2px rgba(96,165,250,0.5)",
+            borderRadius: 2,
           }}
-          className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 cursor-pointer"
-          title={deleteTitle}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
+      )}
+      {insertIndicator === "right" && (
+        <div
+          className="absolute top-0 bottom-0 z-10 pointer-events-none"
+          style={{
+            width: barW,
+            right: -barOffset,
+            background: "linear-gradient(180deg, rgba(96,165,250,0.1) 0%, #60a5fa 8%, #60a5fa 92%, rgba(96,165,250,0.1) 100%)",
+            boxShadow: "0 0 12px 2px rgba(96,165,250,0.5)",
+            borderRadius: 2,
+          }}
+        />
       )}
     </div>
   );
