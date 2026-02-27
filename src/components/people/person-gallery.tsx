@@ -117,30 +117,30 @@ function JustifiedSortableItem({
         )}
       </div>
 
-      {/* Solid insertion indicator bar — real DOM element filling the gap */}
-      {insertIndicator === "left" && (
+      {/* Flowing insertion indicator bar */}
+      {insertIndicator && (
         <div
-          className="absolute top-0 bottom-0 z-10 pointer-events-none"
+          className="absolute top-0 bottom-0 z-10 pointer-events-none gallery-indicator-flow"
           style={{
             width: barW,
-            left: -barOffset,
-            background: "linear-gradient(180deg, rgba(96,165,250,0.1) 0%, #60a5fa 8%, #60a5fa 92%, rgba(96,165,250,0.1) 100%)",
-            boxShadow: "0 0 12px 2px rgba(96,165,250,0.5)",
+            ...(insertIndicator === "left" ? { left: -barOffset } : { right: -barOffset }),
             borderRadius: 2,
+            // Base layer: subtle solid bar
+            backgroundColor: "rgba(96,165,250,0.35)",
+            boxShadow: "0 0 10px 2px rgba(96,165,250,0.4)",
+            overflow: "hidden",
           }}
-        />
-      )}
-      {insertIndicator === "right" && (
-        <div
-          className="absolute top-0 bottom-0 z-10 pointer-events-none"
-          style={{
-            width: barW,
-            right: -barOffset,
-            background: "linear-gradient(180deg, rgba(96,165,250,0.1) 0%, #60a5fa 8%, #60a5fa 92%, rgba(96,165,250,0.1) 100%)",
-            boxShadow: "0 0 12px 2px rgba(96,165,250,0.5)",
-            borderRadius: 2,
-          }}
-        />
+        >
+          {/* Flowing light beam */}
+          <div
+            className="absolute inset-0 gallery-indicator-beam"
+            style={{
+              background:
+                "linear-gradient(180deg, transparent 0%, transparent 30%, rgba(147,197,250,0.9) 45%, #c4dfff 50%, rgba(147,197,250,0.9) 55%, transparent 70%, transparent 100%)",
+              backgroundSize: "100% 300%",
+            }}
+          />
+        </div>
       )}
     </div>
   );
@@ -413,6 +413,23 @@ export function PersonGallery({
 
   return (
     <>
+      {/* Keyframes for the flowing indicator animation */}
+      <style>{`
+        @keyframes galleryIndicatorBeam {
+          0%   { background-position: 0% 200%; }
+          100% { background-position: 0% -100%; }
+        }
+        .gallery-indicator-beam {
+          animation: galleryIndicatorBeam 1.2s ease-in-out infinite;
+        }
+        .gallery-indicator-flow {
+          animation: galleryIndicatorPulse 2s ease-in-out infinite;
+        }
+        @keyframes galleryIndicatorPulse {
+          0%, 100% { box-shadow: 0 0 8px 1px rgba(96,165,250,0.35); }
+          50%      { box-shadow: 0 0 14px 3px rgba(96,165,250,0.6); }
+        }
+      `}</style>
       <section ref={galleryRefCallback} className="flex flex-col gap-4 px-20 pb-12">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-foreground">{tPerson("photos")}</h2>
