@@ -2,7 +2,7 @@
 
 # Kubby
 
-A self-hosted movie server with personal metadata features that Jellyfin doesn't have. Built with Next.js.
+A self-hosted movie server inspired by Jellyfin, reimagined with a modern tech stack. Built with Next.js.
 
 I've been using Jellyfin since 2022 and check the release notes every week, hoping to see long-requested features finally land. Unfortunately, development moves very slowly — for example, the highly requested lazy loading feature was first proposed in 2020 and still hasn't been implemented. That's understandable given Jellyfin's history: it evolved from Media Browser to Emby to Jellyfin over many years, so every change has ripple effects. So I decided to rebuild a similar local media system from scratch using AI and a modern tech stack — that's how Kubby was born.
 

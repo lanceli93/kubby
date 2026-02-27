@@ -2,7 +2,7 @@
 
 # Kubby
 
-自托管个人影音服务器，在 Jellyfin 的基础上加了一些它没有的个人元数据功能。用 Next.js 写的。
+受 Jellyfin 启发，用现代技术栈重新构建的自托管个人影音服务器。基于 Next.js。
 
 本人从 2022 年开始使用 Jellyfin，每周都会关注 release update，想看看 feature request 中的新功能是否有加入。但不幸的是 Jellyfin 的更新实在太慢了，比如社区呼声很高的 lazy loading 功能 2020 年就有人提出，但至今仍未实现。不过也可以理解，毕竟 Jellyfin 已迭代多年，从 Media Browser 到 Emby 再到 Jellyfin，可谓牵一发而动全身。于是我决定自行用 AI + 现代技术栈重写一个类似的本地影音系统，这就是本项目 Kubby。
 
