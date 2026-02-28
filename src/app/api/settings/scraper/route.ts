@@ -3,11 +3,17 @@ import { db } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { validateApiKey } from "@/lib/tmdb";
+import { auth } from "@/lib/auth";
 
 const TMDB_API_KEY = "tmdb_api_key";
 
 // GET /api/settings/scraper
 export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const row = db.select().from(settings).where(eq(settings.key, TMDB_API_KEY)).get();
     const raw = row?.value ?? "";
@@ -24,6 +30,11 @@ export async function GET() {
 
 // PUT /api/settings/scraper
 export async function PUT(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { tmdbApiKey } = body;

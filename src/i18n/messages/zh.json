@@ -64,7 +64,13 @@
     "jellyfinCompatDesc": "不会写入 NFO 文件，并从 Jellyfin 本地路径导入演员照片。如果 Jellyfin 也在使用此媒体库，建议启用。",
     "jellyfinCompatConfirmTitle": "启用 Jellyfin 兼容模式？",
     "jellyfinCompatConfirmDesc": "启用后，Kubby 不会修改或创建媒体库文件夹中的 NFO 文件。NFO 中通过本地路径引用的演员照片将被复制到 Kubby 的元数据目录。如果 Jellyfin 也在使用此媒体库，建议启用。",
-    "libraryNameRequired": "请输入媒体库名称"
+    "libraryNameRequired": "请输入媒体库名称",
+    "metadataDownloaders": "元数据下载器",
+    "metadataDownloadersDesc": "启用后，扫描时会自动从 TMDB 获取电影信息、海报和演员照片。",
+    "tmdbApiKey": "TMDB API 密钥",
+    "tmdbApiKeyPlaceholder": "输入你的 TMDB API 密钥",
+    "tmdbApiKeyRequired": "启用刮削器需要输入 TMDB API 密钥",
+    "getTmdbApiKey": "从 TMDB 免费获取 API 密钥 →"
   },
   "nav": {
     "home": "首页",
@@ -111,6 +117,8 @@
     "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。",
     "cleanupOrphanPeople": "同时清理不再关联任何电影的演员数据",
     "deleteNfoFiles": "删除媒体文件夹中的 NFO 文件（下次可重新刮削）",
+    "tmdbApiKeyRequired": "请输入 TMDB API 密钥以启用刮削器。",
+    "getTmdbApiKey": "从 TMDB 免费获取 API 密钥 →",
     "libraryName": "媒体库名称",
     "folderPath": "文件夹路径",
     "enableScraper": "启用 TMDB 刮削",

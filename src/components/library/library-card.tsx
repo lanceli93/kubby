@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff, Plus, X, AlertCircle } from "lucide-react";
+import { Film, Folder, MoreHorizontal, Pencil, Trash2, HardDriveDownload, ImageIcon, ImageOff, Plus, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -61,6 +61,9 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
   const [editMetadataLanguage, setEditMetadataLanguage] = useState(metadataLanguage || "en");
   const [editTmdbConfigured, setEditTmdbConfigured] = useState<boolean | null>(null);
   const [editScraperError, setEditScraperError] = useState("");
+  const [editApiKey, setEditApiKey] = useState("");
+  const [editApiKeySaving, setEditApiKeySaving] = useState(false);
+  const [editApiKeyError, setEditApiKeyError] = useState("");
   const [editJellyfinCompat, setEditJellyfinCompat] = useState(jellyfinCompat ?? false);
   const [jellyfinCompatConfirmOpen, setJellyfinCompatConfirmOpen] = useState(false);
   const [jellyfinCompatConfirmAction, setJellyfinCompatConfirmAction] = useState<"enable" | "disable">("enable");
@@ -411,26 +414,56 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 </Select>
               </div>
             )}
-            {editScraperError && (
-              <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-destructive">{editScraperError}</p>
-                  <Link
-                    href="/dashboard/scraper"
+            {editScraperError && editTmdbConfigured === false && (
+              <div className="flex flex-col gap-2 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-3">
+                <p className="text-sm text-muted-foreground">{tHome("tmdbApiKeyRequired")}</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={editApiKey}
                     onClick={(e) => e.stopPropagation()}
-                    className="mt-1 inline-block text-sm font-medium text-primary hover:underline"
+                    onChange={(e) => { setEditApiKey(e.target.value); setEditApiKeyError(""); }}
+                    placeholder="TMDB API Key"
+                    className="h-9 min-w-0 flex-1 rounded-md border border-white/[0.06] bg-black/20 px-2.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={!editApiKey.trim() || editApiKeySaving}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setEditApiKeySaving(true);
+                      setEditApiKeyError("");
+                      try {
+                        const res = await fetch("/api/settings/scraper", {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ tmdbApiKey: editApiKey.trim() }),
+                        });
+                        if (res.ok) {
+                          setEditTmdbConfigured(true);
+                          setEditScraperEnabled(true);
+                          setEditScraperError("");
+                          setEditApiKey("");
+                        } else {
+                          const data = await res.json();
+                          setEditApiKeyError(data.error || "Invalid API key");
+                        }
+                      } catch {
+                        setEditApiKeyError("Network error");
+                      }
+                      setEditApiKeySaving(false);
+                    }}
+                    className="h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   >
-                    Go to Scraper Settings
-                  </Link>
+                    {editApiKeySaving ? "..." : tCommon("save")}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setEditScraperError(""); }}
-                  className="shrink-0 text-destructive/60 hover:text-destructive"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                {editApiKeyError && <p className="text-xs text-destructive">{editApiKeyError}</p>}
+                <p className="text-xs text-[#555568]">
+                  <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                    {tHome("getTmdbApiKey")}
+                  </a>
+                </p>
               </div>
             )}
             <div className="flex flex-col gap-2">

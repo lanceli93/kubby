@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
-import { users, mediaLibraries } from "@/lib/db/schema";
-import { count } from "drizzle-orm";
+import { users, mediaLibraries, settings } from "@/lib/db/schema";
+import { count, eq } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { v4 as uuid } from "uuid";
 import { serializeFolderPaths } from "@/lib/folder-paths";
+import { validateApiKey } from "@/lib/tmdb";
 
 export async function POST(request: Request) {
   // Only allow setup when no users exist
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   console.log("[setup/complete] body:", JSON.stringify(body));
-  const { username, password, locale, libraryName, libraryType, folderPath, folderPaths, jellyfinCompat } = body;
+  const { username, password, locale, libraryName, libraryType, folderPath, folderPaths, jellyfinCompat, scraperEnabled, tmdbApiKey } = body;
 
   if (!username || !password) {
     return Response.json({ error: "Username and password are required" }, { status: 400 });
@@ -37,6 +38,20 @@ export async function POST(request: Request) {
     ? folderPaths
     : folderPath ? [folderPath] : [];
 
+  // Save TMDB API key if provided
+  if (tmdbApiKey && typeof tmdbApiKey === "string") {
+    const trimmedKey = tmdbApiKey.trim();
+    const valid = await validateApiKey(trimmedKey);
+    if (valid) {
+      const existing = db.select().from(settings).where(eq(settings.key, "tmdb_api_key")).get();
+      if (existing) {
+        db.update(settings).set({ value: trimmedKey }).where(eq(settings.key, "tmdb_api_key")).run();
+      } else {
+        db.insert(settings).values({ key: "tmdb_api_key", value: trimmedKey }).run();
+      }
+    }
+  }
+
   let libraryId: string | null = null;
   if (libraryName && paths.length > 0) {
     libraryId = uuid();
@@ -45,10 +60,9 @@ export async function POST(request: Request) {
       name: libraryName,
       type: libraryType || "movie",
       folderPath: serializeFolderPaths(paths),
+      scraperEnabled: scraperEnabled ? true : false,
       jellyfinCompat: jellyfinCompat ? true : false,
     }).run();
-    // Scan is NOT triggered here — the homepage auto-scans unscanned libraries
-    // via SSE so the user can see progress in the global scan bar.
   }
 
   return Response.json({ success: true, libraryId });

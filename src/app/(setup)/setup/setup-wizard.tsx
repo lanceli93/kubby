@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { setLocale } from "@/i18n/locale";
-import { Eye, EyeOff, FolderOpen, Check, X, Plus, Folder, Info } from "lucide-react";
+import { Eye, EyeOff, FolderOpen, Check, X, Plus, Folder } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
 import {
   Dialog,
@@ -39,6 +39,9 @@ export function SetupWizard() {
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [jellyfinCompat, setJellyfinCompat] = useState(false);
   const [jellyfinCompatConfirmOpen, setJellyfinCompatConfirmOpen] = useState(false);
+  const [scraperEnabled, setScraperEnabled] = useState(false);
+  const [tmdbApiKey, setTmdbApiKey] = useState("");
+  const [tmdbApiKeyError, setTmdbApiKeyError] = useState("");
 
   // Errors & loading
   const [error, setError] = useState("");
@@ -90,10 +93,19 @@ export function SetupWizard() {
           setLoading(false);
           return;
         }
+        if (scraperEnabled && !tmdbApiKey.trim()) {
+          setError(t("tmdbApiKeyRequired"));
+          setLoading(false);
+          return;
+        }
         body.libraryName = libraryName.trim();
         body.libraryType = libraryType;
         body.folderPaths = allPaths;
         body.jellyfinCompat = jellyfinCompat;
+        body.scraperEnabled = scraperEnabled;
+        if (scraperEnabled && tmdbApiKey.trim()) {
+          body.tmdbApiKey = tmdbApiKey.trim();
+        }
       }
 
       const res = await fetch("/api/setup/complete", {
@@ -389,6 +401,47 @@ export function SetupWizard() {
                 </div>
               </div>
             </div>
+
+            {/* TMDB Scraper */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-medium text-muted-foreground">
+                {t("metadataDownloaders")}
+              </label>
+              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={scraperEnabled}
+                    onChange={(e) => setScraperEnabled(e.target.checked)}
+                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                  />
+                  <span className="text-sm text-foreground">TheMovieDb</span>
+                </label>
+              </div>
+              <p className="text-xs text-[#555568]">
+                {t("metadataDownloadersDesc")}
+              </p>
+            </div>
+            {scraperEnabled && (
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-medium text-muted-foreground">
+                  {t("tmdbApiKey")}
+                </label>
+                <input
+                  type="text"
+                  value={tmdbApiKey}
+                  onChange={(e) => { setTmdbApiKey(e.target.value); setTmdbApiKeyError(""); }}
+                  placeholder={t("tmdbApiKeyPlaceholder")}
+                  className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                />
+                {tmdbApiKeyError && <p className="text-xs text-destructive">{tmdbApiKeyError}</p>}
+                <p className="text-xs text-[#555568]">
+                  <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {t("getTmdbApiKey")}
+                  </a>
+                </p>
+              </div>
+            )}
 
             {/* Jellyfin Compatibility Mode */}
             <div className="flex flex-col gap-2">
