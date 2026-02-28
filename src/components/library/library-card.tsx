@@ -37,6 +37,7 @@ interface LibraryCardProps {
   movieCount?: number;
   coverImage?: string | null;
   hasCustomCover?: boolean;
+  lastScannedAt?: string | null;
   onScanComplete?: () => void;
   onEditComplete?: () => void;
   onDelete?: () => void;
@@ -44,7 +45,7 @@ interface LibraryCardProps {
   onRemoveImage?: () => void;
 }
 
-export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jellyfinCompat, metadataLanguage, movieCount, coverImage, hasCustomCover, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jellyfinCompat, metadataLanguage, movieCount, coverImage, hasCustomCover, lastScannedAt, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
@@ -65,9 +66,14 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
   const libScan = useLibraryScan(id);
   const scanning = libScan.scanning;
   const scanProgress = libScan.progress;
+  const isUnscanned = !lastScannedAt && !scanning;
   const isDone = libScan.result?.startsWith("done:");
+  const doneScannedCount = isDone ? parseInt(libScan.result!.split(":")[1], 10) : 0;
+  const doneSkippedCount = isDone ? parseInt(libScan.result!.split(":")[2] || "0", 10) : 0;
   const scanResult = isDone
-    ? tHome("scanComplete", { count: parseInt(libScan.result!.split(":")[1], 10) })
+    ? (doneSkippedCount > 0
+        ? tHome("scanCompleteWithSkipped", { count: doneScannedCount, skipped: doneSkippedCount })
+        : tHome("scanComplete", { count: doneScannedCount }))
     : libScan.result === "error"
       ? tHome("scanFailed")
       : null;
@@ -131,12 +137,31 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               <>
                 <Progress value={(scanProgress.current / scanProgress.total) * 100} className="h-1.5 w-full" />
                 <span className="text-xs text-white/80">
-                  {tHome("scanProgress", { current: scanProgress.current, total: scanProgress.total })}
+                  {scanProgress.title
+                    ? tHome("scanProgressWithTitle", { title: scanProgress.title, current: scanProgress.current, total: scanProgress.total })
+                    : tHome("scanProgress", { current: scanProgress.current, total: scanProgress.total })}
                 </span>
               </>
             ) : (
               <span className="text-xs text-white/80">{tHome("scanning")}</span>
             )}
+          </div>
+        )}
+
+        {/* Unscanned overlay */}
+        {isUnscanned && !isDone && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/50">
+            <span className="text-xs text-white/60">{tHome("unscanned")}</span>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                startScan();
+              }}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              {tHome("clickToScan")}
+            </button>
           </div>
         )}
 

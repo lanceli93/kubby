@@ -1,13 +1,12 @@
 "use client";
 
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
 import { LibraryCard } from "@/components/library/library-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
-import { useScanActions } from "@/providers/scan-provider";
 
 interface Movie {
   id: string;
@@ -102,18 +101,6 @@ export default function HomePage() {
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
   });
-
-  // Auto-scan libraries that have never been scanned (e.g. after first setup)
-  const { startScan } = useScanActions();
-  const autoScannedRef = useRef(new Set<string>());
-  useEffect(() => {
-    for (const lib of libraries) {
-      if (!lib.lastScannedAt && (lib.movieCount ?? 0) === 0 && !autoScannedRef.current.has(lib.id)) {
-        autoScannedRef.current.add(lib.id);
-        startScan(lib.id);
-      }
-    }
-  }, [libraries, startScan]);
 
   const { data: continueWatching = [] } = useQuery<Movie[]>({
     queryKey: ["movies", "continue-watching"],
@@ -266,6 +253,7 @@ export default function HomePage() {
                     movieCount={lib.movieCount}
                     coverImage={lib.coverImage}
                     hasCustomCover={lib.hasCustomCover}
+                    lastScannedAt={lib.lastScannedAt}
                     onScanComplete={() => {
                       queryClient.invalidateQueries({ queryKey: ["libraries"] });
                       queryClient.invalidateQueries({ queryKey: ["movies"] });

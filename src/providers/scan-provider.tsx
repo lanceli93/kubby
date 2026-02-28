@@ -3,10 +3,13 @@
 import { createContext, useContext, useCallback, useRef, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
+interface SkippedFolder { name: string; reason: string }
+
 interface ScanState {
   scanning: boolean;
-  progress: { current: number; total: number } | null;
-  result: string | null; // "done:42" or "error"
+  progress: { current: number; total: number; title?: string } | null;
+  result: string | null; // "done:42:5" (scanned:skipped) or "error"
+  skipped: SkippedFolder[];
 }
 
 type ScanMap = Map<string, ScanState>;
@@ -26,7 +29,7 @@ function emitChange() {
 }
 
 function setScanState(libraryId: string, update: Partial<ScanState>) {
-  const prev = scans.get(libraryId) ?? { scanning: false, progress: null, result: null };
+  const prev = scans.get(libraryId) ?? { scanning: false, progress: null, result: null, skipped: [] };
   scans.set(libraryId, { ...prev, ...update });
   emitChange();
 }
@@ -53,7 +56,7 @@ export function ScanProvider({ children }: { children: React.ReactNode }) {
       if (activeStreams.current.has(libraryId)) return;
       activeStreams.current.add(libraryId);
 
-      setScanState(libraryId, { scanning: true, progress: null, result: null });
+      setScanState(libraryId, { scanning: true, progress: null, result: null, skipped: [] });
 
       (async () => {
         try {
@@ -64,6 +67,8 @@ export function ScanProvider({ children }: { children: React.ReactNode }) {
           const decoder = new TextDecoder();
           let buffer = "";
           let scannedCount = 0;
+          let skippedCount = 0;
+          let skippedList: SkippedFolder[] = [];
 
           while (true) {
             const { done, value } = await reader.read();
@@ -77,17 +82,19 @@ export function ScanProvider({ children }: { children: React.ReactNode }) {
               const data = JSON.parse(match[1]);
               if (data.done) {
                 scannedCount = data.scannedCount ?? 0;
+                skippedCount = data.skippedCount ?? 0;
+                skippedList = data.skipped ?? [];
               } else if (data.error) {
                 throw new Error(data.error);
               } else if (data.total) {
                 setScanState(libraryId, {
-                  progress: { current: data.current, total: data.total },
+                  progress: { current: data.current, total: data.total, title: data.title },
                 });
               }
             }
           }
 
-          setScanState(libraryId, { scanning: false, progress: null, result: `done:${scannedCount}` });
+          setScanState(libraryId, { scanning: false, progress: null, result: `done:${scannedCount}:${skippedCount}`, skipped: skippedList });
           queryClient.invalidateQueries({ queryKey: ["libraries"] });
           queryClient.invalidateQueries({ queryKey: ["movies"] });
           setTimeout(() => removeScan(libraryId), 5000);
@@ -134,6 +141,7 @@ export function useLibraryScan(libraryId: string) {
     scanning: state?.scanning ?? false,
     progress: state?.progress ?? null,
     result: state?.result ?? null,
+    skipped: state?.skipped ?? [],
     startScan: () => startScan(libraryId),
   };
 }

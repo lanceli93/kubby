@@ -17,9 +17,9 @@ export async function POST(
 
       try {
         const result = await scanLibrary(id, (progress) => {
-          send({ current: progress.current, total: progress.total });
+          send({ current: progress.current, total: progress.total, title: progress.title });
         });
-        send({ done: true, scannedCount: result.scannedCount, removedCount: result.removedCount });
+        send({ done: true, scannedCount: result.scannedCount, removedCount: result.removedCount, skippedCount: result.skipped.length, skipped: result.skipped });
       } catch (error) {
         console.error("[scan] error:", error);
         send({

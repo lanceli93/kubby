@@ -201,6 +201,9 @@ function computeAgeAtRelease(
 
 export type ScanProgress = { current: number; total: number; title: string };
 
+export type SkipReason = 'no_nfo' | 'no_video' | 'nfo_parse_error';
+export interface SkippedFolder { name: string; reason: SkipReason }
+
 export async function scanLibrary(
   libraryId: string,
   onProgress?: (progress: ScanProgress) => void
@@ -254,6 +257,7 @@ export async function scanLibrary(
 
   let scannedCount = 0;
   let lastPctBucket = -1;
+  const skipped: SkippedFolder[] = [];
 
   for (let i = 0; i < dirs.length; i++) {
     const entry = dirs[i];
@@ -306,11 +310,11 @@ export async function scanLibrary(
       }
     }
 
-    if (!fs.existsSync(nfoPath)) continue;
+    if (!fs.existsSync(nfoPath)) { skipped.push({ name: entry.name, reason: 'no_nfo' }); continue; }
 
     // Find video files (multi-disc detection)
     const videoFiles = findVideoFiles(movieDir);
-    if (videoFiles.length === 0) continue;
+    if (videoFiles.length === 0) { skipped.push({ name: entry.name, reason: 'no_video' }); continue; }
     const multiDiscResult = detectMultiDisc(videoFiles);
     const isMultiDisc = multiDiscResult != null && multiDiscResult.length >= 2;
     const primaryVideo = isMultiDisc ? multiDiscResult[0].filePath : videoFiles[0];
@@ -322,6 +326,7 @@ export async function scanLibrary(
       nfoData = parseNfo(nfoContent);
     } catch (e) {
       console.error(`Failed to parse NFO in ${movieDir}:`, e);
+      skipped.push({ name: entry.name, reason: 'nfo_parse_error' });
       continue;
     }
 
@@ -698,5 +703,5 @@ export async function scanLibrary(
     .where(eq(mediaLibraries.id, libraryId))
     .run();
 
-  return { scannedCount, removedCount };
+  return { scannedCount, removedCount, skipped };
 }
