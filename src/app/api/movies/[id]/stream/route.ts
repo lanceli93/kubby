@@ -48,6 +48,8 @@ export async function GET(
       ".mov": "video/quicktime",
       ".webm": "video/webm",
       ".m4v": "video/mp4",
+      ".flv": "video/x-flv",
+      ".ts": "video/mp2t",
     };
     const contentType = mimeTypes[ext] || "video/mp4";
 

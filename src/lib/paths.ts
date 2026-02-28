@@ -1,4 +1,5 @@
 import path from "path";
+import os from "os";
 
 /**
  * Centralized path management for Kubby.
@@ -32,4 +33,12 @@ export function getBookmarksDir(): string {
 
 export function getBookmarkIconsDir(): string {
   return path.join(getMetadataDir(), "bookmark-icons");
+}
+
+export function getFfmpegPath(): string {
+  return process.env.FFMPEG_PATH || "ffmpeg";
+}
+
+export function getTranscodeCacheDir(): string {
+  return path.join(os.tmpdir(), "kubby-transcode");
 }

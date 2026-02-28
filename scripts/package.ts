@@ -45,10 +45,12 @@ interface PlatformConfig {
   nodeDirName: string;
   ffprobeUrl: string;
   ffprobeArchiveType: "zip" | "tar.xz" | "7z";
+  ffmpegUrl: string;
   goOs: string;
   goArch: string;
   launcherBin: string;
   ffprobeBin: string;
+  ffmpegBin: string;
 }
 
 const PLATFORMS: Record<Platform, PlatformConfig> = {
@@ -59,10 +61,13 @@ const PLATFORMS: Record<Platform, PlatformConfig> = {
     ffprobeUrl:
       "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-arm64.gz",
     ffprobeArchiveType: "zip", // actually .gz, handled specially
+    ffmpegUrl:
+      "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffmpeg-darwin-arm64.gz",
     goOs: "darwin",
     goArch: "arm64",
     launcherBin: "kubby",
     ffprobeBin: "ffprobe",
+    ffmpegBin: "ffmpeg",
   },
   "darwin-x64": {
     nodeUrl: `https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-x64.tar.gz`,
@@ -71,10 +76,13 @@ const PLATFORMS: Record<Platform, PlatformConfig> = {
     ffprobeUrl:
       "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-darwin-x64.gz",
     ffprobeArchiveType: "zip",
+    ffmpegUrl:
+      "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffmpeg-darwin-x64.gz",
     goOs: "darwin",
     goArch: "amd64",
     launcherBin: "kubby",
     ffprobeBin: "ffprobe",
+    ffmpegBin: "ffmpeg",
   },
   "win-x64": {
     nodeUrl: `https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-win-x64.zip`,
@@ -83,10 +91,13 @@ const PLATFORMS: Record<Platform, PlatformConfig> = {
     ffprobeUrl:
       "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-win32-x64.gz",
     ffprobeArchiveType: "zip",
+    ffmpegUrl:
+      "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffmpeg-win32-x64.gz",
     goOs: "windows",
     goArch: "amd64",
     launcherBin: "kubby.exe",
     ffprobeBin: "ffprobe.exe",
+    ffmpegBin: "ffmpeg.exe",
   },
   "linux-x64": {
     nodeUrl: `https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz`,
@@ -95,10 +106,13 @@ const PLATFORMS: Record<Platform, PlatformConfig> = {
     ffprobeUrl:
       "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffprobe-linux-x64.gz",
     ffprobeArchiveType: "zip",
+    ffmpegUrl:
+      "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffmpeg-linux-x64.gz",
     goOs: "linux",
     goArch: "amd64",
     launcherBin: "kubby",
     ffprobeBin: "ffprobe",
+    ffmpegBin: "ffmpeg",
   },
 };
 
@@ -436,6 +450,27 @@ async function downloadFfprobe(platform: Platform, outputDir: string, skipDownlo
   console.log("  ffprobe ready");
 }
 
+async function downloadFfmpeg(platform: Platform, outputDir: string, skipDownload: boolean) {
+  console.log("\n[4b/6] Setting up ffmpeg...");
+  const cfg = PLATFORMS[platform];
+
+  const archiveName = path.basename(new URL(cfg.ffmpegUrl).pathname);
+  const archivePath = path.join(DOWNLOAD_CACHE, archiveName);
+
+  const binDir = path.join(outputDir, "bin");
+  ensureDir(binDir);
+  const ffmpegDest = path.join(binDir, cfg.ffmpegBin);
+
+  // Download and decompress .gz → binary
+  await downloadAndGunzip(cfg.ffmpegUrl, archivePath, ffmpegDest, skipDownload);
+
+  if (platform !== "win-x64") {
+    fs.chmodSync(ffmpegDest, 0o755);
+  }
+
+  console.log("  ffmpeg ready");
+}
+
 function buildLauncher(platform: Platform, outputDir: string) {
   console.log("\n[5/6] Building Go launcher...");
   const cfg = PLATFORMS[platform];
@@ -725,6 +760,7 @@ async function main() {
   await swapNativeModules(platform, outputDir, skipDownload);
   await downloadNode(platform, outputDir, skipDownload);
   await downloadFfprobe(platform, outputDir, skipDownload);
+  await downloadFfmpeg(platform, outputDir, skipDownload);
   buildLauncher(platform, outputDir);
 
   // Platform-specific installer

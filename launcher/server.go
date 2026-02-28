@@ -27,6 +27,7 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 	nodeBin := resolveNodeBin(exeDir)
 	serverJS := filepath.Join(exeDir, "server", "server.js")
 	ffprobeBin := resolveFfprobeBin(exeDir)
+	ffmpegBin := resolveFfmpegBin(exeDir)
 
 	// Ensure log directory exists
 	logDir := filepath.Join(dataDir, "logs")
@@ -50,6 +51,7 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 		fmt.Sprintf("HOSTNAME=%s", "0.0.0.0"),
 		fmt.Sprintf("KUBBY_DATA_DIR=%s", dataDir),
 		fmt.Sprintf("FFPROBE_PATH=%s", ffprobeBin),
+		fmt.Sprintf("FFMPEG_PATH=%s", ffmpegBin),
 		fmt.Sprintf("AUTH_SECRET=%s", authSecret),
 		"AUTH_TRUST_HOST=true",
 		"NODE_ENV=production",
@@ -182,4 +184,12 @@ func resolveFfprobeBin(exeDir string) string {
 		return filepath.Join(exeDir, "bin", "ffprobe.exe")
 	}
 	return filepath.Join(exeDir, "bin", "ffprobe")
+}
+
+// resolveFfmpegBin returns the path to the bundled ffmpeg binary.
+func resolveFfmpegBin(exeDir string) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(exeDir, "bin", "ffmpeg.exe")
+	}
+	return filepath.Join(exeDir, "bin", "ffmpeg")
 }

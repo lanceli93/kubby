@@ -1,0 +1,48 @@
+import { NextRequest } from "next/server";
+import fs from "fs";
+import path from "path";
+import { getTranscodeManager } from "@/lib/transcode/transcode-manager";
+
+const SEGMENT_PATTERN = /^segment_\d{4}\.ts$/;
+
+// GET /api/stream/[sessionId]/segment/[name]
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ sessionId: string; name: string }> }
+) {
+  const { sessionId, name } = await params;
+
+  // Validate segment name to prevent path traversal
+  if (!SEGMENT_PATTERN.test(name)) {
+    return new Response("Invalid segment name", { status: 400 });
+  }
+
+  const manager = getTranscodeManager();
+  const session = manager.getSession(sessionId);
+
+  if (!session) {
+    return new Response("Session not found", { status: 404 });
+  }
+
+  const segmentPath = path.join(session.outputDir, name);
+
+  // Brief wait+retry if segment not yet generated
+  let attempts = 0;
+  while (!fs.existsSync(segmentPath) && attempts < 20) {
+    await new Promise((r) => setTimeout(r, 500));
+    attempts++;
+  }
+
+  if (!fs.existsSync(segmentPath)) {
+    return new Response("Segment not found", { status: 404 });
+  }
+
+  const data = fs.readFileSync(segmentPath);
+  return new Response(data, {
+    headers: {
+      "Content-Type": "video/mp2t",
+      "Cache-Control": "public, max-age=86400",
+      "Content-Length": String(data.length),
+    },
+  });
+}

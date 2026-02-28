@@ -20,6 +20,7 @@ import {
   BookmarkPlus,
   PanelTop,
 } from "lucide-react";
+import Hls from "hls.js";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
@@ -84,6 +85,9 @@ export default function PlayerPage() {
   const [bookmarkTags, setBookmarkTags] = useState<string[]>([]);
   const [bookmarkNote, setBookmarkNote] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const hlsRef = useRef<Hls | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -423,10 +427,123 @@ export default function PlayerPage() {
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  // Build video src with disc param
-  const videoSrc = isMultiDisc
-    ? `/api/movies/${movieId}/stream?disc=${currentDisc}`
-    : `/api/movies/${movieId}/stream`;
+  // Decide-then-play: call the decide endpoint, then set up direct or HLS playback
+  useEffect(() => {
+    if (!movie) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    let cancelled = false;
+
+    // Cleanup previous HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    // Cleanup previous transcode session
+    const prevSession = sessionIdRef.current;
+    if (prevSession) {
+      fetch(`/api/stream/${prevSession}`, { method: "DELETE", keepalive: true });
+      sessionIdRef.current = null;
+    }
+
+    setPlaybackMode(null);
+
+    const discQuery = isMultiDisc ? `?disc=${currentDisc}` : "";
+    fetch(`/api/movies/${movieId}/stream/decide${discQuery}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+
+        if (data.warning) {
+          showOsd(data.warning);
+        }
+
+        setPlaybackMode(data.mode);
+
+        if (data.mode === "direct") {
+          // Direct play — set src directly
+          video.src = data.directUrl;
+        } else {
+          // HLS playback (remux or transcode)
+          sessionIdRef.current = data.sessionId;
+          const hlsUrl = data.hlsUrl;
+
+          if (Hls.isSupported()) {
+            const hls = new Hls({
+              maxBufferLength: 30,
+              maxMaxBufferLength: 60,
+            });
+            hlsRef.current = hls;
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.ERROR, (_event, errorData) => {
+              if (errorData.fatal && errorData.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                // Try to recover by restarting transcode from current position
+                if (video.currentTime > 0 && sessionIdRef.current) {
+                  fetch(`/api/stream/${sessionIdRef.current}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(video.currentTime) }),
+                  })
+                    .then((r) => r.json())
+                    .then((seekData) => {
+                      if (seekData.sessionId) {
+                        sessionIdRef.current = seekData.sessionId;
+                        hls.loadSource(seekData.hlsUrl);
+                      }
+                    })
+                    .catch(() => {
+                      // Give up on recovery
+                      hls.destroy();
+                    });
+                }
+              }
+            });
+
+            showOsd(data.mode === "remux" ? "Remuxing..." : "Transcoding...");
+          } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            // Safari native HLS
+            video.src = hlsUrl;
+            showOsd(data.mode === "remux" ? "Remuxing..." : "Transcoding...");
+          }
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Fallback to direct play
+        const directUrl = isMultiDisc
+          ? `/api/movies/${movieId}/stream?disc=${currentDisc}`
+          : `/api/movies/${movieId}/stream`;
+        video.src = directUrl;
+        setPlaybackMode("direct");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movieId, currentDisc, movie]);
+
+  // Cleanup transcode session on unmount
+  useEffect(() => {
+    const cleanup = () => {
+      if (sessionIdRef.current) {
+        fetch(`/api/stream/${sessionIdRef.current}`, { method: "DELETE", keepalive: true });
+      }
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
+    };
+
+    window.addEventListener("beforeunload", cleanup);
+    return () => {
+      window.removeEventListener("beforeunload", cleanup);
+      cleanup();
+    };
+  }, []);
 
   return (
     <div
@@ -437,9 +554,7 @@ export default function PlayerPage() {
     >
       <video
         ref={videoRef}
-        key={videoSrc}
         className="h-full w-full"
-        src={videoSrc}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}

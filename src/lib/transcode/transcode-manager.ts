@@ -1,0 +1,229 @@
+import { spawn, execFileSync, type ChildProcess } from "child_process";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
+import { getFfmpegPath, getTranscodeCacheDir } from "@/lib/paths";
+import { buildFfmpegArgs } from "./ffmpeg-command";
+import type { PlaybackDecision } from "./playback-decider";
+
+export interface TranscodeSession {
+  id: string;
+  movieId: string;
+  discNumber: number;
+  filePath: string;
+  decision: PlaybackDecision;
+  outputDir: string;
+  process: ChildProcess | null;
+  startedAt: number;
+  lastAccessedAt: number;
+  seekToSeconds: number;
+}
+
+const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const CLEANUP_INTERVAL_MS = 60 * 1000; // 60 seconds
+
+class TranscodeManager {
+  private sessions = new Map<string, TranscodeSession>();
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private ffmpegAvailable: boolean | null = null;
+
+  constructor() {
+    this.startCleanupInterval();
+    this.registerShutdownHandlers();
+  }
+
+  checkFfmpegAvailable(): boolean {
+    if (this.ffmpegAvailable !== null) return this.ffmpegAvailable;
+    try {
+      execFileSync(getFfmpegPath(), ["-version"], { timeout: 5000, stdio: "ignore" });
+      this.ffmpegAvailable = true;
+    } catch {
+      this.ffmpegAvailable = false;
+    }
+    return this.ffmpegAvailable;
+  }
+
+  startSession(
+    movieId: string,
+    discNumber: number,
+    filePath: string,
+    decision: PlaybackDecision,
+    seekToSeconds = 0,
+  ): string {
+    const id = uuidv4();
+    const outputDir = path.join(getTranscodeCacheDir(), id);
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds });
+    const ffmpegProcess = spawn(getFfmpegPath(), args, {
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+
+    ffmpegProcess.stderr?.on("data", (data: Buffer) => {
+      // Log FFmpeg progress sparingly
+      const line = data.toString().trim();
+      if (line.includes("time=") || line.includes("Error")) {
+        console.log(`[transcode:${id.slice(0, 8)}] ${line.slice(0, 200)}`);
+      }
+    });
+
+    ffmpegProcess.on("exit", (code) => {
+      console.log(`[transcode:${id.slice(0, 8)}] FFmpeg exited with code ${code}`);
+      const session = this.sessions.get(id);
+      if (session) {
+        session.process = null;
+      }
+    });
+
+    const session: TranscodeSession = {
+      id,
+      movieId,
+      discNumber,
+      filePath,
+      decision,
+      outputDir,
+      process: ffmpegProcess,
+      startedAt: Date.now(),
+      lastAccessedAt: Date.now(),
+      seekToSeconds,
+    };
+
+    this.sessions.set(id, session);
+    return id;
+  }
+
+  getSession(sessionId: string): TranscodeSession | undefined {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      session.lastAccessedAt = Date.now();
+    }
+    return session;
+  }
+
+  async waitForPlaylist(sessionId: string, timeoutMs = 15000): Promise<boolean> {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+
+    const playlistPath = path.join(session.outputDir, "playlist.m3u8");
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      if (fs.existsSync(playlistPath)) {
+        return true;
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    return false;
+  }
+
+  seekSession(sessionId: string, seekToSeconds: number): string | null {
+    const session = this.sessions.get(sessionId);
+    if (!session) return null;
+
+    // Kill existing process
+    this.killProcess(session);
+
+    // Clean up old output
+    this.cleanOutputDir(session.outputDir);
+
+    // Start new session from the seek point
+    return this.startSession(
+      session.movieId,
+      session.discNumber,
+      session.filePath,
+      session.decision,
+      seekToSeconds,
+    );
+  }
+
+  stopSession(sessionId: string): void {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+
+    this.killProcess(session);
+    this.cleanOutputDir(session.outputDir);
+    this.sessions.delete(sessionId);
+  }
+
+  shutdownAll(): void {
+    for (const [id, session] of this.sessions) {
+      this.killProcess(session);
+      this.cleanOutputDir(session.outputDir);
+    }
+    this.sessions.clear();
+
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+
+    // Clean up the entire cache dir
+    const cacheDir = getTranscodeCacheDir();
+    try {
+      if (fs.existsSync(cacheDir)) {
+        fs.rmSync(cacheDir, { recursive: true, force: true });
+      }
+    } catch {
+      // Best effort
+    }
+  }
+
+  private killProcess(session: TranscodeSession): void {
+    if (session.process && !session.process.killed) {
+      try {
+        session.process.kill("SIGTERM");
+      } catch {
+        // Process may have already exited
+      }
+      session.process = null;
+    }
+  }
+
+  private cleanOutputDir(outputDir: string): void {
+    try {
+      if (fs.existsSync(outputDir)) {
+        fs.rmSync(outputDir, { recursive: true, force: true });
+      }
+    } catch {
+      // Best effort
+    }
+  }
+
+  private startCleanupInterval(): void {
+    this.cleanupTimer = setInterval(() => {
+      const now = Date.now();
+      for (const [id, session] of this.sessions) {
+        if (now - session.lastAccessedAt > IDLE_TIMEOUT_MS) {
+          console.log(`[transcode] Cleaning up idle session ${id.slice(0, 8)}`);
+          this.stopSession(id);
+        }
+      }
+    }, CLEANUP_INTERVAL_MS);
+
+    // Don't prevent process exit
+    if (this.cleanupTimer.unref) {
+      this.cleanupTimer.unref();
+    }
+  }
+
+  private registerShutdownHandlers(): void {
+    const handler = () => {
+      this.shutdownAll();
+    };
+
+    process.on("SIGTERM", handler);
+    process.on("SIGINT", handler);
+    process.on("exit", handler);
+  }
+}
+
+// Singleton via globalThis (survives Next.js dev hot reload)
+const GLOBAL_KEY = "__kubby_transcode_manager__";
+
+export function getTranscodeManager(): TranscodeManager {
+  const g = globalThis as Record<string, unknown>;
+  if (!g[GLOBAL_KEY]) {
+    g[GLOBAL_KEY] = new TranscodeManager();
+  }
+  return g[GLOBAL_KEY] as TranscodeManager;
+}
