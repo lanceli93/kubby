@@ -15,7 +15,7 @@
 | NFO 解析 | fast-xml-parser | 5.3.5 |
 | 国际化 | next-intl | 4.8.2 |
 | 图标 | lucide-react | 0.563.0 |
-| 运行时 | Node.js | 22.12.0 |
+| 运行时 | Node.js | 25.x |
 
 ---
 
@@ -115,7 +115,7 @@ kubby/
 │   │   ├── auth.config.ts                          # NextAuth 轻量配置 (供 middleware 使用, 无 DB)
 │   │   ├── db/
 │   │   │   ├── schema.ts                           # Drizzle schema (13 张表, 含 settings + user_preferences + bookmarks)
-│   │   │   └── index.ts                            # DB 连接单例 (WAL + FK)
+│   │   │   └── index.ts                            # DB 连接 (Proxy 懒初始化, WAL + FK + 自动迁移)
 │   │   ├── folder-paths.ts                         # 多文件夹路径 parse/serialize 辅助工具 (向后兼容 JSON 数组存储)
 │   │   ├── scanner/
 │   │   │   ├── index.ts                            # 媒体库扫描器 (多路径遍历+TMDB刮削+DB写入)
@@ -849,7 +849,7 @@ Kubby 支持构建为可分发的桌面应用:
 ```
 dist/kubby-{platform}/
 ├── kubby(.exe)              # Go 启动器 (~9MB)
-├── node/                    # Node.js 22 LTS 运行时
+├── node/                    # Node.js 25 运行时
 ├── bin/                     # ffprobe 静态编译
 └── server/                  # Next.js standalone 输出
     ├── server.js
