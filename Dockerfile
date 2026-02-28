@@ -1,5 +1,5 @@
 # ─── Stage 1: Build ─────────────────────────────────────
-FROM node:22-slim AS builder
+FROM node:25-slim AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN STANDALONE_ROOT=$(find .next/standalone -name "server.js" -not -path "*/node
     cp -r "$STANDALONE_ROOT"/. /standalone/
 
 # ─── Stage 2: Production ────────────────────────────────
-FROM node:22-slim AS runner
+FROM node:25-slim AS runner
 
 WORKDIR /app
 
