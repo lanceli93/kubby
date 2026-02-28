@@ -599,10 +599,11 @@ function createWindowsInstaller(flatDir: string, distDir: string) {
   }
 
   // Check makensis is available
+  const whichCmd = process.platform === "win32" ? "where makensis" : "which makensis";
   try {
-    execSync("which makensis", { stdio: "ignore" });
+    execSync(whichCmd, { stdio: "ignore" });
   } catch {
-    console.warn("  makensis not found. Install via: brew install nsis");
+    console.warn("  makensis not found. Install via: choco install nsis (Windows) or brew install nsis (macOS)");
     return;
   }
 
