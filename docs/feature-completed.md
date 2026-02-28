@@ -1,5 +1,43 @@
 # Completed Features
 
+## 2026-02-28: HLS Transcoding for Universal Video Playback
+
+FFmpeg converts incompatible video formats to HLS on-demand. Browser-compatible formats keep direct play.
+
+### Decision Logic
+- **Direct play**: MP4+H.264+AAC, WebM+VP8/VP9+Opus/Vorbis
+- **Remux** (copy streams to HLS): browser-compatible codec but wrong container (MKV/MOV/TS with H.264)
+- **Transcode** (re-encode to H.264+AAC): incompatible codecs (mpeg4, wmv2, flv1, etc.)
+
+### New Files
+- `src/lib/transcode/playback-decider.ts` — pure function deciding direct/remux/transcode
+- `src/lib/transcode/ffmpeg-command.ts` — builds FFmpeg HLS command arguments
+- `src/lib/transcode/transcode-manager.ts` — singleton managing FFmpeg child processes (session lifecycle, idle cleanup, graceful shutdown via globalThis pattern)
+- `src/app/api/movies/[id]/stream/decide/route.ts` — decide endpoint
+- `src/app/api/stream/[sessionId]/playlist.m3u8/route.ts` — HLS playlist serving
+- `src/app/api/stream/[sessionId]/segment/[name]/route.ts` — HLS segment serving
+- `src/app/api/stream/[sessionId]/route.ts` — session management (seek/stop)
+
+### Modified Files
+- `src/lib/paths.ts` — added getFfmpegPath(), getTranscodeCacheDir()
+- `src/lib/scanner/index.ts` — added .ts to VIDEO_EXTENSIONS
+- `src/app/api/movies/[id]/stream/route.ts` — added .flv and .ts MIME types
+- `src/app/(main)/movies/[id]/play/page.tsx` — HLS.js integration with decide-then-play pattern
+- `launcher/server.go` — added resolveFfmpegBin() and FFMPEG_PATH env var
+- `scripts/package.ts` — added ffmpeg binary download for all platforms
+
+### New Dependency
+- `hls.js` — HLS playback in browsers
+
+### Key Design Decisions
+- Transcode temp files in `os.tmpdir()/kubby-transcode/` (ephemeral, OS clears on reboot)
+- 10-minute idle session cleanup, graceful shutdown kills all FFmpeg processes
+- FFmpeg unavailable → graceful fallback to direct play with warning
+- HLS.js handles playback; Safari uses native HLS via `video.src`
+- Session cleanup on unmount + beforeunload for reliable cleanup
+
+---
+
 ## 2026-02-12: 5 Jellyfin-Inspired UI Features
 
 ### F1: Movie Card Hover Play Button
