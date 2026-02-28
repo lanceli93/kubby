@@ -381,6 +381,18 @@ export const db = new Proxy({} as BetterSQLite3Database<typeof schema>, {
 
 **解决**：保持 CI 的 `node-version` 与本地开发环境一致。在 `release.yml` 中更新 `node-version` 即可。
 
+### 4. Windows: `which` 命令不存在导致 NSIS 安装包未生成
+
+**问题**：打包脚本用 `which makensis` 检测 NSIS 是否安装，但 `which` 是 Unix 命令，Windows 上不存在。检测静默失败后函数直接 return，跳过了 `KubbySetup.exe` 的生成，构建看起来成功但没有产出 exe。
+
+**解决**：根据平台选择正确的命令：
+
+```typescript
+const whichCmd = process.platform === "win32" ? "where makensis" : "which makensis";
+```
+
+**教训**：在跨平台脚本中避免使用平台特有的 shell 命令（`which`、`ls`、`cp` 等），优先使用 Node.js API 或做平台判断。
+
 ## 恢复 Docker arm64 支持
 
 当前 Docker 镜像只构建 amd64，因为 QEMU 模拟 arm64 在 GitHub Actions 上非常慢（15+ 分钟）。如果将来需要支持 arm64（树莓派、Apple Silicon Docker 等），有两种方案：
