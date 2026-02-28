@@ -299,13 +299,13 @@ export function SetupWizard() {
 
       {/* Step 3: Add Media Library */}
       {step === 3 && (
-        <div className="flex w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
-          <h1 className="text-4xl font-bold text-primary">Kubby</h1>
-          <h2 className="text-xl font-semibold text-foreground">
+        <div className="flex max-h-[90vh] w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
+          <h1 className="shrink-0 text-4xl font-bold text-primary">Kubby</h1>
+          <h2 className="shrink-0 text-xl font-semibold text-foreground">
             {t("addMediaLibrary")}
           </h2>
 
-          <div className="flex w-full flex-col gap-5">
+          <div className="flex w-full flex-col gap-5 overflow-y-auto pr-1">
             {/* Library Name */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-muted-foreground">
