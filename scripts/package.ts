@@ -612,7 +612,18 @@ function createWindowsInstaller(flatDir: string, distDir: string) {
   const relFlatDir = path.relative(PROJECT_ROOT, flatDir);
   run(`makensis -NOCD -DINPUTDIR="${relFlatDir}" "${path.relative(PROJECT_ROOT, nsiScript)}"`);
 
+  // OutFile in .nsi may resolve relative to the .nsi directory or cwd depending
+  // on NSIS version/platform. Check both locations and move to dist/ if needed.
   const exePath = path.join(distDir, "KubbySetup.exe");
+  if (!fs.existsSync(exePath)) {
+    const altPath = path.join(path.dirname(nsiScript), "dist", "KubbySetup.exe");
+    if (fs.existsSync(altPath)) {
+      fs.renameSync(altPath, exePath);
+      console.log(`  Moved KubbySetup.exe from ${altPath} to ${exePath}`);
+    } else {
+      console.warn("  WARNING: KubbySetup.exe not found at expected locations");
+    }
+  }
   if (fs.existsSync(exePath)) {
     console.log(`  Created: ${exePath} (${(fs.statSync(exePath).size / 1024 / 1024).toFixed(1)} MB)`);
   }
