@@ -307,7 +307,7 @@ CMD if [ -z "$AUTH_SECRET" ]; then \
       if [ -f /data/auth-secret ]; then \
         export AUTH_SECRET=$(cat /data/auth-secret); \
       else \
-        export AUTH_SECRET=$(head -c 32 /dev/urandom | xxd -p | tr -d '\n'); \
+        export AUTH_SECRET=$(node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))"); \
         echo "$AUTH_SECRET" > /data/auth-secret; \
       fi; \
     fi && node server.js
@@ -345,9 +345,59 @@ volumes:
 
 `.github/workflows/release.yml` 在 `v*` tag push 时自动构建三个平台（darwin-arm64, darwin-x64, win-x64），产出 GitHub Release（draft）。支持 `workflow_dispatch` 手动触发测试构建。
 
+**Node.js 版本**：CI runner 的 Node.js 版本必须与本地开发环境一致（当前为 Node 25），否则 `npm ci` 会因 `package-lock.json` 与 `package.json` 依赖解析不匹配而失败。
+
 ### Docker 镜像
 
-`.github/workflows/docker.yml` 在 `v*` tag push 时用 `docker buildx` 构建 amd64 + arm64 双架构镜像，推送到 GitHub Container Registry (ghcr.io)。
+`.github/workflows/docker.yml` 在 `v*` tag push 时用 `docker buildx` 构建 amd64 + arm64 双架构镜像，推送到 GitHub Container Registry (ghcr.io)。Docker 构建使用 `node:22-slim` 基础镜像，这是容器内自包含的环境，与 CI release workflow 的 Node 版本无关。
+
+## CI 构建踩坑记录
+
+### 1. Windows: Go 交叉编译环境变量语法
+
+**问题**：`GOOS=windows GOARCH=amd64 go build ...` 是 Unix shell 语法，Windows runner 上会报 `'GOOS' is not recognized as an internal or external command`。
+
+**解决**：通过 Node.js `execSync` 的 `env` 选项传递环境变量，而不是拼在命令字符串前面：
+
+```typescript
+// ❌ 错误：Unix-only 语法
+run(`GOOS=${goOs} GOARCH=${goArch} go build -o "${dest}" .`);
+
+// ✅ 正确：跨平台
+run(`go build -o "${dest}" .`, {
+  cwd: launcherDir,
+  env: { GOOS: goOs, GOARCH: goArch, CGO_ENABLED: "0", GOPROXY: "direct" },
+});
+```
+
+### 2. macOS: Next.js 构建时 SQLite 数据库锁冲突
+
+**问题**：Next.js 构建阶段用多个 worker 并行收集页面数据（`Collecting page data using 2 workers`），每个 worker 都会 import `db/index.ts`，导致多个进程同时打开同一个 SQLite 数据库文件并执行迁移，触发 `SqliteError: database is locked (SQLITE_BUSY)`。
+
+**解决**：将 `src/lib/db/index.ts` 中的数据库连接从模块顶层立即执行改为懒初始化。通过 `Proxy` 包装 `db` 导出，只在首次实际访问时才打开连接和执行迁移：
+
+```typescript
+// ❌ 错误：模块 import 时立即打开连接
+const sqlite = new Database(DB_PATH);
+export const db = drizzle(sqlite, { schema });
+
+// ✅ 正确：首次使用时才初始化
+let _db: BetterSQLite3Database<typeof schema> | null = null;
+function initDb() { /* ... */ }
+export const db = new Proxy({} as BetterSQLite3Database<typeof schema>, {
+  get(_target, prop, receiver) {
+    return Reflect.get(initDb(), prop, receiver);
+  },
+});
+```
+
+### 3. npm ci 报 lock file 不同步
+
+**问题**：`npm ci` 报 `Missing: @swc/helpers@0.5.19 from lock file`。本地 `npm install` 显示 "up to date" 但 CI 失败。
+
+**原因**：本地 Node 版本（如 v25）和 CI Node 版本（如 v22）不同，不同版本的 npm 对依赖树的解析方式有差异，导致 `package-lock.json` 在另一个版本上被视为不同步。
+
+**解决**：保持 CI 的 `node-version` 与本地开发环境一致。在 `release.yml` 中更新 `node-version` 即可。
 
 ## 已知限制
 
