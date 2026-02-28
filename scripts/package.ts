@@ -447,8 +447,16 @@ function buildLauncher(platform: Platform, outputDir: string) {
   const binDest = path.join(outputDir, cfg.launcherBin);
 
   run(
-    `GOOS=${cfg.goOs} GOARCH=${cfg.goArch} CGO_ENABLED=${cgoEnabled} GOPROXY=direct go build ${ldflags} -o "${binDest}" .`,
-    { cwd: launcherDir }
+    `go build ${ldflags} -o "${binDest}" .`,
+    {
+      cwd: launcherDir,
+      env: {
+        GOOS: cfg.goOs,
+        GOARCH: cfg.goArch,
+        CGO_ENABLED: cgoEnabled,
+        GOPROXY: "direct",
+      },
+    }
   );
 
   if (platform !== "win-x64") {
