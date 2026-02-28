@@ -5,25 +5,45 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to build (tag push always builds all)"
+        required: true
+        type: choice
+        options:
+          - all
+          - darwin-arm64
+          - darwin-x64
+          - win-x64
 
 permissions:
   contents: write
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          PLATFORM="${{ github.event.inputs.platform }}"
+          ALL='{"include":[{"os":"macos-latest","platform":"darwin-arm64","artifact_name":"Kubby-arm64.dmg"},{"os":"macos-latest","platform":"darwin-x64","artifact_name":"Kubby-x64.dmg"},{"os":"windows-latest","platform":"win-x64","artifact_name":"KubbySetup.exe"}]}'
+          if [ -z "$PLATFORM" ] || [ "$PLATFORM" = "all" ]; then
+            echo "matrix=$ALL" >> $GITHUB_OUTPUT
+          elif [ "$PLATFORM" = "darwin-arm64" ]; then
+            echo 'matrix={"include":[{"os":"macos-latest","platform":"darwin-arm64","artifact_name":"Kubby-arm64.dmg"}]}' >> $GITHUB_OUTPUT
+          elif [ "$PLATFORM" = "darwin-x64" ]; then
+            echo 'matrix={"include":[{"os":"macos-latest","platform":"darwin-x64","artifact_name":"Kubby-x64.dmg"}]}' >> $GITHUB_OUTPUT
+          elif [ "$PLATFORM" = "win-x64" ]; then
+            echo 'matrix={"include":[{"os":"windows-latest","platform":"win-x64","artifact_name":"KubbySetup.exe"}]}' >> $GITHUB_OUTPUT
+          fi
+
   build:
+    needs: setup
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            platform: darwin-arm64
-            artifact_name: Kubby-arm64.dmg
-          - os: macos-latest
-            platform: darwin-x64
-            artifact_name: Kubby-x64.dmg
-          - os: windows-latest
-            platform: win-x64
-            artifact_name: KubbySetup.exe
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
 
     runs-on: ${{ matrix.os }}
 
