@@ -47,7 +47,7 @@ export function GlobalScanBar() {
             {/* Text */}
             <div className="flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-2 text-xs">
               {scanning && progress && (
-                <span className="text-white/80">
+                <span className="max-w-[80vw] truncate text-white/80">
                   {progress.title
                     ? tHome("scanProgressWithTitle", { title: progress.title, current: progress.current, total: progress.total })
                     : tHome("scanProgress", { current: progress.current, total: progress.total })}

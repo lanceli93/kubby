@@ -136,7 +136,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
             {scanProgress ? (
               <>
                 <Progress value={(scanProgress.current / scanProgress.total) * 100} className="h-1.5 w-full" />
-                <span className="text-xs text-white/80">
+                <span className="max-w-full truncate text-xs text-white/80">
                   {scanProgress.title
                     ? tHome("scanProgressWithTitle", { title: scanProgress.title, current: scanProgress.current, total: scanProgress.total })
                     : tHome("scanProgress", { current: scanProgress.current, total: scanProgress.total })}
