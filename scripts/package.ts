@@ -598,19 +598,33 @@ function createWindowsInstaller(flatDir: string, distDir: string) {
     return;
   }
 
-  // Check makensis is available
-  const whichCmd = process.platform === "win32" ? "where makensis" : "which makensis";
-  try {
-    execSync(whichCmd, { stdio: "ignore" });
-  } catch {
-    console.warn("  makensis not found. Install via: choco install nsis (Windows) or brew install nsis (macOS)");
-    return;
+  // Find makensis binary — choco installs NSIS but may not update PATH in the same session
+  let makensis = "makensis";
+  if (process.platform === "win32") {
+    const chocoPath = "C:\\Program Files (x86)\\NSIS\\makensis.exe";
+    if (fs.existsSync(chocoPath)) {
+      makensis = `"${chocoPath}"`;
+    } else {
+      try {
+        execSync("where makensis", { stdio: "ignore" });
+      } catch {
+        console.warn("  makensis not found. Install via: choco install nsis");
+        return;
+      }
+    }
+  } else {
+    try {
+      execSync("which makensis", { stdio: "ignore" });
+    } catch {
+      console.warn("  makensis not found. Install via: brew install nsis");
+      return;
+    }
   }
 
   // Run makensis from project root; INPUTDIR points to the flat build dir
   // -NOCD prevents makensis from changing to the .nsi file's directory
   const relFlatDir = path.relative(PROJECT_ROOT, flatDir);
-  run(`makensis -NOCD -DINPUTDIR="${relFlatDir}" "${path.relative(PROJECT_ROOT, nsiScript)}"`);
+  run(`${makensis} -NOCD -DINPUTDIR="${relFlatDir}" "${path.relative(PROJECT_ROOT, nsiScript)}"`);
 
   // OutFile in .nsi may resolve relative to the .nsi directory or cwd depending
   // on NSIS version/platform. Check both locations and move to dist/ if needed.
