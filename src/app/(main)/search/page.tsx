@@ -399,7 +399,7 @@ function SearchContent() {
                 <Link
                   key={movie.id}
                   href={`/movies/${movie.id}`}
-                  className="max-w-[280px] text-sm font-semibold text-primary transition-colors hover:text-primary hover:underline truncate text-center"
+                  className="max-w-[560px] text-sm font-semibold text-primary transition-colors hover:text-primary hover:underline truncate text-center"
                   title={movie.title}
                 >
                   {movie.title}
