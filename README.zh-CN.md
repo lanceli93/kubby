@@ -89,7 +89,7 @@ npm run dev
 
 ### 1. 下载
 
-从 [Releases](https://github.com/kubby-app/kubby/releases) 页面下载 `Kubby.dmg`。
+从 [Releases](https://github.com/lanceli93/kubby/releases) 页面下载 `Kubby.dmg`。
 
 ### 2. 安装
 
@@ -136,7 +136,7 @@ macOS 默认会拦截未签名的应用。第一次打开 Kubby：
 
 ### 1. 下载
 
-从 [Releases](https://github.com/kubby-app/kubby/releases) 页面下载 `KubbySetup.exe`。
+从 [Releases](https://github.com/lanceli93/kubby/releases) 页面下载 `KubbySetup.exe`。
 
 ### 2. 安装
 
@@ -180,7 +180,7 @@ Windows SmartScreen 可能会对未签名应用弹出警告。点 **更多信息
 ```yaml
 services:
   kubby:
-    image: ghcr.io/kubby-app/kubby:latest
+    image: ghcr.io/lanceli93/kubby:latest
     ports:
       - "3000:3000"
     volumes:
@@ -207,7 +207,7 @@ docker run -d \
   -v kubby-data:/data \
   -v /path/to/your/movies:/media \
   --restart unless-stopped \
-  ghcr.io/kubby-app/kubby:latest
+  ghcr.io/lanceli93/kubby:latest
 ```
 
 ### 挂载目录

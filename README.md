@@ -89,7 +89,7 @@ Open [http://localhost:3000](http://localhost:3000) — the setup wizard handles
 
 ### 1. Download
 
-Download `Kubby.dmg` from the [Releases](https://github.com/kubby-app/kubby/releases) page.
+Download `Kubby.dmg` from the [Releases](https://github.com/lanceli93/kubby/releases) page.
 
 ### 2. Install
 
@@ -136,7 +136,7 @@ Right-click the Kubby icon in the Dock → **Quit**, or click the tray icon in t
 
 ### 1. Download
 
-Download `KubbySetup.exe` from the [Releases](https://github.com/kubby-app/kubby/releases) page.
+Download `KubbySetup.exe` from the [Releases](https://github.com/lanceli93/kubby/releases) page.
 
 ### 2. Install
 
@@ -180,7 +180,7 @@ Supports **amd64** and **arm64**. Works on Synology, QNAP, Unraid, and any Linux
 ```yaml
 services:
   kubby:
-    image: ghcr.io/kubby-app/kubby:latest
+    image: ghcr.io/lanceli93/kubby:latest
     ports:
       - "3000:3000"
     volumes:
@@ -207,7 +207,7 @@ docker run -d \
   -v kubby-data:/data \
   -v /path/to/your/movies:/media \
   --restart unless-stopped \
-  ghcr.io/kubby-app/kubby:latest
+  ghcr.io/lanceli93/kubby:latest
 ```
 
 ### Volumes

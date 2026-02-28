@@ -309,7 +309,7 @@ CMD if [ -z "$AUTH_SECRET" ]; then \
 ```yaml
 services:
   kubby:
-    image: ghcr.io/kubby-app/kubby:latest
+    image: ghcr.io/lanceli93/kubby:latest
     ports:
       - "3000:3000"
     volumes:

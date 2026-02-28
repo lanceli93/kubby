@@ -2,7 +2,7 @@ services:
   kubby:
     build: .
     # Or use pre-built image:
-    # image: ghcr.io/kubby-app/kubby:latest
+    # image: ghcr.io/lanceli93/kubby:latest
     ports:
       - "3000:3000"
     volumes:
