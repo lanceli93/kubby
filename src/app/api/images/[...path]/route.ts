@@ -32,8 +32,10 @@ export async function GET(
   const imagePath = decodeURIComponent(pathSegments.join("/"));
 
   // Security: prevent path traversal
+  // Check that no segment is literally ".." (allows filenames containing ".." like "A...B")
   const normalizedPath = path.normalize(imagePath);
-  if (normalizedPath.includes("..")) {
+  const segments = normalizedPath.split(path.sep);
+  if (segments.some((s) => s === "..")) {
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
