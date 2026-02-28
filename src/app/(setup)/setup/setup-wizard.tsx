@@ -84,8 +84,13 @@ export function SetupWizard() {
       const allPaths = newFolderPath.trim()
         ? [...folderPaths, newFolderPath.trim()]
         : folderPaths;
-      if (!skipLibrary && libraryName && allPaths.length > 0) {
-        body.libraryName = libraryName;
+      if (!skipLibrary && allPaths.length > 0) {
+        if (!libraryName.trim()) {
+          setError(t("libraryNameRequired"));
+          setLoading(false);
+          return;
+        }
+        body.libraryName = libraryName.trim();
         body.libraryType = libraryType;
         body.folderPaths = allPaths;
         body.jellyfinCompat = jellyfinCompat;

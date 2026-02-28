@@ -63,7 +63,8 @@
     "jellyfinCompatMode": "Jellyfin 兼容模式",
     "jellyfinCompatDesc": "不会写入 NFO 文件，并从 Jellyfin 本地路径导入演员照片。如果 Jellyfin 也在使用此媒体库，建议启用。",
     "jellyfinCompatConfirmTitle": "启用 Jellyfin 兼容模式？",
-    "jellyfinCompatConfirmDesc": "启用后，Kubby 不会修改或创建媒体库文件夹中的 NFO 文件。NFO 中通过本地路径引用的演员照片将被复制到 Kubby 的元数据目录。如果 Jellyfin 也在使用此媒体库，建议启用。"
+    "jellyfinCompatConfirmDesc": "启用后，Kubby 不会修改或创建媒体库文件夹中的 NFO 文件。NFO 中通过本地路径引用的演员照片将被复制到 Kubby 的元数据目录。如果 Jellyfin 也在使用此媒体库，建议启用。",
+    "libraryNameRequired": "请输入媒体库名称"
   },
   "nav": {
     "home": "首页",

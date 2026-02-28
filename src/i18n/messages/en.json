@@ -63,7 +63,8 @@
     "jellyfinCompatMode": "Jellyfin Compatibility Mode",
     "jellyfinCompatDesc": "Prevents writing to NFO files and imports actor photos from Jellyfin local paths. Recommended if Jellyfin also uses this library.",
     "jellyfinCompatConfirmTitle": "Enable Jellyfin Compatibility?",
-    "jellyfinCompatConfirmDesc": "When enabled, Kubby will never modify or create NFO files in your library folders. Actor photos referenced by local paths in NFO thumb tags will be copied to Kubby's metadata directory. This is recommended if Jellyfin also uses this library."
+    "jellyfinCompatConfirmDesc": "When enabled, Kubby will never modify or create NFO files in your library folders. Actor photos referenced by local paths in NFO thumb tags will be copied to Kubby's metadata directory. This is recommended if Jellyfin also uses this library.",
+    "libraryNameRequired": "Please enter a library name"
   },
   "nav": {
     "home": "Home",
