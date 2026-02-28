@@ -115,6 +115,7 @@ export async function POST(
       success: true,
       startPosition: startSeconds,
       player: playerName,
+      cmd: lastLaunchCmd,
     });
   } catch (error) {
     console.error("Play external error:", error);
@@ -125,7 +126,12 @@ export async function POST(
   }
 }
 
+/** Track last launched command for debug response */
+let lastLaunchCmd = "";
+
 function launchPlayer(exe: string, args: string[]) {
+  lastLaunchCmd = `"${exe}" ${args.map((a) => `"${a}"`).join(" ")}`;
+  console.log("[play-external] exec:", lastLaunchCmd);
   execFile(exe, args, (error) => {
     if (error) console.error("[play-external] launch error:", error.message);
   });

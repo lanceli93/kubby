@@ -204,9 +204,12 @@ export default function MovieDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ disc, startSeconds }),
       });
+      const data = await res.json();
       if (res.ok) {
+        if (data.cmd) console.log("[external-player] cmd:", data.cmd);
         setExternalToast(t("launchedIn", { player: externalPlayerName || "" }));
       } else {
+        console.error("[external-player] error:", data);
         setExternalToast(t("externalPlayerFailed"));
       }
     } catch {
