@@ -62,18 +62,19 @@ kubby/
 │   │       │   ├── stats/route.ts                  # GET 管理统计
 │   │       │   └── activity/route.ts               # GET 最近活动 (占位)
 │   │       ├── filesystem/route.ts                 # GET 服务端目录浏览
-│   │       ├── images/[...path]/route.ts           # GET 本地图片服务
+│   │       ├── images/[...path]/route.ts           # GET 本地图片服务 (路径遍历按段检查, 支持含..的文件名)
 │   │       ├── libraries/
 │   │       │   ├── route.ts                        # GET 列表 / POST 创建
 │   │       │   └── [id]/
 │   │       │       ├── route.ts                    # GET 详情 / DELETE 删除
-│   │       │       └── scan/route.ts               # POST 触发扫描
+│   │       │       └── scan/route.ts               # POST 触发扫描 (SSE: progress+title, done+skipped)
 │   │       ├── movies/
 │   │       │   ├── route.ts                        # GET 列表 (搜索/过滤/排序/分页/genre/includeGenres)
 │   │       │   ├── genres/route.ts                 # GET 按媒体库去重的类型列表
 │   │       │   └── [id]/
 │   │       │       ├── route.ts                    # GET 详情 (含演员/导演/userData)
 │   │       │       ├── stream/route.ts             # GET 视频流 (HTTP 206 Range)
+│   │       │       ├── play-external/route.ts       # POST 启动外部播放器 (debug cmd 日志)
 │   │       │       └── user-data/route.ts          # GET/PUT 播放进度/收藏/已看
 │   │       ├── people/[id]/
 │   │       │   ├── route.ts                        # GET/PUT 演员详情+参演作品
@@ -118,7 +119,7 @@ kubby/
 │   │   │   └── index.ts                            # DB 连接 (Proxy 懒初始化, WAL + FK + 自动迁移)
 │   │   ├── folder-paths.ts                         # 多文件夹路径 parse/serialize 辅助工具 (向后兼容 JSON 数组存储)
 │   │   ├── scanner/
-│   │   │   ├── index.ts                            # 媒体库扫描器 (多路径遍历+TMDB刮削+DB写入)
+│   │   │   ├── index.ts                            # 媒体库扫描器 (多路径遍历+TMDB刮削+DB写入+跳过追踪)
 │   │   │   ├── nfo-parser.ts                       # NFO XML 解析器
 │   │   │   └── nfo-writer.ts                       # NFO 生成/回写 (完整 NFO 生成 + 追加 actor)
 │   │   ├── scraper/
@@ -132,7 +133,8 @@ kubby/
 │   │   └── use-user-preferences.ts                 # 用户偏好 React Query hook (评分维度/卡片标记/书签配置)
 │   ├── providers/
 │   │   ├── query-provider.tsx                      # TanStack React Query Provider
-│   │   └── session-provider.tsx                    # NextAuth Session Provider
+│   │   ├── session-provider.tsx                    # NextAuth Session Provider
+│   │   └── scan-provider.tsx                       # 全局扫描状态 (SSE 进度+title+skipped, 跨组件共享)
 │   ├── types/
 │   │   └── next-auth.d.ts                          # NextAuth 类型扩展 (isAdmin, locale)
 │   └── middleware.ts                               # 路由保护 (auth.config.ts)
@@ -534,25 +536,30 @@ token.locale: string   // 语言偏好 (en/zh)
 ### 扫描流程
 
 ```
-scanLibrary(libraryId)
+scanLibrary(libraryId, onProgress?)
   │
   ├── 读取 media_libraries 表获取 folder_path + scraper_enabled
   ├── 若 scraper_enabled, 从 settings 表加载 TMDB API key
-  ├── 遍历 folder_path 下的子目录
+  ├── 预计数所有子目录 → dirs[] (用于 progress total)
+  ├── 遍历 dirs, 每 5% 发送 onProgress({ current, total, title })
   │   ├── 若无 movie.nfo 且 scraper 启用 → 调用 scrapeMovie()
   │   │   ├── 解析文件夹名 → { title, year }
   │   │   ├── TMDB searchMovie() → 选最佳匹配
   │   │   ├── TMDB getMovieDetails() → 完整元数据+credits
   │   │   ├── 下载 poster.jpg + fanart.jpg + 演员头像
   │   │   └── 生成 movie.nfo (Kodi/Jellyfin 兼容)
+  │   ├── 无 NFO → skipped.push({ name, reason: 'no_nfo' }), continue
   │   ├── 查找 movie.nfo → 用 fast-xml-parser 解析
-  │   ├── 查找视频文件 (.mp4/.mkv/.avi/.wmv/.mov/.flv/.webm/.m4v)
+  │   │   └── 解析失败 → skipped.push({ name, reason: 'nfo_parse_error' }), continue
+  │   ├── 查找视频文件 → 无视频 → skipped.push({ name, reason: 'no_video' }), continue
   │   ├── 查找 poster.* 和 fanart.* (.jpg/.jpeg/.png/.webp/.bmp)
   │   ├── 写入/更新 movies 表 (按 folder_path 幂等匹配)
   │   ├── 清除旧的 movie_people 关联
   │   ├── 写入 people 表 (按 name + type 去重)
   │   └── 写入 movie_people 关联 (演员 + 导演)
-  └── 更新 media_libraries.last_scanned_at
+  ├── 清理已不存在的电影 → removedCount
+  ├── 更新 media_libraries.last_scanned_at
+  └── 返回 { scannedCount, removedCount, skipped[] }
 ```
 
 ### NFO 解析字段
@@ -692,7 +699,7 @@ data/metadata/
 | `/setup` | 欢迎向导 | 4 步: 语言选择 → 创建管理员 → 添加媒体库 → 完成, 首次运行自动跳转 |
 | `/login` | 登录 | Server Component 检查首次运行, i18n, 登录后恢复 locale |
 | `/register` | 注册 | 同登录风格, 4 字段 + 管理员提示, i18n |
-| `/` | 首页 | Jellyfin 风格 Tab 导航: Home Tab (媒体库卡片+继续观看+最近添加+收藏ScrollRow) / Favorites Tab (全局收藏网格) |
+| `/` | 首页 | Jellyfin 风格 Tab 导航: Home Tab (媒体库卡片(未扫描显示overlay)+继续观看+最近添加+收藏ScrollRow) / Favorites Tab (全局收藏网格) |
 | `/movies?libraryId=X` | 媒体库浏览 | 需 libraryId, 3 Tab: Movies (排序下拉+网格) / Favorites (库内收藏网格) / Genres (按类型分组ScrollRow) |
 | `/movies/[id]` | 电影详情 | Jellyfin 风格: fanart 充分可见(仅底部渐变) + 左侧海报(300×450) + 右侧 text-shadow 信息面板(标题/元数据行/小型按钮行/Overview/Metadata 纵向列表) + 书签 ScrollRow + 演员卡片 + 推荐 |
 | `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 书签 (B/Shift+B) + 倍速 + 进度条图标标记 + 自动隐藏控制栏 (可 toggle) |
@@ -713,7 +720,8 @@ data/metadata/
 | `MovieCard` | `components/movie/` | 海报卡片 (180x270), 支持评分/收藏/进度条, hover 显示 watched/favorite 切换 + ⋯ 下拉菜单 (Play/Edit/MediaInfo/Refresh/Delete) |
 | `PersonCard` | `components/people/` | 演员卡片 (sm:140x210, md:160x240, lg:240x340) |
 | `BookmarkCard` | `components/movie/` | 书签缩略图卡片 (320px, 支持编辑/删除/图标选择, 过滤禁用图标) |
-| `LibraryCard` | `components/library/` | 媒体库卡片 (320x180), 图标+名称+数量, hover 显示 ⋯ 下拉菜单 (Scan/RefreshMetadata/Edit/Delete) |
+| `LibraryCard` | `components/library/` | 媒体库卡片 (360x200), 未扫描 overlay+扫描按钮, 扫描进度含标题, 跳过计数, hover ⋯ 菜单 |
+| `GlobalScanBar` | `components/layout/` | 底部全局扫描条, 显示当前标题+进度, 完成后可展开跳过列表 |
 | `FolderPicker` | `components/library/` | 服务端目录浏览器 Dialog |
 
 ---
@@ -825,8 +833,8 @@ src/i18n/
 ```
 Step 1: 选择语言 (English / 中文) → 写 locale cookie
 Step 2: 创建管理员 (username / password / confirm)
-Step 3: 添加媒体库 (name / folderPath + FolderPicker) — 可 Skip
-Step 4: POST /api/setup/complete → 显示完成 → 跳转 /login
+Step 3: 添加媒体库 (name / folderPath + FolderPicker) — 可 Skip, 有路径时强制要求填库名
+Step 4: POST /api/setup/complete → 显示完成 → 跳转 /login (不再自动扫描, 用户在首页手动触发)
 ```
 
 ---

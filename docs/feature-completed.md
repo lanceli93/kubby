@@ -735,3 +735,49 @@
 ### Player play/skip buttons absolutely centered
 - Changed from `justify-between` flex layout to absolute centering (`left-1/2 -translate-x-1/2`)
 - Play/pause, skip back, skip forward buttons now visually centered in the control bar regardless of left (time display) and right (bookmarks/volume/etc) group widths
+
+## 2026-02-28: Library Scan Improvements & Bug Fixes
+
+### Remove auto-scan, add unscanned state
+- Removed auto-scan `useEffect` from homepage — libraries no longer auto-scan after setup wizard
+- Library cards show "unscanned" overlay with "Scan Now" button when `lastScannedAt` is null
+- User-initiated scanning instead of automatic, eliminating perceived setup page slowness
+
+### Skipped folder tracking in scanner
+- Scanner now tracks 3 skip reasons: `no_nfo`, `no_video`, `nfo_parse_error`
+- `scanLibrary()` returns `{ scannedCount, removedCount, skipped }` with full skip details
+- SSE progress events now include movie `title` for real-time display
+- Done event includes `skippedCount` and `skipped[]` array
+
+### Scan progress UI improvements
+- Global scan bar shows current movie title during scan: "Scanning: Inception (42/100)"
+- On completion with skips: "Scanned 42 movies, 5 skipped" with expandable skip list
+- Each skipped folder shows reason (no NFO, no video, parse error)
+- Library card shows skip count in scan result
+- Long movie titles truncated with ellipsis (`max-w-[80vw]` in global bar, `max-w-full` on card)
+
+### Scan provider state updates
+- `ScanState` extended with `title` in progress and `skipped[]` array
+- Result format changed from `done:count` to `done:scanned:skipped`
+- `useLibraryScan` hook exposes `skipped` array
+
+### Setup wizard library creation fix
+- Fixed: if user filled folder paths but left library name empty, library was silently not created
+- Now validates library name is required when paths are provided, shows error message
+- Added `libraryNameRequired` i18n key (EN + ZH)
+
+### Image path traversal check fix
+- Fixed: `normalizedPath.includes("..")` substring check rejected legitimate folder names containing consecutive dots (e.g. `A...B`)
+- Changed to per-segment check: `segments.some(s => s === "..")` — only rejects actual `..` traversal segments
+- Folder names like `Movie... Something` or `What If..?` now serve images correctly
+
+### PotPlayer external player fixes
+- Fixed argument order: PotPlayer expects `/seek=SECONDS filepath` (seek before file path)
+- Fixed seek unit: PotPlayer `/seek` takes seconds, not milliseconds (removed `* 1000`)
+- Fixed in local mode (`execFile`), stream mode protocol URLs (movie detail + search page)
+- Added debug logging: full command logged to server console and returned in API response `cmd` field
+- Frontend logs command to browser console for easy copy-paste debugging
+
+### i18n (EN + ZH)
+- New `home` keys: scanProgressWithTitle, scanCompleteWithSkipped, unscanned, clickToScan, skippedFolders, skipReasonNoNfo, skipReasonNoVideo, skipReasonNfoParseFailed
+- New `setup` key: libraryNameRequired
