@@ -109,6 +109,8 @@
     "removeImage": "移除封面",
     "deleteLibrary": "删除",
     "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。",
+    "cleanupOrphanPeople": "同时清理不再关联任何电影的演员数据",
+    "deleteNfoFiles": "删除媒体文件夹中的 NFO 文件（下次可重新刮削）",
     "libraryName": "媒体库名称",
     "folderPath": "文件夹路径",
     "enableScraper": "启用 TMDB 刮削",

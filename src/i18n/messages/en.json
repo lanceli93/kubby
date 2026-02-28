@@ -109,6 +109,8 @@
     "removeImage": "Remove Image",
     "deleteLibrary": "Delete",
     "confirmDeleteLibrary": "Are you sure you want to delete this library? All movies in it will be removed.",
+    "cleanupOrphanPeople": "Also remove actors no longer associated with any movie",
+    "deleteNfoFiles": "Delete NFO files from media folders (allows re-scraping)",
     "libraryName": "Library Name",
     "folderPath": "Folder Path",
     "enableScraper": "Enable TMDB Scraper",

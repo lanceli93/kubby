@@ -76,6 +76,8 @@ export default function LibrariesPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLibId, setDeleteLibId] = useState<string | null>(null);
   const [deleteLibName, setDeleteLibName] = useState("");
+  const [deleteCleanupOrphans, setDeleteCleanupOrphans] = useState(true);
+  const [deleteNfo, setDeleteNfo] = useState(false);
 
   const { data: libraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
@@ -129,8 +131,8 @@ export default function LibrariesPage() {
   const anyScanning = libraries.some((lib) => scansMap.get(lib.id)?.scanning);
 
   const deleteLibrary = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/libraries/${id}`, { method: "DELETE" }),
+    mutationFn: ({ id, cleanupOrphans, deleteNfo }: { id: string; cleanupOrphans: boolean; deleteNfo: boolean }) =>
+      fetch(`/api/libraries/${id}?cleanupOrphans=${cleanupOrphans}&deleteNfo=${deleteNfo}`, { method: "DELETE" }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["libraries"] }),
   });
@@ -834,6 +836,26 @@ export default function LibrariesPage() {
               Are you sure you want to delete &ldquo;{deleteLibName}&rdquo;? All movies in it will be removed.
             </DialogDescription>
           </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deleteCleanupOrphans}
+                onChange={(e) => setDeleteCleanupOrphans(e.target.checked)}
+                className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+              />
+              <span className="text-sm text-muted-foreground">Clean up actors no longer associated with any movie</span>
+            </label>
+            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deleteNfo}
+                onChange={(e) => setDeleteNfo(e.target.checked)}
+                className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+              />
+              <span className="text-sm text-muted-foreground">Delete NFO files from media folders (allows re-scraping)</span>
+            </label>
+          </div>
           <DialogFooter>
             <button
               type="button"
@@ -845,7 +867,7 @@ export default function LibrariesPage() {
             <button
               type="button"
               onClick={() => {
-                if (deleteLibId) deleteLibrary.mutate(deleteLibId);
+                if (deleteLibId) deleteLibrary.mutate({ id: deleteLibId, cleanupOrphans: deleteCleanupOrphans, deleteNfo });
                 setDeleteOpen(false);
               }}
               className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"

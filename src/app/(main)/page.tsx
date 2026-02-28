@@ -154,8 +154,8 @@ export default function HomePage() {
 
 
   const deleteLibrary = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/libraries/${id}`, { method: "DELETE" }),
+    mutationFn: ({ id, cleanupOrphans, deleteNfo }: { id: string; cleanupOrphans: boolean; deleteNfo: boolean }) =>
+      fetch(`/api/libraries/${id}?cleanupOrphans=${cleanupOrphans}&deleteNfo=${deleteNfo}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       queryClient.invalidateQueries({ queryKey: ["movies"] });
@@ -261,7 +261,7 @@ export default function HomePage() {
                     onEditComplete={() => {
                       queryClient.invalidateQueries({ queryKey: ["libraries"] });
                     }}
-                    onDelete={() => deleteLibrary.mutate(lib.id)}
+                    onDelete={(opts) => deleteLibrary.mutate({ id: lib.id, ...opts })}
                     onEditImage={() => handleEditImage(lib.id)}
                     onRemoveImage={() => removeCover.mutate(lib.id)}
                   />

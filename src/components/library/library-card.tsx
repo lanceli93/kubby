@@ -40,7 +40,7 @@ interface LibraryCardProps {
   lastScannedAt?: string | null;
   onScanComplete?: () => void;
   onEditComplete?: () => void;
-  onDelete?: () => void;
+  onDelete?: (options: { cleanupOrphans: boolean; deleteNfo: boolean }) => void;
   onEditImage?: () => void;
   onRemoveImage?: () => void;
 }
@@ -50,6 +50,8 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [cleanupOrphans, setCleanupOrphans] = useState(true);
+  const [deleteNfo, setDeleteNfo] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState(name);
   const [editFolderPaths, setEditFolderPaths] = useState<string[]>(folderPaths ?? []);
@@ -532,6 +534,26 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
             <DialogTitle>{tHome("deleteLibrary")}</DialogTitle>
             <DialogDescription>{tHome("confirmDeleteLibrary")}</DialogDescription>
           </DialogHeader>
+          <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={cleanupOrphans}
+                onChange={(e) => setCleanupOrphans(e.target.checked)}
+                className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+              />
+              <span className="text-sm text-muted-foreground">{tHome("cleanupOrphanPeople")}</span>
+            </label>
+            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deleteNfo}
+                onChange={(e) => setDeleteNfo(e.target.checked)}
+                className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+              />
+              <span className="text-sm text-muted-foreground">{tHome("deleteNfoFiles")}</span>
+            </label>
+          </div>
           <DialogFooter>
             <button
               onClick={(e) => {
@@ -547,7 +569,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onDelete?.();
+                onDelete?.({ cleanupOrphans, deleteNfo });
                 setDeleteOpen(false);
               }}
               className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
