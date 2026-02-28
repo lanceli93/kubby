@@ -188,7 +188,7 @@ export default function MovieDetailPage() {
       if (externalPlayerName === "IINA") {
         protocolUrl = `iina://weblink?url=${encodeURIComponent(streamUrl)}${startSeconds ? `&start=${startSeconds}` : ""}`;
       } else if (externalPlayerName === "PotPlayer") {
-        protocolUrl = `potplayer://${streamUrl}${startSeconds ? ` /seek=${startSeconds * 1000}` : ""}`;
+        protocolUrl = `potplayer://${streamUrl}${startSeconds ? ` /seek=${Math.round(startSeconds)}` : ""}`;
       }
       console.log("[external-player] protocol URL:", protocolUrl);
       window.location.href = protocolUrl;

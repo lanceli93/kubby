@@ -168,8 +168,9 @@ function launchWindows(
 ) {
   if (playerName === "PotPlayer") {
     const exe = playerPath || "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe";
-    const args: string[] = [filePath];
-    if (startSeconds > 0) args.push(`/seek=${Math.round(startSeconds) * 1000}`);
+    const args: string[] = [];
+    if (startSeconds > 0) args.push(`/seek=${Math.round(startSeconds)}`);
+    args.push(filePath);
     launchPlayer(exe, args);
   } else if (playerName === "VLC") {
     const exe = playerPath || "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
