@@ -268,25 +268,7 @@ Dockerfile (多阶段构建)
 | ffprobe | 内嵌静态编译 | `apt install ffmpeg` |
 | Native 模块 | 需要手动替换目标平台 | 容器内 `npm ci` 自动编译正确架构 |
 | 数据目录 | OS 标准位置 | `/data` volume mount |
-| 多架构 | 每个架构单独打包 | `docker buildx` 一次构建 amd64 + arm64 |
-
-### 多架构支持 (amd64 + arm64)
-
-通过 `docker buildx` + QEMU 模拟实现交叉构建：
-
-```bash
-# 本地构建当前架构
-docker build -t kubby:test .
-
-# 构建并推送多架构镜像
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -t ghcr.io/kubby-app/kubby:latest --push .
-```
-
-每一层都天然支持多架构：
-- `node:25-slim` — Docker Hub 提供 amd64/arm64 变体
-- `npm ci` — 在目标架构容器内编译 native 模块 (better-sqlite3, sharp)
-- `apt install ffmpeg` — 包管理器自动安装对应架构
+| 架构 | 每个架构单独打包 | 当前仅 amd64（覆盖绝大多数 NAS/服务器） |
 
 ### standalone 路径处理
 
@@ -349,7 +331,7 @@ volumes:
 
 ### Docker 镜像
 
-`.github/workflows/docker.yml` 在 `v*` tag push 时用 `docker buildx` 构建 amd64 + arm64 双架构镜像，推送到 GitHub Container Registry (ghcr.io)。Docker 构建使用 `node:25-slim` 基础镜像，这是容器内自包含的环境，与 CI release workflow 的 Node 版本无关。
+`.github/workflows/docker.yml` 在 `v*` tag push 时用 `docker buildx` 构建 amd64 镜像，推送到 GitHub Container Registry (ghcr.io)。Docker 构建使用 `node:25-slim` 基础镜像，这是容器内自包含的环境，与 CI release workflow 的 Node 版本无关。
 
 ## CI 构建踩坑记录
 
