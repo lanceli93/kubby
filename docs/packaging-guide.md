@@ -268,7 +268,7 @@ Dockerfile (多阶段构建)
 | ffprobe | 内嵌静态编译 | `apt install ffmpeg` |
 | Native 模块 | 需要手动替换目标平台 | 容器内 `npm ci` 自动编译正确架构 |
 | 数据目录 | OS 标准位置 | `/data` volume mount |
-| 架构 | 每个架构单独打包 | 当前仅 amd64（覆盖绝大多数 NAS/服务器） |
+| 架构 | 每个架构单独打包 | 当前仅 amd64（覆盖绝大多数 NAS/服务器，恢复 arm64 见下方说明） |
 
 ### standalone 路径处理
 
@@ -380,6 +380,59 @@ export const db = new Proxy({} as BetterSQLite3Database<typeof schema>, {
 **原因**：本地 Node 版本（如 v25）和 CI Node 版本（如 v22）不同，不同版本的 npm 对依赖树的解析方式有差异，导致 `package-lock.json` 在另一个版本上被视为不同步。
 
 **解决**：保持 CI 的 `node-version` 与本地开发环境一致。在 `release.yml` 中更新 `node-version` 即可。
+
+## 恢复 Docker arm64 支持
+
+当前 Docker 镜像只构建 amd64，因为 QEMU 模拟 arm64 在 GitHub Actions 上非常慢（15+ 分钟）。如果将来需要支持 arm64（树莓派、Apple Silicon Docker 等），有两种方案：
+
+### 方案 A：QEMU 模拟（简单但慢）
+
+在 `docker.yml` 中加回 QEMU 和双平台：
+
+```yaml
+steps:
+  - name: Set up QEMU
+    uses: docker/setup-qemu-action@v3
+
+  - name: Set up Docker Buildx
+    uses: docker/setup-buildx-action@v3
+
+  # ...
+
+  - name: Build and push
+    uses: docker/build-push-action@v5
+    with:
+      platforms: linux/amd64,linux/arm64  # 加回 arm64
+```
+
+预计构建时间 15-25 分钟，但无需额外配置。
+
+### 方案 B：原生 arm64 runner（快但需付费）
+
+使用 GitHub 提供的 arm64 runner（付费）或自托管 runner，两个架构并行构建后合并 manifest：
+
+```yaml
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+          - runner: ubuntu-24.04-arm  # GitHub 付费 arm64 runner
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      # 各自构建并推送到临时 tag ...
+
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # docker buildx imagetools create 合并为多架构 manifest
+```
+
+构建时间和纯 amd64 差不多，但需要付费 runner 或自建 arm64 机器。
 
 ## 已知限制
 
