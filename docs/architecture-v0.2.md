@@ -666,25 +666,28 @@ Player (page.tsx)
 - 首次转码时检测, 结果缓存在 TranscodeManager 单例中
 - 运行时降级: 硬件编码失败 (exit code ≠ 0) 自动重试 libx264, 设置 `retriedWithSoftware` 防止循环
 - decide API 返回 `encoder` 字段 + `maxWidth` 字段, 播放器显示统一模式徽标 (Direct/Remux/HW/SW)
+- 智能硬件解码: 仅对 NVDEC 支持的编码 (h264/hevc/vp9/av1/mpeg1/mpeg2) 启用 `-hwaccel cuda`, 不支持的编码 (mpeg4/divx/wmv 等) 使用 CPU 解码 + NVENC 编码, 避免无效 GPU 占用
+- 分辨率自适应码率: 480p 2M / 720p 4M / 1080p 6M / 4K 12M / 5K 16M / 6K 20M / 7-8K+ 25M (maxrate), bufsize = 2x maxrate
 
 **FFmpeg 参数** (`src/lib/transcode/ffmpeg-command.ts`):
 - Remux: `-c:v copy -c:a copy -f hls -hls_time 6 -hls_list_size 0`
-- Transcode (VideoToolbox): `-vf scale='min({maxWidth},iw)':-2 -c:v h264_videotoolbox -q:v 65 -maxrate 4M -bufsize 8M`
-- Transcode (NVENC): `-hwaccel cuda -vf scale='min({maxWidth},iw)':-2 -c:v h264_nvenc -preset p4 -cq 23 -maxrate 4M -bufsize 8M`
-- Transcode (libx264 兜底): `-threads 0 -vf scale='min({maxWidth},iw)':-2 -c:v libx264 -preset ultrafast -crf 23 -maxrate 4M -bufsize 8M`
+- Transcode (NVENC + NVDEC 支持的编码): `-hwaccel cuda -hwaccel_output_format cuda -vf scale_cuda='min({maxWidth},iw)':-2 -c:v h264_nvenc -preset p4 -cq 23 -maxrate {动态} -bufsize {动态}` (全 GPU 零拷贝管线)
+- Transcode (NVENC + NVDEC 不支持的编码): `-vf scale='min({maxWidth},iw)':-2 -c:v h264_nvenc -preset p4 -cq 23 -maxrate {动态} -bufsize {动态}` (CPU 解码 + GPU 编码)
+- Transcode (VideoToolbox): `-vf scale='min({maxWidth},iw)':-2 -c:v h264_videotoolbox -q:v 65 -maxrate {动态} -bufsize {动态}`
+- Transcode (libx264 兜底): `-threads 0 -vf scale='min({maxWidth},iw)':-2 -c:v libx264 -preset ultrafast -crf 23 -maxrate {动态} -bufsize {动态}`
 - `maxWidth` 可配置 (默认 1920), 通过 decide API 的 `maxWidth` 查询参数传入, 支持 1920/1280/854 (1080p/720p/480p)
-- 所有编码器使用 CPU scale filter (硬件 scale 在 1080p 下无明显加速)
 - 快速输入 seek: `-ss {seconds}` 在 `-i` 之前
 
 **TranscodeManager** (`src/lib/transcode/transcode-manager.ts`):
 - globalThis 单例 (Next.js dev hot reload 安全)
 - 临时文件: `os.tmpdir()/kubby-transcode/{sessionId}/`
 - 15 秒清理间隔, 90 秒空闲超时 (客户端 30 秒心跳保持活跃 session)
-- seekSession() 先从 map 中删除旧 session, 防止快速 seek 时产生孤儿 FFmpeg 进程
-- SIGTERM 后 2 秒 SIGKILL 兜底, 确保顽固进程被杀死
+- 异步进程管理: `stopSession()`/`seekSession()` 异步等待旧 FFmpeg 进程完全退出后再操作, 防止分辨率切换时产生重复进程
+- 跨平台进程终止: Windows 使用 `TerminateProcess` (SIGTERM 不可靠); Unix 使用 SIGTERM + 2 秒 SIGKILL 兜底; 3 秒安全超时
 - 进程退出时 (SIGTERM/SIGINT) 杀死所有 FFmpeg 进程 + 清理缓存目录
 - FFmpeg 不可用时降级为 direct play + 警告
 - 硬件编码失败时自动 fallback 到 libx264 (同一 session 内, 透明重启 FFmpeg 进程)
+- Session 保存 sourceVideoCodec/sourceVideoWidth, seek 时传递给新 FFmpeg 进程
 
 ### 服务端
 
