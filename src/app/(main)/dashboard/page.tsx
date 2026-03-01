@@ -32,22 +32,16 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  accent,
 }: {
   label: string;
   value: string | number;
   icon: React.ComponentType<{ className?: string }>;
-  accent: string;
 }) {
   return (
-    <div className="card-hover flex flex-1 flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-6 shadow-[0_2px_16px_rgba(0,0,0,0.15)]"
-      style={{ borderLeft: `3px solid ${accent}` }}
-    >
+    <div className="card-hover flex flex-1 flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-6 shadow-[0_2px_16px_rgba(0,0,0,0.15)]">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{label}</span>
-        <div className="opacity-60" style={{ color: accent }}>
-          <Icon className="h-5 w-5" />
-        </div>
+        <Icon className="h-5 w-5 text-muted-foreground/40" />
       </div>
       <span className="text-3xl font-bold tracking-tight tabular-nums text-foreground">{value}</span>
     </div>
@@ -90,25 +84,21 @@ export default function DashboardPage() {
           label={t("totalMovies")}
           value={stats?.totalMovies ?? 0}
           icon={Film}
-          accent="#3b82f6"
         />
         <StatCard
           label={t("mediaLibraries")}
           value={stats?.totalLibraries ?? 0}
           icon={Folder}
-          accent="#8b5cf6"
         />
         <StatCard
           label={t("users")}
           value={stats?.totalUsers ?? 0}
           icon={Users}
-          accent="#22c55e"
         />
         <StatCard
           label={t("diskUsage")}
           value={stats?.diskUsage ?? "—"}
           icon={HardDrive}
-          accent="#f59e0b"
         />
       </div>
 
@@ -193,21 +183,21 @@ export default function DashboardPage() {
         </div>
         <div className="flex gap-3">
           <button className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground">
-            <RefreshCw className="h-4 w-4 text-blue-400" />
+            <RefreshCw className="h-4 w-4 text-muted-foreground" />
             {t("scanAllLibraries")}
           </button>
           <Link
             href="/dashboard/libraries"
             className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground"
           >
-            <Plus className="h-4 w-4 text-emerald-400" />
+            <Plus className="h-4 w-4 text-muted-foreground" />
             {t("addLibrary")}
           </Link>
           <Link
             href="/dashboard/users"
             className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground"
           >
-            <UserPlus className="h-4 w-4 text-purple-400" />
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
             {t("addUser")}
           </Link>
         </div>
