@@ -659,13 +659,14 @@ Player (page.tsx)
 - 自动检测优先级: `h264_videotoolbox` (macOS) → `h264_nvenc` (NVIDIA) → `libx264` (CPU 兜底)
 - 首次转码时检测, 结果缓存在 TranscodeManager 单例中
 - 运行时降级: 硬件编码失败 (exit code ≠ 0) 自动重试 libx264, 设置 `retriedWithSoftware` 防止循环
-- decide API 返回 `encoder` 字段, 播放器显示 HW/SW 徽标
+- decide API 返回 `encoder` 字段 + `maxWidth` 字段, 播放器显示统一模式徽标 (Direct/Remux/HW/SW)
 
 **FFmpeg 参数** (`src/lib/transcode/ffmpeg-command.ts`):
 - Remux: `-c:v copy -c:a copy -f hls -hls_time 6 -hls_list_size 0`
-- Transcode (VideoToolbox): `-vf scale='min(1920,iw)':-2 -c:v h264_videotoolbox -q:v 65 -maxrate 4M -bufsize 8M`
-- Transcode (NVENC): `-hwaccel cuda -vf scale='min(1920,iw)':-2 -c:v h264_nvenc -preset p4 -cq 23 -maxrate 4M -bufsize 8M`
-- Transcode (libx264 兜底): `-threads 0 -vf scale='min(1920,iw)':-2 -c:v libx264 -preset ultrafast -crf 23 -maxrate 4M -bufsize 8M`
+- Transcode (VideoToolbox): `-vf scale='min({maxWidth},iw)':-2 -c:v h264_videotoolbox -q:v 65 -maxrate 4M -bufsize 8M`
+- Transcode (NVENC): `-hwaccel cuda -vf scale='min({maxWidth},iw)':-2 -c:v h264_nvenc -preset p4 -cq 23 -maxrate 4M -bufsize 8M`
+- Transcode (libx264 兜底): `-threads 0 -vf scale='min({maxWidth},iw)':-2 -c:v libx264 -preset ultrafast -crf 23 -maxrate 4M -bufsize 8M`
+- `maxWidth` 可配置 (默认 1920), 通过 decide API 的 `maxWidth` 查询参数传入, 支持 1920/1280/854 (1080p/720p/480p)
 - 所有编码器使用 CPU scale filter (硬件 scale 在 1080p 下无明显加速)
 - 快速输入 seek: `-ss {seconds}` 在 `-i` 之前
 
@@ -708,7 +709,8 @@ Player (page.tsx)
 - HLS 进度条时长: 使用数据库 `durationSeconds` (ffprobe 扫描值) 替代不可靠的 `video.duration`
 - 每 10 秒自动保存播放进度 (`PUT /api/movies/[id]/user-data`)
 - 播放完成自动标记已看 + 更新播放次数
-- 控制栏: 拖动进度条, 快进/快退 10s, 音量, 倍速, 全屏, HW/SW 编码器徽标 (hover 显示编码器详情)
+- 控制栏: 拖动进度条, 快进/快退 10s, 音量, 倍速, 全屏, 统一模式徽标 (Direct/Remux/HW/SW, 点击显示详情)
+- 转码分辨率选择器: 仅在 transcode 模式显示, 支持 1080p/720p/480p, 切换时在当前位置重启 FFmpeg
 - 书签系统: B 键快速书签 (使用模板预设), Shift+B 详细书签 (选图标/标签/备注)
 - 进度条书签标记: 彩色圆点 + 图标, hover 放大, 点击定位; 支持低调模式 (半透明白色)
 - 3 秒无操作自动隐藏控制栏 (可通过 toggle 按钮关闭自动隐藏)
