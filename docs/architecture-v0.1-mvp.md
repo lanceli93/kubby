@@ -656,7 +656,7 @@ Player (page.tsx)
 
 **FFmpeg 参数** (`src/lib/transcode/ffmpeg-command.ts`):
 - Remux: `-c:v copy -c:a copy -f hls -hls_time 6 -hls_list_size 0`
-- Transcode: `-c:v libx264 -preset veryfast -crf 23 -maxrate 4M -bufsize 8M -c:a aac -b:a 192k -f hls`
+- Transcode: `-vf scale='min(1920,iw)':-2` (限制输出最大 1080p) + `-c:v libx264 -preset veryfast -crf 23 -maxrate 4M -bufsize 8M -c:a aac -b:a 192k -f hls`
 - 快速输入 seek: `-ss {seconds}` 在 `-i` 之前
 
 **TranscodeManager** (`src/lib/transcode/transcode-manager.ts`):
@@ -686,9 +686,12 @@ Player (page.tsx)
 - Direct: 设置 `video.src` (原有行为)
 - HLS: 使用 HLS.js `loadSource()` + `attachMedia()` (Safari fallback: native HLS)
 - OSD 提示 "Remuxing..." / "Transcoding..."
+- HLS 时间偏移跟踪: `hlsTimeOffsetRef` 追踪 FFmpeg `-ss` 起点, `getRealTime()` 返回原始视频中的真实位置
+- HLS 感知 seek: `seekTo()` 函数通过 POST seek API 重启 FFmpeg, 进度条/书签点击均可正确定位
+- HLS 初始位置: `startAt` 参数传给 decide API, FFmpeg 直接从该位置启动 (支持 `?t=` 参数和续播恢复)
 - HLS 网络错误自动 seek 恢复
+- HLS 进度条时长: 使用数据库 `durationSeconds` (ffprobe 扫描值) 替代不可靠的 `video.duration`
 - 每 10 秒自动保存播放进度 (`PUT /api/movies/[id]/user-data`)
-- 页面加载时从保存位置恢复
 - 播放完成自动标记已看 + 更新播放次数
 - 控制栏: 拖动进度条, 快进/快退 10s, 音量, 倍速, 全屏
 - 书签系统: B 键快速书签 (使用模板预设), Shift+B 详细书签 (选图标/标签/备注)
