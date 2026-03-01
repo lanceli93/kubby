@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, LayoutDashboard, Database, Settings, LogOut, X, SlidersHorizontal, BadgeCheck } from "lucide-react";
+import { Home, Film, LayoutDashboard, Settings, LogOut, X, SlidersHorizontal, BadgeCheck } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
@@ -42,7 +42,6 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
 
   const adminItems = [
     { href: "/dashboard", label: tNav("dashboard"), icon: LayoutDashboard },
-    { href: "#", label: tNav("metadataManager"), icon: Database, placeholder: true },
   ];
 
   const userItems = [
@@ -143,11 +142,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
                   <Link
                     key={item.label}
                     href={item.href}
-                    onClick={(e) => {
-                      if (item.placeholder) {
-                        e.preventDefault();
-                        alert("Metadata Manager — coming soon");
-                      }
+                    onClick={() => {
                       onClose();
                     }}
                     className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${

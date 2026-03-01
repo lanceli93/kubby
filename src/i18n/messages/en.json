@@ -80,7 +80,6 @@
     "settings": "Settings",
     "media": "Media",
     "administration": "Administration",
-    "metadataManager": "Metadata Manager",
     "user": "User",
     "allMovies": "All Movies",
     "personalMetadata": "Personal Metadata",
@@ -401,8 +400,6 @@
     "deleteImage": "Delete",
     "noImage": "No image",
     "usingMovieFanart": "Using movie fanart",
-    "editSubtitles": "Edit Subtitles",
-    "identify": "Identify",
     "deleteMedia": "Delete Media"
   },
   "cardBadges": {

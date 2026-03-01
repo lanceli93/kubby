@@ -80,7 +80,6 @@
     "settings": "设置",
     "media": "媒体",
     "administration": "管理",
-    "metadataManager": "元数据管理",
     "user": "用户",
     "allMovies": "所有电影",
     "personalMetadata": "个人元数据",
@@ -401,8 +400,6 @@
     "deleteImage": "删除",
     "noImage": "无图片",
     "usingMovieFanart": "使用电影背景图",
-    "editSubtitles": "编辑字幕",
-    "identify": "识别",
     "deleteMedia": "删除媒体"
   },
   "cardBadges": {
