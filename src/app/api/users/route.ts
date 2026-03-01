@@ -4,12 +4,25 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 
 // POST /api/users - Register a new user
+// First user (setup flow): no auth required, becomes admin
+// After setup: admin-only
 export async function POST(request: NextRequest) {
   try {
+    const [{ total }] = db.select({ total: count() }).from(users).all();
+
+    // After first user exists, require admin auth
+    if (total > 0) {
+      const session = await auth();
+      if (!session?.user?.isAdmin) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const body = await request.json();
-    const { username, password, displayName } = body;
+    const { username, password, displayName, isAdmin: requestedAdmin } = body;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -32,9 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // First user becomes admin
-    const [{ total }] = db.select({ total: count() }).from(users).all();
-    const isAdmin = total === 0;
+    // First user becomes admin; subsequent users get admin status from request
+    const isAdmin = total === 0 ? true : !!requestedAdmin;
 
     const passwordHash = await hash(password, 12);
     const id = uuidv4();
@@ -62,6 +74,11 @@ export async function POST(request: NextRequest) {
 // GET /api/users - List all users (admin only)
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user?.isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const allUsers = db
       .select({
         id: users.id,
