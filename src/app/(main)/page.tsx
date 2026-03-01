@@ -237,7 +237,7 @@ export default function HomePage() {
 
         <div className="flex-1 overflow-y-scroll">
         <TabsContent value="home">
-          <div className="flex flex-col gap-10 px-12 py-8">
+          <div className="stagger-children flex flex-col gap-10 px-12 py-8">
             {/* Media Libraries */}
             {libraries.length > 0 ? (
               <ScrollRow title={t("mediaLibraries")}>
@@ -306,7 +306,7 @@ export default function HomePage() {
         </TabsContent>
 
         <TabsContent value="favorites">
-          <div className="px-12 py-8">
+          <div className="animate-fade-in-up px-12 py-8">
             {favorites.length > 0 ? (
               <div
                 className="grid gap-4"
