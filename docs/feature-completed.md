@@ -1,5 +1,30 @@
 # Completed Features
 
+## 2026-03-01: Complete Admin User Management System
+
+Full CRUD user management for administrators with role management and security protections.
+
+### New Files
+- `src/app/api/users/[id]/route.ts` — DELETE (admin delete user) and PUT (admin update role/reset password) endpoints
+
+### Modified Files
+- `src/app/api/users/route.ts` — Added admin auth check to GET, restricted POST to admin-only after first user, accept `isAdmin` field from admin callers
+- `src/app/(main)/dashboard/users/page.tsx` — Full rewrite from read-only list to management page with Add User, Delete, Role Toggle, and Reset Password dialogs
+- `src/i18n/messages/en.json` — Added 18 dashboard user management translation keys
+- `src/i18n/messages/zh.json` — Added corresponding Chinese translations
+
+### Key Features
+- **Admin create user**: Dialog with username, password, display name, admin toggle
+- **Delete user**: Confirmation dialog with cascade warning (ratings, bookmarks, watch history)
+- **Toggle admin role**: Click role badge to promote/demote users
+- **Reset password**: Admin can set new password for any user
+- **Last-admin protection**: Cannot demote or delete the sole administrator
+- **Self-delete prevention**: Admin cannot delete their own account
+- **Closed registration**: Public registration locked after first user; only admins can create users
+- **API authorization**: GET /api/users and POST /api/users require admin auth (except first-user setup)
+
+---
+
 ## 2026-03-01: Hardware-Accelerated Transcoding (VideoToolbox + NVENC + Fallback)
 
 Auto-detects and uses the best available hardware encoder for HLS transcoding with zero configuration.
