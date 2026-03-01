@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Search, ArrowLeft, House, Menu, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
@@ -39,6 +39,7 @@ export function AppHeader() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: session } = useSession();
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
@@ -46,6 +47,11 @@ export function AppHeader() {
   const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
   const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
   const isPlayerPage = /^\/movies\/[^/]+\/play$/.test(pathname);
+  const isSearchPage = pathname === "/search";
+  const isSettingsPage = pathname === "/settings";
+  const isPersonalMetadataPage = pathname === "/personal-metadata";
+  const isCardBadgesPage = pathname === "/card-badges";
+  const needsBackNav = isMovieDetail || isPersonDetail || isSearchPage || isSettingsPage || isPersonalMetadataPage || isCardBadgesPage;
   const libraryId = searchParams.get("libraryId");
   const personId = searchParams.get("personId");
   const filterGenre = searchParams.get("genre");
@@ -115,6 +121,29 @@ export function AppHeader() {
                 ? personData?.name || ""
                 : `${library?.name || ""}${filterLabel ? ` — ${filterLabel}` : ""}`}
             </span>
+          </>
+        ) : needsBackNav ? (
+          <>
+            <button
+              onClick={() => router.back()}
+              className={`transition-colors ${
+                isTransparent
+                  ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <Link
+              href="/"
+              className={`transition-colors ${
+                isTransparent
+                  ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <House className="h-5 w-5" />
+            </Link>
           </>
         ) : (
           <Link href="/" className="flex items-center gap-2 text-[22px] font-bold text-foreground">
