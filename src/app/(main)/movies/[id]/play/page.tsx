@@ -89,6 +89,7 @@ export default function PlayerPage() {
   const sessionIdRef = useRef<string | null>(null);
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
   const [encoderName, setEncoderName] = useState<string | null>(null);
+  const [showEncoderInfo, setShowEncoderInfo] = useState(false);
   const hlsDurationRef = useRef<number | null>(null);
   // HLS time offset: when FFmpeg starts at -ss N, output timestamps start from 0,
   // so we track the offset to compute the real position in the original video.
@@ -369,14 +370,15 @@ export default function PlayerPage() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
-  // Close speed menu and volume slider when clicking outside
+  // Close popover menus when clicking outside
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (showSpeedMenu) setShowSpeedMenu(false);
+      if (showEncoderInfo) setShowEncoderInfo(false);
     }
     window.addEventListener("click", onClick);
     return () => window.removeEventListener("click", onClick);
-  }, [showSpeedMenu]);
+  }, [showSpeedMenu, showEncoderInfo]);
 
   function togglePlay() {
     if (!videoRef.current) return;
@@ -1044,26 +1046,38 @@ export default function PlayerPage() {
         </div>
 
         <div className="relative flex items-center justify-between">
-          {/* Time + encoder badge */}
-          <span className="min-w-[120px] flex items-center gap-2 text-sm text-white/80">
-            {formatTime(currentTime)} / {formatTime(duration)}
+          {/* Time display + encoder badge */}
+          <div className="flex items-center gap-2">
+            <span className="min-w-[120px] tabular-nums text-sm text-white/80">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
             {encoderName && (playbackMode === "remux" || playbackMode === "transcode") && (
-              <span
-                className={`text-xs rounded px-1.5 py-0.5 cursor-default ${
-                  encoderName !== "libx264"
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-white/10 text-white/60"
-                }`}
-                title={
-                  encoderName === "h264_videotoolbox" ? "VideoToolbox (Apple GPU)"
-                    : encoderName === "h264_nvenc" ? "NVENC (NVIDIA GPU)"
-                    : "Software (CPU)"
-                }
-              >
-                {encoderName !== "libx264" ? "HW" : "SW"}
-              </span>
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEncoderInfo((v) => !v);
+                  }}
+                  className="text-xs rounded px-1.5 py-0.5 text-white/60 hover:text-white transition-colors cursor-pointer"
+                >
+                  {encoderName !== "libx264" ? "HW" : "SW"}
+                </button>
+                {showEncoderInfo && (
+                  <div
+                    className="absolute bottom-full left-0 mb-2 rounded-lg bg-zinc-900/95 px-3 py-2 shadow-xl backdrop-blur whitespace-nowrap"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="text-xs text-white/50 mb-0.5">Encoder</div>
+                    <div className="text-sm text-white">
+                      {encoderName === "h264_videotoolbox" ? "VideoToolbox (Apple GPU)"
+                        : encoderName === "h264_nvenc" ? "NVENC (NVIDIA GPU)"
+                        : "Software (CPU)"}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-          </span>
+          </div>
 
           {/* Center controls — absolutely centered regardless of left/right width */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
