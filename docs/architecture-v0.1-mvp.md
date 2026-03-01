@@ -96,19 +96,22 @@ kubby/
 │   │   ├── layout/
 │   │   │   ├── app-header.tsx                      # 顶部导航栏 (logo+导航(Home/Dashboard)+搜索+头像, Movies 通过媒体库卡片进入)
 │   │   │   ├── admin-sidebar.tsx                   # 管理侧边栏 (概览/媒体库/用户/刮削器)
-│   │   │   └── nav-sidebar.tsx                     # 汉堡菜单侧边栏 (Home/Media/Admin/User)
+│   │   │   └── nav-sidebar.tsx                     # 汉堡菜单侧边栏 (Home/Media/Dashboard/User)
 │   │   ├── movie/
-│   │   │   └── movie-card.tsx                      # 电影海报卡片 (2:3, 180x270)
+│   │   │   ├── movie-card.tsx                      # 电影海报卡片 (2:3, 180x270)
+│   │   │   └── movie-metadata-editor.tsx           # 电影元数据编辑弹窗 (General/Cast/Personal 三 Tab)
 │   │   ├── people/
-│   │   │   └── person-card.tsx                     # 演员卡片 (sm/md/lg 三种尺寸)
+│   │   │   ├── person-card.tsx                     # 演员卡片 (sm/md/lg 三种尺寸)
+│   │   │   └── person-metadata-editor.tsx          # 人物元数据编辑弹窗 (General/Personal 两 Tab)
 │   │   ├── library/
 │   │   │   ├── library-card.tsx                    # 媒体库卡片 (16:9, 320x180)
 │   │   │   └── folder-picker.tsx                   # 服务端文件夹选择器弹窗
-│   │   └── ui/                                     # shadcn/ui 组件 (13个)
+│   │   └── ui/                                     # shadcn/ui 组件 (17个)
 │   │       ├── avatar.tsx, badge.tsx, button.tsx, card.tsx
 │   │       ├── dialog.tsx, dropdown-menu.tsx, input.tsx, label.tsx
-│   │       ├── progress.tsx, scroll-area.tsx, separator.tsx
-│   │       ├── slider.tsx, tabs.tsx
+│   │       ├── progress.tsx, scroll-area.tsx, scroll-row.tsx, select.tsx
+│   │       ├── separator.tsx, slider.tsx, switch.tsx, tabs.tsx
+│   │       └── textarea.tsx
 │   ├── i18n/
 │   │   ├── config.ts                               # 语言配置 (locales: en/zh, defaultLocale: en)
 │   │   ├── request.ts                              # next-intl 服务端配置 (从 cookie NEXT_LOCALE 读取)
@@ -798,7 +801,7 @@ Player (page.tsx)
 | `AppHeader` | `components/layout/` | 顶部导航: logo + 导航链接(Home/Dashboard) + 搜索图标 + 头像 (Movies 通过媒体库卡片进入, 不在顶部导航) |
 | `AdminSidebar` | `components/layout/` | 管理侧边栏: 概览/媒体库/用户/刮削器/网络, 渐变高亮+圆角指示器 |
 | `AddLibraryCard` | `components/library/` | 空状态媒体库卡片 (虚线边框), 点击打开内联添加媒体库 Dialog |
-| `MovieCard` | `components/movie/` | 海报卡片 (180x270), 支持评分/收藏/进度条, hover 显示 watched/favorite 切换 + ⋯ 下拉菜单 (Play/Edit/MediaInfo/Refresh/Delete) |
+| `MovieCard` | `components/movie/` | 海报卡片 (180x270), 支持评分/收藏/进度条, hover 显示 watched/favorite 切换 + ⋯ 下拉菜单 (Play/Edit/MediaInfo/Delete) |
 | `PersonCard` | `components/people/` | 演员卡片 (sm:140x210, md:160x240, lg:240x340) |
 | `BookmarkCard` | `components/movie/` | 书签缩略图卡片 (320px, 支持编辑/删除/图标选择, 过滤禁用图标) |
 | `LibraryCard` | `components/library/` | 媒体库卡片 (360x200), 未扫描 overlay+扫描按钮, 扫描进度含标题, 跳过计数, hover ⋯ 菜单 |
