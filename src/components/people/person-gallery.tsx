@@ -585,7 +585,7 @@ export function PersonGallery({
           if (!open) setDeleteTarget(null);
         }}
       >
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>{tPerson("deletePhoto")}</DialogTitle>
             <DialogDescription>{tPerson("confirmDeletePhoto")}</DialogDescription>
@@ -593,13 +593,13 @@ export function PersonGallery({
           <DialogFooter>
             <button
               onClick={() => setDeleteTarget(null)}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
             >
               {tCommon("cancel")}
             </button>
             <button
               onClick={handleDeleteGalleryImage}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+              className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 cursor-pointer"
             >
               {tCommon("confirm")}
             </button>

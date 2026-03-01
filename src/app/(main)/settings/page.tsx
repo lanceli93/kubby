@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import { setLocale } from "@/i18n/locale";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, AlertCircle, ChevronDown, Monitor } from "lucide-react";
+import { Check, AlertCircle, Monitor } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string; winPath?: string; label: string; icon: string }> = {
   IINA: { platform: "mac", macPath: "/Applications/IINA.app", label: "macOS", icon: "/icons/iina.png" },
@@ -227,7 +228,7 @@ export default function SettingsPage() {
       {/* Change Password */}
       <form
         onSubmit={handlePasswordChange}
-        className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
+        className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
       >
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {t("changePassword")}
@@ -282,14 +283,12 @@ export default function SettingsPage() {
       </form>
 
       {/* Language */}
-      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("language")}</h2>
         <p className="text-sm text-muted-foreground">{t("languageDesc")}</p>
-        <select
+        <Select
           value={locale}
-          style={{ colorScheme: "dark" }}
-          onChange={async (e) => {
-            const newLocale = e.target.value;
+          onValueChange={async (newLocale) => {
             await setLocale(newLocale);
             await fetch("/api/users/me", {
               method: "PUT",
@@ -298,15 +297,19 @@ export default function SettingsPage() {
             });
             router.refresh();
           }}
-          className="h-11 w-48 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
         >
-          <option value="en">English</option>
-          <option value="zh">中文</option>
-        </select>
+          <SelectTrigger className="h-11 w-48 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="en">English</SelectItem>
+            <SelectItem value="zh">中文</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Playback */}
-      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("playback")}</h2>
         <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
         <div className="flex flex-col gap-1.5">
@@ -360,15 +363,15 @@ export default function SettingsPage() {
             <label className="text-[13px] font-medium text-muted-foreground">
               {t("playerMode")}
             </label>
-            <select
-              value={playerMode}
-              style={{ colorScheme: "dark" }}
-              onChange={(e) => handleModeChange(e.target.value)}
-              className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-            >
-              <option value="local" disabled={!isLocalhost}>{t("playerModeLocal")}</option>
-              <option value="stream">{t("playerModeStream")}</option>
-            </select>
+            <Select value={playerMode} onValueChange={handleModeChange}>
+              <SelectTrigger className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="local" disabled={!isLocalhost}>{t("playerModeLocal")}</SelectItem>
+                <SelectItem value="stream">{t("playerModeStream")}</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
               {playerMode === "local" ? t("playerModeLocalDesc") : t("playerModeStreamDesc")}
             </p>
@@ -409,7 +412,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Account Info */}
-      <div className="flex w-[720px] flex-col gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("accountInfo")}</h2>
         <div className="flex gap-2 text-sm">
           <span className="text-[#666680]">{t("accountType")}:</span>

@@ -271,7 +271,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       {/* Edit library dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent
-          className="border-white/[0.06] bg-card sm:max-w-[440px]"
+          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[440px]"
           onClick={(e) => { e.stopPropagation(); }}
         >
           <DialogHeader>
@@ -288,7 +288,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 value={editName}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setEditName(e.target.value)}
-                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -326,7 +326,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                       }
                     }}
                     placeholder="/path/to/media"
-                    className="h-10 min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
                   <button
                     type="button"
@@ -334,7 +334,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                       e.stopPropagation();
                       setEditFolderPickerOpen(true);
                     }}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
                   >
                     <Folder className="h-4 w-4" />
                   </button>
@@ -348,7 +348,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                         setNewFolderPath("");
                       }
                     }}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -394,10 +394,10 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                   Metadata Language
                 </label>
                 <Select value={editMetadataLanguage} onValueChange={setEditMetadataLanguage}>
-                  <SelectTrigger className="h-10 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground" onClick={(e) => e.stopPropagation()}>
+                  <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground" onClick={(e) => e.stopPropagation()}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-white/[0.06] bg-card" onClick={(e) => e.stopPropagation()}>
+                  <SelectContent onClick={(e) => e.stopPropagation()}>
                     <SelectItem value="en">English (default)</SelectItem>
                     <SelectItem value="zh-CN">简体中文</SelectItem>
                     <SelectItem value="zh-TW">繁體中文</SelectItem>
@@ -494,14 +494,14 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditOpen(false); }}
-                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {tCommon("cancel")}
               </button>
               <button
                 type="submit"
                 disabled={editSaving}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
                 {editSaving ? tCommon("loading") : tCommon("save")}
               </button>
@@ -513,7 +513,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       {/* Jellyfin compat confirmation dialog */}
       <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
         <DialogContent
-          className="border-white/[0.06] bg-card sm:max-w-[400px]"
+          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
           <DialogHeader>
@@ -535,7 +535,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 e.stopPropagation();
                 setJellyfinCompatConfirmOpen(false);
               }}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {tCommon("cancel")}
             </button>
@@ -546,7 +546,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 setEditJellyfinCompat(jellyfinCompatConfirmAction === "enable");
                 setJellyfinCompatConfirmOpen(false);
               }}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               {tCommon("confirm")}
             </button>
@@ -557,7 +557,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent
-          className="border-white/[0.06] bg-card sm:max-w-[400px]"
+          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -594,7 +594,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 e.stopPropagation();
                 setDeleteOpen(false);
               }}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {tCommon("cancel")}
             </button>
@@ -605,7 +605,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 onDelete?.({ cleanupOrphans, deleteNfo });
                 setDeleteOpen(false);
               }}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"
             >
               {tCommon("confirm")}
             </button>

@@ -204,7 +204,7 @@ export function PersonCard({
       )}
       {deleteOpen && (
         <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
-          <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
             <DialogHeader>
               <DialogTitle>{t("deletePerson")}</DialogTitle>
               <DialogDescription>{t("confirmDeletePerson")}</DialogDescription>
@@ -226,7 +226,7 @@ export function PersonCard({
             <DialogFooter>
               <button
                 onClick={() => setDeleteOpen(false)}
-                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+                className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
               >
                 {tCommon("cancel")}
               </button>
@@ -236,7 +236,7 @@ export function PersonCard({
                   setDeleteOpen(false);
                   setDeleteFiles(false);
                 }}
-                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+                className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 cursor-pointer"
               >
                 {tCommon("confirm")}
               </button>

@@ -225,20 +225,16 @@ export default function LibrariesPage() {
                   <label className="text-[13px] font-medium text-muted-foreground">
                     Library Type
                   </label>
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                    style={{ colorScheme: "dark" }}
-                  >
-                    <option value="movie">Movie</option>
-                    <option value="tvshow" disabled>
-                      TV Shows (coming soon)
-                    </option>
-                    <option value="music" disabled>
-                      Music (coming soon)
-                    </option>
-                  </select>
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="movie">Movie</SelectItem>
+                      <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
+                      <SelectItem value="music" disabled>Music (coming soon)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-medium text-muted-foreground">
@@ -350,7 +346,7 @@ export default function LibrariesPage() {
                       <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="border-white/[0.06] bg-card">
+                      <SelectContent>
                         <SelectItem value="en">English (default)</SelectItem>
                         <SelectItem value="zh-CN">简体中文</SelectItem>
                         <SelectItem value="zh-TW">繁體中文</SelectItem>
@@ -400,7 +396,7 @@ export default function LibrariesPage() {
 
                 {/* Jellyfin compat confirmation dialog */}
                 <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
-                  <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+                  <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
                     <DialogHeader>
                       <DialogTitle>Enable Jellyfin Compatibility?</DialogTitle>
                       <DialogDescription>
@@ -411,7 +407,7 @@ export default function LibrariesPage() {
                       <button
                         type="button"
                         onClick={() => setJellyfinCompatConfirmOpen(false)}
-                        className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                        className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
                         Cancel
                       </button>
@@ -421,7 +417,7 @@ export default function LibrariesPage() {
                           setJellyfinCompat(true);
                           setJellyfinCompatConfirmOpen(false);
                         }}
-                        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                        className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                       >
                         Enable
                       </button>
@@ -716,7 +712,7 @@ export default function LibrariesPage() {
                   <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-white/[0.06] bg-card">
+                  <SelectContent>
                     <SelectItem value="en">English (default)</SelectItem>
                     <SelectItem value="zh-CN">简体中文</SelectItem>
                     <SelectItem value="zh-TW">繁體中文</SelectItem>
@@ -792,7 +788,7 @@ export default function LibrariesPage() {
 
       {/* Edit Jellyfin compat confirmation dialog */}
       <Dialog open={editJellyfinCompatConfirmOpen} onOpenChange={setEditJellyfinCompatConfirmOpen}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>
               {editJellyfinCompatAction === "enable"
@@ -809,7 +805,7 @@ export default function LibrariesPage() {
             <button
               type="button"
               onClick={() => setEditJellyfinCompatConfirmOpen(false)}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Cancel
             </button>
@@ -819,7 +815,7 @@ export default function LibrariesPage() {
                 setEditJellyfinCompat(editJellyfinCompatAction === "enable");
                 setEditJellyfinCompatConfirmOpen(false);
               }}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Confirm
             </button>
@@ -829,7 +825,7 @@ export default function LibrariesPage() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Delete Library</DialogTitle>
             <DialogDescription>
@@ -860,7 +856,7 @@ export default function LibrariesPage() {
             <button
               type="button"
               onClick={() => setDeleteOpen(false)}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Cancel
             </button>
@@ -870,7 +866,7 @@ export default function LibrariesPage() {
                 if (deleteLibId) deleteLibrary.mutate({ id: deleteLibId, cleanupOrphans: deleteCleanupOrphans, deleteNfo });
                 setDeleteOpen(false);
               }}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"
             >
               Delete
             </button>

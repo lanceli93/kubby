@@ -57,7 +57,7 @@ export function FolderPicker({ open, onOpenChange, onSelect }: FolderPickerProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/[0.06] bg-card sm:max-w-[560px]">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Select Folder</DialogTitle>
         </DialogHeader>

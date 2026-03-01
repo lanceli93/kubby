@@ -14,6 +14,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function SetupWizard() {
   const router = useRouter();
@@ -342,16 +343,16 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("libraryType")}
               </label>
-              <select
-                value={libraryType}
-                onChange={(e) => setLibraryType(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                style={{ colorScheme: "dark" }}
-              >
-                <option value="movie">Movie</option>
-                <option value="tvshow" disabled>TV Shows (coming soon)</option>
-                <option value="music" disabled>Music (coming soon)</option>
-              </select>
+              <Select value={libraryType} onValueChange={setLibraryType}>
+                <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="movie">Movie</SelectItem>
+                  <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
+                  <SelectItem value="music" disabled>Music (coming soon)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Folder Paths (multi-folder) */}
@@ -487,7 +488,7 @@ export function SetupWizard() {
 
             {/* Jellyfin compat confirmation dialog */}
             <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
-              <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+              <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
                 <DialogHeader>
                   <DialogTitle>{t("jellyfinCompatConfirmTitle")}</DialogTitle>
                   <DialogDescription>{t("jellyfinCompatConfirmDesc")}</DialogDescription>
@@ -496,7 +497,7 @@ export function SetupWizard() {
                   <button
                     type="button"
                     onClick={() => setJellyfinCompatConfirmOpen(false)}
-                    className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {tc("cancel")}
                   </button>
@@ -506,7 +507,7 @@ export function SetupWizard() {
                       setJellyfinCompat(true);
                       setJellyfinCompatConfirmOpen(false);
                     }}
-                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     {tc("enable")}
                   </button>

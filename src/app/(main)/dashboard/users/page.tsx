@@ -171,7 +171,7 @@ export default function UsersPage() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("users")}</h1>
         <button
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           {t("addUser")}
@@ -281,7 +281,7 @@ export default function UsersPage() {
 
       {/* Add User Dialog */}
       <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) resetAddForm(); }}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[440px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle>{t("addUserTitle")}</DialogTitle>
           </DialogHeader>
@@ -295,7 +295,7 @@ export default function UsersPage() {
                 type="text"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
-                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground outline-none focus:border-primary/50"
+                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
                 autoFocus
               />
@@ -306,7 +306,7 @@ export default function UsersPage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground outline-none focus:border-primary/50"
+                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -316,7 +316,7 @@ export default function UsersPage() {
                 type="text"
                 value={newDisplayName}
                 onChange={(e) => setNewDisplayName(e.target.value)}
-                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground outline-none focus:border-primary/50"
+                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
             <label className="flex items-center gap-2.5 px-1 cursor-pointer">
@@ -332,14 +332,14 @@ export default function UsersPage() {
               <button
                 type="button"
                 onClick={() => setAddOpen(false)}
-                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {tCommon("cancel")}
               </button>
               <button
                 type="submit"
                 disabled={createUser.isPending}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
                 {createUser.isPending ? tCommon("loading") : tCommon("confirm")}
               </button>
@@ -350,7 +350,7 @@ export default function UsersPage() {
 
       {/* Delete User Dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>{t("deleteUser")}</DialogTitle>
             <DialogDescription>
@@ -360,14 +360,14 @@ export default function UsersPage() {
           <DialogFooter>
             <button
               onClick={() => setDeleteTarget(null)}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {tCommon("cancel")}
             </button>
             <button
               onClick={() => deleteTarget && deleteUser.mutate(deleteTarget.id)}
               disabled={deleteUser.isPending}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+              className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
             >
               {deleteUser.isPending ? tCommon("loading") : tCommon("confirm")}
             </button>
@@ -377,7 +377,7 @@ export default function UsersPage() {
 
       {/* Reset Password Dialog */}
       <Dialog open={!!resetTarget} onOpenChange={(v) => { if (!v) { setResetTarget(null); setResetPw(""); } }}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>{t("resetPassword")}</DialogTitle>
             <DialogDescription>
@@ -397,7 +397,7 @@ export default function UsersPage() {
                 type="password"
                 value={resetPw}
                 onChange={(e) => setResetPw(e.target.value)}
-                className="h-10 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground outline-none focus:border-primary/50"
+                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
                 autoFocus
               />
@@ -406,14 +406,14 @@ export default function UsersPage() {
               <button
                 type="button"
                 onClick={() => { setResetTarget(null); setResetPw(""); }}
-                className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {tCommon("cancel")}
               </button>
               <button
                 type="submit"
                 disabled={resetPassword.isPending}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
                 {resetPassword.isPending ? tCommon("loading") : tCommon("confirm")}
               </button>

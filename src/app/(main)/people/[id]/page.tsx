@@ -381,7 +381,7 @@ export default function PersonDetailPage() {
 
       {/* Delete person confirmation dialog */}
       <Dialog open={deletePersonOpen} onOpenChange={(open) => { setDeletePersonOpen(open); if (!open) setDeletePersonFiles(false); }}>
-        <DialogContent className="border-white/[0.06] bg-card sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>{tPerson("deletePerson")}</DialogTitle>
             <DialogDescription>{tPerson("confirmDeletePerson")}</DialogDescription>
@@ -403,7 +403,7 @@ export default function PersonDetailPage() {
           <DialogFooter>
             <button
               onClick={() => setDeletePersonOpen(false)}
-              className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
             >
               {tCommon("cancel")}
             </button>
@@ -413,7 +413,7 @@ export default function PersonDetailPage() {
                 setDeletePersonOpen(false);
                 setDeletePersonFiles(false);
               }}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+              className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 cursor-pointer"
             >
               {tCommon("confirm")}
             </button>
