@@ -19,6 +19,8 @@ export async function GET(
 
   const discParam = request.nextUrl.searchParams.get("disc");
   const discNumber = discParam ? parseInt(discParam, 10) : 1;
+  const startAtParam = request.nextUrl.searchParams.get("startAt");
+  const startAt = startAtParam ? Math.max(0, parseInt(startAtParam, 10) || 0) : 0;
 
   // Get codec info for the specific disc
   let container = movie.container;
@@ -67,8 +69,8 @@ export async function GET(
     });
   }
 
-  // Start transcode session
-  const sessionId = manager.startSession(id, discNumber, filePath, decision);
+  // Start transcode session (with optional initial seek position)
+  const sessionId = manager.startSession(id, discNumber, filePath, decision, startAt);
   const hlsUrl = `/api/stream/${sessionId}/playlist.m3u8`;
 
   return NextResponse.json({

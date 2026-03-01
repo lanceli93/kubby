@@ -89,6 +89,13 @@ export default function PlayerPage() {
   const sessionIdRef = useRef<string | null>(null);
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
   const hlsDurationRef = useRef<number | null>(null);
+  // HLS time offset: when FFmpeg starts at -ss N, output timestamps start from 0,
+  // so we track the offset to compute the real position in the original video.
+  const hlsTimeOffsetRef = useRef(0);
+  // Pending seek for direct play: applied in onLoadedMetadata when video is ready
+  const pendingSeekRef = useRef<number | null>(null);
+  // Counter to ignore stale seek API responses
+  const seekCounterRef = useRef(0);
 
   const queryClient = useQueryClient();
 
@@ -113,6 +120,11 @@ export default function PlayerPage() {
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
   const totalDiscs = movie?.discCount ?? 1;
+
+  // Get real playback position (accounts for HLS time offset)
+  function getRealTime() {
+    return (videoRef.current?.currentTime || 0) + hlsTimeOffsetRef.current;
+  }
 
   // Initialize currentDisc from URL param or userData resume
   useEffect(() => {
@@ -144,7 +156,7 @@ export default function PlayerPage() {
     mutationFn: async () => {
       const thumbnail = await captureVideoFrame();
       const formData = new FormData();
-      formData.append("timestampSeconds", String(Math.floor(videoRef.current?.currentTime || 0)));
+      formData.append("timestampSeconds", String(Math.floor(getRealTime())));
       formData.append("discNumber", String(currentDisc));
       formData.append("iconType", qbTemplate?.iconType || "bookmark");
       if (qbTemplate?.tags && qbTemplate.tags.length > 0) formData.append("tags", JSON.stringify(qbTemplate.tags));
@@ -162,7 +174,7 @@ export default function PlayerPage() {
     mutationFn: async () => {
       const thumbnail = await captureVideoFrame();
       const formData = new FormData();
-      formData.append("timestampSeconds", String(Math.floor(videoRef.current?.currentTime || 0)));
+      formData.append("timestampSeconds", String(Math.floor(getRealTime())));
       formData.append("discNumber", String(currentDisc));
       formData.append("iconType", bookmarkIconType);
       if (bookmarkTags.length > 0) formData.append("tags", JSON.stringify(bookmarkTags));
@@ -185,28 +197,11 @@ export default function PlayerPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (videoRef.current && isPlaying) {
-        saveProgress.mutate({ seconds: videoRef.current.currentTime, disc: currentDisc });
+        saveProgress.mutate({ seconds: getRealTime(), disc: currentDisc });
       }
     }, 10000);
     return () => clearInterval(interval);
   }, [isPlaying, movieId, currentDisc, saveProgress]);
-
-  // Restore position on load (only for the initial disc)
-  useEffect(() => {
-    if (!movie || !initializedRef.current) return;
-    // ?t= param takes priority (bookmark navigation)
-    const tParam = searchParams.get("t");
-    if (tParam && videoRef.current) {
-      videoRef.current.currentTime = parseInt(tParam, 10);
-      return;
-    }
-    const pos = movie.userData?.playbackPositionSeconds;
-    const savedDisc = movie.userData?.currentDisc ?? 1;
-    // Only restore position if we're on the saved disc (resume scenario)
-    if (pos && videoRef.current && savedDisc === currentDisc && !searchParams.get("disc")) {
-      videoRef.current.currentTime = pos;
-    }
-  }, [movie?.userData?.playbackPositionSeconds, movie?.userData?.currentDisc, currentDisc, searchParams, movie]);
 
   // Hide controls after inactivity
   const resetControlsTimer = useCallback(() => {
@@ -379,15 +374,56 @@ export default function PlayerPage() {
   function togglePlay() {
     if (!videoRef.current) return;
     if (videoRef.current.paused) {
-      videoRef.current.play();
+      videoRef.current.play().catch(() => {});
     } else {
       videoRef.current.pause();
     }
   }
 
+  // Seek to an absolute position in the original video.
+  // For direct play: sets video.currentTime directly.
+  // For HLS: restarts FFmpeg from that position via the seek API.
+  function seekTo(targetSeconds: number) {
+    if (!videoRef.current) return;
+    const clamped = Math.max(0, targetSeconds);
+
+    // Direct play or no active HLS session — simple seek
+    if (!sessionIdRef.current || !hlsRef.current) {
+      videoRef.current.currentTime = clamped;
+      return;
+    }
+
+    // HLS seek: restart FFmpeg from the new position
+    const counter = ++seekCounterRef.current;
+    showOsd("Seeking...");
+
+    fetch(`/api/stream/${sessionIdRef.current}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(clamped) }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (seekCounterRef.current !== counter) return; // Stale response
+        if (data.sessionId && hlsRef.current) {
+          sessionIdRef.current = data.sessionId;
+          hlsTimeOffsetRef.current = Math.floor(clamped);
+          setCurrentTime(Math.floor(clamped));
+          hlsRef.current.loadSource(data.hlsUrl);
+        }
+      })
+      .catch(() => {});
+  }
+
   function skip(seconds: number) {
     if (!videoRef.current) return;
-    videoRef.current.currentTime += seconds;
+    const realTarget = getRealTime() + seconds;
+    // If skipping backward past the HLS FFmpeg start point, need a full seek
+    if (hlsTimeOffsetRef.current > 0 && realTarget < hlsTimeOffsetRef.current && sessionIdRef.current && hlsRef.current) {
+      seekTo(Math.max(0, realTarget));
+    } else {
+      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime + seconds);
+    }
   }
 
   function formatTime(s: number) {
@@ -449,10 +485,29 @@ export default function PlayerPage() {
       sessionIdRef.current = null;
     }
 
+    // Reset HLS offset
+    hlsTimeOffsetRef.current = 0;
     setPlaybackMode(null);
 
-    const discQuery = isMultiDisc ? `?disc=${currentDisc}` : "";
-    fetch(`/api/movies/${movieId}/stream/decide${discQuery}`)
+    // Compute initial seek position from ?t= param or saved progress
+    let startAt = 0;
+    const tParam = searchParams.get("t");
+    if (tParam) {
+      startAt = parseInt(tParam, 10) || 0;
+    } else if (movie.userData?.playbackPositionSeconds && !searchParams.get("disc")) {
+      const savedDisc = movie.userData?.currentDisc ?? 1;
+      if (savedDisc === currentDisc) {
+        startAt = movie.userData.playbackPositionSeconds;
+      }
+    }
+
+    // Build query params
+    const queryParams = new URLSearchParams();
+    if (isMultiDisc) queryParams.set("disc", String(currentDisc));
+    if (startAt > 0) queryParams.set("startAt", String(startAt));
+    const queryStr = queryParams.toString();
+
+    fetch(`/api/movies/${movieId}/stream/decide${queryStr ? `?${queryStr}` : ""}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
@@ -463,7 +518,7 @@ export default function PlayerPage() {
 
         setPlaybackMode(data.mode);
 
-        // Store backend duration for HLS mode (where video.duration is unreliable during transcoding)
+        // Store backend duration for HLS mode (video.duration is unreliable during live transcoding)
         if (data.durationSeconds && data.mode !== "direct") {
           hlsDurationRef.current = data.durationSeconds;
           setDuration(data.durationSeconds);
@@ -474,10 +529,20 @@ export default function PlayerPage() {
         if (data.mode === "direct") {
           // Direct play — set src directly
           video.src = data.directUrl;
+          // Defer seek to onLoadedMetadata when the video is ready
+          if (startAt > 0) {
+            pendingSeekRef.current = startAt;
+          }
         } else {
           // HLS playback (remux or transcode)
           sessionIdRef.current = data.sessionId;
           const hlsUrl = data.hlsUrl;
+
+          // FFmpeg started from startAt via -ss, so output timestamps are 0-based
+          if (startAt > 0) {
+            hlsTimeOffsetRef.current = startAt;
+            setCurrentTime(startAt);
+          }
 
           if (Hls.isSupported()) {
             const hls = new Hls({
@@ -491,16 +556,18 @@ export default function PlayerPage() {
             hls.on(Hls.Events.ERROR, (_event, errorData) => {
               if (errorData.fatal && errorData.type === Hls.ErrorTypes.NETWORK_ERROR) {
                 // Try to recover by restarting transcode from current position
-                if (video.currentTime > 0 && sessionIdRef.current) {
+                const realTime = getRealTime();
+                if (realTime > 0 && sessionIdRef.current) {
                   fetch(`/api/stream/${sessionIdRef.current}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(video.currentTime) }),
+                    body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(realTime) }),
                   })
                     .then((r) => r.json())
                     .then((seekData) => {
                       if (seekData.sessionId) {
                         sessionIdRef.current = seekData.sessionId;
+                        hlsTimeOffsetRef.current = Math.floor(realTime);
                         hls.loadSource(seekData.hlsUrl);
                       }
                     })
@@ -566,18 +633,22 @@ export default function PlayerPage() {
         className="h-full w-full"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
+        onTimeUpdate={() => setCurrentTime(getRealTime())}
         onLoadedMetadata={() => {
-          // For HLS mode, prefer backend duration (video.duration is unreliable during live transcoding)
-          const videoDuration = videoRef.current?.duration || 0;
-          if (hlsDurationRef.current && (!isFinite(videoDuration) || videoDuration < hlsDurationRef.current * 0.9)) {
+          // For HLS mode, always use backend duration (video.duration is unreliable during live transcoding)
+          if (hlsDurationRef.current) {
             setDuration(hlsDurationRef.current);
           } else {
-            setDuration(videoDuration);
+            setDuration(videoRef.current?.duration || 0);
+          }
+          // Apply pending seek for direct play (deferred from decide effect)
+          if (pendingSeekRef.current !== null) {
+            if (videoRef.current) videoRef.current.currentTime = pendingSeekRef.current;
+            pendingSeekRef.current = null;
           }
           // Auto-play when advancing to next disc
           if (isPlaying || currentDisc > 1) {
-            videoRef.current?.play();
+            videoRef.current?.play().catch(() => {});
           }
         }}
         onEnded={() => {
@@ -609,7 +680,7 @@ export default function PlayerPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
-              if (videoRef.current) saveProgress.mutate({ seconds: videoRef.current.currentTime, disc: currentDisc });
+              saveProgress.mutate({ seconds: getRealTime(), disc: currentDisc });
               router.back();
             }}
             className="text-white/80 hover:text-white cursor-pointer"
@@ -731,7 +802,7 @@ export default function PlayerPage() {
             <div className="mb-4">
               <label className="mb-1 block text-sm text-white/60">Timestamp</label>
               <div className="rounded-md bg-white/10 px-3 py-2 text-sm text-white">
-                {formatTime(videoRef.current?.currentTime || 0)}
+                {formatTime(getRealTime())}
               </div>
             </div>
 
@@ -861,7 +932,7 @@ export default function PlayerPage() {
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const ratio = (e.clientX - rect.left) / rect.width;
-            if (videoRef.current) videoRef.current.currentTime = ratio * duration;
+            seekTo(ratio * duration);
           }}
         >
           <div
@@ -890,7 +961,7 @@ export default function PlayerPage() {
                 title={`${formatTime(bm.timestampSeconds)}${bm.note ? " - " + bm.note : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (videoRef.current) videoRef.current.currentTime = bm.timestampSeconds;
+                  seekTo(bm.timestampSeconds);
                 }}
               >
                 {/* Icon above the dot */}
