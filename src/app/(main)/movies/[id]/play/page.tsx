@@ -88,6 +88,7 @@ export default function PlayerPage() {
   const hlsRef = useRef<Hls | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
+  const [encoderName, setEncoderName] = useState<string | null>(null);
   const hlsDurationRef = useRef<number | null>(null);
   // HLS time offset: when FFmpeg starts at -ss N, output timestamps start from 0,
   // so we track the offset to compute the real position in the original video.
@@ -550,6 +551,7 @@ export default function PlayerPage() {
         }
 
         setPlaybackMode(data.mode);
+        setEncoderName(data.encoder ?? null);
 
         // Store backend duration for HLS mode (video.duration is unreliable during live transcoding)
         if (data.durationSeconds && data.mode !== "direct") {
@@ -1042,9 +1044,25 @@ export default function PlayerPage() {
         </div>
 
         <div className="relative flex items-center justify-between">
-          {/* Time */}
-          <span className="min-w-[120px] text-sm text-white/80">
+          {/* Time + encoder badge */}
+          <span className="min-w-[120px] flex items-center gap-2 text-sm text-white/80">
             {formatTime(currentTime)} / {formatTime(duration)}
+            {encoderName && (playbackMode === "remux" || playbackMode === "transcode") && (
+              <span
+                className={`text-xs rounded px-1.5 py-0.5 cursor-default ${
+                  encoderName !== "libx264"
+                    ? "bg-green-500/20 text-green-400"
+                    : "bg-white/10 text-white/60"
+                }`}
+                title={
+                  encoderName === "h264_videotoolbox" ? "VideoToolbox (Apple GPU)"
+                    : encoderName === "h264_nvenc" ? "NVENC (NVIDIA GPU)"
+                    : "Software (CPU)"
+                }
+              >
+                {encoderName !== "libx264" ? "HW" : "SW"}
+              </span>
+            )}
           </span>
 
           {/* Center controls — absolutely centered regardless of left/right width */}

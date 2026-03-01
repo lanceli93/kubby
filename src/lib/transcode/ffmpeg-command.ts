@@ -1,18 +1,25 @@
 import type { PlaybackDecision } from "./playback-decider";
+import type { EncoderConfig } from "./hw-accel";
 
 interface BuildArgs {
   inputPath: string;
   outputDir: string;
   decision: PlaybackDecision;
   seekToSeconds?: number;
+  encoderConfig?: EncoderConfig;
 }
 
-export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds }: BuildArgs): string[] {
+export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds, encoderConfig }: BuildArgs): string[] {
   const args: string[] = [];
 
   // Fast input seeking (before -i)
   if (seekToSeconds && seekToSeconds > 0) {
     args.push("-ss", String(seekToSeconds));
+  }
+
+  // Hardware acceleration input flag (before -i)
+  if (decision.videoAction !== "copy" && encoderConfig?.hwaccel) {
+    args.push("-hwaccel", encoderConfig.hwaccel);
   }
 
   args.push("-i", inputPath);
@@ -21,16 +28,12 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds 
   if (decision.videoAction === "copy") {
     args.push("-c:v", "copy");
   } else {
-    // Scale down to max 1080p for real-time transcoding performance
-    args.push("-threads", "0"); // Use all available CPU cores
+    const enc = encoderConfig;
+    if (!enc || enc.name === "libx264") {
+      args.push("-threads", "0");
+    }
     args.push("-vf", "scale='min(1920,iw)':-2");
-    args.push(
-      "-c:v", "libx264",
-      "-preset", "ultrafast",
-      "-crf", "23",
-      "-maxrate", "4M",
-      "-bufsize", "8M",
-    );
+    args.push("-c:v", enc?.name ?? "libx264", ...( enc?.qualityArgs ?? ["-preset", "ultrafast", "-crf", "23", "-maxrate", "4M", "-bufsize", "8M"]));
   }
 
   // Audio codec

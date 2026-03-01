@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getFfmpegPath, getTranscodeCacheDir } from "@/lib/paths";
 import { buildFfmpegArgs } from "./ffmpeg-command";
 import type { PlaybackDecision } from "./playback-decider";
+import { detectBestEncoder, getLibx264Config, type EncoderConfig } from "./hw-accel";
 
 export interface TranscodeSession {
   id: string;
@@ -17,6 +18,7 @@ export interface TranscodeSession {
   startedAt: number;
   lastAccessedAt: number;
   seekToSeconds: number;
+  retriedWithSoftware?: boolean;
 }
 
 const IDLE_TIMEOUT_MS = 90 * 1000; // 90 seconds (heartbeat keeps active sessions alive)
@@ -26,6 +28,7 @@ class TranscodeManager {
   private sessions = new Map<string, TranscodeSession>();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
   private ffmpegAvailable: boolean | null = null;
+  private encoderConfig: EncoderConfig | null = null;
 
   constructor() {
     this.startCleanupInterval();
@@ -43,6 +46,13 @@ class TranscodeManager {
     return this.ffmpegAvailable;
   }
 
+  getEncoderConfig(): EncoderConfig {
+    if (this.encoderConfig) return this.encoderConfig;
+    this.encoderConfig = detectBestEncoder(getFfmpegPath());
+    console.log(`[transcode] Using encoder: ${this.encoderConfig.name}${this.encoderConfig.isHardware ? " (hardware)" : " (software)"}`);
+    return this.encoderConfig;
+  }
+
   startSession(
     movieId: string,
     discNumber: number,
@@ -54,7 +64,8 @@ class TranscodeManager {
     const outputDir = path.join(getTranscodeCacheDir(), id);
     fs.mkdirSync(outputDir, { recursive: true });
 
-    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds });
+    const encoderConfig = this.getEncoderConfig();
+    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig });
     const ffmpegProcess = spawn(getFfmpegPath(), args, {
       stdio: ["ignore", "ignore", "pipe"],
     });
@@ -70,9 +81,40 @@ class TranscodeManager {
     ffmpegProcess.on("exit", (code) => {
       console.log(`[transcode:${id.slice(0, 8)}] FFmpeg exited with code ${code}`);
       const session = this.sessions.get(id);
-      if (session) {
-        session.process = null;
+      if (!session) return;
+
+      // Runtime fallback: if hardware encoder failed, retry with libx264
+      if (code !== 0 && encoderConfig.isHardware && !session.retriedWithSoftware) {
+        console.log(`[transcode] Hardware encoder failed, falling back to software`);
+        session.retriedWithSoftware = true;
+
+        // Clean up failed output
+        this.cleanOutputDir(outputDir);
+        fs.mkdirSync(outputDir, { recursive: true });
+
+        const fallbackConfig = getLibx264Config();
+        const fallbackArgs = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig: fallbackConfig });
+        const fallbackProcess = spawn(getFfmpegPath(), fallbackArgs, {
+          stdio: ["ignore", "ignore", "pipe"],
+        });
+
+        fallbackProcess.stderr?.on("data", (data: Buffer) => {
+          const line = data.toString().trim();
+          if (line.includes("time=") || line.includes("Error")) {
+            console.log(`[transcode:${id.slice(0, 8)}] ${line.slice(0, 200)}`);
+          }
+        });
+
+        fallbackProcess.on("exit", (fallbackCode) => {
+          console.log(`[transcode:${id.slice(0, 8)}] FFmpeg (fallback) exited with code ${fallbackCode}`);
+          session.process = null;
+        });
+
+        session.process = fallbackProcess;
+        return;
       }
+
+      session.process = null;
     });
 
     const session: TranscodeSession = {

@@ -1,5 +1,30 @@
 # Completed Features
 
+## 2026-03-01: Hardware-Accelerated Transcoding (VideoToolbox + NVENC + Fallback)
+
+Auto-detects and uses the best available hardware encoder for HLS transcoding with zero configuration.
+
+### Encoder Priority
+- **h264_videotoolbox** (macOS Apple Silicon) — 3-10x faster than CPU
+- **h264_nvenc** (NVIDIA GPU with CUDA) — GPU-accelerated encoding
+- **libx264** (CPU fallback) — unchanged behavior for systems without hardware encoders
+
+### New Files
+- `src/lib/transcode/hw-accel.ts` — encoder detection (`ffmpeg -encoders` + `-hwaccels` parsing), encoder config types, libx264 fallback config
+
+### Modified Files
+- `src/lib/transcode/ffmpeg-command.ts` — accepts `EncoderConfig`, branches on encoder for `-hwaccel`, `-c:v`, quality args; only adds `-threads 0` for libx264
+- `src/lib/transcode/transcode-manager.ts` — lazy encoder detection cached in singleton, runtime fallback (hardware fail → retry with libx264, `retriedWithSoftware` flag prevents loops)
+- `src/app/api/movies/[id]/stream/decide/route.ts` — returns `encoder` field in HLS response
+- `src/app/(main)/movies/[id]/play/page.tsx` — green "HW" / dim "SW" badge next to time display (hover shows encoder name), only visible during remux/transcode
+
+### Key Design Decisions
+- Detection runs once on first transcode, cached for process lifetime
+- Runtime fallback: if hardware encoder FFmpeg exits non-zero, transparently restarts with libx264 (same session ID, no client disruption)
+- All encoders use CPU `scale` filter for 1080p downscale (hardware scale filters add complexity without meaningful gain at this resolution)
+
+---
+
 ## 2026-02-28: HLS Transcoding for Universal Video Playback
 
 FFmpeg converts incompatible video formats to HLS on-demand. Browser-compatible formats keep direct play.

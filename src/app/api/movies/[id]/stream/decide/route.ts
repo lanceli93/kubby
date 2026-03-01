@@ -72,11 +72,13 @@ export async function GET(
   // Start transcode session (with optional initial seek position)
   const sessionId = manager.startSession(id, discNumber, filePath, decision, startAt);
   const hlsUrl = `/api/stream/${sessionId}/playlist.m3u8`;
+  const encoder = manager.getEncoderConfig().name;
 
   return NextResponse.json({
     mode: decision.mode,
     sessionId,
     hlsUrl,
     durationSeconds,
+    encoder,
   });
 }
