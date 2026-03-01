@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTranscodeManager } from "@/lib/transcode/transcode-manager";
 
+// PATCH /api/stream/[sessionId] — heartbeat to keep session alive
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ sessionId: string }> }
+) {
+  const { sessionId } = await params;
+  const manager = getTranscodeManager();
+  const session = manager.getSession(sessionId); // updates lastAccessedAt
+  if (!session) {
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  }
+  return NextResponse.json({ ok: true });
+}
+
 // DELETE /api/stream/[sessionId] — stop session, cleanup
 export async function DELETE(
   request: NextRequest,

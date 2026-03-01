@@ -96,6 +96,12 @@ export default function PlayerPage() {
   const pendingSeekRef = useRef<number | null>(null);
   // Counter to ignore stale seek API responses
   const seekCounterRef = useRef(0);
+  // Debounce timer for HLS seek
+  const seekDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // AbortController to cancel in-flight seek fetch
+  const seekAbortRef = useRef<AbortController | null>(null);
+  // Heartbeat interval for HLS sessions
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -382,7 +388,7 @@ export default function PlayerPage() {
 
   // Seek to an absolute position in the original video.
   // For direct play: sets video.currentTime directly.
-  // For HLS: restarts FFmpeg from that position via the seek API.
+  // For HLS: debounces 500ms, cancels in-flight fetches, restarts FFmpeg.
   function seekTo(targetSeconds: number) {
     if (!videoRef.current) return;
     const clamped = Math.max(0, targetSeconds);
@@ -393,26 +399,47 @@ export default function PlayerPage() {
       return;
     }
 
-    // HLS seek: restart FFmpeg from the new position
-    const counter = ++seekCounterRef.current;
+    // Optimistic UI: show new position immediately
+    hlsTimeOffsetRef.current = Math.floor(clamped);
+    setCurrentTime(Math.floor(clamped));
     showOsd("Seeking...");
 
-    fetch(`/api/stream/${sessionIdRef.current}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(clamped) }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (seekCounterRef.current !== counter) return; // Stale response
-        if (data.sessionId && hlsRef.current) {
-          sessionIdRef.current = data.sessionId;
-          hlsTimeOffsetRef.current = Math.floor(clamped);
-          setCurrentTime(Math.floor(clamped));
-          hlsRef.current.loadSource(data.hlsUrl);
-        }
+    // Clear any pending debounce
+    if (seekDebounceRef.current) {
+      clearTimeout(seekDebounceRef.current);
+    }
+
+    // Debounce: wait 500ms before actually firing the seek
+    seekDebounceRef.current = setTimeout(() => {
+      // Abort any in-flight seek fetch
+      if (seekAbortRef.current) {
+        seekAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      seekAbortRef.current = controller;
+
+      const counter = ++seekCounterRef.current;
+
+      fetch(`/api/stream/${sessionIdRef.current}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(clamped) }),
+        signal: controller.signal,
       })
-      .catch(() => {});
+        .then((r) => r.json())
+        .then((data) => {
+          if (seekCounterRef.current !== counter) return; // Stale response
+          if (data.sessionId && hlsRef.current) {
+            sessionIdRef.current = data.sessionId;
+            hlsTimeOffsetRef.current = Math.floor(clamped);
+            setCurrentTime(Math.floor(clamped));
+            hlsRef.current.loadSource(data.hlsUrl);
+          }
+        })
+        .catch((err) => {
+          if (err?.name === "AbortError") return; // Expected cancellation
+        });
+    }, 500);
   }
 
   function skip(seconds: number) {
@@ -471,6 +498,12 @@ export default function PlayerPage() {
     if (!video) return;
 
     let cancelled = false;
+
+    // Stop heartbeat for previous session
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+    }
 
     // Cleanup previous HLS instance
     if (hlsRef.current) {
@@ -537,6 +570,14 @@ export default function PlayerPage() {
           // HLS playback (remux or transcode)
           sessionIdRef.current = data.sessionId;
           const hlsUrl = data.hlsUrl;
+
+          // Start heartbeat to keep session alive (server has 90s idle timeout)
+          if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+          heartbeatRef.current = setInterval(() => {
+            if (sessionIdRef.current) {
+              fetch(`/api/stream/${sessionIdRef.current}`, { method: "PATCH" }).catch(() => {});
+            }
+          }, 30_000);
 
           // FFmpeg started from startAt via -ss, so output timestamps are 0-based
           if (startAt > 0) {
@@ -606,6 +647,20 @@ export default function PlayerPage() {
   // Cleanup transcode session on unmount
   useEffect(() => {
     const cleanup = () => {
+      // Stop heartbeat
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+      // Cancel pending seek debounce and abort in-flight fetch
+      if (seekDebounceRef.current) {
+        clearTimeout(seekDebounceRef.current);
+        seekDebounceRef.current = null;
+      }
+      if (seekAbortRef.current) {
+        seekAbortRef.current.abort();
+        seekAbortRef.current = null;
+      }
       if (sessionIdRef.current) {
         fetch(`/api/stream/${sessionIdRef.current}`, { method: "DELETE", keepalive: true });
       }

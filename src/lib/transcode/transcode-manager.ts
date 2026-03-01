@@ -19,8 +19,8 @@ export interface TranscodeSession {
   seekToSeconds: number;
 }
 
-const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
-const CLEANUP_INTERVAL_MS = 60 * 1000; // 60 seconds
+const IDLE_TIMEOUT_MS = 90 * 1000; // 90 seconds (heartbeat keeps active sessions alive)
+const CLEANUP_INTERVAL_MS = 15 * 1000; // 15 seconds
 
 class TranscodeManager {
   private sessions = new Map<string, TranscodeSession>();
@@ -120,11 +120,11 @@ class TranscodeManager {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
 
-    // Kill existing process
+    // Kill existing process and remove old session from map
+    // This prevents duplicate seeks on the same stale sessionId from spawning orphans
     this.killProcess(session);
-
-    // Clean up old output
     this.cleanOutputDir(session.outputDir);
+    this.sessions.delete(sessionId);
 
     // Start new session from the seek point
     return this.startSession(
@@ -170,11 +170,21 @@ class TranscodeManager {
 
   private killProcess(session: TranscodeSession): void {
     if (session.process && !session.process.killed) {
+      const proc = session.process;
       try {
-        session.process.kill("SIGTERM");
+        proc.kill("SIGTERM");
       } catch {
         // Process may have already exited
       }
+      // SIGKILL fallback if SIGTERM doesn't work within 2s
+      const killTimer = setTimeout(() => {
+        try {
+          if (!proc.killed) proc.kill("SIGKILL");
+        } catch {
+          // Already dead
+        }
+      }, 2000);
+      killTimer.unref?.();
       session.process = null;
     }
   }
