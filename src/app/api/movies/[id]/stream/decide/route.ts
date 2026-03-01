@@ -22,6 +22,8 @@ export async function GET(
   const discNumber = discParam ? parseInt(discParam, 10) : 1;
   const startAtParam = request.nextUrl.searchParams.get("startAt");
   const startAt = startAtParam ? Math.max(0, parseInt(startAtParam, 10) || 0) : 0;
+  const maxWidthParam = request.nextUrl.searchParams.get("maxWidth");
+  const maxWidth = maxWidthParam ? parseInt(maxWidthParam, 10) || undefined : undefined;
 
   // Get codec info for the specific disc
   let container = movie.container;
@@ -71,7 +73,7 @@ export async function GET(
   }
 
   // Start transcode session (with optional initial seek position)
-  const sessionId = manager.startSession(id, discNumber, filePath, decision, startAt);
+  const sessionId = manager.startSession(id, discNumber, filePath, decision, startAt, maxWidth);
   const hlsUrl = `/api/stream/${sessionId}/playlist.m3u8`;
   // Read encoder name directly (avoids stale globalThis singleton in dev)
   const encoder = manager.getEncoderConfig?.()?.name ?? detectBestEncoder().name;
@@ -82,5 +84,6 @@ export async function GET(
     hlsUrl,
     durationSeconds,
     encoder,
+    maxWidth: maxWidth ?? 1920,
   });
 }

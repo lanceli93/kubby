@@ -7,9 +7,10 @@ interface BuildArgs {
   decision: PlaybackDecision;
   seekToSeconds?: number;
   encoderConfig?: EncoderConfig;
+  maxWidth?: number;
 }
 
-export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds, encoderConfig }: BuildArgs): string[] {
+export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth }: BuildArgs): string[] {
   const args: string[] = [];
 
   // Fast input seeking (before -i)
@@ -32,7 +33,8 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
     if (!enc || enc.name === "libx264") {
       args.push("-threads", "0");
     }
-    args.push("-vf", "scale='min(1920,iw)':-2");
+    const cap = maxWidth ?? 1920;
+    args.push("-vf", `scale='min(${cap},iw)':-2`);
     args.push("-c:v", enc?.name ?? "libx264", ...( enc?.qualityArgs ?? ["-preset", "ultrafast", "-crf", "23", "-maxrate", "4M", "-bufsize", "8M"]));
   }
 

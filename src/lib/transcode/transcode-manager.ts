@@ -18,6 +18,7 @@ export interface TranscodeSession {
   startedAt: number;
   lastAccessedAt: number;
   seekToSeconds: number;
+  maxWidth: number;
   retriedWithSoftware?: boolean;
 }
 
@@ -59,13 +60,14 @@ class TranscodeManager {
     filePath: string,
     decision: PlaybackDecision,
     seekToSeconds = 0,
+    maxWidth = 1920,
   ): string {
     const id = uuidv4();
     const outputDir = path.join(getTranscodeCacheDir(), id);
     fs.mkdirSync(outputDir, { recursive: true });
 
     const encoderConfig = this.getEncoderConfig();
-    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig });
+    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth });
     const ffmpegProcess = spawn(getFfmpegPath(), args, {
       stdio: ["ignore", "ignore", "pipe"],
     });
@@ -93,7 +95,7 @@ class TranscodeManager {
         fs.mkdirSync(outputDir, { recursive: true });
 
         const fallbackConfig = getLibx264Config();
-        const fallbackArgs = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig: fallbackConfig });
+        const fallbackArgs = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig: fallbackConfig, maxWidth });
         const fallbackProcess = spawn(getFfmpegPath(), fallbackArgs, {
           stdio: ["ignore", "ignore", "pipe"],
         });
@@ -128,6 +130,7 @@ class TranscodeManager {
       startedAt: Date.now(),
       lastAccessedAt: Date.now(),
       seekToSeconds,
+      maxWidth,
     };
 
     this.sessions.set(id, session);
@@ -175,6 +178,7 @@ class TranscodeManager {
       session.filePath,
       session.decision,
       seekToSeconds,
+      session.maxWidth,
     );
   }
 
