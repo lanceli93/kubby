@@ -158,7 +158,7 @@ export default function PersonDetailPage() {
         <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + person info */}
-        <div className={`absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
+        <div className={`animate-fade-in-up absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
           {/* Poster — 350×525 (2:3), same as movie detail */}
           <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {person.photoPath ? (
@@ -311,6 +311,7 @@ export default function PersonDetailPage() {
         </div>
       </div>
 
+      <div className="stagger-children">
       {/* Filmography */}
       <section className="flex flex-col gap-4 px-20 mt-[10px] pb-12">
         <div className="flex items-center gap-3">
@@ -349,6 +350,7 @@ export default function PersonDetailPage() {
 
       {/* Photo Gallery */}
       <PersonGallery personId={personId} galleryImages={galleryImages} />
+      </div>
 
       {/* Metadata editor dialog */}
       <PersonMetadataEditor

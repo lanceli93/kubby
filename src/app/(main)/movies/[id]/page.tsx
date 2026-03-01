@@ -347,7 +347,7 @@ export default function MovieDetailPage() {
         <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + movie info */}
-        <div className={`absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-24 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
+        <div className={`animate-fade-in-up absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-24 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
           {/* Poster — 350×525 (2:3) */}
           <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (
@@ -651,6 +651,7 @@ export default function MovieDetailPage() {
         </div>
       </div>
 
+      <div className="stagger-children">
       {/* Discs Section (multi-disc movies only) */}
       {(movie.discCount ?? 1) > 1 && movie.discs && movie.discs.length > 0 && (
         <section className="px-20 mt-4">
@@ -860,6 +861,7 @@ export default function MovieDetailPage() {
           </ScrollRow>
         </section>
       )}
+      </div>
 
       {/* Metadata editor dialog */}
       <MovieMetadataEditor
