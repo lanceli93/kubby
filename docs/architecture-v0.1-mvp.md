@@ -656,13 +656,15 @@ Player (page.tsx)
 
 **FFmpeg 参数** (`src/lib/transcode/ffmpeg-command.ts`):
 - Remux: `-c:v copy -c:a copy -f hls -hls_time 6 -hls_list_size 0`
-- Transcode: `-vf scale='min(1920,iw)':-2` (限制输出最大 1080p) + `-c:v libx264 -preset veryfast -crf 23 -maxrate 4M -bufsize 8M -c:a aac -b:a 192k -f hls`
+- Transcode: `-threads 0 -vf scale='min(1920,iw)':-2` (限制输出最大 1080p, 使用所有 CPU 核心) + `-c:v libx264 -preset ultrafast -crf 23 -maxrate 4M -bufsize 8M -c:a aac -b:a 192k -f hls`
 - 快速输入 seek: `-ss {seconds}` 在 `-i` 之前
 
 **TranscodeManager** (`src/lib/transcode/transcode-manager.ts`):
 - globalThis 单例 (Next.js dev hot reload 安全)
 - 临时文件: `os.tmpdir()/kubby-transcode/{sessionId}/`
-- 60 秒清理间隔, 10 分钟空闲超时
+- 15 秒清理间隔, 90 秒空闲超时 (客户端 30 秒心跳保持活跃 session)
+- seekSession() 先从 map 中删除旧 session, 防止快速 seek 时产生孤儿 FFmpeg 进程
+- SIGTERM 后 2 秒 SIGKILL 兜底, 确保顽固进程被杀死
 - 进程退出时 (SIGTERM/SIGINT) 杀死所有 FFmpeg 进程 + 清理缓存目录
 - FFmpeg 不可用时降级为 direct play + 警告
 
@@ -677,6 +679,7 @@ Player (page.tsx)
 - `playlist.m3u8` — 等待 FFmpeg 生成 m3u8, 重写 segment 路径
 - `segment/[name]` — 校验 segment 名称 (防路径遍历), 等待+重试不存在的 segment
 - `POST` — seek 操作 (杀旧 FFmpeg, 从新位置重启)
+- `PATCH` — 心跳端点, 更新 lastAccessedAt 防止空闲超时清理
 - `DELETE` — 停止 session, 清理临时文件
 
 ### 客户端
@@ -687,7 +690,8 @@ Player (page.tsx)
 - HLS: 使用 HLS.js `loadSource()` + `attachMedia()` (Safari fallback: native HLS)
 - OSD 提示 "Remuxing..." / "Transcoding..."
 - HLS 时间偏移跟踪: `hlsTimeOffsetRef` 追踪 FFmpeg `-ss` 起点, `getRealTime()` 返回原始视频中的真实位置
-- HLS 感知 seek: `seekTo()` 函数通过 POST seek API 重启 FFmpeg, 进度条/书签点击均可正确定位
+- HLS 感知 seek: `seekTo()` 函数通过 POST seek API 重启 FFmpeg, 500ms 防抖 + AbortController 取消进行中的 fetch, 防止快速点击产生多个孤儿 FFmpeg 进程
+- HLS 心跳: 每 30 秒 PATCH 保持 session 活跃 (服务端 90 秒空闲超时)
 - HLS 初始位置: `startAt` 参数传给 decide API, FFmpeg 直接从该位置启动 (支持 `?t=` 参数和续播恢复)
 - HLS 网络错误自动 seek 恢复
 - HLS 进度条时长: 使用数据库 `durationSeconds` (ffprobe 扫描值) 替代不可靠的 `video.duration`
