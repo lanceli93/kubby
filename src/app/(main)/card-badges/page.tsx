@@ -241,11 +241,11 @@ export default function CardBadgesPage() {
 
   return (
     <div className="h-full overflow-y-scroll">
-    <div className="flex flex-col items-center gap-6 py-8">
-      <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
+    <div className="stagger-children flex flex-col items-center gap-6 py-8">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
 
       {/* Movie card badges */}
-      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
+      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("movieCardBadges")}
         </h2>
@@ -344,7 +344,7 @@ export default function CardBadgesPage() {
       </div>
 
       {/* Person card badges */}
-      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
+      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("personCardBadges")}
         </h2>
