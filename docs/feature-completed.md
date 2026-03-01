@@ -66,6 +66,50 @@ Visual refinement pass across all utility and content pages to match the cinemat
 
 ---
 
+## 2026-03-01: Hardware-Accelerated Transcoding + HLS Improvements
+
+End-to-end overhaul of the streaming pipeline: hardware encoder auto-detection, resolution selection, HLS-aware seeking, and session lifecycle hardening.
+
+- **hw-accel.ts**: auto-detect VideoToolbox (macOS) / NVENC (NVIDIA) / libx264 (CPU) with runtime fallback if HW encoder fails
+- **Player HW/SW badge**: green "HW" / dim "SW" indicator with encoder detail popover
+- **Resolution selector**: 原画 (original) / 1080p / 720p / 480p with smart filtering by source width; 1080p cap for transcoding
+- **Decide API**: returns `videoWidth` and `durationSeconds`; `maxWidth` param flows through decide → FFmpeg pipeline (maxWidth=0 skips scale)
+- **HLS-aware seeking**: `seekTo`, `hlsTimeOffsetRef`, `getRealTime`, destroy+recreate HLS instance on seek; 500ms debounce + AbortController on client seeks
+- **Backend duration for progress bar**: fixes HLS.js reporting only 6-8s of duration
+- **PATCH heartbeat** on `/api/stream/[sessionId]` (30s keepalive)
+- **Session lifecycle tuning**: idle timeout 10min→90s, cleanup interval 60s→15s, SIGKILL fallback 2s after SIGTERM
+- **Encoding performance**: ultrafast preset + threads 0 for faster SW encoding
+- **Bug fixes**: seek race condition (stopLoad before seek, play after loadSource, skip error recovery during seek); progress bar jump and video freeze during seek (hlsSeekingRef flag); stale globalThis singleton after dev hot-reload (version key)
+
+---
+
+## 2026-03-01: Movie Browser Sort Options
+
+- Added file size sorting option to movies API and browser UI
+- Added resolution sorting option to movies API and browser UI
+
+---
+
+## 2026-03-01: Empty Home Page Library Card
+
+- New `AddLibraryCard` component: dashed-border card in Media Libraries scroll row when no libraries exist
+- Clicking the card opens the Add Library dialog inline
+
+---
+
+## 2026-03-01: Back/Home Navigation Buttons
+
+- Added back and home buttons to the app header on 6 pages for improved navigation
+
+---
+
+## 2026-03-01: Non-Admin Dashboard Protection
+
+- Hide Administration section from non-admin users in the nav sidebar
+- Redirect non-admin `/dashboard` access to `/` instead of `/login`
+
+---
+
 ## 2026-03-01: Complete Admin User Management System
 
 Full CRUD user management for administrators with role management and security protections.
