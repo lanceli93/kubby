@@ -33,8 +33,9 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
     if (!enc || enc.name === "libx264") {
       args.push("-threads", "0");
     }
-    const cap = maxWidth ?? 1920;
-    args.push("-vf", `scale='min(${cap},iw)':-2`);
+    if (maxWidth && maxWidth > 0) {
+      args.push("-vf", `scale='min(${maxWidth},iw)':-2`);
+    }
     args.push("-c:v", enc?.name ?? "libx264", ...( enc?.qualityArgs ?? ["-preset", "ultrafast", "-crf", "23", "-maxrate", "4M", "-bufsize", "8M"]));
   }
 

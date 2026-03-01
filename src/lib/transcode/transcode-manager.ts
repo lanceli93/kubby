@@ -60,7 +60,7 @@ class TranscodeManager {
     filePath: string,
     decision: PlaybackDecision,
     seekToSeconds = 0,
-    maxWidth = 1920,
+    maxWidth = 0,
   ): string {
     const id = uuidv4();
     const outputDir = path.join(getTranscodeCacheDir(), id);

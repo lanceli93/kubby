@@ -29,9 +29,10 @@ import { useUserPreferences } from "@/hooks/use-user-preferences";
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 const RESOLUTION_OPTIONS = [
-  { maxWidth: 1920, label: "1080p" },
-  { maxWidth: 1280, label: "720p" },
-  { maxWidth: 854, label: "480p" },
+  { maxWidth: 0, labelKey: "resOriginal" as const },
+  { maxWidth: 1920, labelKey: "res1080p" as const },
+  { maxWidth: 1280, labelKey: "res720p" as const },
+  { maxWidth: 854, labelKey: "res480p" as const },
 ];
 
 interface DiscData {
@@ -66,6 +67,7 @@ export default function PlayerPage() {
   const searchParams = useSearchParams();
   const movieId = params.id as string;
   const tPM = useTranslations("personalMetadata");
+  const tPlayer = useTranslations("player");
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -96,7 +98,8 @@ export default function PlayerPage() {
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
   const [encoderName, setEncoderName] = useState<string | null>(null);
   const [showEncoderInfo, setShowEncoderInfo] = useState(false);
-  const [selectedMaxWidth, setSelectedMaxWidth] = useState(1920);
+  const [selectedMaxWidth, setSelectedMaxWidth] = useState(0);
+  const [sourceVideoWidth, setSourceVideoWidth] = useState<number | null>(null);
   const [showResMenu, setShowResMenu] = useState(false);
   const hlsDurationRef = useRef<number | null>(null);
   // HLS time offset: when FFmpeg starts at -ss N, output timestamps start from 0,
@@ -551,7 +554,7 @@ export default function PlayerPage() {
     const queryParams = new URLSearchParams();
     if (isMultiDisc) queryParams.set("disc", String(currentDisc));
     if (startAt > 0) queryParams.set("startAt", String(startAt));
-    if (selectedMaxWidth !== 1920) queryParams.set("maxWidth", String(selectedMaxWidth));
+    if (selectedMaxWidth > 0) queryParams.set("maxWidth", String(selectedMaxWidth));
     const queryStr = queryParams.toString();
 
     fetch(`/api/movies/${movieId}/stream/decide${queryStr ? `?${queryStr}` : ""}`)
@@ -565,6 +568,7 @@ export default function PlayerPage() {
 
         setPlaybackMode(data.mode);
         setEncoderName(data.encoder ?? null);
+        setSourceVideoWidth(data.videoWidth ?? null);
 
         // Store backend duration for HLS mode (video.duration is unreliable during live transcoding)
         if (data.durationSeconds && data.mode !== "direct") {
@@ -1071,9 +1075,9 @@ export default function PlayerPage() {
                   }}
                   className="text-xs rounded px-1.5 py-0.5 text-white/60 hover:text-white transition-colors cursor-pointer"
                 >
-                  {playbackMode === "direct" ? "Direct"
-                    : playbackMode === "remux" ? "Remux"
-                    : encoderName && encoderName !== "libx264" ? "HW" : "SW"}
+                  {playbackMode === "direct" ? tPlayer("modeDirect")
+                    : playbackMode === "remux" ? tPlayer("modeRemux")
+                    : encoderName && encoderName !== "libx264" ? tPlayer("modeHW") : tPlayer("modeSW")}
                 </button>
                 {showEncoderInfo && (
                   <div
@@ -1081,11 +1085,11 @@ export default function PlayerPage() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="text-xs text-white/50 mb-0.5">
-                      {playbackMode === "direct" ? "Playback" : playbackMode === "remux" ? "Playback" : "Encoder"}
+                      {playbackMode === "transcode" ? tPlayer("labelEncoder") : tPlayer("labelPlayback")}
                     </div>
                     <div className="text-sm text-white">
-                      {playbackMode === "direct" ? "Browser native playback \u2014 no transcoding needed"
-                        : playbackMode === "remux" ? "Repackaging streams to HLS \u2014 no re-encoding"
+                      {playbackMode === "direct" ? tPlayer("descDirect")
+                        : playbackMode === "remux" ? tPlayer("descRemux")
                         : encoderName === "h264_videotoolbox" ? "VideoToolbox (Apple GPU)"
                         : encoderName === "h264_nvenc" ? "NVENC (NVIDIA GPU)"
                         : "Software (CPU)"}
@@ -1149,85 +1153,91 @@ export default function PlayerPage() {
               <PanelTop className="h-5 w-5" />
             </button>
             {/* Resolution selector (transcode only) */}
-            {playbackMode === "transcode" && (
-              <div className="relative">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowResMenu((v) => !v);
-                  }}
-                  className="text-xs rounded px-1.5 py-0.5 text-white/60 hover:text-white transition-colors cursor-pointer"
-                  title="Transcode resolution"
-                >
-                  {RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.label ?? "1080p"}
-                </button>
-                {showResMenu && (
-                  <div
-                    className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
-                    onClick={(e) => e.stopPropagation()}
+            {playbackMode === "transcode" && (() => {
+              // Filter: only show options where source is wider than the cap (原画 always shown)
+              const filtered = RESOLUTION_OPTIONS.filter(
+                (opt) => opt.maxWidth === 0 || !sourceVideoWidth || sourceVideoWidth > opt.maxWidth
+              );
+              return (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowResMenu((v) => !v);
+                    }}
+                    className="text-xs rounded px-1.5 py-0.5 text-white/60 hover:text-white transition-colors cursor-pointer"
+                    title="Transcode resolution"
                   >
-                    {RESOLUTION_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.maxWidth}
-                        onClick={async () => {
-                          setShowResMenu(false);
-                          if (opt.maxWidth === selectedMaxWidth) return;
-                          setSelectedMaxWidth(opt.maxWidth);
-                          const realTime = Math.floor(getRealTime());
+                    {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}
+                  </button>
+                  {showResMenu && (
+                    <div
+                      className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {filtered.map((opt) => (
+                        <button
+                          key={opt.maxWidth}
+                          onClick={async () => {
+                            setShowResMenu(false);
+                            if (opt.maxWidth === selectedMaxWidth) return;
+                            setSelectedMaxWidth(opt.maxWidth);
+                            const realTime = Math.floor(getRealTime());
 
-                          // Stop old session
-                          if (sessionIdRef.current) {
-                            await fetch(`/api/stream/${sessionIdRef.current}`, { method: "DELETE" });
-                          }
-                          if (hlsRef.current) {
-                            hlsRef.current.destroy();
-                            hlsRef.current = null;
-                          }
-
-                          // Re-decide with new maxWidth
-                          const qp = new URLSearchParams();
-                          if (isMultiDisc) qp.set("disc", String(currentDisc));
-                          if (realTime > 0) qp.set("startAt", String(realTime));
-                          qp.set("maxWidth", String(opt.maxWidth));
-                          const qs = qp.toString();
-
-                          showOsd(`Switching to ${opt.label}...`);
-
-                          const res = await fetch(`/api/movies/${movieId}/stream/decide?${qs}`);
-                          const data = await res.json();
-
-                          if (data.sessionId && videoRef.current) {
-                            sessionIdRef.current = data.sessionId;
-                            setEncoderName(data.encoder ?? null);
-                            hlsTimeOffsetRef.current = realTime;
-                            setCurrentTime(realTime);
-
-                            if (Hls.isSupported()) {
-                              const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
-                              hlsRef.current = hls;
-                              hls.loadSource(data.hlsUrl);
-                              hls.attachMedia(videoRef.current);
-                              hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                                videoRef.current?.play().catch(() => {});
-                              });
-                            } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
-                              videoRef.current.src = data.hlsUrl;
+                            // Stop old session
+                            if (sessionIdRef.current) {
+                              await fetch(`/api/stream/${sessionIdRef.current}`, { method: "DELETE" });
                             }
-                          }
-                        }}
-                        className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
-                          opt.maxWidth === selectedMaxWidth
-                            ? "bg-white/10 text-white"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                            if (hlsRef.current) {
+                              hlsRef.current.destroy();
+                              hlsRef.current = null;
+                            }
+
+                            // Re-decide with new maxWidth
+                            const qp = new URLSearchParams();
+                            if (isMultiDisc) qp.set("disc", String(currentDisc));
+                            if (realTime > 0) qp.set("startAt", String(realTime));
+                            if (opt.maxWidth > 0) qp.set("maxWidth", String(opt.maxWidth));
+                            const qs = qp.toString();
+
+                            showOsd(tPlayer("switchingTo", { label: tPlayer(opt.labelKey) }));
+
+                            const res = await fetch(`/api/movies/${movieId}/stream/decide?${qs}`);
+                            const data = await res.json();
+
+                            if (data.sessionId && videoRef.current) {
+                              sessionIdRef.current = data.sessionId;
+                              setEncoderName(data.encoder ?? null);
+                              hlsTimeOffsetRef.current = realTime;
+                              setCurrentTime(realTime);
+
+                              if (Hls.isSupported()) {
+                                const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
+                                hlsRef.current = hls;
+                                hls.loadSource(data.hlsUrl);
+                                hls.attachMedia(videoRef.current);
+                                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                                  videoRef.current?.play().catch(() => {});
+                                });
+                              } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+                                videoRef.current.src = data.hlsUrl;
+                              }
+                            }
+                          }}
+                          className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
+                            opt.maxWidth === selectedMaxWidth
+                              ? "bg-white/10 text-white"
+                              : "text-white/70 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          {tPlayer(opt.labelKey)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             {/* Speed control */}
             <div className="relative">
               <button

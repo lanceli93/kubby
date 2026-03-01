@@ -484,6 +484,21 @@
     "noStreams": "无媒体流数据",
     "rescanHint": "重新扫描媒体库以获取媒体信息"
   },
+  "player": {
+    "resOriginal": "原画",
+    "res1080p": "1080p",
+    "res720p": "720p",
+    "res480p": "480p",
+    "switchingTo": "切换到 {label}...",
+    "modeDirect": "直连",
+    "modeRemux": "转封装",
+    "modeHW": "硬解",
+    "modeSW": "软解",
+    "descDirect": "浏览器原生播放 — 无需转码",
+    "descRemux": "重新封装为 HLS — 不重新编码",
+    "labelPlayback": "播放模式",
+    "labelEncoder": "编码器"
+  },
   "folderPicker": {
     "selectFolder": "选择文件夹",
     "noSubdirectories": "没有子目录",

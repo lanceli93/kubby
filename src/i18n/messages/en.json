@@ -484,6 +484,21 @@
     "noStreams": "No media stream data available",
     "rescanHint": "Rescan library to populate media info"
   },
+  "player": {
+    "resOriginal": "Original",
+    "res1080p": "1080p",
+    "res720p": "720p",
+    "res480p": "480p",
+    "switchingTo": "Switching to {label}...",
+    "modeDirect": "Direct",
+    "modeRemux": "Remux",
+    "modeHW": "HW",
+    "modeSW": "SW",
+    "descDirect": "Browser native playback — no transcoding needed",
+    "descRemux": "Repackaging streams to HLS — no re-encoding",
+    "labelPlayback": "Playback",
+    "labelEncoder": "Encoder"
+  },
   "folderPicker": {
     "selectFolder": "Select Folder",
     "noSubdirectories": "No subdirectories",
