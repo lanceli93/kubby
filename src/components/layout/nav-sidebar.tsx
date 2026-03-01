@@ -186,7 +186,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
             <button
               onClick={() => {
                 onClose();
-                signOut();
+                signOut({ callbackUrl: "/login" });
               }}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
             >

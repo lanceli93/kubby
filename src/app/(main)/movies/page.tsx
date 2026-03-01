@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect, useMemo } from "react";
+import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { MovieCard } from "@/components/movie/movie-card";
@@ -116,18 +116,30 @@ function useMovieMutations() {
 
 function MovieBrowseContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const libraryId = searchParams.get("libraryId") || "";
   const personId = searchParams.get("personId") || "";
   const t = useTranslations("movies");
 
   // Derive active tab: if URL has genre/tag/studio filter, force "movies" tab
   const urlHasFilter = searchParams.get("genre") || searchParams.get("tag") || searchParams.get("studio");
-  const [activeTab, setActiveTab] = useState(urlHasFilter ? "movies" : "movies");
+  const [activeTab, setActiveTab] = useState(() =>
+    urlHasFilter ? "movies" : (searchParams.get("tab") || "movies")
+  );
 
   // Switch to "movies" tab when filter params appear in URL
   useEffect(() => {
     if (urlHasFilter) setActiveTab("movies");
   }, [urlHasFilter]);
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab !== "movies") params.set("tab", tab);
+    else params.delete("tab");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [router, pathname]);
 
   // Person filmography mode — no tabs, just a movie grid
   if (personId) {
@@ -140,7 +152,7 @@ function MovieBrowseContent() {
 
   return (
     <div className="flex h-full flex-col">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-full flex-col">
         <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
             <TabsTrigger value="movies">{t("movies")}</TabsTrigger>
@@ -175,25 +187,61 @@ function MovieBrowseContent() {
 function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const t = useTranslations("movies");
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const urlGenre = searchParams.get("genre") || "";
   const urlTag = searchParams.get("tag") || "";
   const urlStudio = searchParams.get("studio") || "";
-  const [sort, setSort] = useState("dateAdded");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [sortDimension, setSortDimension] = useState<string | null>(null);
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "dateAdded");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(() =>
+    (searchParams.get("sortOrder") as "asc" | "desc") || "desc"
+  );
+  const [sortDimension, setSortDimension] = useState<string | null>(() =>
+    searchParams.get("sortDimension") || null
+  );
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [personalRatingExpanded, setPersonalRatingExpanded] = useState(false);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(() =>
-    urlGenre ? [urlGenre] : []
-  );
-  const [selectedTags, setSelectedTags] = useState<string[]>(() =>
-    urlTag ? [urlTag] : []
-  );
-  const [selectedYears, setSelectedYears] = useState<number[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(() => {
+    const urlGenres = searchParams.get("genres");
+    return urlGenres ? urlGenres.split(",") : urlGenre ? [urlGenre] : [];
+  });
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    const urlTags = searchParams.get("tags");
+    return urlTags ? urlTags.split(",") : urlTag ? [urlTag] : [];
+  });
+  const [selectedYears, setSelectedYears] = useState<number[]>(() => {
+    const urlYears = searchParams.get("years");
+    return urlYears ? urlYears.split(",").map(Number).filter(Boolean) : [];
+  });
   const [genresExpanded, setGenresExpanded] = useState(false);
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [yearsExpanded, setYearsExpanded] = useState(false);
+
+  // Sync sort/filter state to URL params for persistence across navigation
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    // Sort
+    if (sort !== "dateAdded") params.set("sort", sort);
+    else params.delete("sort");
+    if (sortOrder !== "desc") params.set("sortOrder", sortOrder);
+    else params.delete("sortOrder");
+    if (sortDimension) params.set("sortDimension", sortDimension);
+    else params.delete("sortDimension");
+    // Filters
+    if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
+    else params.delete("genres");
+    if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+    else params.delete("tags");
+    if (selectedYears.length > 0) params.set("years", selectedYears.join(","));
+    else params.delete("years");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [sort, sortOrder, sortDimension, selectedGenres, selectedTags, selectedYears, router, pathname]);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =

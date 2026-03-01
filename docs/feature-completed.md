@@ -1,5 +1,19 @@
 # Completed Features
 
+## 2026-03-01: Auth Redirect Fixes & Sort/Filter State Persistence
+
+### Sign Out Redirect Fix
+- `signOut()` in nav-sidebar now passes `{ callbackUrl: "/login" }` explicitly, preventing redirect to `0.0.0.0:3000`
+
+### Login Redirect Fix
+- Login form now sanitizes `callbackUrl` to pathname-only, stripping any absolute URL with `0.0.0.0` host that middleware may inject
+
+### Sort/Filter State Persistence
+- Movies page sort (field, order, dimension) and filter (genres, tags, years) state now synced to URL search params
+- Active tab (movies/favorites/genres/actors) persisted in URL `tab` param
+- Navigating to movie detail and back preserves all sort/filter/tab selections
+- State initialized from URL params on mount; changes written back via `router.replace`
+
 ## 2026-03-01: UI Polish — Entrance Animations, Card Tiers, Typography
 
 Visual refinement pass across all utility and content pages to match the cinematic quality of the main browsing experience.

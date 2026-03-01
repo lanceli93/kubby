@@ -19,7 +19,16 @@ export function LoginForm() {
 function LoginFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  // Sanitize callbackUrl to pathname only — middleware may set absolute URL with 0.0.0.0 host
+  const rawCallbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = (() => {
+    try {
+      const url = new URL(rawCallbackUrl, window.location.origin);
+      return url.pathname + url.search + url.hash;
+    } catch {
+      return "/";
+    }
+  })();
   const t = useTranslations("auth");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
