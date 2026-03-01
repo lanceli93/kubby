@@ -1,5 +1,71 @@
 # Completed Features
 
+## 2026-03-01: UI Polish — Entrance Animations, Card Tiers, Typography
+
+Visual refinement pass across all utility and content pages to match the cinematic quality of the main browsing experience.
+
+### Global (globals.css)
+- `stagger-children` CSS class: children fade-in with 50ms stagger delays
+- `animate-fade-in-up` / `animate-slide-in-right` / `animate-slide-in-left` keyframe animations
+- `brand-glow` pulsing text-shadow for Kubby logo
+- Enhanced input focus states: blue glow ring + background shift (applies globally)
+- `card-hover` class: translateY lift + border brighten on hover
+- `button:active` scale-down feedback (0.98)
+
+### Setup Wizard
+- Slide left/right animations between steps based on navigation direction
+- Progress dots replaced with numbered step indicators + check icons + connecting lines
+- Brand glow on Kubby logo across all steps
+
+### Auth Pages (Login, Register)
+- Card fade-in-up animation on mount
+- Brand glow on Kubby logo
+
+### Dashboard
+- Stat cards: elevated card surface (`bg-white/[0.03]` + shadow), `tabular-nums` for values
+- Section headings: icon + gradient divider line pattern
+- Activity rows: hover highlight
+- Quick action buttons: subtle bg + hover lift
+- All sub-pages (Users, Scraper, Networking, Libraries): `stagger-children` entrance, `text-3xl tracking-tight` titles, elevated card surfaces
+
+### Admin Sidebar
+- Rounded nav items with padding
+- Active state: gradient background (`from-primary/12 to-transparent`) + rounded pill indicator
+- Gradient divider below section label
+- Smooth hover transition on items
+
+### User Settings, Card Badges, Personal Metadata
+- `stagger-children` entrance animations
+- Elevated card surfaces with shadow
+- Avatar glow ring on settings page
+- `tracking-tight` on section headings
+
+### Content Pages
+- Home page: stagger-fade on ScrollRow sections
+- Movie browse: fade-in-up on grid containers (first load only, not on infinite scroll)
+- Genres tab: stagger-fade on genre rows
+- Favorites tabs: fade-in-up on grids
+
+### Detail Pages (Movie, Person)
+- Hero content (poster + info overlay): fade-in-up
+- Sections below hero (discs, bookmarks, cast, recommended, filmography, gallery): stagger-fade
+
+### Modified Files
+- `src/app/globals.css` — animation keyframes, input focus, card-hover, button feedback
+- `src/app/(setup)/setup/setup-wizard.tsx` — step transitions, progress indicator
+- `src/app/(auth)/login/login-form.tsx`, `src/app/(auth)/register/page.tsx` — entrance animation
+- `src/app/(main)/dashboard/page.tsx` — stat cards, section headings, quick actions
+- `src/app/(main)/dashboard/users/page.tsx`, `scraper/page.tsx`, `networking/page.tsx`, `libraries/page.tsx` — stagger + card tiers
+- `src/app/(main)/settings/page.tsx` — avatar glow, card tiers
+- `src/app/(main)/card-badges/page.tsx`, `personal-metadata/page.tsx` — stagger + card tiers
+- `src/app/(main)/page.tsx` — home row stagger, favorites fade-in
+- `src/app/(main)/movies/page.tsx` — grid fade-in, genres stagger
+- `src/app/(main)/movies/[id]/page.tsx` — hero fade-in, sections stagger
+- `src/app/(main)/people/[id]/page.tsx` — hero fade-in, sections stagger
+- `src/components/layout/admin-sidebar.tsx` — redesigned nav items
+
+---
+
 ## 2026-03-01: Complete Admin User Management System
 
 Full CRUD user management for administrators with role management and security protections.
