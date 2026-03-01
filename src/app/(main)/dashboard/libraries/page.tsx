@@ -175,10 +175,10 @@ export default function LibrariesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 px-10">
+    <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Media Libraries</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Media Libraries</h1>
         <div className="flex items-center gap-2">
           {libraries.length > 0 && (
             <button

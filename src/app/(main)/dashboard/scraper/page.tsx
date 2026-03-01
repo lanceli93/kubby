@@ -51,10 +51,10 @@ export default function ScraperSettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 px-10">
-      <h1 className="text-2xl font-bold text-foreground">{t("scraperSettings")}</h1>
+    <div className="stagger-children flex flex-col gap-6 p-8 px-10">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("scraperSettings")}</h1>
 
-      <div className="flex max-w-xl flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-6">
+      <div className="flex max-w-xl flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-6">
         <h2 className="text-lg font-semibold text-foreground">{t("metadataProviders")}</h2>
 
         <div className="flex flex-col gap-1.5">

@@ -176,18 +176,19 @@ export default function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-scroll">
-    <div className="flex flex-col items-center gap-6 py-8">
-      <h1 className="text-2xl font-bold text-foreground">{t("settings")}</h1>
+    <div className="stagger-children flex flex-col items-center gap-6 py-8">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("settings")}</h1>
 
       {/* Profile */}
       <form
         onSubmit={handleProfileSave}
-        className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7"
+        className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
       >
-        <h2 className="text-lg font-semibold text-foreground">{t("profile")}</h2>
-        <div className="flex items-center gap-4">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("profile")}</h2>
+        <div className="flex items-center gap-5">
+          <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_24px_rgba(59,130,246,0.2)]">
             {initials}
+            <div className="absolute inset-0 rounded-full ring-2 ring-primary/20" />
           </div>
           <div>
             <p className="text-sm text-muted-foreground">
@@ -226,9 +227,9 @@ export default function SettingsPage() {
       {/* Change Password */}
       <form
         onSubmit={handlePasswordChange}
-        className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7"
+        className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
       >
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {t("changePassword")}
         </h2>
         <div className="flex flex-col gap-1.5">
@@ -281,8 +282,8 @@ export default function SettingsPage() {
       </form>
 
       {/* Language */}
-      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
-        <h2 className="text-lg font-semibold text-foreground">{t("language")}</h2>
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("language")}</h2>
         <p className="text-sm text-muted-foreground">{t("languageDesc")}</p>
         <select
           value={locale}
@@ -305,8 +306,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Playback */}
-      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
-        <h2 className="text-lg font-semibold text-foreground">{t("playback")}</h2>
+      <div className="flex w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("playback")}</h2>
         <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
         <div className="flex flex-col gap-1.5">
           <label className="text-[13px] font-medium text-muted-foreground">
@@ -408,8 +409,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Account Info */}
-      <div className="flex w-[720px] flex-col gap-3 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-7">
-        <h2 className="text-lg font-semibold text-foreground">{t("accountInfo")}</h2>
+      <div className="flex w-[720px] flex-col gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("accountInfo")}</h2>
         <div className="flex gap-2 text-sm">
           <span className="text-[#666680]">{t("accountType")}:</span>
           <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${

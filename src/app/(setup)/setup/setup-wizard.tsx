@@ -22,6 +22,7 @@ export function SetupWizard() {
   const tAuth = useTranslations("auth");
 
   const [step, setStep] = useState(1);
+  const [slideDir, setSlideDir] = useState<"right" | "left">("right");
   const [selectedLocale, setSelectedLocale] = useState("en");
 
   // Step 2: Admin
@@ -54,6 +55,7 @@ export function SetupWizard() {
   }
 
   function handleLanguageNext() {
+    setSlideDir("right");
     setStep(2);
   }
 
@@ -71,6 +73,7 @@ export function SetupWizard() {
       setError("Passwords do not match");
       return;
     }
+    setSlideDir("right");
     setStep(3);
   }
 
@@ -128,20 +131,34 @@ export function SetupWizard() {
     setLoading(false);
   }
 
-  function ProgressDots({ current }: { current: number }) {
+  function ProgressSteps({ current }: { current: number }) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-0">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className={`rounded-full transition-all ${
-              i === current
-                ? "h-2.5 w-2.5 bg-primary"
-                : i < current
-                  ? "h-2 w-2 bg-primary"
-                  : "h-2 w-2 bg-[#333348]"
-            }`}
-          />
+          <div key={i} className="flex items-center">
+            <div
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
+                i === current
+                  ? "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(59,130,246,0.4)]"
+                  : i < current
+                    ? "bg-primary/20 text-primary"
+                    : "bg-[#222238] text-[#555568]"
+              }`}
+            >
+              {i < current ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                i
+              )}
+            </div>
+            {i < 4 && (
+              <div
+                className={`h-px w-8 transition-colors duration-300 ${
+                  i < current ? "bg-primary/30" : "bg-[#222238]"
+                }`}
+              />
+            )}
+          </div>
         ))}
       </div>
     );
@@ -151,8 +168,8 @@ export function SetupWizard() {
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
       {/* Step 1: Language Selection */}
       {step === 1 && (
-        <div className="flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
-          <h1 className="text-4xl font-bold text-primary">Kubby</h1>
+        <div key="step1" className={`flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+          <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
             {t("welcomeToKubby")}
           </h2>
@@ -194,14 +211,14 @@ export function SetupWizard() {
             {tc("next")}
           </button>
 
-          <ProgressDots current={1} />
+          <ProgressSteps current={1} />
         </div>
       )}
 
       {/* Step 2: Create Admin */}
       {step === 2 && (
-        <div className="flex w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
-          <h1 className="text-4xl font-bold text-primary">Kubby</h1>
+        <div key="step2" className={`flex w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+          <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
             {t("createAdminAccount")}
           </h2>
@@ -280,7 +297,7 @@ export function SetupWizard() {
 
           <div className="flex w-full gap-3">
             <button
-              onClick={() => setStep(1)}
+              onClick={() => { setSlideDir("left"); setStep(1); }}
               className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
             >
               {tc("back")}
@@ -293,14 +310,14 @@ export function SetupWizard() {
             </button>
           </div>
 
-          <ProgressDots current={2} />
+          <ProgressSteps current={2} />
         </div>
       )}
 
       {/* Step 3: Add Media Library */}
       {step === 3 && (
-        <div className="flex max-h-[90vh] w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
-          <h1 className="shrink-0 text-4xl font-bold text-primary">Kubby</h1>
+        <div key="step3" className={`flex max-h-[90vh] w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+          <h1 className="shrink-0 brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="shrink-0 text-xl font-semibold text-foreground">
             {t("addMediaLibrary")}
           </h2>
@@ -502,7 +519,7 @@ export function SetupWizard() {
 
           <div className="flex w-full gap-3">
             <button
-              onClick={() => setStep(2)}
+              onClick={() => { setSlideDir("left"); setStep(2); }}
               disabled={loading}
               className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
@@ -525,7 +542,7 @@ export function SetupWizard() {
             {t("skipForNow")}
           </button>
 
-          <ProgressDots current={3} />
+          <ProgressSteps current={3} />
 
           <FolderPicker
             open={folderPickerOpen}
@@ -537,8 +554,8 @@ export function SetupWizard() {
 
       {/* Step 4: Complete */}
       {step === 4 && (
-        <div className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
-          <h1 className="text-4xl font-bold text-primary">Kubby</h1>
+        <div key="step4" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 animate-slide-in-right">
+          <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
 
           <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-green-500/10">
             <Check className="h-9 w-9 text-green-500" />
@@ -558,7 +575,7 @@ export function SetupWizard() {
             {t("goToSignIn")}
           </button>
 
-          <ProgressDots current={4} />
+          <ProgressSteps current={4} />
         </div>
       )}
     </div>

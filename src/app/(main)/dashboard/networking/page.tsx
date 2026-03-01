@@ -62,7 +62,7 @@ export default function NetworkingSettingsPage() {
   if (!settings) {
     return (
       <div className="flex flex-col gap-6 p-8 px-10">
-        <h1 className="text-2xl font-bold text-foreground">{t("networking")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("networking")}</h1>
         <div className="text-muted-foreground">{tc("loading")}...</div>
       </div>
     );
@@ -72,7 +72,7 @@ export default function NetworkingSettingsPage() {
   const configDiffers = restartRequired || settings.runtime.port !== settings.port;
 
   return (
-    <div className="flex flex-col gap-6 p-8 px-10">
+    <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       {/* Restart required toast */}
       {configDiffers && !isDocker && (
         <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-top-2">
@@ -83,7 +83,7 @@ export default function NetworkingSettingsPage() {
         </div>
       )}
 
-      <h1 className="text-2xl font-bold text-foreground">{t("networking")}</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("networking")}</h1>
 
       {/* Docker mode banner */}
       {isDocker && (
@@ -93,7 +93,7 @@ export default function NetworkingSettingsPage() {
         </div>
       )}
 
-      <div className="flex max-w-xl flex-col gap-5 rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl p-6">
+      <div className="flex max-w-xl flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-6">
         <h2 className="text-lg font-semibold text-foreground">
           {t("networkingServerSettings")}
         </h2>

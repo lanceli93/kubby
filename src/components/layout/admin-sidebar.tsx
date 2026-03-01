@@ -19,9 +19,10 @@ export function AdminSidebar() {
 
   return (
     <aside className="flex w-60 flex-col gap-1 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6">
-      <span className="px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
+      <span className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
         {t("administration")}
       </span>
+      <div className="mx-3 mb-2 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />
       {sidebarItems.map((item) => {
         const isActive = item.href === "/dashboard"
           ? pathname === "/dashboard"
@@ -31,15 +32,18 @@ export function AdminSidebar() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex h-10 items-center gap-2.5 px-5 text-sm transition-colors ${
+            className={`group relative mx-2 flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-all duration-200 ${
               isActive
-                ? "border-l-[3px] border-primary bg-primary/[0.08] font-medium text-foreground"
-                : "border-l-[3px] border-transparent font-normal text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
+                ? "bg-gradient-to-r from-primary/[0.12] to-transparent font-medium text-foreground"
+                : "font-normal text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
             }`}
           >
+            {isActive && (
+              <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+            )}
             <Icon
-              className={`h-[18px] w-[18px] ${
-                isActive ? "text-primary" : "text-[#666680]"
+              className={`h-[18px] w-[18px] transition-colors ${
+                isActive ? "text-primary" : "text-[#666680] group-hover:text-muted-foreground"
               }`}
             />
             {item.label}
