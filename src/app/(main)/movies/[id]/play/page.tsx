@@ -436,6 +436,11 @@ export default function PlayerPage() {
 
       const counter = ++seekCounterRef.current;
 
+      // Stop HLS.js loading immediately to prevent 404s on old session segments
+      if (hlsRef.current) {
+        hlsRef.current.stopLoad();
+      }
+
       fetch(`/api/stream/${sessionIdRef.current}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -450,10 +455,16 @@ export default function PlayerPage() {
             hlsTimeOffsetRef.current = Math.floor(clamped);
             setCurrentTime(Math.floor(clamped));
             hlsRef.current.loadSource(data.hlsUrl);
+            // Resume playback after source switch
+            videoRef.current?.play().catch(() => {});
           }
         })
         .catch((err) => {
           if (err?.name === "AbortError") return; // Expected cancellation
+          // Restore loading if fetch failed unexpectedly
+          if (hlsRef.current) {
+            hlsRef.current.startLoad();
+          }
         });
     }, 500);
   }
@@ -615,9 +626,13 @@ export default function PlayerPage() {
 
             hls.on(Hls.Events.ERROR, (_event, errorData) => {
               if (errorData.fatal && errorData.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                // Skip recovery if a seek is already in progress (404s are expected during seek transitions)
+                if (seekDebounceRef.current || seekAbortRef.current) return;
+
                 // Try to recover by restarting transcode from current position
                 const realTime = getRealTime();
                 if (realTime > 0 && sessionIdRef.current) {
+                  hls.stopLoad();
                   fetch(`/api/stream/${sessionIdRef.current}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -629,6 +644,7 @@ export default function PlayerPage() {
                         sessionIdRef.current = seekData.sessionId;
                         hlsTimeOffsetRef.current = Math.floor(realTime);
                         hls.loadSource(seekData.hlsUrl);
+                        videoRef.current?.play().catch(() => {});
                       }
                     })
                     .catch(() => {
