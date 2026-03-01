@@ -26,6 +26,7 @@ import {
   Loader2,
   Cake,
   Monitor,
+  HardDrive,
 } from "lucide-react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
@@ -208,6 +209,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
     { value: "runtime", label: t("runtime"), icon: Timer },
     { value: "resolution", label: t("resolution"), icon: Monitor },
+    { value: "fileSize", label: t("fileSize"), icon: HardDrive },
   ];
 
   // Close dropdowns on outside click
@@ -1414,6 +1416,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
     { value: "runtime", label: t("runtime"), icon: Timer },
     { value: "resolution", label: t("resolution"), icon: Monitor },
+    { value: "fileSize", label: t("fileSize"), icon: HardDrive },
     { value: "ageAtRelease", label: t("ageAtRelease"), icon: Cake },
   ];
 

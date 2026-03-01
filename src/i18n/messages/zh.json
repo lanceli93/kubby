@@ -220,6 +220,7 @@
     "releaseDate": "上映日期",
     "runtime": "时长",
     "resolution": "分辨率",
+    "fileSize": "文件大小",
     "moviesCount": "{count} 部电影",
     "cast": "演员",
     "youMayAlsoLike": "猜你喜欢",

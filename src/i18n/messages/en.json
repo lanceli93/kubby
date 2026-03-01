@@ -220,6 +220,7 @@
     "releaseDate": "Release Date",
     "runtime": "Runtime",
     "resolution": "Resolution",
+    "fileSize": "File Size",
     "moviesCount": "{count} movies",
     "cast": "Cast",
     "youMayAlsoLike": "You May Also Like",
