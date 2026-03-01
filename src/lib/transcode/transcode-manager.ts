@@ -274,7 +274,12 @@ const GLOBAL_KEY = "__kubby_transcode_manager__";
 
 export function getTranscodeManager(): TranscodeManager {
   const g = globalThis as Record<string, unknown>;
-  if (!g[GLOBAL_KEY]) {
+  const existing = g[GLOBAL_KEY] as TranscodeManager | undefined;
+  // Recreate if missing or stale (dev hot-reload changed the class prototype)
+  if (!existing || !(existing instanceof TranscodeManager)) {
+    if (existing && typeof (existing as { shutdownAll?: unknown }).shutdownAll === "function") {
+      (existing as TranscodeManager).shutdownAll();
+    }
     g[GLOBAL_KEY] = new TranscodeManager();
   }
   return g[GLOBAL_KEY] as TranscodeManager;

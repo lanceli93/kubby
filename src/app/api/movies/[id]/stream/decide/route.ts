@@ -4,6 +4,7 @@ import { movies, movieDiscs } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { decidePlayback } from "@/lib/transcode/playback-decider";
 import { getTranscodeManager } from "@/lib/transcode/transcode-manager";
+import { detectBestEncoder } from "@/lib/transcode/hw-accel";
 
 // GET /api/movies/[id]/stream/decide?disc=1
 export async function GET(
@@ -72,7 +73,8 @@ export async function GET(
   // Start transcode session (with optional initial seek position)
   const sessionId = manager.startSession(id, discNumber, filePath, decision, startAt);
   const hlsUrl = `/api/stream/${sessionId}/playlist.m3u8`;
-  const encoder = manager.getEncoderConfig().name;
+  // Read encoder name directly (avoids stale globalThis singleton in dev)
+  const encoder = manager.getEncoderConfig?.()?.name ?? detectBestEncoder().name;
 
   return NextResponse.json({
     mode: decision.mode,
