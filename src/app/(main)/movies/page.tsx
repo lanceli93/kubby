@@ -295,7 +295,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="grid gap-x-4 gap-y-4"
+      className="animate-fade-in-up grid gap-x-4 gap-y-4"
       style={{
         gridTemplateColumns: "repeat(auto-fill, 180px)",
         justifyContent: "center",
@@ -698,7 +698,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
   });
 
   return (
-    <div className="py-6">
+    <div className="animate-fade-in-up py-6">
       {favorites.length > 0 ? (
         <div
           className="grid gap-4"
@@ -782,7 +782,7 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-8 py-6">
+    <div className="stagger-children flex flex-col gap-8 py-6">
       {visibleGenres.map((genre) => (
         <GenreScrollRow key={genre} genre={genre} libraryId={libraryId} />
       ))}
@@ -997,7 +997,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="grid gap-x-4 gap-y-4"
+      className="animate-fade-in-up grid gap-x-4 gap-y-4"
       style={{
         gridTemplateColumns: "repeat(auto-fill, 180px)",
         justifyContent: "center",
@@ -1510,7 +1510,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
 
   return (
     <div
-      className="grid gap-x-4 gap-y-4"
+      className="animate-fade-in-up grid gap-x-4 gap-y-4"
       style={{
         gridTemplateColumns: "repeat(auto-fill, 180px)",
         justifyContent: "center",
