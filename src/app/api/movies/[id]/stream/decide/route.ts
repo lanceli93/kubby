@@ -25,6 +25,7 @@ export async function GET(
   let videoCodec = movie.videoCodec;
   let audioCodec = movie.audioCodec;
   let filePath = movie.filePath;
+  let durationSeconds = movie.runtimeSeconds;
 
   if (discNumber > 1) {
     const disc = db
@@ -37,6 +38,7 @@ export async function GET(
       videoCodec = disc.videoCodec;
       audioCodec = disc.audioCodec;
       filePath = disc.filePath;
+      durationSeconds = disc.runtimeSeconds;
     }
   }
 
@@ -47,7 +49,7 @@ export async function GET(
     const directUrl = discNumber > 1
       ? `/api/movies/${id}/stream?disc=${discNumber}`
       : `/api/movies/${id}/stream`;
-    return NextResponse.json({ mode: "direct", directUrl });
+    return NextResponse.json({ mode: "direct", directUrl, durationSeconds });
   }
 
   // Need HLS — check if FFmpeg is available
@@ -60,6 +62,7 @@ export async function GET(
     return NextResponse.json({
       mode: "direct",
       directUrl,
+      durationSeconds,
       warning: "FFmpeg not available. Video may not play correctly in this format.",
     });
   }
@@ -72,5 +75,6 @@ export async function GET(
     mode: decision.mode,
     sessionId,
     hlsUrl,
+    durationSeconds,
   });
 }

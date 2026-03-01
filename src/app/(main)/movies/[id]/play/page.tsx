@@ -88,6 +88,7 @@ export default function PlayerPage() {
   const hlsRef = useRef<Hls | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
+  const hlsDurationRef = useRef<number | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -462,6 +463,14 @@ export default function PlayerPage() {
 
         setPlaybackMode(data.mode);
 
+        // Store backend duration for HLS mode (where video.duration is unreliable during transcoding)
+        if (data.durationSeconds && data.mode !== "direct") {
+          hlsDurationRef.current = data.durationSeconds;
+          setDuration(data.durationSeconds);
+        } else {
+          hlsDurationRef.current = null;
+        }
+
         if (data.mode === "direct") {
           // Direct play — set src directly
           video.src = data.directUrl;
@@ -559,7 +568,13 @@ export default function PlayerPage() {
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
         onLoadedMetadata={() => {
-          setDuration(videoRef.current?.duration || 0);
+          // For HLS mode, prefer backend duration (video.duration is unreliable during live transcoding)
+          const videoDuration = videoRef.current?.duration || 0;
+          if (hlsDurationRef.current && (!isFinite(videoDuration) || videoDuration < hlsDurationRef.current * 0.9)) {
+            setDuration(hlsDurationRef.current);
+          } else {
+            setDuration(videoDuration);
+          }
           // Auto-play when advancing to next disc
           if (isPlaying || currentDisc > 1) {
             videoRef.current?.play();
