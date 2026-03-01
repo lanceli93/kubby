@@ -92,6 +92,7 @@
     "favorites": "Favorites",
     "mediaLibraries": "Media Libraries",
     "emptyState": "Welcome to Kubby! Add a media library to get started.",
+    "addLibrary": "Add Media Library",
     "homeTab": "Home",
     "favoritesTab": "Favorites",
     "noFavorites": "No favorites yet",

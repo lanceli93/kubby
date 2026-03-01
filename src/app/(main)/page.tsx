@@ -4,6 +4,7 @@ import { useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
 import { LibraryCard } from "@/components/library/library-card";
+import { AddLibraryCard } from "@/components/library/add-library-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
@@ -238,7 +239,7 @@ export default function HomePage() {
         <TabsContent value="home">
           <div className="flex flex-col gap-10 px-12 py-8">
             {/* Media Libraries */}
-            {libraries.length > 0 && (
+            {libraries.length > 0 ? (
               <ScrollRow title={t("mediaLibraries")}>
                 {libraries.map((lib) => (
                   <LibraryCard
@@ -266,6 +267,10 @@ export default function HomePage() {
                     onRemoveImage={() => removeCover.mutate(lib.id)}
                   />
                 ))}
+              </ScrollRow>
+            ) : (
+              <ScrollRow title={t("mediaLibraries")}>
+                <AddLibraryCard />
               </ScrollRow>
             )}
 
@@ -297,15 +302,6 @@ export default function HomePage() {
               onDelete={handleDeleteMovie}
             />
 
-            {/* Empty state */}
-            {libraries.length === 0 &&
-              recentlyAdded.length === 0 && (
-                <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
-                  <p className="text-lg text-muted-foreground">
-                    {t("emptyState")}
-                  </p>
-                </div>
-              )}
           </div>
         </TabsContent>
 
