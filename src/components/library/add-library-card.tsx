@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { FolderPicker } from "@/components/library/folder-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
@@ -218,23 +219,18 @@ export function AddLibraryCard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 Metadata downloaders (Movies)
               </label>
-              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
-                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={scraperEnabled}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      if (checked && tmdbConfigured === false) {
-                        setScraperError("TMDB API key is not configured. Please set it up in Dashboard > Scraper before enabling.");
-                        return;
-                      }
-                      setScraperEnabled(checked);
-                    }}
-                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
-                  />
-                  <span className="text-sm text-foreground">TheMovieDb</span>
-                </label>
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+                <span className="text-sm text-foreground">TheMovieDb</span>
+                <Switch
+                  checked={scraperEnabled}
+                  onCheckedChange={(checked) => {
+                    if (checked && tmdbConfigured === false) {
+                      setScraperError("TMDB API key is not configured. Please set it up in Dashboard > Scraper before enabling.");
+                      return;
+                    }
+                    setScraperEnabled(checked);
+                  }}
+                />
               </div>
               <p className="text-xs text-[#555568]">
                 Select metadata downloaders to automatically fetch movie info during library scan.
@@ -277,22 +273,18 @@ export function AddLibraryCard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("jellyfinCompat")}
               </label>
-              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
-                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={jellyfinCompat}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setJellyfinCompatConfirmOpen(true);
-                      } else {
-                        setJellyfinCompat(false);
-                      }
-                    }}
-                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
-                  />
-                  <span className="text-sm text-foreground">{t("jellyfinCompat")}</span>
-                </label>
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+                <span className="text-sm text-foreground">{t("jellyfinCompat")}</span>
+                <Switch
+                  checked={jellyfinCompat}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setJellyfinCompatConfirmOpen(true);
+                    } else {
+                      setJellyfinCompat(false);
+                    }
+                  }}
+                />
               </div>
               <p className="text-xs text-[#555568]">
                 {t("jellyfinCompatHelp")}

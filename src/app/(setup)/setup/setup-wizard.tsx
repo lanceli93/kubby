@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export function SetupWizard() {
   const router = useRouter();
@@ -425,16 +426,9 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("metadataDownloaders")}
               </label>
-              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
-                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={scraperEnabled}
-                    onChange={(e) => setScraperEnabled(e.target.checked)}
-                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
-                  />
-                  <span className="text-sm text-foreground">TheMovieDb</span>
-                </label>
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+                <span className="text-sm text-foreground">TheMovieDb</span>
+                <Switch checked={scraperEnabled} onCheckedChange={setScraperEnabled} />
               </div>
               <p className="text-xs text-[#555568]">
                 {t("metadataDownloadersDesc")}
@@ -466,22 +460,18 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("jellyfinCompatMode")}
               </label>
-              <div className="rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
-                <label className="flex items-center gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={jellyfinCompat}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setJellyfinCompatConfirmOpen(true);
-                      } else {
-                        setJellyfinCompat(false);
-                      }
-                    }}
-                    className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
-                  />
-                  <span className="text-sm text-foreground">{t("jellyfinCompatMode")}</span>
-                </label>
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+                <span className="text-sm text-foreground">{t("jellyfinCompatMode")}</span>
+                <Switch
+                  checked={jellyfinCompat}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setJellyfinCompatConfirmOpen(true);
+                    } else {
+                      setJellyfinCompat(false);
+                    }
+                  }}
+                />
               </div>
               <p className="text-xs text-[#555568]">{t("jellyfinCompatDesc")}</p>
             </div>
