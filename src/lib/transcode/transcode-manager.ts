@@ -269,18 +269,22 @@ class TranscodeManager {
   }
 }
 
-// Singleton via globalThis (survives Next.js dev hot reload)
+// Singleton via globalThis (survives Next.js dev hot reload).
+// Version key ensures stale singletons from prior code are replaced.
 const GLOBAL_KEY = "__kubby_transcode_manager__";
+const GLOBAL_VERSION_KEY = "__kubby_transcode_manager_v__";
+const MANAGER_VERSION = 2; // bump when class shape changes
 
 export function getTranscodeManager(): TranscodeManager {
   const g = globalThis as Record<string, unknown>;
-  const existing = g[GLOBAL_KEY] as TranscodeManager | undefined;
-  // Recreate if missing or stale (dev hot-reload changed the class prototype)
-  if (!existing || !(existing instanceof TranscodeManager)) {
-    if (existing && typeof (existing as { shutdownAll?: unknown }).shutdownAll === "function") {
-      (existing as TranscodeManager).shutdownAll();
+  if (!g[GLOBAL_KEY] || g[GLOBAL_VERSION_KEY] !== MANAGER_VERSION) {
+    // Shut down stale instance if it exists
+    const old = g[GLOBAL_KEY] as TranscodeManager | undefined;
+    if (old && typeof old.shutdownAll === "function") {
+      old.shutdownAll();
     }
     g[GLOBAL_KEY] = new TranscodeManager();
+    g[GLOBAL_VERSION_KEY] = MANAGER_VERSION;
   }
   return g[GLOBAL_KEY] as TranscodeManager;
 }
