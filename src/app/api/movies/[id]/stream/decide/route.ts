@@ -75,7 +75,7 @@ export async function GET(
   }
 
   // Start transcode session (with optional initial seek position)
-  const sessionId = manager.startSession(id, discNumber, filePath, decision, startAt, maxWidth);
+  const sessionId = manager.startSession(id, discNumber, filePath, decision, startAt, maxWidth, videoCodec, videoWidth);
   const hlsUrl = `/api/stream/${sessionId}/playlist.m3u8`;
   // Read encoder name directly (avoids stale globalThis singleton in dev)
   const encoder = manager.getEncoderConfig?.()?.name ?? detectBestEncoder().name;

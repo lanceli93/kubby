@@ -19,6 +19,8 @@ export interface TranscodeSession {
   lastAccessedAt: number;
   seekToSeconds: number;
   maxWidth: number;
+  sourceVideoCodec: string | null;
+  sourceVideoWidth: number | null;
   retriedWithSoftware?: boolean;
 }
 
@@ -61,13 +63,15 @@ class TranscodeManager {
     decision: PlaybackDecision,
     seekToSeconds = 0,
     maxWidth = 0,
+    sourceVideoCodec: string | null = null,
+    sourceVideoWidth: number | null = null,
   ): string {
     const id = uuidv4();
     const outputDir = path.join(getTranscodeCacheDir(), id);
     fs.mkdirSync(outputDir, { recursive: true });
 
     const encoderConfig = this.getEncoderConfig();
-    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth });
+    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth, sourceVideoCodec, sourceVideoWidth });
     const ffmpegProcess = spawn(getFfmpegPath(), args, {
       stdio: ["ignore", "ignore", "pipe"],
     });
@@ -95,7 +99,7 @@ class TranscodeManager {
         fs.mkdirSync(outputDir, { recursive: true });
 
         const fallbackConfig = getLibx264Config();
-        const fallbackArgs = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig: fallbackConfig, maxWidth });
+        const fallbackArgs = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig: fallbackConfig, maxWidth, sourceVideoCodec, sourceVideoWidth });
         const fallbackProcess = spawn(getFfmpegPath(), fallbackArgs, {
           stdio: ["ignore", "ignore", "pipe"],
         });
@@ -131,6 +135,8 @@ class TranscodeManager {
       lastAccessedAt: Date.now(),
       seekToSeconds,
       maxWidth,
+      sourceVideoCodec,
+      sourceVideoWidth,
     };
 
     this.sessions.set(id, session);
@@ -161,13 +167,13 @@ class TranscodeManager {
     return false;
   }
 
-  seekSession(sessionId: string, seekToSeconds: number): string | null {
+  async seekSession(sessionId: string, seekToSeconds: number): Promise<string | null> {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
 
-    // Kill existing process and remove old session from map
-    // This prevents duplicate seeks on the same stale sessionId from spawning orphans
-    this.killProcess(session);
+    // Kill existing process and wait for it to fully exit before spawning a new one
+    // This prevents duplicate FFmpeg processes competing for GPU resources
+    await this.killProcess(session);
     this.cleanOutputDir(session.outputDir);
     this.sessions.delete(sessionId);
 
@@ -179,21 +185,27 @@ class TranscodeManager {
       session.decision,
       seekToSeconds,
       session.maxWidth,
+      session.sourceVideoCodec,
+      session.sourceVideoWidth,
     );
   }
 
-  stopSession(sessionId: string): void {
+  async stopSession(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
     if (!session) return;
 
-    this.killProcess(session);
+    await this.killProcess(session);
     this.cleanOutputDir(session.outputDir);
     this.sessions.delete(sessionId);
   }
 
   shutdownAll(): void {
-    for (const [id, session] of this.sessions) {
-      this.killProcess(session);
+    for (const [, session] of this.sessions) {
+      // Fire-and-forget: best-effort kill during shutdown
+      if (session.process && !session.process.killed) {
+        try { session.process.kill(process.platform === "win32" ? undefined : "SIGKILL"); } catch { /* */ }
+        session.process = null;
+      }
       this.cleanOutputDir(session.outputDir);
     }
     this.sessions.clear();
@@ -214,15 +226,39 @@ class TranscodeManager {
     }
   }
 
-  private killProcess(session: TranscodeSession): void {
-    if (session.process && !session.process.killed) {
-      const proc = session.process;
-      try {
-        proc.kill("SIGTERM");
-      } catch {
-        // Process may have already exited
+  private killProcess(session: TranscodeSession): Promise<void> {
+    return new Promise<void>((resolve) => {
+      if (!session.process || session.process.killed) {
+        session.process = null;
+        resolve();
+        return;
       }
-      // SIGKILL fallback if SIGTERM doesn't work within 2s
+
+      const proc = session.process;
+      session.process = null;
+
+      // Resolve once the process actually exits
+      const onExit = () => {
+        clearTimeout(killTimer);
+        clearTimeout(giveUpTimer);
+        resolve();
+      };
+      proc.once("exit", onExit);
+
+      try {
+        if (process.platform === "win32") {
+          // Windows: SIGTERM is unreliable, use TerminateProcess directly
+          proc.kill();
+        } else {
+          proc.kill("SIGTERM");
+        }
+      } catch {
+        proc.removeListener("exit", onExit);
+        resolve();
+        return;
+      }
+
+      // Unix: SIGKILL fallback if SIGTERM doesn't work within 2s
       const killTimer = setTimeout(() => {
         try {
           if (!proc.killed) proc.kill("SIGKILL");
@@ -231,8 +267,14 @@ class TranscodeManager {
         }
       }, 2000);
       killTimer.unref?.();
-      session.process = null;
-    }
+
+      // Safety net: resolve after 3s even if exit event never fires
+      const giveUpTimer = setTimeout(() => {
+        proc.removeListener("exit", onExit);
+        resolve();
+      }, 3000);
+      giveUpTimer.unref?.();
+    });
   }
 
   private cleanOutputDir(outputDir: string): void {
@@ -251,7 +293,7 @@ class TranscodeManager {
       for (const [id, session] of this.sessions) {
         if (now - session.lastAccessedAt > IDLE_TIMEOUT_MS) {
           console.log(`[transcode] Cleaning up idle session ${id.slice(0, 8)}`);
-          this.stopSession(id);
+          void this.stopSession(id);
         }
       }
     }, CLEANUP_INTERVAL_MS);
@@ -277,7 +319,7 @@ class TranscodeManager {
 // Version key ensures stale singletons from prior code are replaced.
 const GLOBAL_KEY = "__kubby_transcode_manager__";
 const GLOBAL_VERSION_KEY = "__kubby_transcode_manager_v__";
-const MANAGER_VERSION = 2; // bump when class shape changes
+const MANAGER_VERSION = 3; // bump when class shape changes
 
 export function getTranscodeManager(): TranscodeManager {
   const g = globalThis as Record<string, unknown>;

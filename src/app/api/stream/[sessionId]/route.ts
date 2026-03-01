@@ -22,7 +22,7 @@ export async function DELETE(
 ) {
   const { sessionId } = await params;
   const manager = getTranscodeManager();
-  manager.stopSession(sessionId);
+  await manager.stopSession(sessionId);
   return NextResponse.json({ ok: true });
 }
 
@@ -39,7 +39,7 @@ export async function POST(
   }
 
   const manager = getTranscodeManager();
-  const newSessionId = manager.seekSession(sessionId, body.seekToSeconds);
+  const newSessionId = await manager.seekSession(sessionId, body.seekToSeconds);
 
   if (!newSessionId) {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
