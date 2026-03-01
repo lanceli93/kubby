@@ -25,6 +25,7 @@ import {
   UserRound,
   Loader2,
   Cake,
+  Monitor,
 } from "lucide-react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
@@ -206,6 +207,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
     { value: "runtime", label: t("runtime"), icon: Timer },
+    { value: "resolution", label: t("resolution"), icon: Monitor },
   ];
 
   // Close dropdowns on outside click
@@ -1411,6 +1413,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
     { value: "dateAdded", label: t("dateAdded"), icon: CalendarPlus },
     { value: "releaseDate", label: t("releaseDate"), icon: Calendar },
     { value: "runtime", label: t("runtime"), icon: Timer },
+    { value: "resolution", label: t("resolution"), icon: Monitor },
     { value: "ageAtRelease", label: t("ageAtRelease"), icon: Cake },
   ];
 

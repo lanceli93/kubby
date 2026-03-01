@@ -219,6 +219,7 @@
     "dateAdded": "Date Added",
     "releaseDate": "Release Date",
     "runtime": "Runtime",
+    "resolution": "Resolution",
     "moviesCount": "{count} movies",
     "cast": "Cast",
     "youMayAlsoLike": "You May Also Like",

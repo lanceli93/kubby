@@ -279,6 +279,9 @@ export async function GET(request: NextRequest) {
       case "runtime":
         orderClause = orderFn(movies.runtimeMinutes);
         break;
+      case "resolution":
+        orderClause = orderFn(movies.videoWidth);
+        break;
       case "ageAtRelease":
         // Only meaningful when personId is set (joins moviePeople)
         rawOrderClause = sortOrder === "asc"
