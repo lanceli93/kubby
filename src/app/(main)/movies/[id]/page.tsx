@@ -347,7 +347,7 @@ export default function MovieDetailPage() {
         <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + movie info */}
-        <div className={`animate-fade-in-up absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-24 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
+        <div className={`absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible" : "animate-fade-in-up"}`}>
           {/* Poster — 350×525 (2:3) */}
           <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (
