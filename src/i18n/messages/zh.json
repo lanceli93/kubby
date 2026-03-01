@@ -244,6 +244,7 @@
     "noFavorites": "此媒体库暂无收藏",
     "selectLibrary": "请从首页选择一个媒体库",
     "play": "播放",
+    "resume": "继续播放",
     "editMetadata": "编辑元数据",
     "deleteMovie": "删除",
     "confirmDeleteMovie": "确定要删除这部电影吗？此操作无法撤销。",

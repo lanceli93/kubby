@@ -1,5 +1,12 @@
 # Completed Features
 
+## 2026-03-01: Play vs Resume on Movie Detail Page
+- Movie detail page now shows "Resume" (primary) + "Play" (secondary) buttons when there's saved progress
+- When no saved progress, shows single "Play" button
+- Play button always passes `?t=0` to force playback from beginning
+- Resume button navigates without `?t=` param, triggering the player's existing resume logic
+- Added i18n keys: "Resume" (en) / "继续播放" (zh)
+
 ## 2026-03-01: Auth Redirect Fixes & Sort/Filter State Persistence
 
 ### Sign Out Redirect Fix

@@ -244,6 +244,7 @@
     "noFavorites": "No favorites in this library",
     "selectLibrary": "Please select a library from the home page",
     "play": "Play",
+    "resume": "Resume",
     "editMetadata": "Edit Metadata",
     "deleteMovie": "Delete",
     "confirmDeleteMovie": "Are you sure you want to delete this movie? This action cannot be undone.",
