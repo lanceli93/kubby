@@ -18,6 +18,7 @@ The UI was designed with [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev)
 - Drop-in compatible with existing Jellyfin and Kodi movie libraries (NFO + folder structure)
 - TMDB scraper for automatic metadata, posters, actor photos, and biographies
 - In-browser playback with progress tracking and multi-disc support
+- HLS transcoding — plays MKV, AVI, WMV, FLV, MOV, TS files in the browser via FFmpeg on-demand remux/transcode
 - English / Chinese interface
 
 ## What Kubby adds
