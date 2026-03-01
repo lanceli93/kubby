@@ -111,6 +111,9 @@ export default function PlayerPage() {
   const seekCounterRef = useRef(0);
   // Debounce timer for HLS seek
   const seekDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True while an HLS seek is in-flight; suppresses onTimeUpdate so stale
+  // video.currentTime + new hlsTimeOffset doesn't corrupt the progress bar.
+  const hlsSeekingRef = useRef(false);
   // AbortController to cancel in-flight seek fetch
   const seekAbortRef = useRef<AbortController | null>(null);
   // Heartbeat interval for HLS sessions
@@ -415,6 +418,10 @@ export default function PlayerPage() {
       return;
     }
 
+    // Suppress onTimeUpdate during seek — the old video.currentTime + new
+    // hlsTimeOffset would produce a garbage value and make the progress bar jump.
+    hlsSeekingRef.current = true;
+
     // Optimistic UI: show new position immediately
     hlsTimeOffsetRef.current = Math.floor(clamped);
     setCurrentTime(Math.floor(clamped));
@@ -436,9 +443,11 @@ export default function PlayerPage() {
 
       const counter = ++seekCounterRef.current;
 
-      // Stop HLS.js loading immediately to prevent 404s on old session segments
+      // Destroy old HLS instance immediately — prevents 404s on old session
+      // segments AND avoids stale SourceBuffer data causing position jumps.
       if (hlsRef.current) {
-        hlsRef.current.stopLoad();
+        hlsRef.current.destroy();
+        hlsRef.current = null;
       }
 
       fetch(`/api/stream/${sessionIdRef.current}`, {
@@ -450,21 +459,39 @@ export default function PlayerPage() {
         .then((r) => r.json())
         .then((data) => {
           if (seekCounterRef.current !== counter) return; // Stale response
-          if (data.sessionId && hlsRef.current) {
+          if (data.sessionId && videoRef.current) {
             sessionIdRef.current = data.sessionId;
             hlsTimeOffsetRef.current = Math.floor(clamped);
             setCurrentTime(Math.floor(clamped));
-            hlsRef.current.loadSource(data.hlsUrl);
-            // Resume playback after source switch
-            videoRef.current?.play().catch(() => {});
+
+            // Fresh HLS instance — no stale buffer or event listeners
+            if (Hls.isSupported()) {
+              const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
+              hlsRef.current = hls;
+              hls.loadSource(data.hlsUrl);
+              hls.attachMedia(videoRef.current);
+              hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                hlsSeekingRef.current = false;
+                videoRef.current?.play().catch(() => {});
+              });
+              hls.on(Hls.Events.ERROR, (_event, errorData) => {
+                if (errorData.fatal && errorData.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                  if (hlsSeekingRef.current) return;
+                  const realTime = getRealTime();
+                  if (realTime > 0 && sessionIdRef.current) {
+                    seekTo(realTime);
+                  }
+                }
+              });
+            } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+              videoRef.current.src = data.hlsUrl;
+              hlsSeekingRef.current = false;
+            }
           }
         })
         .catch((err) => {
           if (err?.name === "AbortError") return; // Expected cancellation
-          // Restore loading if fetch failed unexpectedly
-          if (hlsRef.current) {
-            hlsRef.current.startLoad();
-          }
+          hlsSeekingRef.current = false;
         });
     }, 500);
   }
@@ -626,31 +653,13 @@ export default function PlayerPage() {
 
             hls.on(Hls.Events.ERROR, (_event, errorData) => {
               if (errorData.fatal && errorData.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                // Skip recovery if a seek is already in progress (404s are expected during seek transitions)
-                if (seekDebounceRef.current || seekAbortRef.current) return;
+                // Skip recovery if a seek is already in progress
+                if (hlsSeekingRef.current) return;
 
                 // Try to recover by restarting transcode from current position
                 const realTime = getRealTime();
                 if (realTime > 0 && sessionIdRef.current) {
-                  hls.stopLoad();
-                  fetch(`/api/stream/${sessionIdRef.current}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(realTime) }),
-                  })
-                    .then((r) => r.json())
-                    .then((seekData) => {
-                      if (seekData.sessionId) {
-                        sessionIdRef.current = seekData.sessionId;
-                        hlsTimeOffsetRef.current = Math.floor(realTime);
-                        hls.loadSource(seekData.hlsUrl);
-                        videoRef.current?.play().catch(() => {});
-                      }
-                    })
-                    .catch(() => {
-                      // Give up on recovery
-                      hls.destroy();
-                    });
+                  seekTo(realTime);
                 }
               }
             });
@@ -723,7 +732,7 @@ export default function PlayerPage() {
         className="h-full w-full"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onTimeUpdate={() => setCurrentTime(getRealTime())}
+        onTimeUpdate={() => { if (!hlsSeekingRef.current) setCurrentTime(getRealTime()); }}
         onLoadedMetadata={() => {
           // For HLS mode, always use backend duration (video.duration is unreliable during live transcoding)
           if (hlsDurationRef.current) {
