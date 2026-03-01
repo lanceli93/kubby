@@ -44,9 +44,12 @@ export const authConfig: NextAuthConfig = {
       if (isPublic) return true;
       if (!isLoggedIn) return false;
 
-      // Admin routes
+      // Admin routes — redirect non-admin to home (not login, to avoid loop)
       if (pathname.startsWith("/dashboard")) {
-        return !!(auth?.user as { isAdmin?: boolean })?.isAdmin;
+        const isAdmin = !!(auth?.user as { isAdmin?: boolean })?.isAdmin;
+        if (!isAdmin) {
+          return Response.redirect(new URL("/", nextUrl));
+        }
       }
 
       return true;

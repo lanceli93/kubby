@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Film, LayoutDashboard, Database, Settings, LogOut, X, SlidersHorizontal, BadgeCheck } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
 interface NavSidebarProps {
@@ -14,6 +14,8 @@ interface NavSidebarProps {
 
 export function NavSidebar({ open, onClose }: NavSidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = !!(session?.user as { isAdmin?: boolean })?.isAdmin;
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
 
@@ -128,37 +130,39 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
             })}
           </div>
 
-          {/* Administration */}
-          <div className="flex flex-col gap-0.5">
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-              {tNav("administration")}
-            </p>
-            {adminItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={(e) => {
-                    if (item.placeholder) {
-                      e.preventDefault();
-                      alert("Metadata Manager — coming soon");
-                    }
-                    onClose();
-                  }}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
+          {/* Administration (admin only) */}
+          {isAdmin && (
+            <div className="flex flex-col gap-0.5">
+              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {tNav("administration")}
+              </p>
+              {adminItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={(e) => {
+                      if (item.placeholder) {
+                        e.preventDefault();
+                        alert("Metadata Manager — coming soon");
+                      }
+                      onClose();
+                    }}
+                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
 
           {/* User */}
           <div className="flex flex-col gap-0.5">
