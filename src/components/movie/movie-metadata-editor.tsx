@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface MovieMetadataEditorProps {
@@ -495,22 +496,24 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                   }}
                   placeholder={t("name")}
                 />
-                <select
+                <Select
                   value={entry.type}
-                  onChange={(e) => {
-                    const v = e.target.value as CastEntry["type"];
+                  onValueChange={(v: CastEntry["type"]) => {
                     setCastEntries((prev) =>
                       prev.map((c, i) => (i === idx ? { ...c, type: v } : c))
                     );
                   }}
-                  className="h-9 w-[120px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
-                  style={{ colorScheme: "dark" }}
                 >
-                  <option value="actor">{t("actor")}</option>
-                  <option value="director">{t("director")}</option>
-                  <option value="writer">{t("writer")}</option>
-                  <option value="producer">{t("producer")}</option>
-                </select>
+                  <SelectTrigger className="h-9 w-[120px] rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="actor">{t("actor")}</SelectItem>
+                    <SelectItem value="director">{t("director")}</SelectItem>
+                    <SelectItem value="writer">{t("writer")}</SelectItem>
+                    <SelectItem value="producer">{t("producer")}</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Input
                   className="flex-1"
                   value={entry.role}

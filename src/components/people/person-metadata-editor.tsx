@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
@@ -211,16 +212,17 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
 
             <div className="space-y-2">
               <Label>{t("type")}</Label>
-              <select
-                value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
-              >
-                <option value="actor">{t("actor")}</option>
-                <option value="director">{t("director")}</option>
-                <option value="writer">{t("writer")}</option>
-                <option value="producer">{t("producer")}</option>
-              </select>
+              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
+                <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="actor">{t("actor")}</SelectItem>
+                  <SelectItem value="director">{t("director")}</SelectItem>
+                  <SelectItem value="writer">{t("writer")}</SelectItem>
+                  <SelectItem value="producer">{t("producer")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
