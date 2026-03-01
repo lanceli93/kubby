@@ -463,23 +463,6 @@ export default function MovieDetailPage() {
                   <Play className="h-5 w-5 fill-black" />
                   {t("playExternal", { player: externalPlayerName || "" })}
                 </button>
-              ) : (movie.userData?.playbackPositionSeconds ?? 0) > 0 ? (
-                <>
-                  <Link
-                    href={`/movies/${movie.id}/play`}
-                    className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
-                  >
-                    <Play className="h-5 w-5 fill-black" />
-                    {t("resume")}
-                  </Link>
-                  <Link
-                    href={`/movies/${movie.id}/play?t=0`}
-                    className="flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-base font-semibold text-white/90 transition-colors hover:bg-white/10"
-                  >
-                    <Play className="h-4 w-4 fill-white/90" />
-                    {(movie.discCount ?? 1) > 1 ? t("playAll") : t("play")}
-                  </Link>
-                </>
               ) : (
                 <Link
                   href={`/movies/${movie.id}/play?t=0`}
