@@ -18,6 +18,7 @@ const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string
 export default function SettingsPage() {
   const { data: session } = useSession();
   const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: prefs } = useUserPreferences();
@@ -217,12 +218,14 @@ export default function SettingsPage() {
         {profileMsg && (
           <p className="text-sm text-primary">{profileMsg}</p>
         )}
-        <button
-          type="submit"
-          className="w-fit rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          {t("saveChanges")}
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          >
+            {tCommon("save")}
+          </button>
+        </div>
       </form>
 
       {/* Change Password */}
@@ -274,12 +277,14 @@ export default function SettingsPage() {
             {passwordMsg}
           </p>
         )}
-        <button
-          type="submit"
-          className="w-fit rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          {t("updatePassword")}
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          >
+            {tCommon("save")}
+          </button>
+        </div>
       </form>
 
       {/* Language */}
@@ -401,14 +406,16 @@ export default function SettingsPage() {
             </p>
           </>
         )}
-        <button
-          type="button"
-          onClick={handlePlaybackSave}
-          disabled={playbackSaving}
-          className="w-fit rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          {playbackSaving ? t("saving") : t("savePlaybackSettings")}
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handlePlaybackSave}
+            disabled={playbackSaving}
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          >
+            {playbackSaving ? t("saving") : tCommon("save")}
+          </button>
+        </div>
       </div>
 
       {/* Account Info */}
