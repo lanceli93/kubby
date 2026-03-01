@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, RefreshCw, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Subtitles, Search, Info, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle } from "lucide-react";
 import { BookmarkCard, type CustomIconData } from "@/components/movie/bookmark-card";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
@@ -557,10 +557,6 @@ export default function MovieDetailPage() {
                   <DropdownMenuItem onClick={() => setMediaInfoOpen(true)}>
                     <Info className="h-4 w-4" />
                     {t("mediaInfo")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => alert("Refresh metadata — coming soon")}>
-                    <RefreshCw className="h-4 w-4" />
-                    {t("refreshMetadata")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>

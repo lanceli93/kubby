@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, ImageIcon, Info, RefreshCw, Trash2 } from "lucide-react";
+import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, ImageIcon, Info, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
@@ -262,15 +262,6 @@ export function MovieCard({
                 >
                   <Info className="h-4 w-4" />
                   {t("mediaInfo")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    alert("Refresh metadata — coming soon");
-                  }}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  {t("refreshMetadata")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
