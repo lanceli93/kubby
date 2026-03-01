@@ -166,9 +166,9 @@ export default function UsersPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-8 px-10">
+    <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t("users")}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("users")}</h1>
         <button
           onClick={() => setAddOpen(true)}
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
@@ -178,7 +178,7 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <div className="rounded-xl border border-white/[0.06] bg-black/40 backdrop-blur-xl">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl">
         {users.map((user) => {
           const isSelf = user.id === currentUserId;
           const isLastAdmin = user.isAdmin && adminCount <= 1;
@@ -188,7 +188,7 @@ export default function UsersPage() {
           return (
             <div
               key={user.id}
-              className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4 last:border-b-0"
+              className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4 last:border-b-0 transition-colors hover:bg-white/[0.02]"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">

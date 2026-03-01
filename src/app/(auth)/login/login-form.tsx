@@ -62,9 +62,9 @@ function LoginFormInner() {
 
   return (
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
-      <div className="w-[480px] rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
+      <div className="w-[480px] animate-fade-in-up rounded-2xl border border-white/[0.06] bg-card px-10 py-12">
         <div className="flex flex-col items-center gap-6">
-          <h1 className="text-4xl font-bold text-primary">Kubby</h1>
+          <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <p className="text-[15px] text-muted-foreground">
             {t("signInToAccount")}
           </p>
