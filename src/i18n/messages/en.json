@@ -293,7 +293,11 @@
     "saveBookmark": "Save Bookmark",
     "tagsPlaceholder": "Type and press Enter to add",
     "deleteLocalFiles": "Also delete local files",
-    "deleteLocalFilesWarning": "The movie folder and all its contents will be permanently removed from disk"
+    "deleteLocalFilesWarning": "The movie folder and all its contents will be permanently removed from disk",
+    "bookmarkMode": "Bookmark Mode",
+    "scrubberLoading": "Extracting frame...",
+    "scrubberDragHint": "Click or drag to browse",
+    "closeScrubber": "Close"
   },
   "search": {
     "search": "Search",

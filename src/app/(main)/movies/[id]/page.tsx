@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Info, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Info, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle, BookmarkPlus } from "lucide-react";
 import { BookmarkCard, type CustomIconData } from "@/components/movie/bookmark-card";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
@@ -32,6 +32,7 @@ import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { FrameScrubber } from "@/components/movie/frame-scrubber";
 
 interface DiscInfo {
   id: string;
@@ -160,6 +161,7 @@ export default function MovieDetailPage() {
   const [fanartMode, setFanartMode] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [externalToast, setExternalToast] = useState<string | null>(null);
+  const [bookmarkMode, setBookmarkMode] = useState(false);
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
   const SUPPORTED_PLAYERS = ["IINA", "PotPlayer"];
@@ -524,6 +526,19 @@ export default function MovieDetailPage() {
                 />
               </button>
 
+              {/* Bookmark mode toggle */}
+              {(movie.runtimeSeconds || movie.runtimeMinutes) && (
+                <button
+                  onClick={() => setBookmarkMode((v) => !v)}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
+                    bookmarkMode ? "text-yellow-400" : "text-white/70"
+                  }`}
+                  title={t("bookmarkMode")}
+                >
+                  <BookmarkPlus className="h-5 w-5" />
+                </button>
+              )}
+
               {/* Three-dot menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -637,6 +652,22 @@ export default function MovieDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Frame Scrubber for bookmark mode */}
+      {bookmarkMode && (movie.runtimeSeconds || movie.runtimeMinutes) && (
+        <section className="px-20 mt-4">
+          <FrameScrubber
+            movieId={movieId}
+            runtimeSeconds={movie.runtimeSeconds || (movie.runtimeMinutes || 0) * 60}
+            discCount={movie.discCount ?? 1}
+            discs={movie.discs?.map((d) => ({ discNumber: d.discNumber, label: d.label, runtimeSeconds: d.runtimeSeconds }))}
+            bookmarks={bookmarks}
+            customIcons={customIcons}
+            disabledIconIds={prefs?.disabledBookmarkIcons}
+            onClose={() => setBookmarkMode(false)}
+          />
+        </section>
+      )}
 
       <div className="stagger-children">
       {/* Discs Section (multi-disc movies only) */}
