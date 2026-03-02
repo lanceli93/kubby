@@ -1,5 +1,25 @@
 # Completed Features
 
+## 2026-03-02: Bookmark Mode (Frame Scrubber)
+
+Lightweight frame browser on the movie detail page for creating bookmarks without video playback. Solves the problem of VR videos being too heavy for real-time FFmpeg transcoding.
+
+### New Files
+- `src/app/api/movies/[id]/frame/route.ts` — Frame extraction API (`GET ?t=SECONDS&disc=N&maxWidth=W`), uses `ffmpeg -ss` for fast keyframe seek, 10s timeout, 960px default max width
+- `src/components/movie/frame-scrubber.tsx` — Self-contained client component with progress bar (click/drag), frame preview, bookmark creation UI (icon selector, tags, note)
+
+### Modified Files
+- `src/app/(main)/movies/[id]/page.tsx` — Added BookmarkPlus button in action row, conditional FrameScrubber panel between hero and content sections
+- `src/i18n/messages/en.json` / `zh.json` — Added bookmarkMode, scrubberLoading, scrubberDragHint, closeScrubber keys
+
+### Key Behaviors
+- Progress bar: click = instant frame fetch, drag = 300ms debounced fetch
+- Frame display: `<img>` with browser caching for repeated URLs
+- Bookmark markers: colored dots on progress bar matching existing player seek bar pattern
+- Bookmark creation: fetches frame blob as thumbnail, POSTs FormData to existing bookmarks API
+- Multi-disc support: disc tab selector, per-disc runtime and bookmarks
+- Button hidden when movie has no runtimeSeconds
+
 ## 2026-03-01: Play Always Starts From Beginning
 - Play button on movie detail page now passes `?t=0` to always start playback from beginning
 - No resume button needed — users can use bookmarks to jump to specific positions
