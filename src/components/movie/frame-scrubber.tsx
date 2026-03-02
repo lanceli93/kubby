@@ -258,8 +258,6 @@ export function FrameScrubber({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["person-gallery", selectedActorId] });
-      setScreenshotToast(true);
-      setTimeout(() => setScreenshotToast(false), 2000);
     },
   });
 
