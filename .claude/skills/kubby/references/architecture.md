@@ -7,7 +7,7 @@ kubby/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx                    # Root layout (Inter font, NextIntlClientProvider)
-│   │   ├── globals.css                   # Tailwind v4 + dark cinema theme variables
+│   │   ├── globals.css                   # Tailwind v4 + dark cinema theme + glass-flash animation
 │   │   ├── (auth)/                       # Auth route group (no header)
 │   │   │   ├── login/page.tsx            # Login (Server Component, redirects to /setup if no users)
 │   │   │   └── register/page.tsx
@@ -18,7 +18,7 @@ kubby/
 │   │   │   ├── movies/
 │   │   │   │   ├── page.tsx              # Library browse (Tabs: Movies/Favorites/Genres)
 │   │   │   │   └── [id]/
-│   │   │   │       ├── page.tsx          # Movie detail (fanart + poster + metadata + bookmarks + cast)
+│   │   │   │       ├── page.tsx          # Movie detail (fanart + poster + metadata + bookmark mode/FrameScrubber + cast)
 │   │   │   │       └── play/page.tsx     # Video player (HLS.js, bookmarks, progress save)
 │   │   │   ├── people/[id]/page.tsx      # Person detail (filmography + photo gallery)
 │   │   │   ├── search/page.tsx           # Search (movies + people + bookmarks)
@@ -32,7 +32,10 @@ kubby/
 │   │   └── api/                          # ~30 API route files
 │   ├── components/
 │   │   ├── layout/                       # AppHeader, AdminSidebar, NavSidebar, GlobalScanBar
-│   │   ├── movie/movie-card.tsx          # Poster card (180x270)
+│   │   ├── movie/
+│   │   │   ├── movie-card.tsx            # Poster card (180x270)
+│   │   │   ├── bookmark-card.tsx         # Bookmark thumbnail card (320px)
+│   │   │   └── frame-scrubber.tsx        # Frame browser panel (two-column: preview+overlay/form, screenshot to gallery)
 │   │   ├── people/person-card.tsx        # Person card (sm/md/lg sizes)
 │   │   ├── library/
 │   │   │   ├── library-card.tsx          # Library card (360x200)
@@ -155,6 +158,7 @@ media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1�
 - `GET/PUT /api/movies/[id]/user-data` — Progress/favorite/watched/ratings
 - `GET/POST /api/movies/[id]/bookmarks` — Bookmark list / create
 - `PUT/DELETE /api/movies/[id]/bookmarks/[bookmarkId]` — Update/delete bookmark
+- `GET /api/movies/[id]/frame` — Single frame extraction (FFmpeg -ss, JPEG, params: t, disc, maxWidth)
 - `POST /api/movies/[id]/play-external` — Launch external player
 - `GET/PUT /api/people/[id]` — Person detail + filmography
 - `GET/PUT /api/people/[id]/user-data` — Person ratings

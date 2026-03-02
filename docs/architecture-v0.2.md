@@ -26,7 +26,7 @@ kubby/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx                              # 根布局 (async, Inter 字体, NextIntlClientProvider, 动态 lang)
-│   │   ├── globals.css                             # Tailwind v4 + 深色影院主题变量 + CJK 字体回退
+│   │   ├── globals.css                             # Tailwind v4 + 深色影院主题变量 + CJK 字体回退 + glass-flash 动效
 │   │   ├── (auth)/                                 # 认证路由组 (无 header)
 │   │   │   ├── layout.tsx                          # 空壳布局
 │   │   │   ├── login/
@@ -75,6 +75,7 @@ kubby/
 │   │       │       ├── route.ts                    # GET 详情 (含演员/导演/userData)
 │   │       │       ├── stream/route.ts             # GET 视频流 (HTTP 206 Range)
 │   │       │       ├── stream/decide/route.ts      # GET 播放决策 (direct/remux/transcode)
+│   │       │       ├── frame/route.ts                # GET 单帧提取 (FFmpeg -ss, JPEG, ?t=&disc=&maxWidth=)
 │   │       │       ├── play-external/route.ts       # POST 启动外部播放器 (debug cmd 日志)
 │   │       │       └── user-data/route.ts          # GET/PUT 播放进度/收藏/已看
 │   │       ├── stream/[sessionId]/                  # HLS 转码 session 端点
@@ -99,6 +100,8 @@ kubby/
 │   │   │   └── nav-sidebar.tsx                     # 汉堡菜单侧边栏 (Home/Media/Dashboard/User)
 │   │   ├── movie/
 │   │   │   ├── movie-card.tsx                      # 电影海报卡片 (2:3, 180x270)
+│   │   │   ├── bookmark-card.tsx                   # 书签缩略图卡片 (320px, 编辑/删除/图标)
+│   │   │   ├── frame-scrubber.tsx                  # 帧浏览器面板 (两栏布局, 截图到相册, 书签创建)
 │   │   │   └── movie-metadata-editor.tsx           # 电影元数据编辑弹窗 (General/Cast/Personal 三 Tab)
 │   │   ├── people/
 │   │   │   ├── person-card.tsx                     # 演员卡片 (sm/md/lg 三种尺寸)
@@ -785,7 +788,7 @@ Player (page.tsx)
 | `/register` | 注册 | 同登录风格, 4 字段 + 管理员提示, i18n |
 | `/` | 首页 | Jellyfin 风格 Tab 导航: Home Tab (媒体库卡片(未扫描显示overlay)+继续观看+最近添加+收藏ScrollRow) / Favorites Tab (全局收藏网格) |
 | `/movies?libraryId=X` | 媒体库浏览 | 需 libraryId, 3 Tab: Movies (排序下拉+网格) / Favorites (库内收藏网格) / Genres (按类型分组ScrollRow) |
-| `/movies/[id]` | 电影详情 | Jellyfin 风格: fanart 充分可见(仅底部渐变) + 左侧海报(300×450) + 右侧 text-shadow 信息面板(标题/元数据行/小型按钮行/Overview/Metadata 纵向列表) + 帧浏览书签模式(BookmarkPlus按钮) + 书签 ScrollRow + 演员卡片 + 推荐 |
+| `/movies/[id]` | 电影详情 | Jellyfin 风格: fanart 充分可见(仅底部渐变) + 左侧海报(300×450) + 右侧 text-shadow 信息面板(标题/元数据行/小型按钮行/Overview/Metadata 纵向列表) + 帧浏览书签模式(BookmarkPlus按钮, FrameScrubber两栏面板: 帧预览+进度条覆盖层/书签表单+截图到演员相册) + 书签 ScrollRow + 演员卡片 + 推荐 |
 | `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 书签 (B/Shift+B) + 倍速 + 进度条图标标记 + 自动隐藏控制栏 (可 toggle) |
 | `/people/[id]` | 演员详情 | fanart 渐变 + 大卡片 + 参演作品网格 + 照片墙(Justified 行布局+Lightbox+上传/删除) |
 | `/search` | 搜索 | 搜索框 + 电影结果 + 演员结果 |
@@ -808,7 +811,7 @@ Player (page.tsx)
 | `MovieCard` | `components/movie/` | 海报卡片 (180x270), 支持评分/收藏/进度条, hover 显示 watched/favorite 切换 + ⋯ 下拉菜单 (Play/Edit/MediaInfo/Delete) |
 | `PersonCard` | `components/people/` | 演员卡片 (sm:140x210, md:160x240, lg:240x340) |
 | `BookmarkCard` | `components/movie/` | 书签缩略图卡片 (320px, 支持编辑/删除/图标选择, 过滤禁用图标) |
-| `FrameScrubber` | `components/movie/` | 帧浏览器面板 (进度条+帧预览+书签创建, 300ms 拖拽防抖, 多碟支持) |
+| `FrameScrubber` | `components/movie/` | 帧浏览器面板 (左右两栏: 帧预览+覆盖层控件/书签表单, 进度条300ms拖拽防抖, 书签图标标记, 磨砂玻璃按钮+闪光动效, 截图到演员相册, 演员下拉选择器, 时间戳跳转, 多碟支持) |
 | `LibraryCard` | `components/library/` | 媒体库卡片 (360x200), 未扫描 overlay+扫描按钮, 扫描进度含标题, 跳过计数, hover ⋯ 菜单 |
 | `GlobalScanBar` | `components/layout/` | 底部全局扫描条, 显示当前标题+进度, 完成后可展开跳过列表 |
 | `FolderPicker` | `components/library/` | 服务端目录浏览器 Dialog |
