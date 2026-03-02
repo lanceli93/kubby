@@ -238,6 +238,34 @@
   animation: brandGlow 3s ease-in-out infinite;
 }
 
+/* ── Glass flash effect ──────────────────────────────── */
+
+@keyframes glassFlash {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.glass-flash {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(
+    120deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.5) 48%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.5) 52%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: glassFlash 0.5s ease-out forwards;
+}
+
 /* ── UI Polish: Enhanced inputs ───────────────────────── */
 
 /* Better focus states for all inputs */

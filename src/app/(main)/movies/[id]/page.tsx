@@ -664,6 +664,7 @@ export default function MovieDetailPage() {
             bookmarks={bookmarks}
             customIcons={customIcons}
             disabledIconIds={prefs?.disabledBookmarkIcons}
+            cast={movie.cast?.map((c) => ({ id: c.id, name: c.name, photoPath: c.photoPath }))}
             onClose={() => setBookmarkMode(false)}
           />
         </section>

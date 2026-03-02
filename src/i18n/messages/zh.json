@@ -297,7 +297,12 @@
     "bookmarkMode": "书签模式",
     "scrubberLoading": "正在提取帧...",
     "scrubberDragHint": "点击或拖动以浏览",
-    "closeScrubber": "关闭"
+    "closeScrubber": "关闭",
+    "jumpToTime": "跳转到时间",
+    "screenshot": "截图",
+    "screenshotToGallery": "截图到相册",
+    "screenshotSaved": "已保存到相册",
+    "selectActor": "选择演员..."
   },
   "search": {
     "search": "搜索",

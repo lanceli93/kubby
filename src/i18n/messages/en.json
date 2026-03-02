@@ -297,7 +297,12 @@
     "bookmarkMode": "Bookmark Mode",
     "scrubberLoading": "Extracting frame...",
     "scrubberDragHint": "Click or drag to browse",
-    "closeScrubber": "Close"
+    "closeScrubber": "Close",
+    "jumpToTime": "Jump to Time",
+    "screenshot": "Screenshot",
+    "screenshotToGallery": "Screenshot to Gallery",
+    "screenshotSaved": "Saved to gallery",
+    "selectActor": "Select actor..."
   },
   "search": {
     "search": "Search",
