@@ -1,7 +1,59 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git status:*)",
+      "Bash(sqlite3:*)",
+      "Bash(git add:*)",
+      "Bash(npx next build:*)",
+      "Bash(npx drizzle-kit push:*)",
+      "Bash(npm run dev)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__fill_form",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__press_key",
+      "mcp__chrome-devtools__evaluate_script",
+      "WebFetch(domain:jellyfin.org)",
+      "WebFetch(domain:github.com)",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__new_page",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(npm install:*)",
+      "mcp__chrome-devtools__get_network_request",
+      "Bash(git worktree:*)",
+      "Bash(cd /Users/yonglli/Documents/MyWorkSpace/kubby-before-perf && npx next dev --port 3001 2>&1)",
+      "Bash(npm run:*)",
+      "Bash(go build:*)",
+      "Bash(GOPROXY=https://goproxy.cn,direct go mod:*)",
+      "Bash(cd:*)",
+      "Bash(node:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git config:*)",
+      "Bash(gh run:*)",
+      "Bash(gh api:*)",
+      "Bash(gh workflow:*)",
+      "Bash(brew list:*)",
+      "Bash(ffprobe:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(do echo:*)",
+      "Bash(git:*)",
+      "Bash(curl:*)",
+      "mcp__chrome-devtools__handle_dialog",
+      "Bash(gh release:*)"
     ]
+  },
+  "disabledMcpjsonServers": [
+    "shadcn"
+  ],
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
   }
 }
