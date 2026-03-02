@@ -67,6 +67,12 @@ Press B during playback for a quick bookmark, or Shift+B to pick an icon, add ta
 
 ![Bookmark settings](docs/screenshots/bookmark-settings.png)
 
+### Bookmark mode (frame scrubber)
+
+VR and high-bitrate videos are too heavy for real-time browser transcoding. Bookmark mode lets you browse any movie frame-by-frame without playback — drag a progress bar, the server extracts a single frame via FFmpeg in 1-2 seconds. Create bookmarks with icons, tags, and notes right from the movie detail page. You can also screenshot any frame directly into an actor's photo gallery.
+
+![Bookmark mode](docs/screenshots/bookmark-mode.png)
+
 ### Search with categories
 
 One search box for movies, actors, and bookmarks. Filter by category if you're looking for something specific.
