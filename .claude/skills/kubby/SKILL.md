@@ -43,16 +43,18 @@ Read these on demand based on your task:
 
 ## Versioning
 
-**Single source of truth**: `package.json` `"version"` field.
+Version priority: `KUBBY_VERSION` env (CI from git tag) > `package.json` `"version"` field.
 
 `scripts/package.ts` auto-syncs version to all platform files at build time:
 - `installer/windows/kubby.nsi` — NSIS `!define VERSION` + `VIProductVersion` (Windows installer & Add/Remove Programs)
 - `launcher/winres/winres.json` — Windows exe Properties > Details (5 version fields)
 - `launcher/assets/Info.plist` — macOS .app bundle version (`CFBundleVersion` + `CFBundleShortVersionString`)
 
-**To bump version**: only edit `package.json`, the packaging script handles the rest.
+**Release flow**: push `v0.3.0` tag → CI extracts `0.3.0` → passes as `KUBBY_VERSION` env → all platform files auto-updated. No manual edits needed.
 
-> **Pitfall (pre-0.2.0)**: Version was hardcoded independently in 4 files. Bumping `package.json` alone left Windows/macOS showing stale versions. Fixed by adding `syncVersionToAllFiles()` in `scripts/package.ts`.
+**Local builds**: falls back to `package.json` version.
+
+> **Pitfall (pre-0.2.0)**: Version was hardcoded independently in 4 files with no sync. Fixed by `syncVersionToAllFiles()` in `scripts/package.ts`.
 
 ## Common Commands
 

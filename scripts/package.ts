@@ -37,10 +37,10 @@ const PROJECT_ROOT = path.resolve(__scriptDir, "..");
 const DIST_DIR = path.join(PROJECT_ROOT, "dist");
 const DOWNLOAD_CACHE = path.join(PROJECT_ROOT, ".download-cache");
 
-// Read version from package.json (single source of truth)
-const APP_VERSION: string = JSON.parse(
-  fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8")
-).version;
+// Version priority: KUBBY_VERSION env (set by CI from git tag) > package.json
+const APP_VERSION: string =
+  process.env.KUBBY_VERSION ||
+  JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8")).version;
 
 type Platform = "darwin-arm64" | "darwin-x64" | "win-x64" | "linux-x64";
 
