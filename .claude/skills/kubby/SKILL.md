@@ -41,6 +41,19 @@ Read these on demand based on your task:
 | `references/architecture.md` | Implementing features, fixing bugs, understanding DB schema, API endpoints, frontend components, scanner, player, i18n |
 | `references/release-workflow.md` | Packaging, testing builds, creating releases, publishing versions |
 
+## Versioning
+
+**Single source of truth**: `package.json` `"version"` field.
+
+`scripts/package.ts` auto-syncs version to all platform files at build time:
+- `installer/windows/kubby.nsi` — NSIS `!define VERSION` + `VIProductVersion` (Windows installer & Add/Remove Programs)
+- `launcher/winres/winres.json` — Windows exe Properties > Details (5 version fields)
+- `launcher/assets/Info.plist` — macOS .app bundle version (`CFBundleVersion` + `CFBundleShortVersionString`)
+
+**To bump version**: only edit `package.json`, the packaging script handles the rest.
+
+> **Pitfall (pre-0.2.0)**: Version was hardcoded independently in 4 files. Bumping `package.json` alone left Windows/macOS showing stale versions. Fixed by adding `syncVersionToAllFiles()` in `scripts/package.ts`.
+
 ## Common Commands
 
 ```bash

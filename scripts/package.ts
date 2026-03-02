@@ -37,6 +37,11 @@ const PROJECT_ROOT = path.resolve(__scriptDir, "..");
 const DIST_DIR = path.join(PROJECT_ROOT, "dist");
 const DOWNLOAD_CACHE = path.join(PROJECT_ROOT, ".download-cache");
 
+// Read version from package.json (single source of truth)
+const APP_VERSION: string = JSON.parse(
+  fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8")
+).version;
+
 type Platform = "darwin-arm64" | "darwin-x64" | "win-x64" | "linux-x64";
 
 interface PlatformConfig {
@@ -176,6 +181,54 @@ function detectPlatform(): Platform {
       return "linux-x64";
     default:
       throw new Error(`Unsupported platform: ${process.platform}`);
+  }
+}
+
+// ─── Version Sync ────────────────────────────────────────────
+
+function syncVersionToAllFiles() {
+  console.log(`\n[version] Syncing version ${APP_VERSION} to all platform files...`);
+  const v4 = APP_VERSION.includes(".") && APP_VERSION.split(".").length === 3
+    ? `${APP_VERSION}.0`
+    : APP_VERSION;
+
+  // 1. installer/windows/kubby.nsi
+  const nsiPath = path.join(PROJECT_ROOT, "installer", "windows", "kubby.nsi");
+  if (fs.existsSync(nsiPath)) {
+    let nsi = fs.readFileSync(nsiPath, "utf-8");
+    nsi = nsi.replace(/!define VERSION ".*?"/, `!define VERSION "${APP_VERSION}"`);
+    nsi = nsi.replace(/VIProductVersion ".*?"/, `VIProductVersion "${v4}"`);
+    fs.writeFileSync(nsiPath, nsi);
+    console.log(`  Updated ${nsiPath}`);
+  }
+
+  // 2. launcher/winres/winres.json
+  const winresPath = path.join(PROJECT_ROOT, "launcher", "winres", "winres.json");
+  if (fs.existsSync(winresPath)) {
+    const winres = JSON.parse(fs.readFileSync(winresPath, "utf-8"));
+    winres.RT_MANIFEST["#1"]["0409"].identity.version = v4;
+    winres.RT_VERSION["#1"]["0000"].fixed.file_version = v4;
+    winres.RT_VERSION["#1"]["0000"].fixed.product_version = v4;
+    winres.RT_VERSION["#1"]["0000"].info["0409"].FileVersion = v4;
+    winres.RT_VERSION["#1"]["0000"].info["0409"].ProductVersion = v4;
+    fs.writeFileSync(winresPath, JSON.stringify(winres, null, 2) + "\n");
+    console.log(`  Updated ${winresPath}`);
+  }
+
+  // 3. launcher/assets/Info.plist
+  const plistPath = path.join(PROJECT_ROOT, "launcher", "assets", "Info.plist");
+  if (fs.existsSync(plistPath)) {
+    let plist = fs.readFileSync(plistPath, "utf-8");
+    plist = plist.replace(
+      /(<key>CFBundleVersion<\/key>\s*<string>).*?(<\/string>)/,
+      `$1${APP_VERSION}$2`
+    );
+    plist = plist.replace(
+      /(<key>CFBundleShortVersionString<\/key>\s*<string>).*?(<\/string>)/,
+      `$1${APP_VERSION}$2`
+    );
+    fs.writeFileSync(plistPath, plist);
+    console.log(`  Updated ${plistPath}`);
   }
 }
 
@@ -738,8 +791,12 @@ async function main() {
 
   console.log(`\nKubby Packaging Script`);
   console.log(`  Platform: ${platform}`);
+  console.log(`  Version: ${APP_VERSION}`);
   console.log(`  Node.js: v${NODE_VERSION}`);
   console.log(`  Project: ${PROJECT_ROOT}`);
+
+  // Sync version from package.json to all platform-specific files
+  syncVersionToAllFiles();
 
   const outputDir = path.join(DIST_DIR, `kubby-${platform}`);
 
