@@ -39,7 +39,7 @@ kubby/
 │   │   │       ├── page.tsx                        # 设置入口 (Server Component, 有用户则重定向)
 │   │   │       └── setup-wizard.tsx                # 4 步欢迎向导 (Client Component)
 │   │   ├── (main)/                                 # 主应用路由组 (有 header)
-│   │   │   ├── layout.tsx                          # SessionProvider + QueryProvider + AppHeader
+│   │   │   ├── layout.tsx                          # SessionProvider + QueryProvider + AppHeader + BottomTabs (移动端)
 │   │   │   ├── page.tsx                            # 首页 (Tabs: Home=媒体库/继续观看/最近添加/收藏, Favorites=收藏网格)
 │   │   │   ├── movies/
 │   │   │   │   ├── page.tsx                        # 媒体库浏览 (Tabs: Movies=网格+排序, Favorites=收藏网格, Genres=按类型ScrollRow)
@@ -95,11 +95,12 @@ kubby/
 │   │               └── password/route.ts           # PUT 修改密码
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── app-header.tsx                      # 顶部导航栏 (logo+导航(Home/Dashboard)+搜索+头像, Movies 通过媒体库卡片进入)
-│   │   │   ├── admin-sidebar.tsx                   # 管理侧边栏 (概览/媒体库/用户/刮削器)
+│   │   │   ├── app-header.tsx                      # 顶部导航栏 (logo+导航+搜索+头像, 响应式 px-3/md:px-8)
+│   │   │   ├── bottom-tabs.tsx                     # 移动端底部 Tab 栏 (Home/Movies/Search/Settings, md:hidden)
+│   │   │   ├── admin-sidebar.tsx                   # 管理侧边栏 (桌面: 垂直侧栏, 移动: 水平滚动导航条)
 │   │   │   └── nav-sidebar.tsx                     # 汉堡菜单侧边栏 (Home/Media/Dashboard/User)
 │   │   ├── movie/
-│   │   │   ├── movie-card.tsx                      # 电影海报卡片 (2:3, 180x270)
+│   │   │   ├── movie-card.tsx                      # 电影海报卡片 (2:3, 180x270, responsive 模式支持 w-full+aspect-[2/3])
 │   │   │   ├── bookmark-card.tsx                   # 书签缩略图卡片 (320px, 编辑/删除/图标)
 │   │   │   ├── frame-scrubber.tsx                  # 帧浏览器面板 (两栏布局, 截图到相册, 书签创建)
 │   │   │   └── movie-metadata-editor.tsx           # 电影元数据编辑弹窗 (General/Cast/Personal 三 Tab)
@@ -146,6 +147,7 @@ kubby/
 │   │   ├── tmdb.ts                                 # TMDb API 客户端 (search/details/credits/图片下载/API key验证)
 │   │   └── utils.ts                                # shadcn/ui cn() 工具函数
 │   ├── hooks/
+│   │   ├── use-mobile.ts                           # useIsMobile hook (matchMedia max-width:767px, 与 Tailwind md: 断点同步)
 │   │   └── use-user-preferences.ts                 # 用户偏好 React Query hook (评分维度/卡片标记/书签配置)
 │   ├── providers/
 │   │   ├── query-provider.tsx                      # TanStack React Query Provider
@@ -928,6 +930,45 @@ Step 2: 创建管理员 (username / password / confirm)
 Step 3: 添加媒体库 (name / folderPath + FolderPicker) — 可 Skip, 有路径时强制要求填库名
 Step 4: POST /api/setup/complete → 显示完成 → 跳转 /login (不再自动扫描, 用户在首页手动触发)
 ```
+
+---
+
+## 移动端响应式适配
+
+### 策略
+
+Mobile-first CSS — 无前缀写手机样式, `md:` 前缀写桌面样式。统一断点 768px (`md:`)。
+
+### 新增组件
+
+| 组件 | 位置 | 说明 |
+|------|------|------|
+| `BottomTabs` | `components/layout/` | 移动端底部 Tab 栏 (Home/Movies/Search/Settings), `md:hidden`, 播放页自动隐藏 |
+| `useIsMobile` | `hooks/use-mobile.ts` | `window.matchMedia("(max-width: 767px)")` 响应式 hook |
+
+### 页面适配清单
+
+| 页面 | 适配方式 |
+|------|---------|
+| **Login / Register** | `w-[480px]` → `w-full max-w-[480px] mx-4 md:mx-0`, 内边距缩小 |
+| **Home** | `px-12` → `px-4 md:px-12`, `gap-10` → `gap-6 md:gap-10`, Favorites 网格 `grid-cols-2` |
+| **Search** | 搜索框 `w-[800px]` → `w-full max-w-[800px]`, Category chips `flex-wrap` |
+| **Settings / PersonalMetadata / CardBadges** | `w-[720px]` → `w-full max-w-[720px]`, 容器 `px-4 md:px-0` |
+| **Movie Detail** | Hero: 手机端 fanart banner (`h-[220px]`) + 隐藏 poster + 流式布局; 桌面保持 absolute 叠加; Play 按钮 `w-full md:w-auto`; 所有 section `px-4 md:px-20`; View fanart / Bookmark mode 按钮手机端隐藏 |
+| **Person Detail** | 与 Movie Detail 同构: fanart banner + 隐藏 poster + 响应式标题/padding |
+| **Movies Browse** | `px-12` → `px-4 md:px-12`, 电影网格 `grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)]`, MovieCard 传 `responsive` prop |
+| **Dashboard** | AdminSidebar `hidden md:flex` + 移动端水平滚动导航条; layout `flex-col md:flex-row` |
+
+### 组件适配
+
+| 组件 | 适配方式 |
+|------|---------|
+| **AppHeader** | `px-8` → `px-3 md:px-8` |
+| **ScrollRow** | Chevron 按钮 `hidden md:flex`; 添加 `snap-x snap-mandatory md:snap-none` 触控滑动 |
+| **MovieCard** | 新增 `responsive` prop: `w-full` + `aspect-[2/3]` 替代固定 180×270, 用于网格布局 |
+| **BookmarkCard** | `w-[320px]` → `w-[280px] md:w-[320px]` |
+| **Dialog** (MetadataEditor / ImageEditor) | 手机端全屏: `max-h-[100dvh] rounded-none md:rounded-lg` |
+| **Main Layout** | `<main>` 添加 `pb-14 md:pb-0` 为底部 Tab 栏预留空间 |
 
 ---
 
