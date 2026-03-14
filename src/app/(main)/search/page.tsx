@@ -327,22 +327,22 @@ function SearchContent() {
 
   return (
     <div id="search-scroll-container" className="h-full overflow-y-scroll">
-      <div className="flex flex-col gap-4 px-12 pt-12 pb-6">
+      <div className="flex flex-col gap-4 px-4 md:px-12 pt-6 md:pt-12 pb-6">
         {/* Search bar */}
-        <div className="flex items-center justify-center gap-3 pt-10">
+        <div className="flex items-center justify-center gap-3 pt-4 md:pt-10">
           <Search className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="h-10 w-[800px] rounded-sm border border-white/[0.08] bg-[var(--surface)] px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            className="h-10 w-full max-w-[800px] rounded-sm border border-white/[0.08] bg-[var(--surface)] px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             autoFocus
           />
         </div>
 
         {/* Category chips + library filter */}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           {categories.map((cat) => (
             <button
               key={cat.key}

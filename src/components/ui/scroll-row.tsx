@@ -49,7 +49,7 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-foreground">{title}</h2>
           {showNav && (
-            <div className="flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1">
               <button
                 onClick={() => scroll("left")}
                 disabled={!canScrollLeft}
@@ -75,7 +75,7 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
         {!title && canScrollLeft && (
           <button
             onClick={() => scroll("left")}
-            className="absolute -left-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-black/90 group-hover/scroll:opacity-100"
+            className="absolute -left-1 top-1/2 z-10 hidden md:flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-black/90 group-hover/scroll:opacity-100"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -83,7 +83,7 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
         {!title && canScrollRight && (
           <button
             onClick={() => scroll("right")}
-            className="absolute -right-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-black/90 group-hover/scroll:opacity-100"
+            className="absolute -right-1 top-1/2 z-10 hidden md:flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-black/90 group-hover/scroll:opacity-100"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -91,7 +91,7 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
 
         <div
           ref={ref}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
+          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:snap-none [&>*]:snap-start"
         >
           {children}
         </div>

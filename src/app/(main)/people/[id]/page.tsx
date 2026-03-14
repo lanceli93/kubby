@@ -131,16 +131,18 @@ export default function PersonDetailPage() {
     <div className="h-full overflow-y-scroll scrollbar-hide">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — matches movie detail layout */}
-      <div className="relative min-h-[750px] w-full overflow-hidden">
+      <div className="relative md:min-h-[750px] w-full overflow-hidden">
         {/* Fanart Background */}
         {person.fanartPath && (
-          <Image
-            src={resolveImageSrc(person.fanartPath)}
-            alt=""
-            fill
-            className="object-cover"
-            priority
-          />
+          <div className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto">
+            <Image
+              src={resolveImageSrc(person.fanartPath)}
+              alt=""
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
         )}
 
         {/* Fanart fullscreen click-to-dismiss overlay */}
@@ -155,12 +157,12 @@ export default function PersonDetailPage() {
         {/* Bottom gradient — fade to page background */}
         <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
         {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
-        <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
+        <div className={`hidden md:block absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + person info */}
-        <div className={`animate-fade-in-up absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-16 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
+        <div className={`animate-fade-in-up relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 md:px-20 pb-6 md:pb-16 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
           {/* Poster — 350×525 (2:3), same as movie detail */}
-          <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {person.photoPath ? (
               <Image
                 src={resolveImageSrc(person.photoPath)}
@@ -177,7 +179,7 @@ export default function PersonDetailPage() {
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-3 py-2 [text-shadow:0_1px_8px_rgba(0,0,0,0.8)]">
-            <h1 className="text-4xl font-bold text-white">
+            <h1 className="text-2xl md:text-4xl font-bold text-white">
               {person.name}
             </h1>
             <div className="flex items-center gap-2">
@@ -251,13 +253,13 @@ export default function PersonDetailPage() {
 
             {/* Overview / Biography */}
             {person.overview && (
-              <p className="max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
+              <p className="max-w-full md:max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
                 {person.overview}
               </p>
             )}
 
             {/* Metadata list */}
-            <div className="flex flex-col gap-1.5 pt-1 text-sm max-w-[80%]">
+            <div className="flex flex-col gap-1.5 pt-1 text-sm max-w-full md:max-w-[80%]">
               {(person.birthDate || person.birthYear) && (
                 <div>
                   <span className="text-white/50">{tPerson("born")}: </span>
@@ -313,7 +315,7 @@ export default function PersonDetailPage() {
 
       <div className="stagger-children">
       {/* Filmography */}
-      <section className="flex flex-col gap-4 px-20 mt-[10px] pb-12">
+      <section className="flex flex-col gap-4 px-4 md:px-20 mt-[10px] pb-12">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-foreground">
             {tPerson("filmography")}

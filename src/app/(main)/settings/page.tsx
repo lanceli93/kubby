@@ -178,13 +178,13 @@ export default function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-scroll">
-    <div className="stagger-children flex flex-col items-center gap-6 py-8">
+    <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("settings")}</h1>
 
       {/* Profile */}
       <form
         onSubmit={handleProfileSave}
-        className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
+        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
       >
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("profile")}</h2>
         <div className="flex items-center gap-5">
@@ -231,7 +231,7 @@ export default function SettingsPage() {
       {/* Change Password */}
       <form
         onSubmit={handlePasswordChange}
-        className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
+        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
       >
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {t("changePassword")}
@@ -288,7 +288,7 @@ export default function SettingsPage() {
       </form>
 
       {/* Language */}
-      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("language")}</h2>
         <p className="text-sm text-muted-foreground">{t("languageDesc")}</p>
         <Select
@@ -314,7 +314,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Playback */}
-      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("playback")}</h2>
         <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
         <div className="flex flex-col gap-1.5">
@@ -419,7 +419,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Account Info */}
-      <div className="flex w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("accountInfo")}</h2>
         <div className="flex gap-2 text-sm">
           <span className="text-[#666680]">{t("accountType")}:</span>

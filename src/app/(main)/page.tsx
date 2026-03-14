@@ -237,7 +237,7 @@ export default function HomePage() {
 
         <div className="flex-1 overflow-y-scroll">
         <TabsContent value="home">
-          <div className="stagger-children flex flex-col gap-10 px-12 py-8">
+          <div className="stagger-children flex flex-col gap-6 md:gap-10 px-4 md:px-12 py-4 md:py-8">
             {/* Media Libraries */}
             {libraries.length > 0 ? (
               <ScrollRow title={t("mediaLibraries")}>
@@ -306,15 +306,9 @@ export default function HomePage() {
         </TabsContent>
 
         <TabsContent value="favorites">
-          <div className="animate-fade-in-up px-12 py-8">
+          <div className="animate-fade-in-up px-4 md:px-12 py-4 md:py-8">
             {favorites.length > 0 ? (
-              <div
-                className="grid gap-4"
-                style={{
-                  gridTemplateColumns: "repeat(auto-fill, 180px)",
-                  justifyContent: "center",
-                }}
-              >
+              <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-[repeat(auto-fill,180px)] justify-center">
                 {favorites.map((movie) => (
                   <MovieCard
                     key={movie.id}

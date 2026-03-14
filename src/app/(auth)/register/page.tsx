@@ -49,7 +49,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
-      <div className="w-[480px] animate-fade-in-up rounded-2xl border border-white/[0.06] bg-card p-10">
+      <div className="w-full max-w-[480px] mx-4 md:mx-0 animate-fade-in-up rounded-2xl border border-white/[0.06] bg-card p-6 md:p-10">
         <div className="flex flex-col items-center gap-5">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <p className="text-[15px] text-muted-foreground">

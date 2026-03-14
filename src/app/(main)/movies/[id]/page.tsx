@@ -322,16 +322,18 @@ export default function MovieDetailPage() {
     <div className="h-full overflow-y-scroll scrollbar-hide">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — Jellyfin style */}
-      <div className="relative min-h-[750px] w-full overflow-hidden">
+      <div className="relative md:min-h-[750px] w-full overflow-hidden">
         {/* Fanart Background */}
         {movie.fanartPath && (
-          <Image
-            src={resolveImageSrc(movie.fanartPath)}
-            alt=""
-            fill
-            className="object-cover"
-            priority
-          />
+          <div className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto">
+            <Image
+              src={resolveImageSrc(movie.fanartPath)}
+              alt=""
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
         )}
 
         {/* Fanart fullscreen click-to-dismiss overlay */}
@@ -346,12 +348,12 @@ export default function MovieDetailPage() {
         {/* Bottom gradient — fade to page background */}
         <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
         {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
-        <div className={`absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
+        <div className={`hidden md:block absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + movie info */}
-        <div className={`absolute inset-x-0 bottom-0 flex gap-8 px-20 pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible" : "animate-fade-in-up"}`}>
+        <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible" : "animate-fade-in-up"}`}>
           {/* Poster — 350×525 (2:3) */}
-          <div className="relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             {movie.posterPath ? (
               <Image
                 src={resolveImageSrc(movie.posterPath)}
@@ -369,7 +371,7 @@ export default function MovieDetailPage() {
 
           {/* Movie Info — no glass, text-shadow for readability */}
           <div className="flex min-w-0 flex-1 flex-col gap-3 py-2 [text-shadow:0_1px_8px_rgba(0,0,0,0.8)]">
-            <h1 className="text-4xl font-bold text-white">
+            <h1 className="text-2xl md:text-4xl font-bold text-white">
               {movie.title}
             </h1>
 
@@ -456,11 +458,11 @@ export default function MovieDetailPage() {
             )}
 
             {/* Action buttons — Jellyfin-style uniform small buttons */}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               {externalEnabled ? (
                 <button
                   onClick={() => launchExternal()}
-                  className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white cursor-pointer"
+                  className="flex w-full md:w-auto items-center justify-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white cursor-pointer"
                 >
                   <Play className="h-5 w-5 fill-black" />
                   {t("playExternal", { player: externalPlayerName || "" })}
@@ -468,7 +470,7 @@ export default function MovieDetailPage() {
               ) : (
                 <Link
                   href={`/movies/${movie.id}/play?t=0`}
-                  className="flex items-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
+                  className="flex w-full md:w-auto items-center justify-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
                 >
                   <Play className="h-5 w-5 fill-black" />
                   {(movie.discCount ?? 1) > 1 ? t("playAll") : t("play")}
@@ -575,13 +577,13 @@ export default function MovieDetailPage() {
 
             {/* Overview */}
             {movie.overview && (
-              <p className="max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
+              <p className="max-w-full md:max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
                 {movie.overview}
               </p>
             )}
 
             {/* Metadata list — vertical label: value pairs */}
-            <div className="flex flex-col gap-1.5 pt-1 text-sm max-w-[80%]">
+            <div className="flex flex-col gap-1.5 pt-1 text-sm max-w-full md:max-w-[80%]">
               {tags.length > 0 && (
                 <div className="line-clamp-3">
                   <span className="text-white/50">{t("tags")}: </span>
@@ -655,7 +657,7 @@ export default function MovieDetailPage() {
 
       {/* Frame Scrubber for bookmark mode */}
       {bookmarkMode && (movie.runtimeSeconds || movie.runtimeMinutes) && (
-        <section className="px-20 mt-4">
+        <section className="px-4 md:px-20 mt-4">
           <FrameScrubber
             movieId={movieId}
             runtimeSeconds={movie.runtimeSeconds || (movie.runtimeMinutes || 0) * 60}
@@ -673,7 +675,7 @@ export default function MovieDetailPage() {
       <div className="stagger-children">
       {/* Discs Section (multi-disc movies only) */}
       {(movie.discCount ?? 1) > 1 && movie.discs && movie.discs.length > 0 && (
-        <section className="px-20 mt-4">
+        <section className="px-4 md:px-20 mt-4">
           <h2 className="text-xl font-semibold text-foreground mb-4">
             {t("discs")} ({movie.discs.length})
           </h2>
@@ -817,7 +819,7 @@ export default function MovieDetailPage() {
 
       {/* Bookmarks Section */}
       {bookmarks.length > 0 && (
-        <section className="px-20 mt-4">
+        <section className="px-4 md:px-20 mt-4">
           <ScrollRow title={`${t("bookmarks")} (${bookmarks.length})`}>
             {bookmarks.map((bm) => (
               <BookmarkCard
@@ -838,7 +840,7 @@ export default function MovieDetailPage() {
 
       {/* Cast Section */}
       {movie.cast.length > 0 && (
-        <section className="px-20 mt-4">
+        <section className="px-4 md:px-20 mt-4">
           <ScrollRow title={t("cast")}>
             {movie.cast.map((person) => (
               <PersonCard
@@ -859,7 +861,7 @@ export default function MovieDetailPage() {
 
       {/* Recommended Movies */}
       {recommended.length > 0 && (
-        <section className={`flex flex-col gap-4 px-20 pb-12 ${movie.cast.length > 0 ? "pt-4" : "mt-4"}`}>
+        <section className={`flex flex-col gap-4 px-4 md:px-20 pb-12 ${movie.cast.length > 0 ? "pt-4" : "mt-4"}`}>
           <h2 className="text-xl font-semibold text-foreground">
             {t("youMayAlsoLike")}
           </h2>

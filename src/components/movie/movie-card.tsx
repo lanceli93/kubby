@@ -65,6 +65,7 @@ interface MovieCardProps {
   onToggleFavorite?: () => void;
   onToggleWatched?: () => void;
   onDelete?: (deleteFiles: boolean) => void;
+  responsive?: boolean;
 }
 
 export function MovieCard({
@@ -85,6 +86,7 @@ export function MovieCard({
   onToggleFavorite,
   onToggleWatched,
   onDelete,
+  responsive,
 }: MovieCardProps) {
   const router = useRouter();
   const t = useTranslations("movies");
@@ -100,12 +102,12 @@ export function MovieCard({
   const showResBadge = prefs?.showResolutionBadge !== false;
 
   return (
-    <div className="group flex-shrink-0 transition-transform hover:scale-[1.03]" style={{ width: 180 }}>
+    <div className={`group flex-shrink-0 transition-transform hover:scale-[1.03] ${responsive ? "w-full" : ""}`} style={responsive ? undefined : { width: 180 }}>
     <Link
       href={`/movies/${id}`}
     >
       {/* Poster */}
-      <div className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)]" style={{ height: 270 }}>
+      <div className={`relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)] ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
         {posterPath ? (
           <Image
             src={resolveImageSrc(posterPath, 360)}

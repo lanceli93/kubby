@@ -126,7 +126,7 @@ export function ImageEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[900px]">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[900px] sm:rounded-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{tMeta("editImages")}</DialogTitle>
         </DialogHeader>

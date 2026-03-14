@@ -85,7 +85,7 @@ export function AppHeader() {
 
   return (
     <header
-      className={`flex h-12 w-full items-center justify-between px-8 ${
+      className={`flex h-12 w-full items-center justify-between px-3 md:px-8 ${
         isTransparent
           ? "absolute top-0 left-0 z-30 bg-transparent"
           : "bg-[var(--header)]"
