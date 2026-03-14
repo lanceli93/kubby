@@ -34,7 +34,7 @@ export async function GET(
   return new Response(content, {
     headers: {
       "Content-Type": "application/vnd.apple.mpegurl",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
     },
   });
 }

@@ -77,6 +77,7 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
     "-f", "hls",
     "-hls_time", "6",
     "-hls_list_size", "0",
+    "-hls_playlist_type", "event",
     "-hls_segment_filename", `${outputDir}/segment_%04d.ts`,
     `${outputDir}/playlist.m3u8`,
   );
