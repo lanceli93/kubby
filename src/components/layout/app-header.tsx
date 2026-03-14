@@ -17,11 +17,11 @@ function KubbyLogo({ className }: { className?: string }) {
       className={className}
     >
       {/* Rounded square frame */}
-      <rect x="2" y="2" width="24" height="24" rx="6" stroke="#3b82f6" strokeWidth="2.2" />
+      <rect x="2" y="2" width="24" height="24" rx="6" stroke="#6366f1" strokeWidth="2.2" />
       {/* Letter K */}
       <path
         d="M10 8v12M10 14l8-6M10 14l8 6"
-        stroke="#3b82f6"
+        stroke="#6366f1"
         strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
