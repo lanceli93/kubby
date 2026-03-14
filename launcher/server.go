@@ -53,7 +53,6 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 		fmt.Sprintf("FFPROBE_PATH=%s", ffprobeBin),
 		fmt.Sprintf("FFMPEG_PATH=%s", ffmpegBin),
 		fmt.Sprintf("AUTH_SECRET=%s", authSecret),
-		fmt.Sprintf("AUTH_URL=http://localhost:%d", port),
 		"AUTH_TRUST_HOST=true",
 		"NODE_ENV=production",
 	)
