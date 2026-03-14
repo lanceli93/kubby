@@ -4,7 +4,7 @@ services:
     # Or use pre-built image:
     # image: ghcr.io/lanceli93/kubby:latest
     ports:
-      - "3000:3000"
+      - "8665:8665"
     volumes:
       - kubby-data:/data
       - /path/to/your/movies:/media  # Kubby writes NFO/poster files here

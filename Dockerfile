@@ -36,11 +36,11 @@ RUN mkdir -p /data
 ENV KUBBY_DATA_DIR=/data
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
+ENV PORT=8665
 ENV AUTH_TRUST_HOST=true
 ENV KUBBY_DOCKER=1
 
-EXPOSE 3000
+EXPOSE 8665
 
 # Generate AUTH_SECRET on first run if not provided via env
 CMD if [ -z "$AUTH_SECRET" ]; then \

@@ -15,7 +15,7 @@ export default function NetworkingSettingsPage() {
   const tc = useTranslations("common");
 
   const [settings, setSettings] = useState<NetworkingSettings | null>(null);
-  const [portStr, setPortStr] = useState("3000");
+  const [portStr, setPortStr] = useState("8665");
   const [saving, setSaving] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
   const [error, setError] = useState("");

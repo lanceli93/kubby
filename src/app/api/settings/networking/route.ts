@@ -14,7 +14,7 @@ function readConfig(): ConfigJson {
     const raw = fs.readFileSync(configPath, "utf-8");
     return JSON.parse(raw);
   } catch {
-    return { port: 3000 };
+    return { port: 8665 };
   }
 }
 
@@ -27,10 +27,10 @@ export async function GET() {
   try {
     const cfg = readConfig();
     const isDocker = process.env.KUBBY_DOCKER === "1";
-    const runtimePort = parseInt(process.env.PORT || "3000", 10);
+    const runtimePort = parseInt(process.env.PORT || "8665", 10);
 
     return NextResponse.json({
-      port: cfg.port || 3000,
+      port: cfg.port || 8665,
       runtime: { port: runtimePort },
       isDocker,
     });

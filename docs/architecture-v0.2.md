@@ -982,7 +982,7 @@ dist/kubby-{platform}/
 ## 常用命令
 
 ```bash
-npm run dev              # 启动开发服务器 (http://localhost:3000)
+npm run dev              # 启动开发服务器 (http://localhost:8665)
 npm run build            # 生产构建 (standalone 输出到 .next/standalone/)
 npx drizzle-kit generate # 生成迁移文件
 npx drizzle-kit push     # 推送 schema 到数据库

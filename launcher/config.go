@@ -11,7 +11,7 @@ type Config struct {
 	Port int `json:"port"`
 }
 
-const defaultPort = 3000
+const defaultPort = 8665
 
 // loadConfig reads config.json from dataDir, creating it with defaults if missing.
 func loadConfig(dataDir string) (*Config, error) {

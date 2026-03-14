@@ -90,7 +90,7 @@ npm install
 npm run dev
 ```
 
-打开 [http://localhost:3000](http://localhost:3000)，设置向导会引导你创建管理员账号和添加媒体库。
+打开 [http://localhost:8665](http://localhost:8665)，设置向导会引导你创建管理员账号和添加媒体库。
 
 ## 安装（macOS）
 
@@ -117,7 +117,7 @@ macOS 默认会拦截未签名的应用。第一次打开 Kubby：
 
 ### 启动后会发生什么
 
-- 在 `http://localhost:3000` 跑起一个本地服务
+- 在 `http://localhost:8665` 跑起一个本地服务
 - 自动打开浏览器
 - Dock 栏和菜单栏（右上角）会出现 Kubby 图标
 - 数据存在 `~/Library/Application Support/Kubby/`
@@ -159,7 +159,7 @@ Windows SmartScreen 可能会对未签名应用弹出警告。点 **更多信息
 
 ### 启动后会发生什么
 
-- 在 `http://localhost:3000` 跑起一个本地服务
+- 在 `http://localhost:8665` 跑起一个本地服务
 - 自动打开浏览器
 - 系统托盘（右下角）出现 Kubby 图标
 - 数据存在 `%LOCALAPPDATA%\Kubby\`
@@ -189,7 +189,7 @@ services:
   kubby:
     image: ghcr.io/lanceli93/kubby:latest
     ports:
-      - "3000:3000"
+      - "8665:8665"
     volumes:
       - kubby-data:/data
       - /path/to/your/movies:/media
@@ -203,14 +203,14 @@ volumes:
 docker compose up -d
 ```
 
-打开 `http://<你的服务器IP>:3000`。
+打开 `http://<你的服务器IP>:8665`。
 
 ### Docker CLI
 
 ```bash
 docker run -d \
   --name kubby \
-  -p 3000:3000 \
+  -p 8665:8665 \
   -v kubby-data:/data \
   -v /path/to/your/movies:/media \
   --restart unless-stopped \
@@ -235,7 +235,7 @@ docker compose pull && docker compose up -d
 ```bash
 git clone <repo> && cd kubby
 docker build -t kubby .
-docker run -d -p 3000:3000 -v kubby-data:/data kubby
+docker run -d -p 8665:8665 -v kubby-data:/data kubby
 ```
 
 ## 从源码构建

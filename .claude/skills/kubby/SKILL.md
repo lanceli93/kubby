@@ -59,7 +59,7 @@ Version priority: `KUBBY_VERSION` env (CI from git tag) > `package.json` `"versi
 ## Common Commands
 
 ```bash
-npm run dev                    # Dev server at localhost:3000
+npm run dev                    # Dev server at localhost:8665
 npm run build                  # Production build (standalone)
 npx drizzle-kit push           # Push schema changes to DB
 npx tsc --noEmit               # Type check without emitting

@@ -90,7 +90,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — the setup wizard handles admin account creation and media library setup.
+Open [http://localhost:8665](http://localhost:8665) — the setup wizard handles admin account creation and media library setup.
 
 ## Installation (macOS)
 
@@ -117,7 +117,7 @@ Alternatively: System Settings → Privacy & Security → scroll down → click 
 
 ### What happens on launch
 
-- Starts a local server at `http://localhost:3000`
+- Starts a local server at `http://localhost:8665`
 - Opens your browser automatically
 - Shows a Kubby icon in the Dock and menu bar (top right)
 - Stores data in `~/Library/Application Support/Kubby/`
@@ -159,7 +159,7 @@ Windows SmartScreen may warn about unsigned apps. Click **More info** → **Run 
 
 ### What happens on launch
 
-- Starts a local server at `http://localhost:3000`
+- Starts a local server at `http://localhost:8665`
 - Opens your browser automatically
 - Shows a Kubby icon in the system tray (bottom-right)
 - Stores data in `%LOCALAPPDATA%\Kubby\`
@@ -189,7 +189,7 @@ services:
   kubby:
     image: ghcr.io/lanceli93/kubby:latest
     ports:
-      - "3000:3000"
+      - "8665:8665"
     volumes:
       - kubby-data:/data
       - /path/to/your/movies:/media
@@ -203,14 +203,14 @@ volumes:
 docker compose up -d
 ```
 
-Open `http://<your-server-ip>:3000`.
+Open `http://<your-server-ip>:8665`.
 
 ### Docker CLI
 
 ```bash
 docker run -d \
   --name kubby \
-  -p 3000:3000 \
+  -p 8665:8665 \
   -v kubby-data:/data \
   -v /path/to/your/movies:/media \
   --restart unless-stopped \
@@ -235,7 +235,7 @@ docker compose pull && docker compose up -d
 ```bash
 git clone <repo> && cd kubby
 docker build -t kubby .
-docker run -d -p 3000:3000 -v kubby-data:/data kubby
+docker run -d -p 8665:8665 -v kubby-data:/data kubby
 ```
 
 ## Build from source

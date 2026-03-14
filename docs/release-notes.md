@@ -63,7 +63,7 @@ Kubby's first release! A self-hosted movie server inspired by Jellyfin, rebuilt 
 
 ```bash
 docker run -d \
-  -p 3000:3000 \
+  -p 8665:8665 \
   -v kubby-data:/data \
   -v /path/to/movies:/media \
   ghcr.io/lanceli93/kubby:0.1.0
