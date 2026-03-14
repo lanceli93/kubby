@@ -63,6 +63,8 @@ gh run watch <run-id> --exit-status
 
 ### 5. Write release notes
 
+> **IMPORTANT**: Do NOT use `gh release create` — CI already created a draft release with assets in step 3-4. Using `gh release create` will create a **second** release for the same tag (one with assets, one with notes). Instead, always **edit** the existing draft.
+
 Get commits since last release:
 
 ```bash
@@ -99,8 +101,23 @@ EOF
 
 ### 6. Publish
 
+Edit the draft to add title, notes, and publish in one step:
+
 ```bash
-gh release edit v{x.y.z} --draft=false
+gh api -X PATCH repos/lanceli93/kubby/releases/<RELEASE_ID> \
+  -f name="v{x.y.z} — Title" \
+  -F draft=false \
+  -f body="$(cat <<'EOF'
+## What's New
+...release notes...
+EOF
+)"
+```
+
+To find the draft release ID:
+
+```bash
+gh api repos/lanceli93/kubby/releases --jq '.[] | select(.tag_name=="v{x.y.z}" and .draft) | .id'
 ```
 
 ### 7. Verify Docker image
