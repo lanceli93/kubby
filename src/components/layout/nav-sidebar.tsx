@@ -65,7 +65,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
 
       {/* Panel */}
       <div
-        className={`fixed left-0 top-0 z-50 flex h-full w-64 flex-col bg-[var(--header)] transition-transform duration-300 ${
+        className={`fixed left-0 top-0 z-50 flex h-full w-64 flex-col bg-[#0a0a0f]/70 backdrop-blur-2xl border-r border-white/[0.08] shadow-[inset_-0.5px_0_0_rgba(255,255,255,0.06)] transition-transform duration-300 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -73,9 +73,9 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
         <div className="flex h-12 items-center justify-end px-4">
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="glass-btn rounded-lg p-1.5 cursor-pointer transition-fluid"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
@@ -90,10 +90,10 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
                     active
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -116,10 +116,10 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
                     active
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -145,10 +145,10 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
                     onClick={() => {
                       onClose();
                     }}
-                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
                       active
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                        ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+                        : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -172,10 +172,10 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
                     active
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -188,7 +188,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
                 onClose();
                 signOut({ callbackUrl: "/login" });
               }}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-fluid cursor-pointer hover:bg-white/[0.06] hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
               {tAuth("signOut")}
