@@ -37,10 +37,16 @@ const PROJECT_ROOT = path.resolve(__scriptDir, "..");
 const DIST_DIR = path.join(PROJECT_ROOT, "dist");
 const DOWNLOAD_CACHE = path.join(PROJECT_ROOT, ".download-cache");
 
-// Version priority: KUBBY_VERSION env (set by CI from git tag) > package.json
-const APP_VERSION: string =
-  process.env.KUBBY_VERSION ||
-  JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8")).version;
+// Version priority: KUBBY_VERSION env (CI from git tag) > git describe > package.json
+function getAppVersion(): string {
+  if (process.env.KUBBY_VERSION) return process.env.KUBBY_VERSION;
+  try {
+    const tag = execSync("git describe --tags --abbrev=0", { encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] }).trim();
+    return tag.startsWith("v") ? tag.slice(1) : tag;
+  } catch {}
+  return JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8")).version;
+}
+const APP_VERSION = getAppVersion();
 
 type Platform = "darwin-arm64" | "darwin-x64" | "win-x64" | "linux-x64";
 
