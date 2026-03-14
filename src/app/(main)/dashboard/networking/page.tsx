@@ -87,7 +87,7 @@ export default function NetworkingSettingsPage() {
 
       {/* Docker mode banner */}
       {isDocker && (
-        <div className="flex items-center gap-3 rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-400">
+        <div className="flex items-center gap-3 rounded-lg border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-400">
           <Info className="h-4 w-4 shrink-0" />
           {t("networkingDockerMode")}
         </div>

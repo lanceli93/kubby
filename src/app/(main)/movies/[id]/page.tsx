@@ -492,7 +492,7 @@ export default function MovieDetailPage() {
                   queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
                 }}
                 className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all cursor-pointer ${
-                  externalEnabled ? "text-blue-400" : "text-white/70"
+                  externalEnabled ? "text-indigo-400" : "text-white/70"
                 }`}
                 title={`External player: ${externalEnabled ? "on" : "off"}`}
               >
@@ -971,7 +971,7 @@ export default function MovieDetailPage() {
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>
                 {t("configureExternalPlayer")}{" "}
-                <Link href="/settings" className="underline font-semibold text-blue-400 hover:text-blue-300">
+                <Link href="/settings" className="underline font-semibold text-indigo-400 hover:text-indigo-300">
                   {tSettings("settings")} → {tSettings("playback")}
                 </Link>
               </span>

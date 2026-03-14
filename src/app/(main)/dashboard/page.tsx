@@ -50,7 +50,7 @@ function StatCard({
 
 // Consistent color palette for library bars
 const BAR_COLORS = [
-  "bg-blue-500",
+  "bg-indigo-400",
   "bg-emerald-500",
   "bg-amber-500",
   "bg-purple-500",

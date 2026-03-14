@@ -15,14 +15,14 @@ export interface BuiltinBookmarkIcon {
   id: string;
   label: string;
   icon: LucideIcon;
-  color: string;       // Tailwind text color class, e.g. "text-blue-400"
+  color: string;       // Tailwind text color class, e.g. "text-indigo-400"
   bgSelected: string;  // Tailwind bg for selected state
   ringSelected: string; // Tailwind ring for selected state
   hexColor: string;    // hex for inline styles (progress bar markers)
 }
 
 export const BUILTIN_BOOKMARK_ICONS: BuiltinBookmarkIcon[] = [
-  { id: "bookmark",        label: "Bookmark",  icon: Bookmark,       color: "text-blue-400",    bgSelected: "bg-blue-500/20",    ringSelected: "ring-blue-500/50",    hexColor: "#60a5fa" },
+  { id: "bookmark",        label: "Bookmark",  icon: Bookmark,       color: "text-indigo-400",  bgSelected: "bg-indigo-500/20",  ringSelected: "ring-indigo-500/50",  hexColor: "#818cf8" },
   { id: "star",            label: "Star",       icon: Star,           color: "text-yellow-400",  bgSelected: "bg-yellow-500/20",  ringSelected: "ring-yellow-500/50",  hexColor: "#facc15" },
   { id: "zap",             label: "Action",     icon: Zap,            color: "text-orange-500",  bgSelected: "bg-orange-500/20",  ringSelected: "ring-orange-500/50",  hexColor: "#f97316" },
   { id: "music",           label: "Music",      icon: Music,          color: "text-violet-400",  bgSelected: "bg-violet-500/20",  ringSelected: "ring-violet-500/50",  hexColor: "#a78bfa" },

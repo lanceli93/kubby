@@ -1151,7 +1151,7 @@ export default function PlayerPage() {
             {/* Quick bookmark */}
             <button
               onClick={() => addQuickBookmark.mutate()}
-              className="text-white/60 hover:text-blue-400 transition-colors"
+              className="text-white/60 hover:text-indigo-400 transition-colors"
               title="Quick bookmark (B)"
             >
               <Bookmark className="h-5 w-5" />
@@ -1171,7 +1171,7 @@ export default function PlayerPage() {
             <button
               onClick={() => setAutoHideControls((v) => !v)}
               className={`transition-colors cursor-pointer ${
-                autoHideControls ? "text-white/60 hover:text-white" : "text-blue-400 hover:text-blue-300"
+                autoHideControls ? "text-white/60 hover:text-white" : "text-indigo-400 hover:text-indigo-300"
               }`}
               title={autoHideControls ? "Auto-hide: on" : "Auto-hide: off (controls always visible)"}
             >
