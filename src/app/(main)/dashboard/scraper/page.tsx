@@ -71,12 +71,12 @@ export default function ScraperSettingsPage() {
                   setStatus("idle");
                 }}
                 placeholder={configured ? maskedKey : "Enter TMDB API key..."}
-                className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 pr-10 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -84,7 +84,7 @@ export default function ScraperSettingsPage() {
             <button
               onClick={handleSave}
               disabled={saving || !apiKey.trim()}
-              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer transition-fluid active:scale-95"
             >
               {saving ? "..." : tc("save")}
             </button>

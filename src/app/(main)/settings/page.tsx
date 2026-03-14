@@ -184,7 +184,7 @@ export default function SettingsPage() {
       {/* Profile */}
       <form
         onSubmit={handleProfileSave}
-        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
+        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
       >
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("profile")}</h2>
         <div className="flex items-center gap-5">
@@ -206,7 +206,7 @@ export default function SettingsPage() {
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -221,7 +221,7 @@ export default function SettingsPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
           >
             {tCommon("save")}
           </button>
@@ -231,7 +231,7 @@ export default function SettingsPage() {
       {/* Change Password */}
       <form
         onSubmit={handlePasswordChange}
-        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7"
+        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
       >
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {t("changePassword")}
@@ -244,7 +244,7 @@ export default function SettingsPage() {
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             required
           />
         </div>
@@ -256,7 +256,7 @@ export default function SettingsPage() {
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             required
           />
         </div>
@@ -268,7 +268,7 @@ export default function SettingsPage() {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             required
           />
         </div>
@@ -280,7 +280,7 @@ export default function SettingsPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
           >
             {tCommon("save")}
           </button>
@@ -288,7 +288,7 @@ export default function SettingsPage() {
       </form>
 
       {/* Language */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("language")}</h2>
         <p className="text-sm text-muted-foreground">{t("languageDesc")}</p>
         <Select
@@ -303,7 +303,7 @@ export default function SettingsPage() {
             router.refresh();
           }}
         >
-          <SelectTrigger className="h-11 w-48 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+          <SelectTrigger className="h-11 w-48 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -314,7 +314,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Playback */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("playback")}</h2>
         <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
         <div className="flex flex-col gap-1.5">
@@ -326,10 +326,10 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => handlePlayerChange("")}
-              className={`flex h-11 w-80 items-center gap-3 rounded-lg border px-3.5 text-sm transition-colors cursor-pointer ${
+              className={`flex h-11 w-80 items-center gap-3 rounded-lg border px-3.5 text-sm transition-fluid cursor-pointer ${
                 !playerName
                   ? "border-primary bg-primary/10 text-foreground"
-                  : "border-white/[0.06] bg-[var(--input-bg)] text-muted-foreground hover:bg-white/5"
+                  : "border-white/[0.06] bg-white/[0.05] text-muted-foreground hover:bg-white/5"
               }`}
             >
               <Monitor className="h-5 w-5 flex-shrink-0 opacity-50" />
@@ -346,12 +346,12 @@ export default function SettingsPage() {
                   type="button"
                   disabled={disabled}
                   onClick={() => handlePlayerChange(name)}
-                  className={`flex h-11 w-80 items-center gap-3 rounded-lg border px-3.5 text-sm transition-colors ${
+                  className={`flex h-11 w-80 items-center gap-3 rounded-lg border px-3.5 text-sm transition-fluid ${
                     disabled
                       ? "border-white/[0.03] bg-white/[0.02] text-muted-foreground/40 cursor-not-allowed opacity-40"
                       : selected
                         ? "border-primary bg-primary/10 text-foreground cursor-pointer"
-                        : "border-white/[0.06] bg-[var(--input-bg)] text-foreground hover:bg-white/5 cursor-pointer"
+                        : "border-white/[0.06] bg-white/[0.05] text-foreground hover:bg-white/5 cursor-pointer"
                   }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -369,7 +369,7 @@ export default function SettingsPage() {
               {t("playerMode")}
             </label>
             <Select value={playerMode} onValueChange={handleModeChange}>
-              <SelectTrigger className="h-11 w-64 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+              <SelectTrigger className="h-11 w-64 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -391,7 +391,7 @@ export default function SettingsPage() {
               type="text"
               value={playerPath}
               onChange={(e) => setPlayerPath(e.target.value)}
-              className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+              className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
               placeholder="/Applications/IINA.app"
             />
           </div>
@@ -411,7 +411,7 @@ export default function SettingsPage() {
             type="button"
             onClick={handlePlaybackSave}
             disabled={playbackSaving}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
           >
             {tCommon("save")}
           </button>
@@ -419,7 +419,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Account Info */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("accountInfo")}</h2>
         <div className="flex gap-2 text-sm">
           <span className="text-[#666680]">{t("accountType")}:</span>

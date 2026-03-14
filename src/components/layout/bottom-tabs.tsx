@@ -29,9 +29,9 @@ export function BottomTabs() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] transition-colors ${
+            className={`flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] transition-fluid ${
               isActive
-                ? "text-primary"
+                ? "text-primary bg-white/[0.06] rounded-lg"
                 : "text-muted-foreground"
             }`}
           >

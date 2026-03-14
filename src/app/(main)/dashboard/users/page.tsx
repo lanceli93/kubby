@@ -171,7 +171,7 @@ export default function UsersPage() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("users")}</h1>
         <button
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 cursor-pointer active:scale-95"
         >
           <Plus className="h-4 w-4" />
           {t("addUser")}
@@ -242,7 +242,7 @@ export default function UsersPage() {
                     setResetTarget(user);
                     setResetPw("");
                   }}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+                  className="rounded-md p-1.5 text-muted-foreground transition-fluid hover:bg-white/5 hover:text-foreground cursor-pointer"
                   title={t("resetPassword")}
                 >
                   <KeyRound className="h-4 w-4" />
@@ -259,9 +259,9 @@ export default function UsersPage() {
                         ? t("cannotDeleteLastAdmin")
                         : t("deleteUser")
                   }
-                  className={`rounded-md p-1.5 transition-colors ${
+                  className={`rounded-md p-1.5 transition-fluid ${
                     canDelete
-                      ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive cursor-pointer"
                       : "cursor-default text-muted-foreground/30"
                   }`}
                 >
@@ -295,7 +295,7 @@ export default function UsersPage() {
                 type="text"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
                 autoFocus
               />
@@ -306,7 +306,7 @@ export default function UsersPage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -316,7 +316,7 @@ export default function UsersPage() {
                 type="text"
                 value={newDisplayName}
                 onChange={(e) => setNewDisplayName(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
             <label className="flex items-center gap-2.5 px-1 cursor-pointer">
@@ -324,7 +324,7 @@ export default function UsersPage() {
                 type="checkbox"
                 checked={newIsAdmin}
                 onChange={(e) => setNewIsAdmin(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
               />
               <span className="text-sm text-muted-foreground">{t("makeAdmin")}</span>
             </label>
@@ -397,7 +397,7 @@ export default function UsersPage() {
                 type="password"
                 value={resetPw}
                 onChange={(e) => setResetPw(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
                 autoFocus
               />

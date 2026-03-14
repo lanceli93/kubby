@@ -19,7 +19,7 @@ export function AdminSidebar() {
 
   return (
     <>
-      <aside className="hidden md:flex w-60 flex-col gap-1 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6">
+      <aside className="hidden md:flex w-60 flex-col gap-1 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6 ring-1 ring-white/[0.06]">
         <span className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
           {t("administration")}
         </span>

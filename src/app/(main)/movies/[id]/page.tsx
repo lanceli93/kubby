@@ -347,13 +347,13 @@ export default function MovieDetailPage() {
 
         {/* Bottom gradient — fade to page background */}
         <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
-        {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
-        <div className={`hidden md:block absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/30 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
+        {/* Left-to-right gradient — softened for glass effect */}
+        <div className={`hidden md:block absolute inset-0 bg-gradient-to-r from-background/60 via-background/30 to-transparent transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + movie info */}
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible" : "animate-fade-in-up"}`}>
           {/* Poster — 350×525 (2:3) */}
-          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
             {movie.posterPath ? (
               <Image
                 src={resolveImageSrc(movie.posterPath)}
@@ -369,8 +369,8 @@ export default function MovieDetailPage() {
             )}
           </div>
 
-          {/* Movie Info — no glass, text-shadow for readability */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3 py-2 [text-shadow:0_1px_8px_rgba(0,0,0,0.8)]">
+          {/* Movie Info — glass panel over fanart */}
+          <div className="glass-cinema flex min-w-0 flex-1 flex-col gap-3 rounded-2xl p-4 md:p-6">
             <h1 className="text-2xl md:text-4xl font-bold text-white">
               {movie.title}
             </h1>
@@ -416,41 +416,41 @@ export default function MovieDetailPage() {
               )}
             </div>
 
-            {/* Video info badges */}
+            {/* Video info badges — glass pills */}
             {(movie.videoCodec || movie.audioCodec || movie.videoWidth || movie.container || movie.runtimeSeconds || movie.runtimeMinutes) && (
               <div className="flex flex-wrap items-center gap-2">
                 {getResolutionLabel(movie.videoWidth) && (
-                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
                     {getResolutionLabel(movie.videoWidth)}
                   </span>
                 )}
                 {movie.videoWidth && movie.videoHeight && (
-                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
                     {movie.videoWidth} × {movie.videoHeight}
                   </span>
                 )}
                 {movie.videoCodec && (
-                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
                     {movie.videoCodec}
                   </span>
                 )}
                 {movie.audioCodec && (
-                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
                     {movie.audioCodec}
                   </span>
                 )}
                 {formatChannels(movie.audioChannels) && (
-                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
                     {formatChannels(movie.audioChannels)}
                   </span>
                 )}
                 {movie.container && (
-                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
                     {movie.container}
                   </span>
                 )}
                 {(movie.runtimeSeconds || movie.runtimeMinutes) && (
-                  <span className="rounded border border-white/30 px-2 py-1 text-xs font-semibold uppercase text-white/90">
+                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
                     {formatRuntime(movie.runtimeSeconds, movie.runtimeMinutes)}
                   </span>
                 )}
@@ -462,7 +462,7 @@ export default function MovieDetailPage() {
               {externalEnabled ? (
                 <button
                   onClick={() => launchExternal()}
-                  className="flex w-full md:w-auto items-center justify-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white cursor-pointer"
+                  className="flex w-full md:w-auto items-center justify-center gap-2 rounded-xl bg-white/90 px-6 py-2.5 text-base font-semibold text-black shadow-lg shadow-white/10 transition-all hover:bg-white hover:shadow-white/20 cursor-pointer"
                 >
                   <Play className="h-5 w-5 fill-black" />
                   {t("playExternal", { player: externalPlayerName || "" })}
@@ -470,7 +470,7 @@ export default function MovieDetailPage() {
               ) : (
                 <Link
                   href={`/movies/${movie.id}/play?t=0`}
-                  className="flex w-full md:w-auto items-center justify-center gap-2 rounded-lg bg-white/90 px-6 py-2.5 text-base font-semibold text-black transition-colors hover:bg-white"
+                  className="flex w-full md:w-auto items-center justify-center gap-2 rounded-xl bg-white/90 px-6 py-2.5 text-base font-semibold text-black shadow-lg shadow-white/10 transition-all hover:bg-white hover:shadow-white/20"
                 >
                   <Play className="h-5 w-5 fill-black" />
                   {(movie.discCount ?? 1) > 1 ? t("playAll") : t("play")}
@@ -491,7 +491,7 @@ export default function MovieDetailPage() {
                   });
                   queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
                 }}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
+                className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all cursor-pointer ${
                   externalEnabled ? "text-blue-400" : "text-white/70"
                 }`}
                 title={`External player: ${externalEnabled ? "on" : "off"}`}
@@ -501,7 +501,7 @@ export default function MovieDetailPage() {
               {movie.fanartPath && (
                 <button
                   onClick={() => setFanartMode(true)}
-                  className="hidden md:flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  className="glass-btn hidden md:flex h-11 w-11 items-center justify-center rounded-xl text-white/70 transition-all"
                   title="View fanart"
                 >
                   <Maximize2 className="h-5 w-5" />
@@ -509,7 +509,7 @@ export default function MovieDetailPage() {
               )}
               <button
                 onClick={() => toggleWatched.mutate()}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 ${
+                className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all ${
                   movie.userData?.isPlayed ? "text-green-400" : "text-white/70"
                 }`}
                 title="Mark as watched"
@@ -518,7 +518,7 @@ export default function MovieDetailPage() {
               </button>
               <button
                 onClick={() => toggleFavorite.mutate()}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 ${
+                className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all ${
                   movie.userData?.isFavorite ? "text-red-400" : "text-white/70"
                 }`}
                 title="Favorite"
@@ -532,7 +532,7 @@ export default function MovieDetailPage() {
               {(movie.runtimeSeconds || movie.runtimeMinutes) && (
                 <button
                   onClick={() => setBookmarkMode((v) => !v)}
-                  className={`hidden md:flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
+                  className={`glass-btn hidden md:flex h-11 w-11 items-center justify-center rounded-xl transition-all cursor-pointer ${
                     bookmarkMode ? "text-yellow-400" : "text-white/70"
                   }`}
                   title={t("bookmarkMode")}
@@ -545,7 +545,7 @@ export default function MovieDetailPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                    className="glass-btn flex h-11 w-11 items-center justify-center rounded-xl text-white/70 transition-all"
                   >
                     <MoreVertical className="h-5 w-5" />
                   </button>
@@ -685,7 +685,7 @@ export default function MovieDetailPage() {
               <button
                 key={disc.id}
                 onClick={() => launchExternal(disc.discNumber)}
-                className="group flex flex-shrink-0 gap-4 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10 cursor-pointer text-left"
+                className="glass-card group flex flex-shrink-0 gap-4 rounded-xl p-3 cursor-pointer text-left"
               >
                 {/* Disc poster with play overlay */}
                 <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
@@ -712,7 +712,7 @@ export default function MovieDetailPage() {
                   )}
                   {/* Centered play button on hover */}
                   <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
+                    <div className="glass-btn flex h-10 w-10 items-center justify-center rounded-full text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
                       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
                     </div>
                   </div>
@@ -750,7 +750,7 @@ export default function MovieDetailPage() {
               <Link
                 key={disc.id}
                 href={`/movies/${movie.id}/play?disc=${disc.discNumber}`}
-                className="group flex flex-shrink-0 gap-4 rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
+                className="glass-card group flex flex-shrink-0 gap-4 rounded-xl p-3"
               >
                 {/* Disc poster with play overlay */}
                 <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
@@ -777,7 +777,7 @@ export default function MovieDetailPage() {
                   )}
                   {/* Centered play button on hover — matches MovieCard style */}
                   <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
+                    <div className="glass-btn flex h-10 w-10 items-center justify-center rounded-full text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
                       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
                     </div>
                   </div>

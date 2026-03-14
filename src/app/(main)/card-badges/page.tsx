@@ -53,7 +53,7 @@ function PosterPlaceholder({
 }) {
   return (
     <div
-      className={`flex items-center justify-center rounded-[4px] ${className}`}
+      className={`flex items-center justify-center rounded-lg ${className}`}
       style={{
         background:
           icon === "movie"
@@ -159,7 +159,7 @@ function ExpandableRules({
     <div className="mt-1">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-fluid cursor-pointer"
       >
         <ChevronDown
           className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-0" : "-rotate-90"}`}
@@ -245,7 +245,7 @@ export default function CardBadgesPage() {
       <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
 
       {/* Movie card badges */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("movieCardBadges")}
         </h2>
@@ -278,7 +278,7 @@ export default function CardBadgesPage() {
           </div>
           <button
             onClick={() => setShowMovieBadge(!showMovieBadge)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
               showMovieBadge ? "bg-primary" : "bg-white/20"
             }`}
           >
@@ -303,7 +303,7 @@ export default function CardBadgesPage() {
             </div>
             <button
               onClick={() => setShowResolutionBadge(!showResolutionBadge)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
                 showResolutionBadge ? "bg-primary" : "bg-white/20"
               }`}
             >
@@ -344,7 +344,7 @@ export default function CardBadgesPage() {
       </div>
 
       {/* Person card badges */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("personCardBadges")}
         </h2>
@@ -375,7 +375,7 @@ export default function CardBadgesPage() {
           </div>
           <button
             onClick={() => setShowPersonRatingBadge(!showPersonRatingBadge)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
               showPersonRatingBadge ? "bg-primary" : "bg-white/20"
             }`}
           >
@@ -400,7 +400,7 @@ export default function CardBadgesPage() {
             </div>
             <button
               onClick={() => setShowPersonBadge(!showPersonBadge)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
                 showPersonBadge ? "bg-primary" : "bg-white/20"
               }`}
             >
@@ -444,7 +444,7 @@ export default function CardBadgesPage() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full max-w-[720px] rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        className="w-full max-w-[720px] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
       >
         {saving ? tCommon("loading") : tCommon("save")}
       </button>

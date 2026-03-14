@@ -69,13 +69,13 @@ export function PersonCard({
   const [deleteFiles, setDeleteFiles] = useState(false);
 
   return (
-    <div className="group flex-shrink-0 transition-transform hover:scale-[1.03]" style={{ width }}>
+    <div className="group flex-shrink-0 transition-fluid hover:scale-[1.03]" style={{ width }}>
     <Link
       href={`/people/${id}`}
     >
       {/* Photo */}
       <div
-        className="relative overflow-hidden rounded-[4px] bg-[var(--surface)]"
+        className="relative overflow-hidden rounded-lg bg-[var(--surface)] ring-1 ring-white/[0.06]"
         style={{ width, height }}
       >
         {photoPath ? (
@@ -83,7 +83,7 @@ export function PersonCard({
             src={resolveImageSrc(photoPath, width * 2)}
             alt={name}
             fill
-            className="object-cover"
+            className="object-cover transition-fluid group-hover:scale-105"
             sizes={`${width}px`}
             {...(photoBlur ? { placeholder: "blur" as const, blurDataURL: photoBlur } : {})}
           />
@@ -97,7 +97,7 @@ export function PersonCard({
         {showTierBadge && personalRating != null && personalRating > 0 && (() => {
           const tier = getTier(personalRating);
           return (
-            <div className={`absolute left-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}>
+            <div className={`absolute left-1.5 top-1.5 glass-badge rounded-md px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierGlow(tier)}`}>
               {tier}
             </div>
           );
@@ -105,7 +105,7 @@ export function PersonCard({
 
         {/* Personal rating badge — top-right */}
         {showRatingBadge && personalRating != null && personalRating > 0 && (
-          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5">
             <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
             <span className="text-[11px] font-medium text-[var(--gold)]">
               {personalRating.toFixed(1)}
@@ -113,8 +113,8 @@ export function PersonCard({
           </div>
         )}
 
-        {/* Hover overlay bar with dropdown */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-end px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
+        {/* Hover overlay bar — glass, slides up */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-end px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-fluid z-[5]">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

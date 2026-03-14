@@ -310,7 +310,7 @@ function SearchContent() {
         <button
           onClick={() => loadMore(section)}
           disabled={isLoading}
-          className="flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/15 hover:text-foreground disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-medium text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground active:scale-95 disabled:opacity-50 cursor-pointer"
         >
           {isLoading ? (
             <>
@@ -336,7 +336,7 @@ function SearchContent() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="h-10 w-full max-w-[800px] rounded-sm border border-white/[0.08] bg-[var(--surface)] px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            className="h-10 w-full max-w-[800px] rounded-xl border border-white/[0.08] bg-white/[0.05] backdrop-blur-sm px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             autoFocus
           />
         </div>
@@ -347,7 +347,7 @@ function SearchContent() {
             <button
               key={cat.key}
               onClick={() => setCategory(cat.key)}
-              className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer ${
+              className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-fluid cursor-pointer ${
                 category === cat.key
                   ? "border-primary/40 bg-primary/20 text-primary backdrop-blur-sm"
                   : "border-white/[0.08] bg-white/[0.06] text-muted-foreground backdrop-blur-sm hover:bg-white/[0.12] hover:text-foreground hover:border-white/[0.15]"
@@ -362,7 +362,7 @@ function SearchContent() {
               <div className="mx-1 h-5 w-px bg-white/10" />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.06] px-3.5 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-all hover:bg-white/[0.12] hover:text-foreground hover:border-white/[0.15] cursor-pointer">
+                  <button className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.06] px-3.5 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-fluid hover:bg-white/[0.12] hover:text-foreground hover:border-white/[0.15] cursor-pointer">
                     <Library className="h-3.5 w-3.5" />
                     <span>{selectedLibraryName || t("allLibraries")}</span>
                     <ChevronDown className="h-3 w-3 opacity-60" />

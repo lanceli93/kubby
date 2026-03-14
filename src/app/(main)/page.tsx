@@ -228,10 +228,10 @@ export default function HomePage() {
         onChange={handleFileChange}
       />
       <Tabs defaultValue="home" className="flex h-full flex-col">
-        <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
+        <div className="flex justify-center border-b border-white/[0.06] bg-black/30 backdrop-blur-xl">
           <TabsList variant="line">
-            <TabsTrigger value="home">{t("homeTab")}</TabsTrigger>
-            <TabsTrigger value="favorites">{t("favoritesTab")}</TabsTrigger>
+            <TabsTrigger value="home" className="transition-fluid cursor-pointer">{t("homeTab")}</TabsTrigger>
+            <TabsTrigger value="favorites" className="transition-fluid cursor-pointer">{t("favoritesTab")}</TabsTrigger>
           </TabsList>
         </div>
 

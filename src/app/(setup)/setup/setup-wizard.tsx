@@ -139,7 +139,7 @@ export function SetupWizard() {
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex items-center">
             <div
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-fluid ${
                 i === current
                   ? "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(59,130,246,0.4)]"
                   : i < current
@@ -170,7 +170,7 @@ export function SetupWizard() {
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
       {/* Step 1: Language Selection */}
       {step === 1 && (
-        <div key="step1" className={`flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+        <div key="step1" className={`flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
             {t("welcomeToKubby")}
@@ -182,7 +182,7 @@ export function SetupWizard() {
           <div className="flex w-full gap-4">
             <button
               onClick={() => handleLanguageSelect("en")}
-              className={`flex flex-1 flex-col items-center justify-center gap-2.5 rounded-xl border-2 py-8 transition-colors ${
+              className={`flex flex-1 flex-col items-center justify-center gap-2.5 rounded-xl border-2 py-8 transition-fluid cursor-pointer ${
                 selectedLocale === "en"
                   ? "border-primary/50 bg-[#0f0f1a]"
                   : "border-white/[0.06] bg-[#0f0f1a] hover:border-white/[0.12]"
@@ -195,7 +195,7 @@ export function SetupWizard() {
             </button>
             <button
               onClick={() => handleLanguageSelect("zh")}
-              className={`flex flex-1 flex-col items-center justify-center gap-2.5 rounded-xl border-2 py-8 transition-colors ${
+              className={`flex flex-1 flex-col items-center justify-center gap-2.5 rounded-xl border-2 py-8 transition-fluid cursor-pointer ${
                 selectedLocale === "zh"
                   ? "border-primary/50 bg-[#0f0f1a]"
                   : "border-white/[0.06] bg-[#0f0f1a] hover:border-white/[0.12]"
@@ -208,7 +208,7 @@ export function SetupWizard() {
 
           <button
             onClick={handleLanguageNext}
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
           >
             {tc("next")}
           </button>
@@ -219,7 +219,7 @@ export function SetupWizard() {
 
       {/* Step 2: Create Admin */}
       {step === 2 && (
-        <div key="step2" className={`flex w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+        <div key="step2" className={`flex w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
             {t("createAdminAccount")}
@@ -236,7 +236,7 @@ export function SetupWizard() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={t("enterAdminUsername")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -251,12 +251,12 @@ export function SetupWizard() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t("enterPassword")}
-                  className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground cursor-pointer"
                 >
                   {showPassword ? (
                     <Eye className="h-[18px] w-[18px]" />
@@ -278,12 +278,12 @@ export function SetupWizard() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder={t("confirmYourPassword")}
-                  className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground cursor-pointer"
                 >
                   {showConfirm ? (
                     <Eye className="h-[18px] w-[18px]" />
@@ -295,18 +295,18 @@ export function SetupWizard() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
           <div className="flex w-full gap-3">
             <button
               onClick={() => { setSlideDir("left"); setStep(1); }}
-              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
             >
               {tc("back")}
             </button>
             <button
               onClick={handleAdminNext}
-              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
             >
               {tc("next")}
             </button>
@@ -318,7 +318,7 @@ export function SetupWizard() {
 
       {/* Step 3: Add Media Library */}
       {step === 3 && (
-        <div key="step3" className={`flex max-h-[90vh] w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+        <div key="step3" className={`flex max-h-[90vh] w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="shrink-0 brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="shrink-0 text-xl font-semibold text-foreground">
             {t("addMediaLibrary")}
@@ -335,7 +335,7 @@ export function SetupWizard() {
                 value={libraryName}
                 onChange={(e) => setLibraryName(e.target.value)}
                 placeholder={t("libraryNamePlaceholder")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -345,7 +345,7 @@ export function SetupWizard() {
                 {t("libraryType")}
               </label>
               <Select value={libraryType} onValueChange={setLibraryType}>
-                <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -372,12 +372,12 @@ export function SetupWizard() {
                         updated[idx] = e.target.value;
                         setFolderPaths(updated);
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setFolderPaths(folderPaths.filter((_, i) => i !== idx))}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-white/[0.06] hover:text-foreground cursor-pointer"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -396,11 +396,11 @@ export function SetupWizard() {
                       }
                     }}
                     placeholder={t("folderPathPlaceholder")}
-                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
                   <button
                     onClick={() => setFolderPickerOpen(true)}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] bg-[var(--input-bg)] text-primary hover:bg-white/[0.04]"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.05] text-primary hover:bg-white/[0.04] cursor-pointer"
                   >
                     <FolderOpen className="h-5 w-5" />
                   </button>
@@ -413,7 +413,7 @@ export function SetupWizard() {
                         setNewFolderPath("");
                       }
                     }}
-                    className="flex h-11 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3.5 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
+                    className="flex h-11 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3.5 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground cursor-pointer disabled:opacity-30"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -426,7 +426,7 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("metadataDownloaders")}
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">TheMovieDb</span>
                 <Switch checked={scraperEnabled} onCheckedChange={setScraperEnabled} />
               </div>
@@ -444,9 +444,9 @@ export function SetupWizard() {
                   value={tmdbApiKey}
                   onChange={(e) => { setTmdbApiKey(e.target.value); setTmdbApiKeyError(""); }}
                   placeholder={t("tmdbApiKeyPlaceholder")}
-                  className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 />
-                {tmdbApiKeyError && <p className="text-xs text-destructive">{tmdbApiKeyError}</p>}
+                {tmdbApiKeyError && <p className="text-xs text-destructive" role="alert">{tmdbApiKeyError}</p>}
                 <p className="text-xs text-[#555568]">
                   <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                     {t("getTmdbApiKey")}
@@ -460,7 +460,7 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("jellyfinCompatMode")}
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">{t("jellyfinCompatMode")}</span>
                 <Switch
                   checked={jellyfinCompat}
@@ -506,20 +506,20 @@ export function SetupWizard() {
             </Dialog>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
           <div className="flex w-full gap-3">
             <button
               onClick={() => { setSlideDir("left"); setStep(2); }}
               disabled={loading}
-              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer disabled:opacity-50"
             >
               {tc("back")}
             </button>
             <button
               onClick={() => handleComplete(false)}
               disabled={loading}
-              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
             >
               {loading ? tc("loading") : tc("next")}
             </button>
@@ -528,7 +528,7 @@ export function SetupWizard() {
           <button
             onClick={() => handleComplete(true)}
             disabled={loading}
-            className="text-[13px] text-muted-foreground hover:text-foreground"
+            className="text-[13px] text-muted-foreground hover:text-foreground transition-fluid cursor-pointer"
           >
             {t("skipForNow")}
           </button>
@@ -545,7 +545,7 @@ export function SetupWizard() {
 
       {/* Step 4: Complete */}
       {step === 4 && (
-        <div key="step4" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] bg-card px-10 py-12 animate-slide-in-right">
+        <div key="step4" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
 
           <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-green-500/10">
@@ -561,7 +561,7 @@ export function SetupWizard() {
 
           <button
             onClick={() => router.push("/login")}
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
           >
             {t("goToSignIn")}
           </button>

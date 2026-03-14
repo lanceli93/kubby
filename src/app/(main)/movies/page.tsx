@@ -153,12 +153,12 @@ function MovieBrowseContent() {
   return (
     <div className="flex h-full flex-col">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-full flex-col">
-        <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
+        <div className="flex justify-center border-b border-white/[0.06] bg-black/30 backdrop-blur-xl">
           <TabsList variant="line">
-            <TabsTrigger value="movies">{t("movies")}</TabsTrigger>
-            <TabsTrigger value="favorites">{t("favorites")}</TabsTrigger>
-            <TabsTrigger value="genres">{t("genres")}</TabsTrigger>
-            <TabsTrigger value="actors">{t("actors")}</TabsTrigger>
+            <TabsTrigger value="movies" className="transition-fluid cursor-pointer">{t("movies")}</TabsTrigger>
+            <TabsTrigger value="favorites" className="transition-fluid cursor-pointer">{t("favorites")}</TabsTrigger>
+            <TabsTrigger value="genres" className="transition-fluid cursor-pointer">{t("genres")}</TabsTrigger>
+            <TabsTrigger value="actors" className="transition-fluid cursor-pointer">{t("actors")}</TabsTrigger>
           </TabsList>
         </div>
 
@@ -362,7 +362,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
           >
             <ArrowUpDown className="h-5 w-5" />
             {t("sortBy")}
@@ -499,7 +499,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
           >
             <Filter className="h-5 w-5" />
             {t("filter")}
@@ -1056,7 +1056,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
           >
             <ArrowUpDown className="h-5 w-5" />
             {t("sortBy")}
@@ -1194,7 +1194,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
           >
             <Filter className="h-5 w-5" />
             {t("filter")}
@@ -1566,7 +1566,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
           >
             <ArrowUpDown className="h-5 w-5" />
             {t("sortBy")}
@@ -1694,7 +1694,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
           >
             <Filter className="h-5 w-5" />
             {t("filter")}

@@ -156,13 +156,13 @@ export default function PersonDetailPage() {
 
         {/* Bottom gradient — fade to page background */}
         <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
-        {/* Left-to-right gradient — dark behind text, fanart peeks through on right */}
-        <div className={`hidden md:block absolute inset-0 bg-gradient-to-r from-background via-background/60 to-background/20 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
+        {/* Left-to-right gradient — softened for glass effect */}
+        <div className={`hidden md:block absolute inset-0 bg-gradient-to-r from-background/60 via-background/30 to-transparent transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + person info */}
-        <div className={`animate-fade-in-up relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 md:px-20 pb-6 md:pb-16 transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`}>
+        <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible" : "animate-fade-in-up"}`}>
           {/* Poster — 350×525 (2:3), same as movie detail */}
-          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
             {person.photoPath ? (
               <Image
                 src={resolveImageSrc(person.photoPath)}
@@ -172,18 +172,18 @@ export default function PersonDetailPage() {
                 sizes="350px"
               />
             ) : (
-              <div className="flex h-full items-center justify-center bg-[var(--surface)] text-4xl text-muted-foreground">
+              <div className="flex h-full items-center justify-center bg-white/[0.05] text-4xl text-muted-foreground">
                 {person.name[0]?.toUpperCase()}
               </div>
             )}
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col gap-3 py-2 [text-shadow:0_1px_8px_rgba(0,0,0,0.8)]">
+          <div className="glass-cinema flex min-w-0 flex-1 flex-col gap-3 rounded-2xl p-4 md:p-6">
             <h1 className="text-2xl md:text-4xl font-bold text-white">
               {person.name}
             </h1>
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 items-center rounded-md border border-white/20 px-3 text-sm capitalize text-white/70">
+              <span className="glass-badge inline-flex h-7 items-center rounded-md px-3 text-sm capitalize text-white/90">
                 {person.type}
               </span>
 
@@ -192,19 +192,21 @@ export default function PersonDetailPage() {
                 <>
                   <button
                     onClick={() => setRatingOpen(true)}
-                    className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
+                    className="glass-badge inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
+                    aria-label="Edit rating"
                   >
                     <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
                     {person.userData.personalRating.toFixed(1)}
                   </button>
-                  <span className={`inline-flex h-7 items-center rounded-md border px-2.5 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))} ${getTierGlow(getTier(person.userData.personalRating))}`}>
+                  <span className={`glass-badge inline-flex h-7 items-center rounded-md border px-2.5 text-sm font-black tracking-wider ${getTierColor(getTier(person.userData.personalRating))} ${getTierBorderColor(getTier(person.userData.personalRating))} ${getTierGlow(getTier(person.userData.personalRating))}`}>
                     {getTier(person.userData.personalRating)}
                   </span>
                 </>
               ) : (
                 <button
                   onClick={() => setRatingOpen(true)}
-                  className="inline-flex h-7 items-center justify-center rounded-md border border-white/20 px-2 text-white/40 transition-colors hover:text-[var(--gold)] cursor-pointer"
+                  className="glass-btn inline-flex h-7 items-center justify-center rounded-lg px-2 text-white/40 transition-all hover:text-[var(--gold)] cursor-pointer"
+                  aria-label="Rate person"
                 >
                   <Star className="h-3.5 w-3.5" />
                 </button>
@@ -214,8 +216,8 @@ export default function PersonDetailPage() {
               {person.fanartPath && (
                 <button
                   onClick={() => setFanartMode(true)}
-                  className="hidden md:inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
-                  title="View fanart"
+                  className="glass-btn hidden md:inline-flex h-7 w-7 items-center justify-center rounded-xl text-white/70 transition-all cursor-pointer"
+                  aria-label="View fanart"
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
                 </button>
@@ -225,7 +227,8 @@ export default function PersonDetailPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="inline-flex h-7 items-center justify-center rounded-md border border-white/20 px-2 text-white/70 transition-colors hover:bg-white/10"
+                    className="glass-btn inline-flex h-7 items-center justify-center rounded-xl px-2 text-white/70 transition-all cursor-pointer"
+                    aria-label="More options"
                   >
                     <MoreVertical className="h-3.5 w-3.5" />
                   </button>

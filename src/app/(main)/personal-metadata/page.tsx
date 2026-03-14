@@ -200,7 +200,7 @@ export default function PersonalMetadataPage() {
       <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
 
       {/* Movie Rating Dimensions */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("movieRatingDimensions")}
         </h2>
@@ -217,7 +217,7 @@ export default function PersonalMetadataPage() {
               <button
                 type="button"
                 onClick={() => setMovieDims((d) => d.filter((x) => x !== dim))}
-                className="text-primary/60 hover:text-primary"
+                className="text-primary/60 hover:text-primary cursor-pointer"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -231,7 +231,7 @@ export default function PersonalMetadataPage() {
           placeholder={t("addDimensionPlaceholder")}
           maxLength={MAX_DIM_LENGTH}
           disabled={movieDims.length >= 10}
-          className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+          className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
         />
         {movieDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
@@ -239,7 +239,7 @@ export default function PersonalMetadataPage() {
       </div>
 
       {/* Person Rating Dimensions */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("personRatingDimensions")}
         </h2>
@@ -256,7 +256,7 @@ export default function PersonalMetadataPage() {
               <button
                 type="button"
                 onClick={() => setPersonDims((d) => d.filter((x) => x !== dim))}
-                className="text-primary/60 hover:text-primary"
+                className="text-primary/60 hover:text-primary cursor-pointer"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -270,7 +270,7 @@ export default function PersonalMetadataPage() {
           placeholder={t("addDimensionPlaceholder")}
           maxLength={MAX_DIM_LENGTH}
           disabled={personDims.length >= 10}
-          className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+          className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
         />
         {personDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
@@ -278,7 +278,7 @@ export default function PersonalMetadataPage() {
       </div>
 
       {/* Bookmark Icons */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
             {t("bookmarkIcons")}
@@ -310,7 +310,7 @@ export default function PersonalMetadataPage() {
                     return next;
                   });
                 }}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-fluid cursor-pointer ${
                   isDisabled
                     ? "bg-white/5 opacity-30 line-through text-muted-foreground"
                     : "bg-white/5 text-muted-foreground hover:bg-white/10"
@@ -400,7 +400,7 @@ export default function PersonalMetadataPage() {
                   onChange={(e) => setIconLabel(e.target.value)}
                   placeholder={t("iconLabelPlaceholder")}
                   maxLength={20}
-                  className="h-9 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="h-9 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
               <div className="flex h-9 flex-1 items-center">
@@ -426,7 +426,7 @@ export default function PersonalMetadataPage() {
                   }
                 }}
                 disabled={!iconLabel.trim() || !iconFile || uploadIcon.isPending}
-                className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
+                className="flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
               >
                 <Upload className="h-3.5 w-3.5" />
                 {t("uploadIcon")}
@@ -464,7 +464,7 @@ export default function PersonalMetadataPage() {
             <button
               type="button"
               onClick={() => setSubtleMarkers((v) => !v)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
                 subtleMarkers ? "bg-primary" : "bg-white/20"
               }`}
             >
@@ -513,7 +513,7 @@ export default function PersonalMetadataPage() {
       </div>
 
       {/* Quick Bookmark Template */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-7">
+      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
             {t("quickBookmarkTemplate")}
@@ -598,7 +598,7 @@ export default function PersonalMetadataPage() {
               }
             }}
             placeholder={t("addDimensionPlaceholder")}
-            className="w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
+            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
           />
         </div>
 
@@ -610,7 +610,7 @@ export default function PersonalMetadataPage() {
             onChange={(e) => setQbNote(e.target.value)}
             placeholder={t("templateNotePlaceholder")}
             rows={2}
-            className="w-full resize-none rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
+            className="w-full resize-none rounded-lg border border-white/[0.06] bg-white/[0.05] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
           />
         </div>
       </div>
@@ -619,7 +619,7 @@ export default function PersonalMetadataPage() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full max-w-[720px] rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        className="w-full max-w-[720px] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
       >
         {saving ? tCommon("loading") : tCommon("save")}
       </button>

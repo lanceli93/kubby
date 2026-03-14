@@ -38,7 +38,7 @@ function StatCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="card-hover flex flex-1 flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-6 shadow-[0_2px_16px_rgba(0,0,0,0.15)]">
+    <div className="card-hover flex flex-1 flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-6 shadow-[0_2px_16px_rgba(0,0,0,0.15)] transition-fluid">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{label}</span>
         <Icon className="h-5 w-5 text-muted-foreground/40" />
@@ -182,20 +182,20 @@ export default function DashboardPage() {
           <div className="h-px flex-1 bg-gradient-to-r from-white/[0.06] to-transparent" />
         </div>
         <div className="flex gap-3">
-          <button className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground">
+          <button className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground cursor-pointer transition-fluid active:scale-95">
             <RefreshCw className="h-4 w-4 text-muted-foreground" />
             {t("scanAllLibraries")}
           </button>
           <Link
             href="/dashboard/libraries"
-            className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground"
+            className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground cursor-pointer transition-fluid active:scale-95"
           >
             <Plus className="h-4 w-4 text-muted-foreground" />
             {t("addLibrary")}
           </Link>
           <Link
             href="/dashboard/users"
-            className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground"
+            className="card-hover flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-3 text-sm text-foreground cursor-pointer transition-fluid active:scale-95"
           >
             <UserPlus className="h-4 w-4 text-muted-foreground" />
             {t("addUser")}

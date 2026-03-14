@@ -88,7 +88,7 @@ export function AppHeader() {
       className={`flex h-12 w-full items-center justify-between px-3 md:px-8 ${
         isTransparent
           ? "absolute top-0 left-0 z-30 bg-transparent"
-          : "bg-[var(--header)]"
+          : "bg-[var(--header)] backdrop-blur-xl"
       }`}
     >
       <div className="flex items-center gap-4">

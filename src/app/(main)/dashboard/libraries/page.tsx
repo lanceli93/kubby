@@ -185,7 +185,7 @@ export default function LibrariesPage() {
             <button
               onClick={scanAll}
               disabled={anyScanning}
-              className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.04] disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm font-medium text-foreground transition-fluid hover:bg-white/[0.04] disabled:opacity-50 cursor-pointer active:scale-95"
             >
               <RefreshCw className={`h-4 w-4 ${anyScanning ? "animate-spin" : ""}`} />
               Scan All Libraries
@@ -193,7 +193,7 @@ export default function LibrariesPage() {
           )}
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) { checkTmdbKey(); setScraperError(""); } }}>
             <DialogTrigger asChild>
-              <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer transition-fluid active:scale-95">
                 <Plus className="h-4 w-4" />
                 Add Library
               </button>
@@ -218,7 +218,7 @@ export default function LibrariesPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="My Movies"
-                    className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                     required
                   />
                 </div>
@@ -227,7 +227,7 @@ export default function LibrariesPage() {
                     Library Type
                   </label>
                   <Select value={type} onValueChange={setType}>
-                    <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                    <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,7 +252,7 @@ export default function LibrariesPage() {
                             updated[idx] = e.target.value;
                             setFolderPaths(updated);
                           }}
-                          className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                          className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
                         />
                         <button
                           type="button"
@@ -276,7 +276,7 @@ export default function LibrariesPage() {
                           }
                         }}
                         placeholder="/media/movies"
-                        className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                        className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                       />
                       <button
                         type="button"
@@ -314,7 +314,7 @@ export default function LibrariesPage() {
                   <label className="text-[13px] font-medium text-muted-foreground">
                     Metadata downloaders (Movies)
                   </label>
-                  <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+                  <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                     <span className="text-sm text-foreground">TheMovieDb</span>
                     <Switch
                       checked={scraperEnabled}
@@ -339,7 +339,7 @@ export default function LibrariesPage() {
                       Metadata Language
                     </label>
                     <Select value={metadataLanguage} onValueChange={setMetadataLanguage}>
-                      <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                      <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -368,7 +368,7 @@ export default function LibrariesPage() {
                   <label className="text-[13px] font-medium text-muted-foreground">
                     Jellyfin Compatibility
                   </label>
-                  <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+                  <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                     <span className="text-sm text-foreground">Jellyfin Compatibility Mode</span>
                     <Switch
                       checked={jellyfinCompat}
@@ -475,7 +475,7 @@ export default function LibrariesPage() {
                 tabIndex={0}
                 onClick={() => openEditDialog(lib)}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openEditDialog(lib); }}
-                className="relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)] cursor-pointer transition-transform hover:scale-[1.03]"
+                className="relative w-full overflow-hidden rounded-lg ring-1 ring-white/[0.06] bg-white/[0.05] cursor-pointer transition-fluid hover:scale-[1.03]"
                 style={{ height: 180 }}
               >
                 {lib.coverImage ? (
@@ -598,7 +598,7 @@ export default function LibrariesPage() {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -615,7 +615,7 @@ export default function LibrariesPage() {
                         updated[idx] = e.target.value;
                         setEditFolderPaths(updated);
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                     <button
                       type="button"
@@ -640,7 +640,7 @@ export default function LibrariesPage() {
                       }
                     }}
                     placeholder="/media/movies"
-                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
                   <button
                     type="button"
@@ -678,7 +678,7 @@ export default function LibrariesPage() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 Metadata downloaders (Movies)
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">TheMovieDb</span>
                 <Switch
                   checked={editScraperEnabled}
@@ -696,7 +696,7 @@ export default function LibrariesPage() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-muted-foreground">Metadata Language</label>
                 <Select value={editMetadataLanguage} onValueChange={setEditMetadataLanguage}>
-                  <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground">
+                  <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -735,7 +735,7 @@ export default function LibrariesPage() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 Jellyfin Compatibility
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">Jellyfin Compatibility Mode</span>
                 <Switch
                   checked={editJellyfinCompat}
@@ -821,7 +821,7 @@ export default function LibrariesPage() {
                 type="checkbox"
                 checked={deleteCleanupOrphans}
                 onChange={(e) => setDeleteCleanupOrphans(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
               />
               <span className="text-sm text-muted-foreground">Clean up actors no longer associated with any movie</span>
             </label>
@@ -830,7 +830,7 @@ export default function LibrariesPage() {
                 type="checkbox"
                 checked={deleteNfo}
                 onChange={(e) => setDeleteNfo(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] bg-[var(--input-bg)] accent-primary"
+                className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
               />
               <span className="text-sm text-muted-foreground">Delete NFO files from media folders (allows re-scraping)</span>
             </label>

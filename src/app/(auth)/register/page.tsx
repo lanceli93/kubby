@@ -49,7 +49,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
-      <div className="w-full max-w-[480px] mx-4 md:mx-0 animate-fade-in-up rounded-2xl border border-white/[0.06] bg-card p-6 md:p-10">
+      <div className="w-full max-w-[480px] mx-4 md:mx-0 animate-fade-in-up rounded-2xl border border-white/[0.06] glass-cinema p-6 md:p-10">
         <div className="flex flex-col items-center gap-5">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <p className="text-[15px] text-muted-foreground">
@@ -66,7 +66,7 @@ export default function RegisterPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={t("enterUsername")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -80,7 +80,7 @@ export default function RegisterPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder={t("displayName")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -93,7 +93,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t("enterPassword")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -107,19 +107,19 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={t("enterPassword")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 required
               />
             </div>
 
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive" role="alert">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
             >
               {loading ? t("creating") : t("createAccount")}
             </button>

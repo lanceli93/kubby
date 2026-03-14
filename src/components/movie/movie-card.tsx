@@ -102,18 +102,18 @@ export function MovieCard({
   const showResBadge = prefs?.showResolutionBadge !== false;
 
   return (
-    <div className={`group flex-shrink-0 transition-transform hover:scale-[1.03] ${responsive ? "w-full" : ""}`} style={responsive ? undefined : { width: 180 }}>
+    <div className={`group flex-shrink-0 transition-fluid hover:scale-[1.03] ${responsive ? "w-full" : ""}`} style={responsive ? undefined : { width: 180 }}>
     <Link
       href={`/movies/${id}`}
     >
       {/* Poster */}
-      <div className={`relative w-full overflow-hidden rounded-[4px] bg-[var(--surface)] ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
+      <div className={`relative w-full overflow-hidden rounded-lg bg-[var(--surface)] ring-1 ring-white/[0.06] ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
         {posterPath ? (
           <Image
             src={resolveImageSrc(posterPath, 360)}
             alt={title}
             fill
-            className="object-cover"
+            className="object-cover transition-fluid group-hover:scale-105"
             sizes="180px"
             {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
           />
@@ -127,7 +127,7 @@ export function MovieCard({
         {showResBadge && (() => {
           const res = getResolutionLabel(videoWidth, videoHeight);
           return res ? (
-            <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
+            <div className="absolute left-1.5 top-1.5 glass-badge rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
               {res}
             </div>
           ) : null;
@@ -135,14 +135,14 @@ export function MovieCard({
 
         {/* Rating badge — prefer personal rating over community rating */}
         {showRatingBadge && (personalRating != null && personalRating > 0 ? (
-          <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5">
             <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
             <span className="text-[11px] font-medium text-[var(--gold)]">
               {personalRating.toFixed(1)}
             </span>
           </div>
         ) : rating != null && rating > 0 ? (
-          <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
+          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5">
             <Star className="h-3 w-3 fill-white/50 text-white/50" />
             <span className="text-[11px] font-medium text-white/60">
               {rating.toFixed(1)}
@@ -151,7 +151,7 @@ export function MovieCard({
         ) : null)}
 
         {/* Centered play button on hover */}
-        <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute inset-0 z-[3] flex items-center justify-center scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-fluid">
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -159,7 +159,7 @@ export function MovieCard({
               router.push(`/movies/${id}/play`);
             }}
             aria-label={t("play")}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white"
+            className="glass-btn flex h-12 w-12 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95"
           >
             <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
           </button>
@@ -175,8 +175,8 @@ export function MovieCard({
           </div>
         )}
 
-        {/* Hover overlay bar */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
+        {/* Hover overlay bar — glass, slides up */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-fluid z-[5]">
           {/* Left: Watched toggle */}
           <button
             onClick={(e) => {
