@@ -206,7 +206,7 @@ export default function SettingsPage() {
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -244,7 +244,7 @@ export default function SettingsPage() {
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             required
           />
         </div>
@@ -256,7 +256,7 @@ export default function SettingsPage() {
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             required
           />
         </div>
@@ -268,7 +268,7 @@ export default function SettingsPage() {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
             required
           />
         </div>
@@ -303,7 +303,7 @@ export default function SettingsPage() {
             router.refresh();
           }}
         >
-          <SelectTrigger className="h-11 w-48 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+          <SelectTrigger className="h-11 w-48 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -369,7 +369,7 @@ export default function SettingsPage() {
               {t("playerMode")}
             </label>
             <Select value={playerMode} onValueChange={handleModeChange}>
-              <SelectTrigger className="h-11 w-64 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+              <SelectTrigger className="h-11 w-64 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -391,7 +391,7 @@ export default function SettingsPage() {
               type="text"
               value={playerPath}
               onChange={(e) => setPlayerPath(e.target.value)}
-              className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+              className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
               placeholder="/Applications/IINA.app"
             />
           </div>

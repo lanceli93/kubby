@@ -336,7 +336,7 @@ function SearchContent() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="h-10 w-full max-w-[800px] rounded-xl border border-white/[0.08] bg-white/[0.05] backdrop-blur-sm px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            className="h-10 w-full max-w-[800px] rounded-md border border-white/[0.08] bg-white/[0.05] backdrop-blur-sm px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             autoFocus
           />
         </div>

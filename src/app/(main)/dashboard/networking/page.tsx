@@ -103,7 +103,7 @@ export default function NetworkingSettingsPage() {
           <label className="text-[13px] font-medium text-muted-foreground">
             {t("networkingCurrentlyListening")}
           </label>
-          <div className="h-11 flex items-center rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-muted-foreground">
+          <div className="h-11 flex items-center rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-muted-foreground">
             0.0.0.0:{settings.runtime.port}
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function NetworkingSettingsPage() {
               setError("");
             }}
             disabled={isDocker}
-            className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none disabled:opacity-50"
+            className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none disabled:opacity-50"
           />
           <p className="text-xs text-[#555568]">
             {t("networkingPortHelp")}

@@ -236,7 +236,7 @@ export function SetupWizard() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={t("enterAdminUsername")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -251,7 +251,7 @@ export function SetupWizard() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t("enterPassword")}
-                  className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 />
                 <button
                   type="button"
@@ -278,7 +278,7 @@ export function SetupWizard() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder={t("confirmYourPassword")}
-                  className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 />
                 <button
                   type="button"
@@ -335,7 +335,7 @@ export function SetupWizard() {
                 value={libraryName}
                 onChange={(e) => setLibraryName(e.target.value)}
                 placeholder={t("libraryNamePlaceholder")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -345,7 +345,7 @@ export function SetupWizard() {
                 {t("libraryType")}
               </label>
               <Select value={libraryType} onValueChange={setLibraryType}>
-                <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+                <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -372,7 +372,7 @@ export function SetupWizard() {
                         updated[idx] = e.target.value;
                         setFolderPaths(updated);
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                      className="min-w-0 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                     <button
                       type="button"
@@ -396,11 +396,11 @@ export function SetupWizard() {
                       }
                     }}
                     placeholder={t("folderPathPlaceholder")}
-                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
                   <button
                     onClick={() => setFolderPickerOpen(true)}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.05] text-primary hover:bg-white/[0.04] cursor-pointer"
+                    className="flex h-11 w-11 items-center justify-center rounded-md border border-white/[0.06] bg-white/[0.05] text-primary hover:bg-white/[0.04] cursor-pointer"
                   >
                     <FolderOpen className="h-5 w-5" />
                   </button>
@@ -426,7 +426,7 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("metadataDownloaders")}
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">TheMovieDb</span>
                 <Switch checked={scraperEnabled} onCheckedChange={setScraperEnabled} />
               </div>
@@ -444,7 +444,7 @@ export function SetupWizard() {
                   value={tmdbApiKey}
                   onChange={(e) => { setTmdbApiKey(e.target.value); setTmdbApiKeyError(""); }}
                   placeholder={t("tmdbApiKeyPlaceholder")}
-                  className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 />
                 {tmdbApiKeyError && <p className="text-xs text-destructive" role="alert">{tmdbApiKeyError}</p>}
                 <p className="text-xs text-[#555568]">
@@ -460,7 +460,7 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("jellyfinCompatMode")}
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">{t("jellyfinCompatMode")}</span>
                 <Switch
                   checked={jellyfinCompat}

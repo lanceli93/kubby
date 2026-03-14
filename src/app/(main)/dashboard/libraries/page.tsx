@@ -218,7 +218,7 @@ export default function LibrariesPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="My Movies"
-                    className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                     required
                   />
                 </div>
@@ -227,7 +227,7 @@ export default function LibrariesPage() {
                     Library Type
                   </label>
                   <Select value={type} onValueChange={setType}>
-                    <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+                    <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,7 +252,7 @@ export default function LibrariesPage() {
                             updated[idx] = e.target.value;
                             setFolderPaths(updated);
                           }}
-                          className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                          className="min-w-0 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
                         />
                         <button
                           type="button"
@@ -276,7 +276,7 @@ export default function LibrariesPage() {
                           }
                         }}
                         placeholder="/media/movies"
-                        className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                        className="h-11 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                       />
                       <button
                         type="button"
@@ -314,7 +314,7 @@ export default function LibrariesPage() {
                   <label className="text-[13px] font-medium text-muted-foreground">
                     Metadata downloaders (Movies)
                   </label>
-                  <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+                  <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                     <span className="text-sm text-foreground">TheMovieDb</span>
                     <Switch
                       checked={scraperEnabled}
@@ -339,7 +339,7 @@ export default function LibrariesPage() {
                       Metadata Language
                     </label>
                     <Select value={metadataLanguage} onValueChange={setMetadataLanguage}>
-                      <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+                      <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -368,7 +368,7 @@ export default function LibrariesPage() {
                   <label className="text-[13px] font-medium text-muted-foreground">
                     Jellyfin Compatibility
                   </label>
-                  <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+                  <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                     <span className="text-sm text-foreground">Jellyfin Compatibility Mode</span>
                     <Switch
                       checked={jellyfinCompat}
@@ -598,7 +598,7 @@ export default function LibrariesPage() {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -615,7 +615,7 @@ export default function LibrariesPage() {
                         updated[idx] = e.target.value;
                         setEditFolderPaths(updated);
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                      className="min-w-0 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                     <button
                       type="button"
@@ -640,7 +640,7 @@ export default function LibrariesPage() {
                       }
                     }}
                     placeholder="/media/movies"
-                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
                   <button
                     type="button"
@@ -678,7 +678,7 @@ export default function LibrariesPage() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 Metadata downloaders (Movies)
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">TheMovieDb</span>
                 <Switch
                   checked={editScraperEnabled}
@@ -696,7 +696,7 @@ export default function LibrariesPage() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-muted-foreground">Metadata Language</label>
                 <Select value={editMetadataLanguage} onValueChange={setEditMetadataLanguage}>
-                  <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+                  <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -735,7 +735,7 @@ export default function LibrariesPage() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 Jellyfin Compatibility
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">Jellyfin Compatibility Mode</span>
                 <Switch
                   checked={editJellyfinCompat}

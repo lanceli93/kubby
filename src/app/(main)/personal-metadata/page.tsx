@@ -231,7 +231,7 @@ export default function PersonalMetadataPage() {
           placeholder={t("addDimensionPlaceholder")}
           maxLength={MAX_DIM_LENGTH}
           disabled={movieDims.length >= 10}
-          className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+          className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
         />
         {movieDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
@@ -270,7 +270,7 @@ export default function PersonalMetadataPage() {
           placeholder={t("addDimensionPlaceholder")}
           maxLength={MAX_DIM_LENGTH}
           disabled={personDims.length >= 10}
-          className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+          className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
         />
         {personDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
@@ -400,7 +400,7 @@ export default function PersonalMetadataPage() {
                   onChange={(e) => setIconLabel(e.target.value)}
                   placeholder={t("iconLabelPlaceholder")}
                   maxLength={20}
-                  className="h-9 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+                  className="h-9 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3 text-sm text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
               <div className="flex h-9 flex-1 items-center">
@@ -598,7 +598,7 @@ export default function PersonalMetadataPage() {
               }
             }}
             placeholder={t("addDimensionPlaceholder")}
-            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
+            className="w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
           />
         </div>
 
@@ -610,7 +610,7 @@ export default function PersonalMetadataPage() {
             onChange={(e) => setQbNote(e.target.value)}
             placeholder={t("templateNotePlaceholder")}
             rows={2}
-            className="w-full resize-none rounded-lg border border-white/[0.06] bg-white/[0.05] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
+            className="w-full resize-none rounded-md border border-white/[0.06] bg-white/[0.05] px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary"
           />
         </div>
       </div>

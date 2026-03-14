@@ -123,7 +123,7 @@ export function AddLibraryCard() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Movies"
-                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -132,7 +132,7 @@ export function AddLibraryCard() {
                 Library Type
               </label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+                <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,7 +157,7 @@ export function AddLibraryCard() {
                         updated[idx] = e.target.value;
                         setFolderPaths(updated);
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                      className="min-w-0 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                     <button
                       type="button"
@@ -181,7 +181,7 @@ export function AddLibraryCard() {
                       }
                     }}
                     placeholder="/media/movies"
-                    className="h-11 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm font-mono text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
                   <button
                     type="button"
@@ -219,7 +219,7 @@ export function AddLibraryCard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 Metadata downloaders (Movies)
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">TheMovieDb</span>
                 <Switch
                   checked={scraperEnabled}
@@ -244,7 +244,7 @@ export function AddLibraryCard() {
                   Metadata Language
                 </label>
                 <Select value={metadataLanguage} onValueChange={setMetadataLanguage}>
-                  <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
+                  <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -273,7 +273,7 @@ export function AddLibraryCard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("jellyfinCompat")}
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">{t("jellyfinCompat")}</span>
                 <Switch
                   checked={jellyfinCompat}

@@ -289,7 +289,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 value={editName}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => setEditName(e.target.value)}
-                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -298,7 +298,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               <div className="flex flex-col gap-2">
                 {editFolderPaths.map((p, idx) => (
                   <div key={idx} className="flex items-center gap-2 min-w-0">
-                    <span title={p} className="min-w-0 flex-1 truncate rounded-lg border border-white/[0.06] bg-white/[0.05] px-3 py-2 font-mono text-sm text-foreground">
+                    <span title={p} className="min-w-0 flex-1 truncate rounded-md border border-white/[0.06] bg-white/[0.05] px-3 py-2 font-mono text-sm text-foreground">
                       {p}
                     </span>
                     <button
@@ -327,7 +327,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                       }
                     }}
                     placeholder="/path/to/media"
-                    className="h-11 min-w-0 flex-1 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                    className="h-11 min-w-0 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   />
                   <button
                     type="button"
@@ -367,7 +367,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               <label className="text-[13px] font-medium text-muted-foreground">
                 Metadata downloaders (Movies)
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">TheMovieDb</span>
                 <Switch
                   checked={editScraperEnabled}
@@ -390,7 +390,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                   Metadata Language
                 </label>
                 <Select value={editMetadataLanguage} onValueChange={setEditMetadataLanguage}>
-                  <SelectTrigger className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground" onClick={(e) => e.stopPropagation()}>
+                  <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground" onClick={(e) => e.stopPropagation()}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent onClick={(e) => e.stopPropagation()}>
@@ -411,7 +411,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               </div>
             )}
             {editScraperError && editTmdbConfigured === false && (
-              <div className="flex flex-col gap-2 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-3">
+              <div className="flex flex-col gap-2 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-3">
                 <p className="text-sm text-muted-foreground">{tHome("tmdbApiKeyRequired")}</p>
                 <div className="flex gap-2">
                   <input
@@ -466,7 +466,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               <label className="text-[13px] font-medium text-muted-foreground">
                 {tHome("jellyfinCompat")}
               </label>
-              <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5" onClick={(e) => e.stopPropagation()}>
                 <span className="text-sm text-foreground">{tHome("jellyfinCompat")}</span>
                 <Switch
                   checked={editJellyfinCompat}

@@ -71,7 +71,7 @@ export default function ScraperSettingsPage() {
                   setStatus("idle");
                 }}
                 placeholder={configured ? maskedKey : "Enter TMDB API key..."}
-                className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
               <button
                 type="button"

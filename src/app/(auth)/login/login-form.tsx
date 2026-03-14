@@ -88,7 +88,7 @@ function LoginFormInner() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={t("enterUsername")}
-                className="h-11 rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                 required
               />
             </div>
@@ -103,7 +103,7 @@ function LoginFormInner() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t("enterPassword")}
-                  className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+                  className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
                   required
                 />
                 <button
