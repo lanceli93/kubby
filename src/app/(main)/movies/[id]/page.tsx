@@ -501,7 +501,7 @@ export default function MovieDetailPage() {
               {movie.fanartPath && (
                 <button
                   onClick={() => setFanartMode(true)}
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  className="hidden md:flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 text-white/70 transition-colors hover:bg-white/10"
                   title="View fanart"
                 >
                   <Maximize2 className="h-5 w-5" />
@@ -532,7 +532,7 @@ export default function MovieDetailPage() {
               {(movie.runtimeSeconds || movie.runtimeMinutes) && (
                 <button
                   onClick={() => setBookmarkMode((v) => !v)}
-                  className={`flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
+                  className={`hidden md:flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 transition-colors hover:bg-white/10 cursor-pointer ${
                     bookmarkMode ? "text-yellow-400" : "text-white/70"
                   }`}
                   title={t("bookmarkMode")}

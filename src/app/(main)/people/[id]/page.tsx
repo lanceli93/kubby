@@ -214,7 +214,7 @@ export default function PersonDetailPage() {
               {person.fanartPath && (
                 <button
                   onClick={() => setFanartMode(true)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
+                  className="hidden md:inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-white/70 transition-colors hover:bg-white/10"
                   title="View fanart"
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
