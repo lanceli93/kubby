@@ -323,6 +323,7 @@ export default function HomePage() {
                     videoHeight={movie.videoHeight}
                     isFavorite={movie.isFavorite}
                     isWatched={movie.isWatched}
+                    responsive
                     onToggleFavorite={() =>
                       handleToggleFavorite(movie.id, !!movie.isFavorite)
                     }

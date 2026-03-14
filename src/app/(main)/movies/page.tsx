@@ -347,14 +347,10 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid gap-x-4 gap-y-4"
-      style={{
-        gridTemplateColumns: "repeat(auto-fill, 180px)",
-        justifyContent: "center",
-      }}
+      className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
-      <div className="py-[18px] flex items-center gap-6" style={{ gridColumn: "1 / -1" }}>
+      <div className="col-span-full py-[18px] flex items-center gap-6">
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           {t("moviesCount", { count: totalCount || movies.length })}
         </span>
@@ -690,6 +686,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             videoHeight={movie.videoHeight}
             isFavorite={movie.isFavorite}
             isWatched={movie.isWatched}
+            responsive
             onToggleFavorite={() =>
               handleToggleFavorite(movie.id, !!movie.isFavorite)
             }
@@ -701,15 +698,15 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
         ))}
 
       {/* Infinite scroll sentinel */}
-      <div ref={moviesSentinelRef} style={{ gridColumn: "1 / -1", height: 1 }} />
+      <div ref={moviesSentinelRef} className="col-span-full" style={{ height: 1 }} />
       {isFetchingNextPage && (
-        <div className="flex justify-center py-6" style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full flex justify-center py-6">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
 
       {!isLoadingMovies && movies.length === 0 && (
-        <div className="flex h-64 items-center justify-center text-muted-foreground" style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full flex h-64 items-center justify-center text-muted-foreground">
           {t("noMovies")}
         </div>
       )}
@@ -752,13 +749,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
   return (
     <div className="animate-fade-in-up py-6">
       {favorites.length > 0 ? (
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: "repeat(auto-fill, 180px)",
-            justifyContent: "center",
-          }}
-        >
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-4 justify-center">
           {favorites.map((movie) => (
             <MovieCard
               key={movie.id}
@@ -772,6 +763,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
               videoHeight={movie.videoHeight}
               isFavorite
               isWatched={movie.isWatched}
+              responsive
               onToggleFavorite={() =>
                 handleToggleFavorite(movie.id, true)
               }
@@ -1049,14 +1041,10 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid gap-x-4 gap-y-4"
-      style={{
-        gridTemplateColumns: "repeat(auto-fill, 180px)",
-        justifyContent: "center",
-      }}
+      className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
-      <div className="py-[18px] flex items-center gap-6" style={{ gridColumn: "1 / -1" }}>
+      <div className="col-span-full py-[18px] flex items-center gap-6">
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           {t("actorsCount", { count: actorsTotalCount || actors.length })}
         </span>
@@ -1418,15 +1406,15 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
         ))}
 
       {/* Infinite scroll sentinel */}
-      <div ref={actorsSentinelRef} style={{ gridColumn: "1 / -1", height: 1 }} />
+      <div ref={actorsSentinelRef} className="col-span-full" style={{ height: 1 }} />
       {isFetchingNextActors && (
-        <div className="flex justify-center py-6" style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full flex justify-center py-6">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
 
       {!isLoadingActors && actors.length === 0 && (
-        <div className="flex h-64 items-center justify-center text-muted-foreground" style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full flex h-64 items-center justify-center text-muted-foreground">
           {t("noActors")}
         </div>
       )}
@@ -1564,14 +1552,10 @@ function PersonMoviesContent({ personId }: { personId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid gap-x-4 gap-y-4"
-      style={{
-        gridTemplateColumns: "repeat(auto-fill, 180px)",
-        justifyContent: "center",
-      }}
+      className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
     >
       {/* Sort & Filter Toolbar */}
-      <div className="py-[18px] flex items-center gap-6" style={{ gridColumn: "1 / -1" }}>
+      <div className="col-span-full py-[18px] flex items-center gap-6">
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           {t("moviesCount", { count: movies.length })}
         </span>
@@ -1839,6 +1823,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
           videoHeight={movie.videoHeight}
           isFavorite={movie.isFavorite}
           isWatched={movie.isWatched}
+          responsive
           subtitle={movie.ageAtRelease != null ? tPerson("filmedAtAge", { age: movie.ageAtRelease }) : undefined}
           onToggleFavorite={() =>
             handleToggleFavorite(movie.id, !!movie.isFavorite)
@@ -1851,7 +1836,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
       ))}
 
       {movies.length === 0 && (
-        <div className="flex h-64 items-center justify-center text-muted-foreground" style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full flex h-64 items-center justify-center text-muted-foreground">
           {t("noMovies")}
         </div>
       )}
