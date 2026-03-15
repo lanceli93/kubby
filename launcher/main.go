@@ -26,8 +26,25 @@ func main() {
 	}
 	log.Printf("Resource directory: %s", resDir)
 
-	// 2. Resolve & ensure data directory
-	dataDir := getDataDir()
+	// 2. Ensure config directory exists (fixed OS-default location)
+	configDir := getDataDir()
+	if err := ensureDir(configDir); err != nil {
+		log.Fatalf("Failed to create config directory %s: %v", configDir, err)
+	}
+
+	// 3. Load or create config
+	cfg, err := loadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+	log.Printf("Port: %d", cfg.Port)
+
+	// 4. Resolve effective data directory
+	//    Priority: KUBBY_DATA_DIR env > config.dataDir > OS default
+	dataDir := configDir
+	if cfg.DataDir != "" {
+		dataDir = cfg.DataDir
+	}
 	if envDir := os.Getenv("KUBBY_DATA_DIR"); envDir != "" {
 		dataDir = envDir
 	}
@@ -36,14 +53,7 @@ func main() {
 	}
 	log.Printf("Data directory: %s", dataDir)
 
-	// 3. Load or create config
-	cfg, err := loadConfig(dataDir)
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-	log.Printf("Port: %d", cfg.Port)
-
-	// 4. Single-instance check via lock file
+	// 5. Single-instance check via lock file
 	lockHandle, acquired := tryAcquireLock(dataDir)
 	if !acquired {
 		log.Printf("Another Kubby instance is running. Opening browser.")
@@ -52,24 +62,24 @@ func main() {
 	}
 	defer releaseLock(lockHandle, dataDir)
 
-	// 5. Load or generate AUTH_SECRET
+	// 6. Load or generate AUTH_SECRET
 	authSecret, err := loadOrCreateSecret(dataDir)
 	if err != nil {
 		log.Fatalf("Failed to load/create auth secret: %v", err)
 	}
 
-	// 6. Start Node.js server
+	// 7. Start Node.js server
 	server, err := StartServer(resDir, dataDir, cfg.Port, authSecret)
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 
-	// 7. Wait for server to be ready
+	// 8. Wait for server to be ready
 	if err := WaitReady(cfg.Port, 60*time.Second); err != nil {
 		log.Printf("Warning: %v", err)
 	}
 
-	// 8. Open browser
+	// 9. Open browser
 	if !*noBrowser {
 		url := serverURL(cfg.Port)
 		log.Printf("Opening browser: %s", url)
@@ -78,13 +88,15 @@ func main() {
 		}
 	}
 
-	// 9. Run with or without system tray
+	// 10. Run with or without system tray
 	if *noTray {
 		runHeadless(server)
 	} else {
 		RunTray(&TrayApp{
-			port:   cfg.Port,
-			server: server,
+			port:    cfg.Port,
+			dataDir: dataDir,
+			cfg:     cfg,
+			server:  server,
 		})
 	}
 

@@ -130,7 +130,7 @@ Section "Uninstall"
 
   ; Ask user if they want to delete user data
   MessageBox MB_YESNO|MB_ICONQUESTION \
-    "Do you want to delete all Kubby user data (database, settings, metadata)?$\n$\nData location: $LOCALAPPDATA\Kubby$\n$\nClick 'No' to keep your data for future installations." \
+    "Do you want to delete Kubby configuration and default data?$\n$\nLocation: $LOCALAPPDATA\Kubby$\n$\nNote: If you configured a custom data directory, you will need to delete it manually.$\n$\nClick 'No' to keep your data for future installations." \
     IDYES deleteData IDNO skipDelete
   deleteData:
     RMDir /r "$LOCALAPPDATA\Kubby"
