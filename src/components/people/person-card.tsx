@@ -63,13 +63,14 @@ export function PersonCard({
   const { data: prefs } = useUserPreferences();
   const showTierBadge = prefs?.showPersonTierBadge !== false;
   const showRatingBadge = prefs?.showPersonRatingBadge !== false;
+  const [menuOpen, setMenuOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteFiles, setDeleteFiles] = useState(false);
 
   return (
-    <div className="group flex-shrink-0 hover:scale-[1.03] transition-[scale] duration-200 ease-out" style={{ width }}>
+    <div className={`group flex-shrink-0 transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`} style={{ width }}>
     <Link
       href={`/people/${id}`}
     >
@@ -83,7 +84,7 @@ export function PersonCard({
             src={resolveImageSrc(photoPath, width * 2)}
             alt={name}
             fill
-            className="object-cover transition-fluid group-hover:scale-105"
+            className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
             sizes={`${width}px`}
             {...(photoBlur ? { placeholder: "blur" as const, blurDataURL: photoBlur } : {})}
           />
@@ -113,9 +114,9 @@ export function PersonCard({
           </div>
         )}
 
-        {/* Hover overlay bar — glass, slides up */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-end px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-[translate,opacity] duration-200 ease-out z-[5]">
-          <DropdownMenu>
+        {/* Hover overlay bar — glass, fades in */}
+        <div className={`absolute -inset-x-1 -bottom-1 flex items-center justify-end px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => {

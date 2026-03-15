@@ -350,11 +350,11 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
       className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
-      <div className="col-span-full py-[18px] flex items-center gap-6">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
+      <div className="col-span-full relative py-[18px] flex items-center justify-center">
+        <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
           {t("moviesCount", { count: totalCount || movies.length })}
         </span>
-        <div className="flex flex-1 items-center justify-center gap-6">
+        <div className="flex items-center gap-3">
         {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
@@ -362,9 +362,9 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+            className="glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
           >
-            <ArrowUpDown className="h-5 w-5" />
+            <ArrowUpDown className="h-4 w-4" />
             {t("sortBy")}
           </button>
 
@@ -499,9 +499,9 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+            className="glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
           >
-            <Filter className="h-5 w-5" />
+            <Filter className="h-4 w-4" />
             {t("filter")}
             {activeFilterCount > 0 && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
@@ -1044,11 +1044,11 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
       className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
-      <div className="col-span-full py-[18px] flex items-center gap-6">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
+      <div className="col-span-full relative py-[18px] flex items-center justify-center">
+        <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
           {t("actorsCount", { count: actorsTotalCount || actors.length })}
         </span>
-        <div className="flex flex-1 items-center justify-center gap-6">
+        <div className="flex items-center gap-3">
         {/* Sort button */}
         <div className="relative" ref={sortRef}>
           <button
@@ -1056,9 +1056,9 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+            className="glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
           >
-            <ArrowUpDown className="h-5 w-5" />
+            <ArrowUpDown className="h-4 w-4" />
             {t("sortBy")}
           </button>
 
@@ -1194,9 +1194,9 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+            className="glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
           >
-            <Filter className="h-5 w-5" />
+            <Filter className="h-4 w-4" />
             {t("filter")}
             {activeFilterCount > 0 && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
@@ -1555,20 +1555,20 @@ function PersonMoviesContent({ personId }: { personId: string }) {
       className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
     >
       {/* Sort & Filter Toolbar */}
-      <div className="col-span-full py-[18px] flex items-center gap-6">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
+      <div className="col-span-full py-[18px] flex items-center">
+        <span className="min-w-[80px] text-sm text-muted-foreground whitespace-nowrap">
           {t("moviesCount", { count: movies.length })}
         </span>
-        <div className="flex flex-1 items-center justify-center gap-6">
+        <div className="flex flex-1 items-center justify-center gap-3">
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => {
               setShowSortDropdown(!showSortDropdown);
               setShowFilterDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+            className="glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
           >
-            <ArrowUpDown className="h-5 w-5" />
+            <ArrowUpDown className="h-4 w-4" />
             {t("sortBy")}
           </button>
 
@@ -1694,9 +1694,9 @@ function PersonMoviesContent({ personId }: { personId: string }) {
               setShowFilterDropdown(!showFilterDropdown);
               setShowSortDropdown(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+            className="glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
           >
-            <Filter className="h-5 w-5" />
+            <Filter className="h-4 w-4" />
             {t("filter")}
             {activeFilterCount > 0 && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">

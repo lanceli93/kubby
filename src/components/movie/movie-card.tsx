@@ -94,6 +94,7 @@ export function MovieCard({
   const tMeta = useTranslations("metadata");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteFiles, setDeleteFiles] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
@@ -102,7 +103,7 @@ export function MovieCard({
   const showResBadge = prefs?.showResolutionBadge !== false;
 
   return (
-    <div className={`group flex-shrink-0 hover:scale-[1.03] transition-[scale] duration-200 ease-out ${responsive ? "w-full" : ""}`} style={responsive ? undefined : { width: 180 }}>
+    <div className={`group flex-shrink-0 transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"} ${responsive ? "w-full" : ""}`} style={responsive ? undefined : { width: 180 }}>
     <Link
       href={`/movies/${id}`}
     >
@@ -113,7 +114,7 @@ export function MovieCard({
             src={resolveImageSrc(posterPath, 360)}
             alt={title}
             fill
-            className="object-cover transition-fluid group-hover:scale-105"
+            className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
             sizes="180px"
             {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
           />
@@ -151,7 +152,7 @@ export function MovieCard({
         ) : null)}
 
         {/* Centered play button on hover */}
-        <div className="absolute inset-0 z-[3] flex items-center justify-center scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-fluid">
+        <div className={`absolute inset-0 z-[3] flex items-center justify-center transition-fluid ${menuOpen ? "scale-100 opacity-100" : "scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100"}`}>
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -175,8 +176,8 @@ export function MovieCard({
           </div>
         )}
 
-        {/* Hover overlay bar — glass, slides up */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-[translate,opacity] duration-200 ease-out z-[5]">
+        {/* Hover overlay bar — glass, fades in */}
+        <div className={`absolute -inset-x-1 -bottom-1 flex items-center justify-between px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
           {/* Left: Watched toggle */}
           <button
             onClick={(e) => {
@@ -209,7 +210,7 @@ export function MovieCard({
             </button>
 
             {/* More menu */}
-            <DropdownMenu>
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
                   onClick={(e) => {
