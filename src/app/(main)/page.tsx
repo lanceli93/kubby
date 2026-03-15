@@ -308,7 +308,7 @@ export default function HomePage() {
         <TabsContent value="favorites">
           <div className="animate-fade-in-up px-4 md:px-12 py-4 md:py-8">
             {favorites.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-[repeat(auto-fill,180px)] justify-center">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:gap-x-4 md:gap-y-6 md:grid-cols-[repeat(auto-fill,180px)] justify-center">
                 {favorites.map((movie) => (
                   <MovieCard
                     key={movie.id}

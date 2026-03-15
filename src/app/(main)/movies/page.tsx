@@ -347,7 +347,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
+      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
       <div className="col-span-full relative py-[18px] flex items-center justify-center">
@@ -749,7 +749,7 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
   return (
     <div className="animate-fade-in-up py-6">
       {favorites.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-4 justify-center">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center">
           {favorites.map((movie) => (
             <MovieCard
               key={movie.id}
@@ -1041,7 +1041,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
+      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
       <div className="col-span-full relative py-[18px] flex items-center justify-center">
@@ -1552,7 +1552,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-4 justify-center"
+      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center"
     >
       {/* Sort & Filter Toolbar */}
       <div className="col-span-full py-[18px] flex items-center">

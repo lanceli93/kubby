@@ -451,7 +451,7 @@ function SearchContent() {
                     <h2 className="mb-3 text-lg font-semibold text-foreground">
                       {t("moviesCount", { count: moviesTotalCount })}
                     </h2>
-                    <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap gap-x-4 gap-y-6">
                       {allMovieItems.map((movie) => (
                         <MovieCard
                           key={movie.id}
@@ -699,7 +699,7 @@ function SearchContent() {
                     <h2 className="mb-3 text-lg font-semibold text-foreground">
                       {t("peopleCount", { count: peopleTotalCount })}
                     </h2>
-                    <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap gap-x-4 gap-y-6">
                       {allPeopleItems.map((person) => (
                         <PersonCard
                           key={person.id}
