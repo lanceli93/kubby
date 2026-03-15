@@ -69,7 +69,7 @@ export function PersonCard({
   const [deleteFiles, setDeleteFiles] = useState(false);
 
   return (
-    <div className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03] has-[[data-state=open]]:scale-[1.03]" style={{ width }}>
+    <div className="group flex-shrink-0 hover:scale-[1.03] transition-[scale] duration-200 ease-out" style={{ width }}>
     <Link
       href={`/people/${id}`}
     >
@@ -114,7 +114,7 @@ export function PersonCard({
         )}
 
         {/* Hover overlay bar — glass, slides up */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-end px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-has-[[data-state=open]]:translate-y-0 group-has-[[data-state=open]]:opacity-100 transition-fluid z-[5]">
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-end px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-fluid z-[5]">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
