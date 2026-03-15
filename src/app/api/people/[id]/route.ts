@@ -192,6 +192,7 @@ export async function GET(
         ? {
             personalRating: userData.personalRating,
             dimensionRatings: userData.dimensionRatings ? JSON.parse(userData.dimensionRatings) : null,
+            isFavorite: userData.isFavorite ?? false,
           }
         : null,
     });

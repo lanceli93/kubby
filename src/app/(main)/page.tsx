@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useCallback } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ContinueWatchingCard } from "@/components/movie/continue-watching-card";
 import { LibraryCard } from "@/components/library/library-card";
@@ -121,6 +123,31 @@ export default function HomePage() {
     queryKey: ["movies", "favorites"],
     queryFn: () =>
       fetch("/api/movies?filter=favorites&limit=500").then((r) => r.json()),
+  });
+
+  const { data: favoritePeople = [] } = useQuery<{
+    id: string;
+    name: string;
+    photoPath?: string | null;
+    photoBlur?: string | null;
+    personalRating?: number | null;
+    isFavorite?: boolean;
+  }[]>({
+    queryKey: ["people", "favorites-home"],
+    queryFn: () =>
+      fetch("/api/people?filter=favorites&limit=20").then((r) => r.json()),
+  });
+
+  const togglePersonFavorite = useMutation({
+    mutationFn: ({ id, current }: { id: string; current: boolean }) =>
+      fetch(`/api/people/${id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !current }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+    },
   });
 
   const toggleFavorite = useMutation({
@@ -317,37 +344,78 @@ export default function HomePage() {
         </TabsContent>
 
         <TabsContent value="favorites">
-          <div className="animate-fade-in-up px-4 md:px-12 py-4 md:py-8">
-            {favorites.length > 0 ? (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:gap-x-4 md:gap-y-6 md:grid-cols-[repeat(auto-fill,180px)] justify-center">
-                {favorites.map((movie) => (
-                  <MovieCard
-                    key={movie.id}
-                    id={movie.id}
-                    title={movie.title}
-                    year={movie.year}
-                    posterPath={movie.posterPath}
-                    posterBlur={movie.posterBlur}
-                    rating={movie.communityRating}
-                    personalRating={movie.personalRating}
-                    videoWidth={movie.videoWidth}
-                    videoHeight={movie.videoHeight}
-                    isFavorite={movie.isFavorite}
-                    isWatched={movie.isWatched}
-                    responsive
-                    onToggleFavorite={() =>
-                      handleToggleFavorite(movie.id, !!movie.isFavorite)
-                    }
-                    onToggleWatched={() =>
-                      handleToggleWatched(movie.id, !!movie.isWatched)
-                    }
-                    onDelete={() => handleDeleteMovie(movie.id)}
-                  />
-                ))}
-              </div>
-            ) : (
+          <div className="px-4 md:px-12 py-4 md:py-8">
+            {favorites.length === 0 && favoritePeople.length === 0 ? (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 {t("noFavorites")}
+              </div>
+            ) : (
+              <div className="stagger-children flex flex-col gap-6 md:gap-10">
+                {favorites.length > 0 && (
+                  <ScrollRow
+                    title={
+                      <Link
+                        href="/movies?tab=favorites&view=movies"
+                        className="hover:text-white hover:underline transition-colors"
+                      >
+                        {t("favoriteMovies")}
+                      </Link>
+                    }
+                  >
+                    {favorites.slice(0, 20).map((movie) => (
+                      <MovieCard
+                        key={movie.id}
+                        id={movie.id}
+                        title={movie.title}
+                        year={movie.year}
+                        posterPath={movie.posterPath}
+                        posterBlur={movie.posterBlur}
+                        rating={movie.communityRating}
+                        personalRating={movie.personalRating}
+                        videoWidth={movie.videoWidth}
+                        videoHeight={movie.videoHeight}
+                        isFavorite={movie.isFavorite}
+                        isWatched={movie.isWatched}
+                        onToggleFavorite={() =>
+                          handleToggleFavorite(movie.id, !!movie.isFavorite)
+                        }
+                        onToggleWatched={() =>
+                          handleToggleWatched(movie.id, !!movie.isWatched)
+                        }
+                        onDelete={() => handleDeleteMovie(movie.id)}
+                      />
+                    ))}
+                  </ScrollRow>
+                )}
+
+                {favoritePeople.length > 0 && (
+                  <ScrollRow
+                    title={
+                      <Link
+                        href="/movies?tab=favorites&view=actors"
+                        className="hover:text-white hover:underline transition-colors"
+                      >
+                        {t("favoriteActors")}
+                      </Link>
+                    }
+                  >
+                    {favoritePeople.map((person) => (
+                      <PersonCard
+                        key={person.id}
+                        id={person.id}
+                        name={person.name}
+                        photoPath={person.photoPath}
+                        photoBlur={person.photoBlur}
+                        personalRating={person.personalRating}
+                        isFavorite
+                        size="movie"
+                        onToggleFavorite={() =>
+                          togglePersonFavorite.mutate({ id: person.id, current: true })
+                        }
+                      />
+                    ))}
+                  </ScrollRow>
+                )}
               </div>
             )}
           </div>

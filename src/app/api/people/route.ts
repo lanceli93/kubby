@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const typesParam = searchParams.get("types");
     const tagsParam = searchParams.get("tags");
     const tierParam = searchParams.get("tier");
+    const filter = searchParams.get("filter");
     const sortDimension = searchParams.get("sortDimension");
     const limit = parseInt(searchParams.get("limit") || "200", 10);
     const offsetParam = searchParams.get("offset");
@@ -87,6 +88,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (filter === "favorites") {
+      conditions.push(sql`upd.is_favorite = 1`);
+    }
+
     const whereClause = conditions.length > 0
       ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
       : sql``;
@@ -141,6 +146,7 @@ export async function GET(request: NextRequest) {
       tags: string | null;
       date_added: string;
       personal_rating: number | null;
+      is_favorite: number | null;
       movie_count: number;
     }>(sql`
       SELECT
@@ -153,6 +159,7 @@ export async function GET(request: NextRequest) {
         p.tags,
         p.date_added,
         upd.personal_rating,
+        upd.is_favorite,
         COUNT(DISTINCT mp.movie_id) as movie_count
       FROM people p
       INNER JOIN movie_people mp ON mp.person_id = p.id
@@ -175,6 +182,7 @@ export async function GET(request: NextRequest) {
       tags: r.tags ? (() => { try { return JSON.parse(r.tags); } catch { return []; } })() : [],
       dateAdded: r.date_added,
       personalRating: r.personal_rating,
+      isFavorite: !!r.is_favorite,
       movieCount: r.movie_count,
     }));
 

@@ -164,6 +164,7 @@ export const userPersonData = sqliteTable("user_person_data", {
   personId: text("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
   personalRating: real("personal_rating"),
   dimensionRatings: text("dimension_ratings"), // JSON object, e.g. {"样貌": 9.5, "身材": 8.0}
+  isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
 }, (table) => [
   uniqueIndex("idx_upd_user_person").on(table.userId, table.personId),
 ]);

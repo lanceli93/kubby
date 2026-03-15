@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, Maximize2, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, Heart, Maximize2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -48,6 +48,7 @@ interface PersonDetail {
   userData?: {
     personalRating?: number | null;
     dimensionRatings?: Record<string, number> | null;
+    isFavorite?: boolean;
   };
   movies: {
     id: string;
@@ -118,6 +119,19 @@ export default function PersonDetailPage() {
     });
     queryClient.invalidateQueries({ queryKey: ["person", personId] });
   };
+
+  const toggleFavorite = useMutation({
+    mutationFn: (current: boolean) =>
+      fetch(`/api/people/${personId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !current }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["person", personId] });
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+    },
+  });
 
   if (!person) {
     return (
@@ -211,6 +225,15 @@ export default function PersonDetailPage() {
                   <Star className="h-3.5 w-3.5" />
                 </button>
               )}
+
+              {/* Favorite button */}
+              <button
+                onClick={() => toggleFavorite.mutate(!!person.userData?.isFavorite)}
+                className="glass-btn inline-flex h-7 w-7 items-center justify-center rounded-xl transition-all cursor-pointer"
+                aria-label="Toggle favorite"
+              >
+                <Heart className={`h-3.5 w-3.5 ${person.userData?.isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
+              </button>
 
               {/* View fanart button */}
               {person.fanartPath && (

@@ -33,7 +33,7 @@ export async function GET(
           ...data,
           dimensionRatings: data.dimensionRatings ? JSON.parse(data.dimensionRatings) : null,
         }
-      : { personalRating: null, dimensionRatings: null };
+      : { personalRating: null, dimensionRatings: null, isFavorite: false };
 
     return NextResponse.json(result);
   } catch (error) {
@@ -74,6 +74,8 @@ export async function PUT(
         updateData.personalRating = body.personalRating;
       if (body.dimensionRatings !== undefined)
         updateData.dimensionRatings = body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null;
+      if (body.isFavorite !== undefined)
+        updateData.isFavorite = body.isFavorite;
 
       db.update(userPersonData)
         .set(updateData)
@@ -87,6 +89,7 @@ export async function PUT(
           personId,
           personalRating: body.personalRating ?? null,
           dimensionRatings: body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null,
+          isFavorite: body.isFavorite ?? false,
         })
         .run();
     }

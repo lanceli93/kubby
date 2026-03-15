@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MoreHorizontal, ImageIcon, Pencil, Trash2 } from "lucide-react";
+import { Star, Heart, MoreHorizontal, ImageIcon, Pencil, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -35,6 +35,8 @@ interface PersonCardProps {
   personalRating?: number | null;
   age?: number | null;
   size?: "sm" | "md" | "lg" | "movie";
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   onDelete?: (deleteFiles: boolean) => void;
 }
 
@@ -54,6 +56,8 @@ export function PersonCard({
   personalRating,
   age,
   size = "sm",
+  isFavorite,
+  onToggleFavorite,
   onDelete,
 }: PersonCardProps) {
   const { width, height } = sizeConfig[size];
@@ -115,7 +119,19 @@ export function PersonCard({
         )}
 
         {/* Hover overlay bar — glass, fades in */}
-        <div className={`absolute -inset-x-1 -bottom-1 flex items-center justify-end px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+        <div className={`absolute -inset-x-1 -bottom-1 flex items-center ${onToggleFavorite ? "justify-between" : "justify-end"} px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleFavorite();
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/20"
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
+            </button>
+          )}
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
             <DropdownMenuTrigger asChild>
               <button

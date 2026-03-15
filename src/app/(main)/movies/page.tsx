@@ -27,6 +27,7 @@ import {
   Cake,
   Monitor,
   HardDrive,
+  ArrowLeft,
 } from "lucide-react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
@@ -715,6 +716,111 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 }
 
 function FavoritesTabContent({ libraryId }: { libraryId: string }) {
+  const searchParams = useSearchParams();
+  const view = searchParams.get("view");
+
+  if (view === "movies") return <FavoritesMoviesGrid libraryId={libraryId} />;
+  if (view === "actors") return <FavoritesActorsGrid />;
+  return <FavoritesOverview libraryId={libraryId} />;
+}
+
+function FavoritesOverview({ libraryId }: { libraryId: string }) {
+  const t = useTranslations("movies");
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+    useMovieMutations();
+  const { handleTogglePersonFavorite } = usePersonMutations();
+
+  const { data: favMovies = [] } = useQuery<Movie[]>({
+    queryKey: ["movies", "favorites-row", libraryId],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("filter", "favorites");
+      if (libraryId) params.set("libraryId", libraryId);
+      params.set("limit", "20");
+      return fetch(`/api/movies?${params}`).then((r) => r.json());
+    },
+  });
+
+  const { data: favActors = [] } = useQuery<PersonItem[]>({
+    queryKey: ["people", "favorites-row"],
+    queryFn: () =>
+      fetch("/api/people?filter=favorites&limit=20").then((r) => r.json()),
+  });
+
+  if (favMovies.length === 0 && favActors.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center text-muted-foreground">
+        {t("noFavorites")}
+      </div>
+    );
+  }
+
+  return (
+    <div className="stagger-children flex flex-col gap-8 py-6">
+      {favMovies.length > 0 && (
+        <ScrollRow
+          title={
+            <Link
+              href={`/movies?tab=favorites&view=movies${libraryId ? `&libraryId=${libraryId}` : ""}`}
+              className="hover:text-white hover:underline transition-colors"
+            >
+              {t("favoriteMovies")}
+            </Link>
+          }
+        >
+          {favMovies.map((movie) => (
+            <MovieCard
+              key={movie.id}
+              id={movie.id}
+              title={movie.title}
+              year={movie.year}
+              posterPath={movie.posterPath}
+              posterBlur={movie.posterBlur}
+              rating={movie.communityRating}
+              personalRating={movie.personalRating}
+              videoWidth={movie.videoWidth}
+              videoHeight={movie.videoHeight}
+              isFavorite
+              isWatched={movie.isWatched}
+              onToggleFavorite={() => handleToggleFavorite(movie.id, true)}
+              onToggleWatched={() => handleToggleWatched(movie.id, !!movie.isWatched)}
+              onDelete={(deleteFiles) => handleDeleteMovie(movie.id, deleteFiles)}
+            />
+          ))}
+        </ScrollRow>
+      )}
+
+      {favActors.length > 0 && (
+        <ScrollRow
+          title={
+            <Link
+              href="/movies?tab=favorites&view=actors"
+              className="hover:text-white hover:underline transition-colors"
+            >
+              {t("favoriteActors")}
+            </Link>
+          }
+        >
+          {favActors.map((person) => (
+            <PersonCard
+              key={person.id}
+              id={person.id}
+              name={person.name}
+              photoPath={person.photoPath}
+              photoBlur={person.photoBlur}
+              personalRating={person.personalRating}
+              isFavorite
+              size="movie"
+              onToggleFavorite={() => handleTogglePersonFavorite(person.id, true)}
+            />
+          ))}
+        </ScrollRow>
+      )}
+    </div>
+  );
+}
+
+function FavoritesMoviesGrid({ libraryId }: { libraryId: string }) {
   const t = useTranslations("movies");
   const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
     useMovieMutations();
@@ -748,6 +854,14 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div className="animate-fade-in-up py-6">
+      <Link
+        href={`/movies?tab=favorites${libraryId ? `&libraryId=${libraryId}` : ""}`}
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        {t("favoriteMovies")}
+      </Link>
+
       {favorites.length > 0 ? (
         <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center">
           {favorites.map((movie) => (
@@ -764,12 +878,8 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
               isFavorite
               isWatched={movie.isWatched}
               responsive
-              onToggleFavorite={() =>
-                handleToggleFavorite(movie.id, true)
-              }
-              onToggleWatched={() =>
-                handleToggleWatched(movie.id, !!movie.isWatched)
-              }
+              onToggleFavorite={() => handleToggleFavorite(movie.id, true)}
+              onToggleWatched={() => handleToggleWatched(movie.id, !!movie.isWatched)}
               onDelete={(deleteFiles) => handleDeleteMovie(movie.id, deleteFiles)}
             />
           ))}
@@ -778,6 +888,77 @@ function FavoritesTabContent({ libraryId }: { libraryId: string }) {
         !isLoading && (
           <div className="flex h-64 items-center justify-center text-muted-foreground">
             {t("noFavorites")}
+          </div>
+        )
+      )}
+
+      <div ref={sentinelRef} className="h-1" />
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FavoritesActorsGrid() {
+  const t = useTranslations("movies");
+  const { handleTogglePersonFavorite, handleDeletePerson } = usePersonMutations();
+
+  const {
+    data: actorsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery<PaginatedResponse<PersonItem>>({
+    queryKey: ["people", "favorites-grid"],
+    queryFn: ({ pageParam }) =>
+      fetch(`/api/people?filter=favorites&offset=${pageParam}`).then((r) => r.json()),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.offset + lastPage.limit : undefined,
+  });
+
+  const actors = actorsData?.pages.flatMap((p) => p.items) ?? [];
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
+
+  return (
+    <div className="animate-fade-in-up py-6">
+      <Link
+        href="/movies?tab=favorites"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        {t("favoriteActors")}
+      </Link>
+
+      {actors.length > 0 ? (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center">
+          {actors.map((person) => (
+            <PersonCard
+              key={person.id}
+              id={person.id}
+              name={person.name}
+              photoPath={person.photoPath}
+              photoBlur={person.photoBlur}
+              personalRating={person.personalRating}
+              isFavorite
+              size="movie"
+              onToggleFavorite={() => handleTogglePersonFavorite(person.id, true)}
+              onDelete={(deleteFiles) => handleDeletePerson(person.id, deleteFiles)}
+            />
+          ))}
+        </div>
+      ) : (
+        !isLoading && (
+          <div className="flex h-64 items-center justify-center text-muted-foreground">
+            {t("noFavoriteActors")}
           </div>
         )
       )}
@@ -901,6 +1082,7 @@ interface PersonItem {
   photoPath?: string | null;
   photoBlur?: string | null;
   personalRating?: number | null;
+  isFavorite?: boolean;
   movieCount: number;
   tags?: string[];
   dateAdded?: string;
@@ -925,9 +1107,23 @@ function usePersonMutations() {
     },
   });
 
+  const togglePersonFavorite = useMutation({
+    mutationFn: ({ id, current }: { id: string; current: boolean }) =>
+      fetch(`/api/people/${id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !current }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["people"] });
+    },
+  });
+
   return {
     handleDeletePerson: (id: string, deleteFiles?: boolean) =>
       deletePerson.mutate({ id, deleteFiles }),
+    handleTogglePersonFavorite: (id: string, current: boolean) =>
+      togglePersonFavorite.mutate({ id, current }),
   };
 }
 
@@ -949,7 +1145,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
   const filterRef = useRef<HTMLDivElement>(null);
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
-  const { handleDeletePerson } = usePersonMutations();
+  const { handleDeletePerson, handleTogglePersonFavorite } = usePersonMutations();
 
   const sortOptions = [
     { value: "name", label: t("nameAZ"), icon: ArrowDownAZ },
@@ -1400,7 +1596,9 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
             photoPath={person.photoPath}
             photoBlur={person.photoBlur}
             personalRating={person.personalRating}
+            isFavorite={person.isFavorite}
             size="movie"
+            onToggleFavorite={() => handleTogglePersonFavorite(person.id, !!person.isFavorite)}
             onDelete={(deleteFiles) => handleDeletePerson(person.id, deleteFiles)}
           />
         ))}

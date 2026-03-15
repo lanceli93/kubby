@@ -268,6 +268,8 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `bookmark_icons` ADD `dot_color` text DEFAULT '#ffffff'",
     // 0021: age at release on movie_people
     "ALTER TABLE `movie_people` ADD `age_at_release` integer",
+    // 0022: favorite flag for people
+    "ALTER TABLE `user_person_data` ADD `is_favorite` integer DEFAULT 0",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }
