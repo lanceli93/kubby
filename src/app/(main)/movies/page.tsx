@@ -153,7 +153,7 @@ function MovieBrowseContent() {
   return (
     <div className="flex h-full flex-col">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-full flex-col">
-        <div className="flex justify-center border-b border-white/[0.06] bg-black/30 backdrop-blur-xl">
+        <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
             <TabsTrigger value="movies" className="transition-fluid cursor-pointer">{t("movies")}</TabsTrigger>
             <TabsTrigger value="favorites" className="transition-fluid cursor-pointer">{t("favorites")}</TabsTrigger>
