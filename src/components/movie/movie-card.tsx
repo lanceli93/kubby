@@ -176,7 +176,7 @@ export function MovieCard({
         )}
 
         {/* Hover overlay bar — glass, slides up */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-fluid z-[5]">
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-[translate,opacity] duration-200 ease-out z-[5]">
           {/* Left: Watched toggle */}
           <button
             onClick={(e) => {
