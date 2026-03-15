@@ -36,11 +36,15 @@ Self-hosted movie server built with Next.js. Dark cinema theme, Jellyfin-compati
 
 Cinema Indigo + Gold color scheme with fluid glassmorphism. Primary `#6366f1`, gold `#ca8a04`.
 
-Glass utilities in `globals.css`: `.glass-cinema` (panels), `.glass-badge` (tags), `.glass-btn` (icon buttons), `.glass-card` (content cards), `.transition-fluid` (spring 280ms).
+Glass utilities in `globals.css`: `.glass-cinema` (panels, 0.75 opacity), `.glass-badge` (tags), `.glass-btn` (icon buttons), `.glass-card` (content cards), `.transition-fluid` (spring 280ms).
 
 Border-radius hierarchy: inputs `rounded-md` (6px) → buttons `rounded-lg` (8px) → cards `rounded-xl` (12px).
 
 UX: `cursor-pointer` on clickables, `active:scale-95` on action buttons, `role="alert"` on errors, `aria-label` on icon buttons.
+
+### Pitfall: `backdrop-filter` in detail pages
+
+Movie/Person detail glass panels use **Tailwind utility** (`backdrop-blur-[20px]`) NOT `.glass-cinema` CSS class. The CSS class's `backdrop-filter` doesn't work in that context (Tailwind v4 vs custom CSS specificity issue). Also: detail page content-row must NOT have `animation` or `transform` — these create stacking contexts that block `backdrop-filter` on children.
 
 ## Reference Files
 

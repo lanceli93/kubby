@@ -47,6 +47,10 @@ next-env.d.ts
 # marketing drafts (local only)
 /marketing/
 
+# third-party claude skills (local only)
+.claude/skills/ui-ux-pro-max/
+.claude/skills/ui-styling/
+
 # packaging output
 /dist/
 /.download-cache/
