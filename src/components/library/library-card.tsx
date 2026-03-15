@@ -69,6 +69,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
   const [jellyfinCompatConfirmOpen, setJellyfinCompatConfirmOpen] = useState(false);
   const [jellyfinCompatConfirmAction, setJellyfinCompatConfirmAction] = useState<"enable" | "disable">("enable");
   const [editSaving, setEditSaving] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const libScan = useLibraryScan(id);
   const scanning = libScan.scanning;
   const scanProgress = libScan.progress;
@@ -106,7 +107,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
   return (
     <Link
       href={`/movies?libraryId=${id}`}
-      className="group flex-shrink-0 cursor-pointer transition-fluid hover:scale-[1.03]"
+      className={`group flex-shrink-0 cursor-pointer transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`}
       style={{ width: 360 }}
     >
       {/* Cover image area */}
@@ -116,7 +117,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
             src={resolveImageSrc(coverImage)}
             alt={name}
             fill
-            className="object-cover transition-fluid group-hover:scale-105"
+            className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
             sizes="360px"
           />
         ) : (
@@ -172,8 +173,8 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
         )}
 
         {/* Hover: ⋯ menu button */}
-        <div className="absolute inset-x-0 bottom-0 flex justify-end px-2 py-1.5 backdrop-blur-md bg-black/30 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
-          <DropdownMenu>
+        <div className={`absolute -inset-x-1 -bottom-1 flex justify-end px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => {
