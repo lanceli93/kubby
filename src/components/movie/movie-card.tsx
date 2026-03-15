@@ -128,7 +128,7 @@ export function MovieCard({
         {showResBadge && (() => {
           const res = getResolutionLabel(videoWidth, videoHeight);
           return res ? (
-            <div className="absolute left-1.5 top-1.5 rounded-md bg-white/70 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80">
+            <div className="absolute left-1.5 top-1.5 rounded-md bg-white/40 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80 shadow-sm">
               {res}
             </div>
           ) : null;
