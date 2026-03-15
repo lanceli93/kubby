@@ -32,6 +32,16 @@ Self-hosted movie server built with Next.js. Dark cinema theme, Jellyfin-compati
 - **Centralized paths**: `src/lib/paths.ts` manages all data/config/metadata paths via `KUBBY_DATA_DIR` env
 - **Auth split**: `auth.config.ts` (lightweight, Edge-compatible) + `auth.ts` (full, with DB) — middleware imports the lightweight one
 
+## UI Design System
+
+Cinema Indigo + Gold color scheme with fluid glassmorphism. Primary `#6366f1`, gold `#ca8a04`.
+
+Glass utilities in `globals.css`: `.glass-cinema` (panels), `.glass-badge` (tags), `.glass-btn` (icon buttons), `.glass-card` (content cards), `.transition-fluid` (spring 280ms).
+
+Border-radius hierarchy: inputs `rounded-md` (6px) → buttons `rounded-lg` (8px) → cards `rounded-xl` (12px).
+
+UX: `cursor-pointer` on clickables, `active:scale-95` on action buttons, `role="alert"` on errors, `aria-label` on icon buttons.
+
 ## Reference Files
 
 Read these on demand based on your task:

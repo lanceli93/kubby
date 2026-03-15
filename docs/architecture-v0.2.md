@@ -822,7 +822,7 @@ Player (page.tsx)
 
 ## 主题配色
 
-定义在 `globals.css` 的 `:root` 中, 始终深色模式。
+定义在 `globals.css` 的 `:root` 中, 始终深色模式。Cinema Indigo + Gold 配色。
 
 | CSS 变量 | 色值 | 用途 |
 |----------|------|------|
@@ -830,16 +830,31 @@ Player (page.tsx)
 | `--foreground` | `#f0f0f5` | 主要文字 |
 | `--surface` / `--card` | `#1a1a2e` | 卡片/表面 |
 | `--header` / `--muted` | `#111118` | 导航栏/侧边栏 |
-| `--input-bg` | `#0f0f1a` | 输入框背景 |
-| `--primary` | `#3b82f6` | 主强调色 (蓝) |
-| `--secondary` | `#6366f1` | 次强调色 (靛蓝) |
+| `--primary` | `#6366f1` | 主强调色 (靛紫) |
+| `--secondary` | `#818cf8` | 次强调色 (浅靛紫) |
 | `--muted-foreground` | `#8888a0` | 次要文字 |
-| `--gold` | `#f5c518` | 评分/高亮 |
+| `--gold` | `#ca8a04` | 评分/高亮 (暖金) |
 | `--destructive` | `#ef4444` | 危险操作 |
 | `--border` | `rgba(255,255,255,0.06)` | 边框 |
 | `--radius` | `0.5rem` (8px) | 基础圆角 |
 
 字体: Inter (通过 `next/font/google` 加载), CJK 回退: PingFang SC → Microsoft YaHei → Noto Sans SC
+
+### Fluid Glass 设计体系
+
+全局采用毛玻璃 (glassmorphism) 风格, 通过 `globals.css` 中的工具类实现:
+
+| 工具类 | 用途 | 效果 |
+|--------|------|------|
+| `.glass-cinema` | 信息面板 (详情页 overlay) | `bg rgba(10,10,15,0.5)` + `blur(20px) saturate(1.3)` + inset highlight |
+| `.glass-badge` | 小标签/徽章 | `bg rgba(255,255,255,0.08)` + `blur(12px)` |
+| `.glass-btn` | 图标按钮 | `bg rgba(255,255,255,0.06)` + `blur(12px)` + hover 发光 |
+| `.glass-card` | 内容卡片 | `bg rgba(255,255,255,0.04)` + `blur(16px)` + hover 阴影 |
+| `.transition-fluid` | 弹性动画 | `cubic-bezier(0.22,1,0.36,1)` 280ms, 含 scale/translate |
+
+**圆角层级**: 输入框 `rounded-md` (6px) → 按钮 `rounded-lg` (8px) → 卡片容器 `rounded-xl` (12px)
+
+**交互规范**: 所有可点击元素 `cursor-pointer`, 主按钮 `active:scale-95`, 错误消息 `role="alert"`, 图标按钮 `aria-label`
 
 ---
 
