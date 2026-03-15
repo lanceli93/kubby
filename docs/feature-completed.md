@@ -1,5 +1,28 @@
 # Completed Features
 
+## 2026-03-15: v0.2.3 — Cinema Indigo & Fluid Glass Visual Upgrade
+
+Comprehensive visual overhaul with Cinema Indigo + Gold color scheme (`#6366f1` / `#ca8a04`) and fluid glassmorphism design system.
+
+### Changes
+- **Color scheme**: replaced all blue with Cinema Indigo + Gold tokens
+- **Glass utilities**: `.glass-cinema`, `.glass-badge`, `.glass-btn`, `.glass-card` in `globals.css`
+- **Glass treatment**: applied to nav sidebar, sort/filter dropdowns, detail page info panels
+- **Backdrop-filter blur**: detail page glass panels use Tailwind `backdrop-blur-[20px]` (not `.glass-cinema` CSS class — Tailwind v4 specificity issue)
+- **Tab bar**: unified with header background color (`var(--header)`) — no black band
+- **Border-radius hierarchy**: inputs `rounded-md` → buttons `rounded-lg` → cards `rounded-xl`
+- **Card dropdown fix**: tracked `menuOpen` state, opacity fade overlay, `modal={false}` on Radix DropdownMenu
+- **HLS iOS Safari fix**: transcoded streams play beyond 6-7s
+- **LAN access fix**: removed hardcoded `AUTH_URL=localhost`
+
+### Key Files Modified
+- `src/app/globals.css` — glass utilities, animations (fadeInUp, fadeIn, irisOpen, stagger-children)
+- `src/app/(main)/movies/page.tsx` — glass pill sort/filter buttons, glass dropdown menus
+- `src/app/(main)/movies/[id]/page.tsx` — backdrop-blur detail panel
+- `src/app/(main)/people/[id]/page.tsx` — same as movie detail
+- `src/components/movie/movie-card.tsx` — menuOpen state tracking, opacity fade overlay
+- `src/components/people/person-card.tsx` — same pattern as movie-card
+
 ## 2026-03-02: Bookmark Mode (Frame Scrubber)
 
 Lightweight frame browser on the movie detail page for creating bookmarks without video playback. Solves the problem of VR videos being too heavy for real-time FFmpeg transcoding.
