@@ -160,7 +160,7 @@ export default function PersonDetailPage() {
         <div className={`hidden md:block absolute inset-0 bg-gradient-to-r from-background/60 via-background/30 to-transparent transition-opacity duration-300 ${fanartMode ? "opacity-0 pointer-events-none" : ""}`} />
 
         {/* Content row: poster + person info */}
-        <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible" : "animate-fade-in-up"}`}>
+        <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
           {/* Poster — 350×525 (2:3), same as movie detail */}
           <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
             {person.photoPath ? (
@@ -178,7 +178,7 @@ export default function PersonDetailPage() {
             )}
           </div>
 
-          <div className="glass-cinema flex min-w-0 flex-1 flex-col gap-3 rounded-2xl p-4 md:p-6">
+          <div className="backdrop-blur-[20px] bg-[rgba(10,10,15,0.45)] border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_0.5px_0_rgba(255,255,255,0.1)] flex min-w-0 flex-1 flex-col gap-3 rounded-2xl p-4 md:p-6">
             <h1 className="text-2xl md:text-4xl font-bold text-white">
               {person.name}
             </h1>

@@ -235,6 +235,25 @@
   animation: fadeInUp 0.4s ease-out both;
 }
 
+/* Fade-in only (no transform) — safe for backdrop-filter children */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+/* Cinema iris reveal — circle expands from center, classic film opening */
+@keyframes irisOpen {
+  0% { clip-path: circle(0% at 50% 40%); }
+  100% { clip-path: circle(150% at 50% 40%); }
+}
+.animate-iris-reveal {
+  clip-path: circle(0% at 50% 40%);
+  animation: irisOpen 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
 /* Stagger children: apply to parent, children get delayed */
 .stagger-children > * {
   opacity: 0;
