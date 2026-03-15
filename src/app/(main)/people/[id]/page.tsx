@@ -353,9 +353,11 @@ export default function PersonDetailPage() {
         </div>
       </section>
 
-      {/* Photo Gallery */}
-      <PersonGallery personId={personId} galleryImages={galleryImages} />
       </div>
+
+      {/* Photo Gallery — outside stagger-children because its animation
+          creates a containing block that breaks DragOverlay fixed positioning */}
+      <PersonGallery personId={personId} galleryImages={galleryImages} />
 
       {/* Metadata editor dialog */}
       <PersonMetadataEditor
