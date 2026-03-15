@@ -846,13 +846,21 @@ Player (page.tsx)
 
 | 工具类 | 用途 | 效果 |
 |--------|------|------|
-| `.glass-cinema` | 信息面板 (详情页 overlay) | `bg rgba(10,10,15,0.5)` + `blur(20px) saturate(1.3)` + inset highlight |
+| `.glass-cinema` | 信息面板 (登录/设置等) | `bg rgba(10,10,15,0.75)` + `blur(28px) saturate(1.3)` + inset highlight |
 | `.glass-badge` | 小标签/徽章 | `bg rgba(255,255,255,0.08)` + `blur(12px)` |
 | `.glass-btn` | 图标按钮 | `bg rgba(255,255,255,0.06)` + `blur(12px)` + hover 发光 |
 | `.glass-card` | 内容卡片 | `bg rgba(255,255,255,0.04)` + `blur(16px)` + hover 阴影 |
 | `.transition-fluid` | 弹性动画 | `cubic-bezier(0.22,1,0.36,1)` 280ms, 含 scale/translate |
 
 **圆角层级**: 输入框 `rounded-md` (6px) → 按钮 `rounded-lg` (8px) → 卡片容器 `rounded-xl` (12px)
+
+> **Pitfall: `backdrop-filter` 与 CSS class 优先级冲突**
+>
+> Movie/Person detail 页面的 glass panel 直接使用 Tailwind utility (`backdrop-blur-[20px]`) 而非 `.glass-cinema` CSS class。原因：`.glass-cinema` 的 `backdrop-filter` 在该上下文中不生效（疑似 Tailwind v4 与自定义 CSS class 的优先级/层叠冲突），而相同属性通过 Tailwind utility class 内联则正常工作。
+>
+> **规则**：在需要 `backdrop-filter` 生效的场景，优先使用 Tailwind utility（`backdrop-blur-*`）而非自定义 CSS class。`.glass-cinema` 仍可用于不依赖 backdrop-filter 的场景（登录、设置向导等，背景不透明度足够高）。
+>
+> **相关限制**：`backdrop-filter` 无法穿透父元素创建的 stacking context（`transform`、`animation` with `fill-mode: both`、`opacity < 1`、`will-change` 等）。Detail 页面的 content-row 因此不使用 `animate-fade-in-up`。
 
 **交互规范**: 所有可点击元素 `cursor-pointer`, 主按钮 `active:scale-95`, 错误消息 `role="alert"`, 图标按钮 `aria-label`
 
