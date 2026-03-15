@@ -77,7 +77,7 @@ interface MovieDetail {
   mediaLibraryId?: string;
   discCount?: number;
   discs?: DiscInfo[];
-  cast: { id: string; name: string; role?: string; photoPath?: string | null; photoBlur?: string | null; personalRating?: number | null; ageAtRelease?: number | null }[];
+  cast: { id: string; name: string; role?: string; photoPath?: string | null; photoBlur?: string | null; personalRating?: number | null; isFavorite?: boolean | null; ageAtRelease?: number | null }[];
   directors: { id: string; name: string }[];
   userData?: {
     isPlayed: boolean;
@@ -294,6 +294,19 @@ export default function MovieDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       router.push("/movies");
+    },
+  });
+
+  const togglePersonFavorite = useMutation({
+    mutationFn: ({ id, current }: { id: string; current: boolean }) =>
+      fetch(`/api/people/${id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !current }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+      queryClient.invalidateQueries({ queryKey: ["people"] });
     },
   });
 
@@ -851,8 +864,10 @@ export default function MovieDetailPage() {
                 photoPath={person.photoPath}
                 photoBlur={person.photoBlur}
                 personalRating={person.personalRating}
+                isFavorite={!!person.isFavorite}
                 age={person.ageAtRelease}
                 size="movie"
+                onToggleFavorite={() => togglePersonFavorite.mutate({ id: person.id, current: !!person.isFavorite })}
               />
             ))}
           </ScrollRow>

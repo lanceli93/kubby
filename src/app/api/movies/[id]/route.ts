@@ -253,6 +253,7 @@ export async function GET(
         photoBlur: people.photoBlur,
         sortOrder: moviePeople.sortOrder,
         personalRating: userPersonData.personalRating,
+        isFavorite: userPersonData.isFavorite,
         ageAtRelease: moviePeople.ageAtRelease,
       })
       .from(moviePeople)
