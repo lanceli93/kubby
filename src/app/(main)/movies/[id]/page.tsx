@@ -371,7 +371,7 @@ export default function MovieDetailPage() {
 
           {/* Movie Info — glass panel over fanart */}
           <div className="backdrop-blur-[20px] bg-[rgba(10,10,15,0.45)] border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_0.5px_0_rgba(255,255,255,0.1)] flex min-w-0 flex-1 flex-col gap-3 rounded-2xl p-4 md:p-6">
-            <h1 className="text-2xl md:text-4xl font-bold text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-white truncate">
               {movie.title}
             </h1>
 
