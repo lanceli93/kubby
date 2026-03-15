@@ -204,18 +204,23 @@ export function PersonGallery({
     })
   );
 
-  // ── Upload ──
+  // ── Upload (batched to stay under body size limit) ──
+  const UPLOAD_BATCH_SIZE = 5;
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const formData = new FormData();
-    for (const file of Array.from(files)) {
-      const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-      if (!IMAGE_EXTENSIONS.has(ext)) continue;
-      formData.append("file", file);
+    const imageFiles = Array.from(files).filter((f) => {
+      const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
+      return IMAGE_EXTENSIONS.has(ext);
+    });
+    if (imageFiles.length === 0) return;
+    // Upload in batches to avoid exceeding body size limit
+    for (let i = 0; i < imageFiles.length; i += UPLOAD_BATCH_SIZE) {
+      const batch = imageFiles.slice(i, i + UPLOAD_BATCH_SIZE);
+      const formData = new FormData();
+      for (const file of batch) formData.append("file", file);
+      await fetch(`/api/people/${personId}/gallery`, { method: "POST", body: formData });
     }
-    if (!formData.has("file")) return;
-    await fetch(`/api/people/${personId}/gallery`, { method: "POST", body: formData });
     queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (folderInputRef.current) folderInputRef.current.value = "";
