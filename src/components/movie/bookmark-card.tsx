@@ -119,7 +119,7 @@ export function BookmarkCard({
   const card = (
     <div className="group relative flex-shrink-0 w-[280px] md:w-[320px]">
       {/* Thumbnail — height adapts to image's native aspect ratio */}
-      <div className="relative w-[280px] md:w-[320px] overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
+      <div className="relative w-[280px] md:w-[320px] overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900">
         {bookmark.thumbnailPath ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -196,7 +196,7 @@ export function BookmarkCard({
         {/* Delete confirmation overlay */}
         {onDelete && confirmDelete && (
           <div
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-lg bg-black/80"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-md bg-black/80"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
           >
             <p className="text-sm text-white/90">Delete this bookmark?</p>

@@ -40,7 +40,7 @@ export function ContinueWatchingCard({
     <div className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.02]" style={{ width: 320 }}>
       <Link href={`/movies/${id}`}>
         {/* Landscape card — 16:9 */}
-        <div className="relative w-full overflow-hidden rounded-xl bg-[var(--surface)] ring-1 ring-white/[0.06]" style={{ aspectRatio: "16/9" }}>
+        <div className="relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]" style={{ aspectRatio: "16/9" }}>
           {imageSrc ? (
             <Image
               src={resolveImageSrc(imageSrc, 640)}

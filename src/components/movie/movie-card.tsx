@@ -108,7 +108,7 @@ export function MovieCard({
       href={`/movies/${id}`}
     >
       {/* Poster */}
-      <div className={`relative w-full overflow-hidden rounded-lg bg-[var(--surface)] ring-1 ring-white/[0.06] ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
+      <div className={`relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06] ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
         {posterPath ? (
           <Image
             src={resolveImageSrc(posterPath, 360)}

@@ -111,7 +111,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       style={{ width: 360 }}
     >
       {/* Cover image area */}
-      <div className="relative w-full overflow-hidden rounded-lg ring-1 ring-white/[0.06] bg-white/[0.05]" style={{ height: 200 }}>
+      <div className="relative w-full overflow-hidden rounded-md ring-1 ring-white/[0.06] bg-white/[0.05]" style={{ height: 200 }}>
         {coverImage ? (
           <Image
             src={resolveImageSrc(coverImage)}
