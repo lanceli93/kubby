@@ -3,6 +3,7 @@
 import { useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MovieCard } from "@/components/movie/movie-card";
+import { ContinueWatchingCard } from "@/components/movie/continue-watching-card";
 import { LibraryCard } from "@/components/library/library-card";
 import { AddLibraryCard } from "@/components/library/add-library-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -15,6 +16,7 @@ interface Movie {
   year?: number;
   posterPath?: string | null;
   posterBlur?: string | null;
+  fanartPath?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
   videoWidth?: number | null;
@@ -274,15 +276,24 @@ export default function HomePage() {
               </ScrollRow>
             )}
 
-            {/* Continue Watching */}
-            <MovieRow
-              title={t("continueWatching")}
-              movies={continueWatching}
-              showProgress
-              onToggleFavorite={handleToggleFavorite}
-              onToggleWatched={handleToggleWatched}
-              onDelete={handleDeleteMovie}
-            />
+            {/* Continue Watching — landscape fanart cards */}
+            {continueWatching.length > 0 && (
+              <ScrollRow title={t("continueWatching")}>
+                {continueWatching.map((movie) => (
+                  <ContinueWatchingCard
+                    key={movie.discLabel ? `${movie.id}-disc${movie.currentDisc}` : movie.id}
+                    id={movie.id}
+                    title={movie.title}
+                    year={movie.year}
+                    fanartPath={movie.fanartPath}
+                    posterPath={movie.posterPath}
+                    progress={movie.progress}
+                    discLabel={movie.discLabel}
+                    currentDisc={movie.currentDisc}
+                  />
+                ))}
+              </ScrollRow>
+            )}
 
             {/* Recently Added */}
             <MovieRow
