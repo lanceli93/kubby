@@ -70,6 +70,8 @@ Version priority: `KUBBY_VERSION` env (CI from git tag) > `package.json` `"versi
 
 > **Pitfall (pre-0.2.0)**: Version was hardcoded independently in 4 files with no sync. Fixed by `syncVersionToAllFiles()` in `scripts/package.ts`.
 
+> **Pitfall: NEVER use `gh release create`** — CI auto-creates a draft release with built assets when a `v*` tag is pushed. Using `gh release create` creates a **duplicate** release (one with assets, one without). Always use `gh release edit` + `gh api PATCH` to add notes and publish the CI-created draft. See `references/release-workflow.md` step 5-6.
+
 ## Common Commands
 
 ```bash
