@@ -160,12 +160,17 @@ Section "Install"
       CopyFiles /SILENT "$LOCALAPPDATA\Kubby\metadata" "$DataDir"
     noMeta:
 
-    ; Clean up old data files (keep config.json — it lives here permanently)
-    Delete "$LOCALAPPDATA\Kubby\kubby.db"
-    Delete "$LOCALAPPDATA\Kubby\kubby.db-wal"
-    Delete "$LOCALAPPDATA\Kubby\kubby.db-shm"
-    Delete "$LOCALAPPDATA\Kubby\secret.key"
-    RMDir /r "$LOCALAPPDATA\Kubby\metadata"
+    ; Clean up: only delete each old file after confirming its copy exists
+    IfFileExists "$DataDir\kubby.db" 0 +2
+      Delete "$LOCALAPPDATA\Kubby\kubby.db"
+    IfFileExists "$DataDir\kubby.db-wal" 0 +2
+      Delete "$LOCALAPPDATA\Kubby\kubby.db-wal"
+    IfFileExists "$DataDir\kubby.db-shm" 0 +2
+      Delete "$LOCALAPPDATA\Kubby\kubby.db-shm"
+    IfFileExists "$DataDir\secret.key" 0 +2
+      Delete "$LOCALAPPDATA\Kubby\secret.key"
+    IfFileExists "$DataDir\metadata\*.*" 0 +2
+      RMDir /r "$LOCALAPPDATA\Kubby\metadata"
 
     Goto skipMigrate
 
