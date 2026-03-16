@@ -727,9 +727,12 @@ export default function PlayerPage() {
       onMouseMove={resetControlsTimer}
       onClick={togglePlay}
     >
+      {/* disableRemotePlayback: required on iOS so WebKit allows ManagedMediaSource instead of forcing AirPlay-compatible native HLS */}
       <video
         ref={videoRef}
         className="h-full w-full"
+        playsInline
+        disableRemotePlayback
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={() => { if (!hlsSeekingRef.current) setCurrentTime(getRealTime()); }}
