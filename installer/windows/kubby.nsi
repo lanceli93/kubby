@@ -112,6 +112,12 @@ FunctionEnd
 Section "Install"
   SetOutPath "$INSTDIR"
 
+  ; Remove old program files before copying (prevents stale files on upgrade)
+  Delete "$INSTDIR\kubby.exe"
+  RMDir /r "$INSTDIR\node"
+  RMDir /r "$INSTDIR\bin"
+  RMDir /r "$INSTDIR\server"
+
   ; Copy all files from the flat build directory
   ; INPUTDIR is passed via -D flag from the packaging script
   File "${INPUTDIR}\kubby.exe"
