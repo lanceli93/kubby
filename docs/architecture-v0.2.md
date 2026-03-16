@@ -1023,7 +1023,20 @@ dist/kubby-{platform}/
     └── public/              # 静态资源
 ```
 
-**启动流程**: Go 启动器 → 创建 OS 标准数据目录 → 自动生成 AUTH_SECRET → 启动 Node.js 子进程 → 等待就绪 → 打开浏览器 → 系统托盘
+**启动流程**: Go 启动器 → 读取 config.json → 解析数据目录 → 自动生成 AUTH_SECRET → 启动 Node.js 子进程 → 等待就绪 → 打开浏览器 → 系统托盘
+
+**数据目录解析链** (`launcher/main.go`):
+1. 环境变量 `KUBBY_DATA_DIR` (最高优先级)
+2. `config.json` 中的 `dataDir` 字段
+3. OS 默认位置: Windows `%LOCALAPPDATA%\Kubby` / macOS `~/Library/Application Support/Kubby` / Linux `~/.local/share/kubby`
+
+**Windows 安装器数据目录** (`installer/windows/kubby.nsi`):
+- 安装时提供 "Data Directory" 自定义页面, 默认 `%LOCALAPPDATA%\Kubby`
+- 升级时从注册表 `HKLM\Software\Kubby\DataDir` 读取上次选择并预填
+- 选择新位置时自动迁移旧数据 (db/secret.key/metadata), 逐文件验证后才删除旧文件
+- 迁移失败自动回退默认位置, config.json 已存在时保留用户端口设置
+- `SetShellVarContext current` 确保 UAC 提升后路径仍解析到当前用户
+- 升级前清理旧程序目录 (node/bin/server), 防止残留文件
 
 **关键配置**:
 - `KUBBY_DATA_DIR` — 数据目录路径 (默认 `process.cwd()/data`)
