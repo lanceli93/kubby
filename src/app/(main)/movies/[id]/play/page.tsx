@@ -329,7 +329,7 @@ export default function PlayerPage() {
           break;
         case "f":
           e.preventDefault();
-          toggleFullscreen();
+          if (!isIOS) toggleFullscreen();
           break;
         case "m":
           e.preventDefault();
@@ -529,6 +529,11 @@ export default function PlayerPage() {
     return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
   }
 
+  // iOS doesn't support Fullscreen API on non-video elements.
+  // Calling requestFullscreen() on a container triggers native video fullscreen
+  // which hides all custom controls. Detect and skip on iOS.
+  const isIOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
   function toggleFullscreen() {
     if (!containerRef.current) return;
     if (document.fullscreenElement) {
@@ -725,6 +730,7 @@ export default function PlayerPage() {
       ref={containerRef}
       className={`relative h-full w-full bg-black overflow-hidden ${!showControls ? "cursor-none" : ""}`}
       onMouseMove={resetControlsTimer}
+      onTouchStart={resetControlsTimer}
       onClick={togglePlay}
     >
       {/* disableRemotePlayback: required on iOS so WebKit allows ManagedMediaSource instead of forcing AirPlay-compatible native HLS */}
@@ -1023,7 +1029,7 @@ export default function PlayerPage() {
 
       {/* Bottom controls */}
       <div
-        className={`absolute inset-x-0 bottom-0 flex flex-col gap-3 bg-gradient-to-t from-black/80 to-transparent px-8 pb-6 pt-4 transition-opacity duration-300 ${
+        className={`absolute inset-x-0 bottom-0 flex flex-col gap-2 md:gap-3 bg-gradient-to-t from-black/80 to-transparent px-3 md:px-8 pb-4 md:pb-6 pt-4 transition-opacity duration-300 ${
           showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -1091,7 +1097,7 @@ export default function PlayerPage() {
         <div className="relative flex items-center justify-between">
           {/* Time display + encoder badge */}
           <div className="flex items-center gap-2">
-            <span className="min-w-[120px] tabular-nums text-sm text-white/80">
+            <span className="tabular-nums text-xs md:text-sm text-white/80">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
             {playbackMode && (
@@ -1129,7 +1135,7 @@ export default function PlayerPage() {
           </div>
 
           {/* Center controls — absolutely centered regardless of left/right width */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 md:gap-4">
             <button
               onClick={() => { skip(-10); showOsd("−10s"); }}
               className="text-white/80 hover:text-white"
@@ -1150,30 +1156,30 @@ export default function PlayerPage() {
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-3">
-            {/* Quick bookmark */}
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Quick bookmark — hidden on mobile */}
             <button
               onClick={() => addQuickBookmark.mutate()}
-              className="text-white/60 hover:text-indigo-400 transition-colors"
+              className="hidden md:block text-white/60 hover:text-indigo-400 transition-colors"
               title="Quick bookmark (B)"
             >
               <Bookmark className="h-5 w-5" />
             </button>
-            {/* Detailed bookmark */}
+            {/* Detailed bookmark — hidden on mobile */}
             <button
               onClick={() => {
                 if (videoRef.current && !videoRef.current.paused) videoRef.current.pause();
                 setShowBookmarkPanel(true);
               }}
-              className="text-white/60 hover:text-yellow-400 transition-colors cursor-pointer"
+              className="hidden md:block text-white/60 hover:text-yellow-400 transition-colors cursor-pointer"
               title="Detailed bookmark (Shift+B)"
             >
               <BookmarkPlus className="h-5 w-5" />
             </button>
-            {/* Auto-hide controls toggle */}
+            {/* Auto-hide controls toggle — hidden on mobile */}
             <button
               onClick={() => setAutoHideControls((v) => !v)}
-              className={`transition-colors cursor-pointer ${
+              className={`hidden md:block transition-colors cursor-pointer ${
                 autoHideControls ? "text-white/60 hover:text-white" : "text-indigo-400 hover:text-indigo-300"
               }`}
               title={autoHideControls ? "Auto-hide: on" : "Auto-hide: off (controls always visible)"}
@@ -1308,10 +1314,10 @@ export default function PlayerPage() {
               )}
             </div>
 
-            {/* Volume control */}
+            {/* Volume control — hidden on mobile (use hardware volume) */}
             <div
               ref={volumeAreaRef}
-              className="relative flex items-center"
+              className="relative hidden md:flex items-center"
               onMouseEnter={() => setShowVolumeSlider(true)}
               onMouseLeave={() => setShowVolumeSlider(false)}
             >
@@ -1341,18 +1347,20 @@ export default function PlayerPage() {
               )}
             </div>
 
-            {/* Fullscreen */}
-            <button
-              onClick={toggleFullscreen}
-              className="text-white/60 hover:text-white"
-              title="Fullscreen (F)"
-            >
-              {isFullscreen ? (
-                <Minimize className="h-5 w-5" />
-              ) : (
-                <Maximize className="h-5 w-5" />
-              )}
-            </button>
+            {/* Fullscreen — hidden on iOS (Fullscreen API not supported on containers, triggers native player) */}
+            {!isIOS && (
+              <button
+                onClick={toggleFullscreen}
+                className="text-white/60 hover:text-white"
+                title="Fullscreen (F)"
+              >
+                {isFullscreen ? (
+                  <Minimize className="h-5 w-5" />
+                ) : (
+                  <Maximize className="h-5 w-5" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
