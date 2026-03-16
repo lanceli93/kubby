@@ -36,6 +36,7 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 ; ─── Variables ──────────────────────────────────────────
 Var DataDir
 Var DataDirText
+Var ExistingPort
 
 ; ─── MUI Settings ───────────────────────────────────────
 !define MUI_ABORTWARNING
@@ -60,6 +61,10 @@ Page custom DataDirPage DataDirPageLeave
 
 ; ─── Close Running Instance & Init ──────────────────────
 Function .onInit
+  ; Ensure shell folder variables ($LOCALAPPDATA, $DESKTOP, etc.) resolve
+  ; to the actual logged-in user, not the admin account from UAC elevation.
+  SetShellVarContext current
+
   ; Kill running Kubby + child node.exe process tree before install/upgrade
   nsExec::ExecToLog 'taskkill /F /T /IM kubby.exe'
   Sleep 2000
@@ -136,6 +141,9 @@ Section "Install"
   doMigrate:
     CopyFiles /SILENT "$LOCALAPPDATA\Kubby\kubby.db" "$DataDir"
 
+    ; Verify the critical file was actually copied
+    IfFileExists "$DataDir\kubby.db" 0 migrateFailed
+
     IfFileExists "$LOCALAPPDATA\Kubby\kubby.db-wal" 0 noWal
       CopyFiles /SILENT "$LOCALAPPDATA\Kubby\kubby.db-wal" "$DataDir"
     noWal:
@@ -152,21 +160,53 @@ Section "Install"
       CopyFiles /SILENT "$LOCALAPPDATA\Kubby\metadata" "$DataDir"
     noMeta:
 
+    ; Clean up old data files (keep config.json — it lives here permanently)
+    Delete "$LOCALAPPDATA\Kubby\kubby.db"
+    Delete "$LOCALAPPDATA\Kubby\kubby.db-wal"
+    Delete "$LOCALAPPDATA\Kubby\kubby.db-shm"
+    Delete "$LOCALAPPDATA\Kubby\secret.key"
+    RMDir /r "$LOCALAPPDATA\Kubby\metadata"
+
+    Goto skipMigrate
+
+  migrateFailed:
+    MessageBox MB_OK|MB_ICONEXCLAMATION \
+      "Failed to copy data to:$\n$DataDir$\n$\nKubby will use the default data location instead."
+    StrCpy $DataDir "$LOCALAPPDATA\Kubby"
+
   skipMigrate:
 
   ; ── Write config.json to fixed config location ──
   CreateDirectory "$LOCALAPPDATA\Kubby"
 
-  StrCmp "$DataDir" "$LOCALAPPDATA\Kubby" writeDefaultConfig
+  ; If using default dataDir, only create config.json when it doesn't exist yet
+  ; (preserves user's port and any other settings on upgrade)
+  StrCmp "$DataDir" "$LOCALAPPDATA\Kubby" handleDefaultConfig
 
-  ; Custom data directory — escape backslashes for JSON
+  ; --- Custom dataDir: must write/update config.json with dataDir field ---
+
+  ; Read existing port from config.json so we don't overwrite it
+  StrCpy $ExistingPort "8665"
+  IfFileExists "$LOCALAPPDATA\Kubby\config.json" 0 writeCustomConfig
+  nsExec::ExecToStack `powershell -NoProfile -Command "try{(Get-Content -Raw '$LOCALAPPDATA\Kubby\config.json'|ConvertFrom-Json).port}catch{8665}"`
+  Pop $0  ; exit code
+  Pop $ExistingPort
+  ${StrRep} $ExistingPort $ExistingPort "$\r" ""
+  ${StrRep} $ExistingPort $ExistingPort "$\n" ""
+  ${StrRep} $ExistingPort $ExistingPort " " ""
+  StrCmp $ExistingPort "" 0 writeCustomConfig
+  StrCpy $ExistingPort "8665"
+
+  writeCustomConfig:
+  ; Escape backslashes for JSON
   ${StrRep} $1 "$DataDir" "\" "\\"
   FileOpen $0 "$LOCALAPPDATA\Kubby\config.json" w
-  FileWrite $0 '{$\r$\n  "port": 8665,$\r$\n  "dataDir": "$1"$\r$\n}$\r$\n'
+  FileWrite $0 '{$\r$\n  "port": $ExistingPort,$\r$\n  "dataDir": "$1"$\r$\n}$\r$\n'
   FileClose $0
   Goto configDone
 
-  writeDefaultConfig:
+  handleDefaultConfig:
+    IfFileExists "$LOCALAPPDATA\Kubby\config.json" configDone
     FileOpen $0 "$LOCALAPPDATA\Kubby\config.json" w
     FileWrite $0 '{$\r$\n  "port": 8665$\r$\n}$\r$\n'
     FileClose $0
@@ -205,6 +245,7 @@ SectionEnd
 
 ; ─── Close Running Instance Before Uninstall ─────────────
 Function un.onInit
+  SetShellVarContext current
   nsExec::ExecToLog 'taskkill /F /T /IM kubby.exe'
   Sleep 2000
 FunctionEnd
