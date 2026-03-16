@@ -465,7 +465,7 @@ export default function PlayerPage() {
             setCurrentTime(Math.floor(clamped));
 
             // Fresh HLS instance — no stale buffer or event listeners
-            if (Hls.isSupported({ allowManagedMediaSource: true })) {
+            if (Hls.isSupported()) {
               const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
               hlsRef.current = hls;
               hls.loadSource(data.hlsUrl);
@@ -642,7 +642,7 @@ export default function PlayerPage() {
             setCurrentTime(startAt);
           }
 
-          if (Hls.isSupported({ allowManagedMediaSource: true })) {
+          if (Hls.isSupported()) {
             const hls = new Hls({
               maxBufferLength: 30,
               maxMaxBufferLength: 60,
@@ -1236,7 +1236,7 @@ export default function PlayerPage() {
                               hlsTimeOffsetRef.current = realTime;
                               setCurrentTime(realTime);
 
-                              if (Hls.isSupported({ allowManagedMediaSource: true })) {
+                              if (Hls.isSupported()) {
                                 const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
                                 hlsRef.current = hls;
                                 hls.loadSource(data.hlsUrl);
