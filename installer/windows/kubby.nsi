@@ -26,8 +26,8 @@ RequestExecutionLevel admin
 Unicode True
 
 ; ─── Version Info ───────────────────────────────────────
-!define VERSION "0.1.0"
-VIProductVersion "0.1.0.0"
+!define VERSION "0.2.4"
+VIProductVersion "0.2.4.0"
 VIAddVersionKey "ProductName" "Kubby"
 VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "FileDescription" "Kubby Media Server Installer"

@@ -9,9 +9,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.kubby.app</string>
 	<key>CFBundleVersion</key>
-	<string>0.1.0</string>
+	<string>0.2.4</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.0</string>
+	<string>0.2.4</string>
 	<key>CFBundleExecutable</key>
 	<string>kubby</string>
 	<key>CFBundleIconFile</key>
