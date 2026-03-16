@@ -93,10 +93,8 @@ func main() {
 		runHeadless(server)
 	} else {
 		RunTray(&TrayApp{
-			port:    cfg.Port,
-			dataDir: dataDir,
-			cfg:     cfg,
-			server:  server,
+			port:   cfg.Port,
+			server: server,
 		})
 	}
 

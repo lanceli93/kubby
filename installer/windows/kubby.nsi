@@ -5,11 +5,17 @@
 ;
 ; Produces KubbySetup.exe that:
 ;   - Installs to C:\Program Files\Kubby
+;   - Lets user choose a data directory (default %LOCALAPPDATA%\Kubby)
+;   - Migrates old data if the user picks a new location
 ;   - Creates Start Menu + Desktop shortcuts
 ;   - Registers in Add/Remove Programs
-;   - Preserves user data (%LOCALAPPDATA%\Kubby) on uninstall
+;   - Preserves user data on uninstall (unless user opts to delete)
 
 !include "MUI2.nsh"
+!include "nsDialogs.nsh"
+!include "LogicLib.nsh"
+!include "StrFunc.nsh"
+${StrRep}
 
 ; ─── General ────────────────────────────────────────────
 Name "Kubby"
@@ -27,6 +33,10 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "FileDescription" "Kubby Media Server Installer"
 VIAddVersionKey "LegalCopyright" "MIT License"
 
+; ─── Variables ──────────────────────────────────────────
+Var DataDir
+Var DataDirText
+
 ; ─── MUI Settings ───────────────────────────────────────
 !define MUI_ABORTWARNING
 ; Icon paths relative to project root (forward slashes for cross-platform makensis)
@@ -36,6 +46,7 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 ; ─── Pages ──────────────────────────────────────────────
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
+Page custom DataDirPage DataDirPageLeave
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\kubby.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Launch Kubby"
@@ -47,11 +58,49 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 ; ─── Language ───────────────────────────────────────────
 !insertmacro MUI_LANGUAGE "English"
 
-; ─── Close Running Instance ──────────────────────────────
+; ─── Close Running Instance & Init ──────────────────────
 Function .onInit
   ; Kill running Kubby + child node.exe process tree before install/upgrade
   nsExec::ExecToLog 'taskkill /F /T /IM kubby.exe'
   Sleep 2000
+
+  ; Pre-populate data directory from previous install or use default
+  ReadRegStr $DataDir HKLM "Software\Kubby" "DataDir"
+  ${If} $DataDir == ""
+    StrCpy $DataDir "$LOCALAPPDATA\Kubby"
+  ${EndIf}
+FunctionEnd
+
+; ─── Custom Page: Data Directory ────────────────────────
+Function DataDirPage
+  !insertmacro MUI_HEADER_TEXT "Data Directory" "Choose where Kubby stores its data."
+  nsDialogs::Create 1018
+  Pop $0
+
+  ${NSD_CreateLabel} 0 0 100% 36u \
+    "Select the directory where Kubby will store its database, metadata,$\r$\nand media information. The default location is recommended for most users."
+  Pop $0
+
+  ${NSD_CreateDirRequest} 0 50u 74% 12u "$DataDir"
+  Pop $DataDirText
+
+  ${NSD_CreateBrowseButton} 76% 50u 24% 12u "Browse..."
+  Pop $0
+  ${NSD_OnClick} $0 OnBrowseDataDir
+
+  nsDialogs::Show
+FunctionEnd
+
+Function OnBrowseDataDir
+  nsDialogs::SelectFolderDialog "Select Kubby Data Directory" "$DataDir"
+  Pop $0
+  ${If} $0 != "error"
+    ${NSD_SetText} $DataDirText $0
+  ${EndIf}
+FunctionEnd
+
+Function DataDirPageLeave
+  ${NSD_GetText} $DataDirText $DataDir
 FunctionEnd
 
 ; ─── Installer Section ──────────────────────────────────
@@ -73,11 +122,63 @@ Section "Install"
 
   SetOutPath "$INSTDIR"
 
+  ; ── Create data directory ──
+  CreateDirectory "$DataDir"
+
+  ; ── Migrate old data if user chose a non-default directory ──
+  StrCmp "$DataDir" "$LOCALAPPDATA\Kubby" skipMigrate
+  IfFileExists "$LOCALAPPDATA\Kubby\kubby.db" 0 skipMigrate
+
+  MessageBox MB_YESNO|MB_ICONQUESTION \
+    "Existing Kubby data found at:$\n$LOCALAPPDATA\Kubby$\n$\nMigrate data to the new location?" \
+    IDYES doMigrate IDNO skipMigrate
+
+  doMigrate:
+    CopyFiles /SILENT "$LOCALAPPDATA\Kubby\kubby.db" "$DataDir"
+
+    IfFileExists "$LOCALAPPDATA\Kubby\kubby.db-wal" 0 noWal
+      CopyFiles /SILENT "$LOCALAPPDATA\Kubby\kubby.db-wal" "$DataDir"
+    noWal:
+
+    IfFileExists "$LOCALAPPDATA\Kubby\kubby.db-shm" 0 noShm
+      CopyFiles /SILENT "$LOCALAPPDATA\Kubby\kubby.db-shm" "$DataDir"
+    noShm:
+
+    IfFileExists "$LOCALAPPDATA\Kubby\secret.key" 0 noSecret
+      CopyFiles /SILENT "$LOCALAPPDATA\Kubby\secret.key" "$DataDir"
+    noSecret:
+
+    IfFileExists "$LOCALAPPDATA\Kubby\metadata\*.*" 0 noMeta
+      CopyFiles /SILENT "$LOCALAPPDATA\Kubby\metadata" "$DataDir"
+    noMeta:
+
+  skipMigrate:
+
+  ; ── Write config.json to fixed config location ──
+  CreateDirectory "$LOCALAPPDATA\Kubby"
+
+  StrCmp "$DataDir" "$LOCALAPPDATA\Kubby" writeDefaultConfig
+
+  ; Custom data directory — escape backslashes for JSON
+  ${StrRep} $1 "$DataDir" "\" "\\"
+  FileOpen $0 "$LOCALAPPDATA\Kubby\config.json" w
+  FileWrite $0 '{$\r$\n  "port": 8665,$\r$\n  "dataDir": "$1"$\r$\n}$\r$\n'
+  FileClose $0
+  Goto configDone
+
+  writeDefaultConfig:
+    FileOpen $0 "$LOCALAPPDATA\Kubby\config.json" w
+    FileWrite $0 '{$\r$\n  "port": 8665$\r$\n}$\r$\n'
+    FileClose $0
+
+  configDone:
+
   ; Write uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
-  ; Registry: install path + uninstall info
+  ; Registry: install path, data path, uninstall info
   WriteRegStr HKLM "Software\Kubby" "InstallDir" "$INSTDIR"
+  WriteRegStr HKLM "Software\Kubby" "DataDir" "$DataDir"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Kubby" \
     "DisplayName" "Kubby"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Kubby" \
@@ -124,15 +225,33 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\Kubby"
   Delete "$DESKTOP\Kubby.lnk"
 
+  ; Read data directory from registry before removing keys
+  ReadRegStr $1 HKLM "Software\Kubby" "DataDir"
+
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Kubby"
   DeleteRegKey HKLM "Software\Kubby"
 
   ; Ask user if they want to delete user data
-  MessageBox MB_YESNO|MB_ICONQUESTION \
-    "Do you want to delete Kubby configuration and default data?$\n$\nLocation: $LOCALAPPDATA\Kubby$\n$\nNote: If you configured a custom data directory, you will need to delete it manually.$\n$\nClick 'No' to keep your data for future installations." \
-    IDYES deleteData IDNO skipDelete
-  deleteData:
-    RMDir /r "$LOCALAPPDATA\Kubby"
+  ; Branch based on whether a custom data directory was used
+  ${If} $1 == ""
+  ${OrIf} $1 == "$LOCALAPPDATA\Kubby"
+    ; Default location — single directory
+    MessageBox MB_YESNO|MB_ICONQUESTION \
+      "Do you want to delete all Kubby user data (database, settings, metadata)?$\n$\nLocation: $LOCALAPPDATA\Kubby$\n$\nClick 'No' to keep your data for future installations." \
+      IDYES deleteDefault IDNO skipDelete
+    deleteDefault:
+      RMDir /r "$LOCALAPPDATA\Kubby"
+      Goto skipDelete
+  ${Else}
+    ; Custom location — two directories
+    MessageBox MB_YESNO|MB_ICONQUESTION \
+      "Do you want to delete all Kubby user data?$\n$\nConfig: $LOCALAPPDATA\Kubby$\nData: $1$\n$\nClick 'No' to keep your data for future installations." \
+      IDYES deleteCustom IDNO skipDelete
+    deleteCustom:
+      RMDir /r "$LOCALAPPDATA\Kubby"
+      RMDir /r "$1"
+  ${EndIf}
+
   skipDelete:
 SectionEnd
