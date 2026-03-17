@@ -96,10 +96,12 @@ export function usePlaybackSession({
 
         const counter = ++seekCounterRef.current;
 
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-          hlsRef.current = null;
-        }
+        // Keep old HLS alive — its buffered content stays visible as a
+        // freeze-frame while the server restarts FFmpeg and produces the
+        // first segment. Destroying it here would clear the SourceBuffer
+        // and show a black screen for 2-4 seconds.
+        const oldHls = hlsRef.current;
+        hlsRef.current = null;
 
         fetch(`/api/stream/${sessionIdRef.current}`, {
           method: "POST",
@@ -109,7 +111,10 @@ export function usePlaybackSession({
         })
           .then((r) => r.json())
           .then((data) => {
-            if (seekCounterRef.current !== counter) return;
+            if (seekCounterRef.current !== counter) {
+              oldHls?.destroy();
+              return;
+            }
             if (data.sessionId && videoRef.current) {
               sessionIdRef.current = data.sessionId;
               hlsTimeOffsetRef.current = Math.floor(clamped);
@@ -119,6 +124,10 @@ export function usePlaybackSession({
                 const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
                 hlsRef.current = hls;
                 hls.loadSource(data.hlsUrl);
+                // Destroy old HLS right before attaching new one — this is
+                // the latest safe moment, keeping the old frame on screen
+                // for as long as possible.
+                oldHls?.destroy();
                 hls.attachMedia(videoRef.current);
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                   hlsSeekingRef.current = false;
@@ -134,12 +143,16 @@ export function usePlaybackSession({
                   }
                 });
               } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+                oldHls?.destroy();
                 videoRef.current.src = data.hlsUrl;
                 hlsSeekingRef.current = false;
               }
+            } else {
+              oldHls?.destroy();
             }
           })
           .catch((err) => {
+            oldHls?.destroy();
             if (err?.name === "AbortError") return;
             hlsSeekingRef.current = false;
           });
@@ -173,13 +186,11 @@ export function usePlaybackSession({
   const changeResolution = useCallback(
     async (maxWidth: number) => {
       const realTime = Math.floor(getRealTime());
+      const oldHls = hlsRef.current;
+      hlsRef.current = null;
 
       if (sessionIdRef.current) {
         await fetch(`/api/stream/${sessionIdRef.current}`, { method: "DELETE" });
-      }
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
       }
 
       const qp = new URLSearchParams();
@@ -201,13 +212,17 @@ export function usePlaybackSession({
           const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
           hlsRef.current = hls;
           hls.loadSource(data.hlsUrl);
+          oldHls?.destroy();
           hls.attachMedia(videoRef.current);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             videoRef.current?.play().catch(() => {});
           });
         } else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+          oldHls?.destroy();
           videoRef.current.src = data.hlsUrl;
         }
+      } else {
+        oldHls?.destroy();
       }
     },
     [movieId, currentDisc, isMultiDisc, getRealTime],
@@ -226,10 +241,10 @@ export function usePlaybackSession({
       heartbeatRef.current = null;
     }
 
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
+    // Keep old HLS alive — its buffered content stays visible while the
+    // new session starts. Destroy it only when the new source is ready.
+    const oldHls = hlsRef.current;
+    hlsRef.current = null;
 
     const prevSession = sessionIdRef.current;
     if (prevSession) {
@@ -249,7 +264,10 @@ export function usePlaybackSession({
     fetch(`/api/movies/${movieId}/stream/decide${queryStr ? `?${queryStr}` : ""}`)
       .then((r) => r.json())
       .then((data) => {
-        if (cancelled) return;
+        if (cancelled) {
+          oldHls?.destroy();
+          return;
+        }
 
         if (data.warning) {
           showOsd(data.warning);
@@ -267,6 +285,7 @@ export function usePlaybackSession({
         }
 
         if (data.mode === "direct") {
+          oldHls?.destroy();
           video.src = data.directUrl;
           if (startAt > 0) {
             pendingSeekRef.current = startAt;
@@ -294,6 +313,7 @@ export function usePlaybackSession({
             });
             hlsRef.current = hls;
             hls.loadSource(hlsUrl);
+            oldHls?.destroy();
             hls.attachMedia(video);
 
             hls.on(Hls.Events.ERROR, (_event, errorData) => {
@@ -308,12 +328,14 @@ export function usePlaybackSession({
 
             showOsd(data.mode === "remux" ? "Remuxing..." : "Transcoding...");
           } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            oldHls?.destroy();
             video.src = hlsUrl;
             showOsd(data.mode === "remux" ? "Remuxing..." : "Transcoding...");
           }
         }
       })
       .catch(() => {
+        oldHls?.destroy();
         if (cancelled) return;
         const directUrl = isMultiDisc
           ? `/api/movies/${movieId}/stream?disc=${currentDisc}`
