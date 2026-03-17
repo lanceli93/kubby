@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { getTranscodeManager } from "@/lib/transcode/transcode-manager";
 
-const SEGMENT_PATTERN = /^segment_\d{4}\.ts$/;
+const SEGMENT_PATTERN = /^(segment_\d{4}\.(ts|m4s)|init\.mp4)$/;
 
 // GET /api/stream/[sessionId]/segment/[name]
 export async function GET(
@@ -38,9 +38,11 @@ export async function GET(
   }
 
   const data = fs.readFileSync(segmentPath);
+  const ext = path.extname(name);
+  const contentType = ext === ".m4s" || ext === ".mp4" ? "video/mp4" : "video/mp2t";
   return new Response(data, {
     headers: {
-      "Content-Type": "video/mp2t",
+      "Content-Type": contentType,
       "Cache-Control": "public, max-age=86400",
       "Content-Length": String(data.length),
     },

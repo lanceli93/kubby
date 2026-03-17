@@ -71,7 +71,8 @@ class TranscodeManager {
     fs.mkdirSync(outputDir, { recursive: true });
 
     const encoderConfig = this.getEncoderConfig();
-    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth, sourceVideoCodec, sourceVideoWidth });
+    const isHevcCopy = decision.videoAction === "copy" && !!sourceVideoCodec && /^(hevc|h265)$/i.test(sourceVideoCodec);
+    const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth, sourceVideoCodec, sourceVideoWidth, forceHevcFmp4: isHevcCopy });
     const ffmpegProcess = spawn(getFfmpegPath(), args, {
       stdio: ["ignore", "ignore", "pipe"],
     });
@@ -90,7 +91,9 @@ class TranscodeManager {
       if (!session) return;
 
       // Runtime fallback: if hardware encoder failed, retry with libx264
-      if (code !== 0 && encoderConfig.isHardware && !session.retriedWithSoftware) {
+      // Skip fallback for remux (stream copy) — no encoder involved
+      const isStreamCopy = decision.videoAction === "copy";
+      if (code !== 0 && encoderConfig.isHardware && !isStreamCopy && !session.retriedWithSoftware) {
         console.log(`[transcode] Hardware encoder failed, falling back to software`);
         session.retriedWithSoftware = true;
 
@@ -99,7 +102,7 @@ class TranscodeManager {
         fs.mkdirSync(outputDir, { recursive: true });
 
         const fallbackConfig = getLibx264Config();
-        const fallbackArgs = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig: fallbackConfig, maxWidth, sourceVideoCodec, sourceVideoWidth });
+        const fallbackArgs = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig: fallbackConfig, maxWidth, sourceVideoCodec, sourceVideoWidth, forceHevcFmp4: isHevcCopy });
         const fallbackProcess = spawn(getFfmpegPath(), fallbackArgs, {
           stdio: ["ignore", "ignore", "pipe"],
         });

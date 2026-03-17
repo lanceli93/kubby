@@ -25,9 +25,9 @@ export async function GET(
   const playlistPath = path.join(session.outputDir, "playlist.m3u8");
   let content = fs.readFileSync(playlistPath, "utf-8");
 
-  // Rewrite segment paths to route through our API
+  // Rewrite segment paths to route through our API (supports .ts and .m4s/.mp4 fMP4 segments)
   content = content.replace(
-    /^(segment_\d{4}\.ts)$/gm,
+    /^((?:segment_\d{4}\.(?:ts|m4s))|(?:init\.mp4))$/gm,
     `/api/stream/${sessionId}/segment/$1`,
   );
 

@@ -13,7 +13,7 @@ interface BuildArgs {
   sourceVideoWidth?: number | null;
 }
 
-export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth, sourceVideoCodec, sourceVideoWidth }: BuildArgs): string[] {
+export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth, sourceVideoCodec, sourceVideoWidth, forceHevcFmp4 }: BuildArgs & { forceHevcFmp4?: boolean }): string[] {
   const args: string[] = [];
   const needsTranscode = decision.videoAction !== "copy";
 
@@ -96,15 +96,29 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
   }
 
   // HLS output — short first segment for faster playback start
-  args.push(
-    "-f", "hls",
-    "-hls_time", "6",
-    "-hls_init_time", "1",
-    "-hls_list_size", "0",
-    "-hls_playlist_type", "event",
-    "-hls_segment_filename", `${outputDir}/segment_%04d.ts`,
-    `${outputDir}/playlist.m3u8`,
-  );
+  // Apple HLS spec requires HEVC in fMP4 segments (not MPEG-TS)
+  if (forceHevcFmp4) {
+    args.push(
+      "-f", "hls",
+      "-hls_time", "6",
+      "-hls_init_time", "1",
+      "-hls_list_size", "0",
+      "-hls_playlist_type", "event",
+      "-hls_segment_type", "fmp4",
+      "-hls_segment_filename", `${outputDir}/segment_%04d.m4s`,
+      `${outputDir}/playlist.m3u8`,
+    );
+  } else {
+    args.push(
+      "-f", "hls",
+      "-hls_time", "6",
+      "-hls_init_time", "1",
+      "-hls_list_size", "0",
+      "-hls_playlist_type", "event",
+      "-hls_segment_filename", `${outputDir}/segment_%04d.ts`,
+      `${outputDir}/playlist.m3u8`,
+    );
+  }
 
   return args;
 }
