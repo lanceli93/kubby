@@ -45,7 +45,7 @@ kubby/
 │   │   │   │   ├── page.tsx                        # 媒体库浏览 (Tabs: Movies=网格+排序, Favorites=收藏网格, Genres=按类型ScrollRow)
 │   │   │   │   └── [id]/
 │   │   │   │       ├── page.tsx                    # 电影详情 (fanart+poster+元数据+书签+演员+推荐)
-│   │   │   │       └── play/page.tsx               # 视频播放器 (全屏, 进度保存, 书签系统, 倍速)
+│   │   │   │       └── play/page.tsx               # 视频播放器编排 (hook 接线, 键盘快捷键, 数据获取)
 │   │   │   ├── people/[id]/page.tsx                # 演员详情 (fanart+大卡片+参演作品)
 │   │   │   ├── search/page.tsx                     # 搜索结果 (电影+演员)
 │   │   │   ├── settings/page.tsx                   # 用户设置 (个人资料/密码/语言切换/账户信息, i18n)
@@ -110,6 +110,10 @@ kubby/
 │   │   ├── library/
 │   │   │   ├── library-card.tsx                    # 媒体库卡片 (16:9, 320x180)
 │   │   │   └── folder-picker.tsx                   # 服务端文件夹选择器弹窗
+│   │   ├── player/
+│   │   │   ├── player-controls.tsx                  # 底部控制栏 (进度条/传输/音量/倍速/分辨率/全屏)
+│   │   │   ├── player-overlays.tsx                  # 叠加层 (OSD/帮助/书签面板/中央播放按钮)
+│   │   │   └── player-top-bar.tsx                   # 顶部栏 (返回/标题/碟片计数/帮助)
 │   │   └── ui/                                     # shadcn/ui 组件 (17个)
 │   │       ├── avatar.tsx, badge.tsx, button.tsx, card.tsx
 │   │       ├── dialog.tsx, dropdown-menu.tsx, input.tsx, label.tsx
@@ -148,6 +152,8 @@ kubby/
 │   │   └── utils.ts                                # shadcn/ui cn() 工具函数
 │   ├── hooks/
 │   │   ├── use-mobile.ts                           # useIsMobile hook (matchMedia max-width:767px, 与 Tailwind md: 断点同步)
+│   │   ├── use-playback-session.ts                 # HLS/直接播放生命周期, seek, 心跳, 清理 (可复用于 VR/360)
+│   │   ├── use-progress-save.ts                    # 自动保存播放进度 (10 秒间隔 + 按需保存)
 │   │   └── use-user-preferences.ts                 # 用户偏好 React Query hook (评分维度/卡片标记/书签配置)
 │   ├── providers/
 │   │   ├── query-provider.tsx                      # TanStack React Query Provider

@@ -1,5 +1,44 @@
 # Completed Features
 
+## 2026-03-17: Player Refactoring for VR/360 Support (Phase 0)
+
+Refactored the 1370-line monolithic player page into focused, reusable modules. Pure refactoring with zero behavior change, preparing for future VR/360 panoramic player that will share HLS session management, playback controls, bookmarks, and progress saving.
+
+### New Files
+- `src/hooks/use-playback-session.ts` — HLS/direct-play lifecycle, seek (debounced), heartbeat, cleanup, resolution change
+- `src/hooks/use-progress-save.ts` — Auto-save interval (10s) + on-demand save mutation
+- `src/components/player/player-controls.tsx` — Bottom control bar (seek bar, transport, volume, speed, resolution, fullscreen, bookmark markers)
+- `src/components/player/player-overlays.tsx` — OSD message, Help modal, Bookmark panel, Center play button
+- `src/components/player/player-top-bar.tsx` — Back button, title, disc counter, help toggle
+
+### Modified Files
+- `src/app/(main)/movies/[id]/play/page.tsx` — Slim orchestrator (487 lines, down from 1370): data fetching, hook wiring, keyboard shortcuts, controls visibility, bookmark mutations
+- `docs/architecture-v0.2.md` — Updated directory structure to reflect new player modules
+
+## 2026-03-15: Favorite Actors Feature
+
+Added person/actor favoriting support and redesigned both Favorites tabs (Home + Movies page) to show favorite movies and favorite actors as separate ScrollRows.
+
+### Changes
+- **DB**: Added `is_favorite` column to `user_person_data` table (migration #0022)
+- **API**: `GET/PUT /api/people/[id]/user-data` handles `isFavorite`; `/api/people` supports `filter=favorites` and returns `isFavorite` field
+- **PersonCard**: Heart toggle button on hover overlay (left side), matching MovieCard pattern
+- **Person Detail Page**: Heart button in badges row between rating/fanart buttons
+- **Movies Page Favorites Tab**: Redesigned to show two ScrollRows (Favorite Movies + Favorite Actors) with clickable titles navigating to full grid views (`?view=movies` / `?view=actors`) with back navigation
+- **Home Page Favorites Tab**: Two ScrollRows with clickable titles linking to Movies page grid views
+- **i18n**: Added keys for `favoriteMovies`, `favoriteActors`, `noFavoriteActors` in en/zh
+
+### Key Files Modified
+- `src/lib/db/schema.ts`, `src/lib/db/index.ts` — schema + migration
+- `src/app/api/people/[id]/user-data/route.ts` — isFavorite in GET/PUT
+- `src/app/api/people/route.ts` — filter=favorites, isFavorite in response
+- `src/app/api/people/[id]/route.ts` — isFavorite in userData
+- `src/components/people/person-card.tsx` — Heart toggle props
+- `src/app/(main)/people/[id]/page.tsx` — Heart button + toggleFavorite mutation
+- `src/app/(main)/movies/page.tsx` — FavoritesOverview, FavoritesMoviesGrid, FavoritesActorsGrid; togglePersonFavorite in usePersonMutations
+- `src/app/(main)/page.tsx` — Two ScrollRows in Favorites tab
+- `src/i18n/messages/en.json`, `src/i18n/messages/zh.json`
+
 ## 2026-03-15: v0.2.3 — Cinema Indigo & Fluid Glass Visual Upgrade
 
 Comprehensive visual overhaul with Cinema Indigo + Gold color scheme (`#6366f1` / `#ca8a04`) and fluid glassmorphism design system.
