@@ -9,6 +9,7 @@ export interface UsePlaybackSessionOptions {
   isMultiDisc: boolean;
   selectedMaxWidth: number;
   startAt: number;
+  ready: boolean;
   showOsd: (msg: string) => void;
 }
 
@@ -44,6 +45,7 @@ export function usePlaybackSession({
   isMultiDisc,
   selectedMaxWidth,
   startAt,
+  ready,
   showOsd,
 }: UsePlaybackSessionOptions): UsePlaybackSessionReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -256,6 +258,7 @@ export function usePlaybackSession({
 
   // Decide-then-play effect
   useEffect(() => {
+    if (!ready) return;
     const video = videoRef.current;
     if (!video) return;
 
@@ -379,8 +382,10 @@ export function usePlaybackSession({
     return () => {
       cancelled = true;
     };
+    // selectedMaxWidth is intentionally excluded — resolution changes are
+    // handled by changeResolution(), not by re-running this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movieId, currentDisc, startAt, selectedMaxWidth]);
+  }, [movieId, currentDisc, startAt, ready]);
 
   // Cleanup on unmount
   useEffect(() => {

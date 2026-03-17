@@ -108,7 +108,8 @@ export default function PlayerPage() {
     currentDisc,
     isMultiDisc,
     selectedMaxWidth,
-    startAt: movie ? startAt : 0,
+    startAt,
+    ready: !!movie,
     showOsd,
   });
 
