@@ -87,6 +87,18 @@ export default function PlayerPage() {
   const resetViewRef = useRef<(() => void) | null>(null);
   const capture360Ref = useRef<(() => Promise<Blob | null>) | null>(null);
   const view360Ref = useRef<{ getView: () => { lon: number; lat: number; fov: number }; setView: (v: { lon: number; lat: number; fov: number }) => void } | null>(null);
+  const initialViewState = useRef<{ lon: number; lat: number; fov: number } | null | undefined>(undefined);
+  if (initialViewState.current === undefined) {
+    const vsParam = searchParams.get("vs");
+    if (vsParam) {
+      const parts = vsParam.split(",").map(Number);
+      initialViewState.current = parts.length === 3 && parts.every((n) => !isNaN(n))
+        ? { lon: parts[0], lat: parts[1], fov: parts[2] }
+        : null;
+    } else {
+      initialViewState.current = null;
+    }
+  }
 
   // Sync 360 mode from user preferences on load
   useEffect(() => {
@@ -257,7 +269,9 @@ export default function PlayerPage() {
       if (qbTemplate?.tags && qbTemplate.tags.length > 0) formData.append("tags", JSON.stringify(qbTemplate.tags));
       if (qbTemplate?.note) formData.append("note", qbTemplate.note);
       if (thumbnail) formData.append("thumbnail", thumbnail, "thumb.jpg");
-      if (is360Mode && view360Ref.current) formData.append("viewState", JSON.stringify(view360Ref.current.getView()));
+      if (is360Mode && view360Ref.current) {
+        formData.append("viewState", JSON.stringify(view360Ref.current.getView()));
+      }
       return fetch(`/api/movies/${movieId}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
     },
     onSuccess: () => {
@@ -444,7 +458,13 @@ export default function PlayerPage() {
           isPlaying={session.isPlaying}
           onResetRef={(fn) => { resetViewRef.current = fn; }}
           onCaptureRef={(fn) => { capture360Ref.current = fn; }}
-          onViewRef={(fns) => { view360Ref.current = fns; }}
+          onViewRef={(fns) => {
+            view360Ref.current = fns;
+            if (initialViewState.current) {
+              fns.setView(initialViewState.current);
+              initialViewState.current = null;
+            }
+          }}
         />
       )}
 

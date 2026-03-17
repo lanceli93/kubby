@@ -22,6 +22,7 @@ interface BookmarkData {
   tags?: string[];
   note?: string;
   thumbnailPath?: string | null;
+  viewState?: { lon: number; lat: number; fov: number } | null;
 }
 
 export interface CustomIconData {
@@ -71,7 +72,8 @@ export function BookmarkCard({
   const builtin = getBuiltinIcon(bookmark.iconType || "bookmark");
   const customIcon = !builtin ? customIcons?.find((c) => c.id === bookmark.iconType) : undefined;
   const discParam = bookmark.discNumber && bookmark.discNumber > 1 ? `&disc=${bookmark.discNumber}` : "";
-  const href = `/movies/${movieId}/play?t=${bookmark.timestampSeconds}${discParam}`;
+  const vsParam = bookmark.viewState ? `&vs=${bookmark.viewState.lon.toFixed(2)},${bookmark.viewState.lat.toFixed(2)},${bookmark.viewState.fov.toFixed(0)}` : "";
+  const href = `/movies/${movieId}/play?t=${bookmark.timestampSeconds}${discParam}${vsParam}`;
 
   function openEdit() {
     setEditIconType(bookmark.iconType || "bookmark");
