@@ -1,7 +1,7 @@
 import { drizzle, BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "./schema";
-import { getDbPath, getDataDir } from "@/lib/paths";
+import { getDbPath } from "@/lib/paths";
 import path from "path";
 
 let _db: BetterSQLite3Database<typeof schema> | null = null;
@@ -281,28 +281,21 @@ function initDb(): BetterSQLite3Database<typeof schema> {
   }
 
   // 0025: Migrate absolute photoPath to relative (idempotent — skips already-relative paths)
+  // Extracts "metadata/people/..." from any absolute path, regardless of old dataDir
   try {
-    const dataDir = getDataDir();
-    const normalizedPrefix = path.normalize(dataDir) + path.sep;
-    const posixPrefix = normalizedPrefix.replace(/\\/g, "/");
     const rows = sqlite.prepare("SELECT id, photo_path FROM people WHERE photo_path IS NOT NULL").all() as Array<{ id: string; photo_path: string }>;
     const update = sqlite.prepare("UPDATE people SET photo_path = ? WHERE id = ?");
+    const MARKER = "metadata/people/";
     for (const row of rows) {
       const p = row.photo_path;
-      if (path.isAbsolute(p)) {
-        const normalized = path.normalize(p);
-        let relative: string | null = null;
-        if (normalized.startsWith(normalizedPrefix)) {
-          relative = normalized.slice(normalizedPrefix.length).replace(/\\/g, "/");
-        } else if (p.replace(/\\/g, "/").startsWith(posixPrefix)) {
-          relative = p.replace(/\\/g, "/").slice(posixPrefix.length);
-        }
-        if (relative) {
-          update.run(relative, row.id);
-        }
+      if (!path.isAbsolute(p)) continue; // already relative
+      const normalized = p.replace(/\\/g, "/");
+      const idx = normalized.indexOf(MARKER);
+      if (idx >= 0) {
+        update.run(normalized.slice(idx), row.id);
       }
     }
-  } catch { /* non-critical: old absolute paths still work via resolveDataPath fallback */ }
+  } catch { /* non-critical */ }
 
   _db = drizzle(sqlite, { schema });
   return _db;
