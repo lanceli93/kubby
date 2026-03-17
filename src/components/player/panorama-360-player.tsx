@@ -38,6 +38,11 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
   const prevPointerRef = useRef({ x: 0, y: 0 });
   const wasDragRef = useRef(false);
 
+  // Pinch-to-zoom state
+  const pinchDistRef = useRef(0);
+  const isPinchingRef = useRef(false);
+  const activeTouchesRef = useRef(new Map<number, { x: number; y: number }>());
+
   const updateCamera = useCallback(() => {
     const camera = cameraRef.current;
     if (!camera) return;
@@ -68,32 +73,7 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
     cameraRef.current = camera;
     updateCamera();
 
-    onResetRef?.(() => {
-      lonRef.current = 0;
-      latRef.current = 0;
-      camera.fov = 75;
-      camera.updateProjectionMatrix();
-      updateCamera();
-    });
-
     const renderer = new WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
-
-    onCaptureRef?.(() => {
-      return new Promise<Blob | null>((resolve) => {
-        renderer.domElement.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
-      });
-    });
-
-    onViewRef?.({
-      getView: () => ({ lon: lonRef.current, lat: latRef.current, fov: camera.fov }),
-      setView: (v) => {
-        lonRef.current = v.lon;
-        latRef.current = v.lat;
-        camera.fov = v.fov;
-        camera.updateProjectionMatrix();
-        updateCamera();
-      },
-    });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
@@ -110,12 +90,62 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
     const sphere = new Mesh(geometry, material);
     scene.add(sphere);
 
-    // Render loop
+    // Render loop — runs when playing; renders one frame then stops when paused
+    let loopRunning = false;
     const animate = () => {
-      animFrameRef.current = requestAnimationFrame(animate);
       renderer.render(scene, camera);
+      if (loopRunning) {
+        animFrameRef.current = requestAnimationFrame(animate);
+      }
     };
-    animate();
+    const startLoop = () => {
+      if (!loopRunning) { loopRunning = true; animate(); }
+    };
+    const stopLoop = () => { loopRunning = false; };
+    const renderOnce = () => {
+      if (!loopRunning) renderer.render(scene, camera);
+    };
+
+    // Expose renderOnce so pointer handlers can trigger it while paused
+    (renderer as unknown as Record<string, unknown>).__renderOnce = renderOnce;
+
+    // Register external callbacks (after renderOnce is available)
+    onResetRef?.(() => {
+      lonRef.current = 0;
+      latRef.current = 0;
+      camera.fov = 75;
+      camera.updateProjectionMatrix();
+      updateCamera();
+      renderOnce();
+    });
+
+    onCaptureRef?.(() => {
+      renderOnce();
+      return new Promise<Blob | null>((resolve) => {
+        renderer.domElement.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
+      });
+    });
+
+    onViewRef?.({
+      getView: () => ({ lon: lonRef.current, lat: latRef.current, fov: camera.fov }),
+      setView: (v) => {
+        lonRef.current = v.lon;
+        latRef.current = v.lat;
+        camera.fov = v.fov;
+        camera.updateProjectionMatrix();
+        updateCamera();
+        renderOnce();
+      },
+    });
+
+    // Start based on current play state
+    if (video.paused) { renderOnce(); } else { startLoop(); }
+
+    // Listen for play/pause to toggle loop
+    const onPlay = () => startLoop();
+    const onPause = () => stopLoop();
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
 
     // Resize
     const onResize = () => {
@@ -128,7 +158,10 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
     resizeObserver.observe(container);
 
     return () => {
+      stopLoop();
       cancelAnimationFrame(animFrameRef.current);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
       resizeObserver.disconnect();
       renderer.dispose();
       geometry.dispose();
@@ -142,16 +175,46 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
     };
   }, [videoRef, updateCamera]);
 
-  // Pointer events for drag rotation
+  const renderOnce = useCallback(() => {
+    const r = rendererRef.current as unknown as Record<string, unknown> | null;
+    if (r && typeof r.__renderOnce === "function") (r.__renderOnce as () => void)();
+  }, []);
+
+  // Pointer events for drag rotation + pinch-to-zoom
   const onPointerDown = useCallback((e: React.PointerEvent) => {
-    isDraggingRef.current = true;
-    wasDragRef.current = false;
-    prevPointerRef.current = { x: e.clientX, y: e.clientY };
+    activeTouchesRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (activeTouchesRef.current.size === 2) {
+      // Start pinch
+      isPinchingRef.current = true;
+      isDraggingRef.current = false;
+      const pts = [...activeTouchesRef.current.values()];
+      pinchDistRef.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+    } else if (activeTouchesRef.current.size === 1) {
+      isDraggingRef.current = true;
+      wasDragRef.current = false;
+      prevPointerRef.current = { x: e.clientX, y: e.clientY };
+    }
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   }, []);
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
+      activeTouchesRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (isPinchingRef.current && activeTouchesRef.current.size === 2) {
+        const camera = cameraRef.current;
+        if (!camera) return;
+        const pts = [...activeTouchesRef.current.values()];
+        const newDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        const delta = pinchDistRef.current - newDist;
+        camera.fov = Math.max(30, Math.min(120, camera.fov + delta * 0.1));
+        camera.updateProjectionMatrix();
+        pinchDistRef.current = newDist;
+        wasDragRef.current = true;
+        renderOnce();
+        return;
+      }
+
       if (!isDraggingRef.current) return;
       const dx = e.clientX - prevPointerRef.current.x;
       const dy = e.clientY - prevPointerRef.current.y;
@@ -160,12 +223,15 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
       latRef.current = Math.max(-85, Math.min(85, latRef.current + dy * 0.2));
       prevPointerRef.current = { x: e.clientX, y: e.clientY };
       updateCamera();
+      renderOnce();
     },
-    [updateCamera],
+    [updateCamera, renderOnce],
   );
 
-  const onPointerUp = useCallback(() => {
-    isDraggingRef.current = false;
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    activeTouchesRef.current.delete(e.pointerId);
+    if (activeTouchesRef.current.size < 2) isPinchingRef.current = false;
+    if (activeTouchesRef.current.size === 0) isDraggingRef.current = false;
   }, []);
 
   // Scroll wheel for FOV zoom
@@ -175,7 +241,8 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
     if (!camera) return;
     camera.fov = Math.max(30, Math.min(120, camera.fov + e.deltaY * 0.05));
     camera.updateProjectionMatrix();
-  }, []);
+    renderOnce();
+  }, [renderOnce]);
 
   // Click handler: only toggle play if it wasn't a drag
   const onClick = useCallback(
