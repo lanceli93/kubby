@@ -85,6 +85,7 @@ export default function PlayerPage() {
   const subtleMarkers = userPrefs?.subtleBookmarkMarkers ?? false;
   const [is360Mode, setIs360Mode] = useState(false);
   const resetViewRef = useRef<(() => void) | null>(null);
+  const capture360Ref = useRef<(() => Promise<Blob | null>) | null>(null);
 
   // Sync 360 mode from user preferences on load
   useEffect(() => {
@@ -228,6 +229,9 @@ export default function PlayerPage() {
 
   // Capture video frame for bookmark thumbnails
   async function captureVideoFrame(): Promise<Blob | null> {
+    if (is360Mode && capture360Ref.current) {
+      return capture360Ref.current();
+    }
     const video = session.videoRef.current;
     if (!video || !video.videoWidth || !video.videoHeight) return null;
     const canvas = document.createElement("canvas");
@@ -436,6 +440,7 @@ export default function PlayerPage() {
           videoRef={session.videoRef}
           isPlaying={session.isPlaying}
           onResetRef={(fn) => { resetViewRef.current = fn; }}
+          onCaptureRef={(fn) => { capture360Ref.current = fn; }}
         />
       )}
 
