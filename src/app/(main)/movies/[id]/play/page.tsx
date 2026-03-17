@@ -100,15 +100,33 @@ export default function PlayerPage() {
     }
   }
 
-  // Sync 360 mode: bookmark with vs → force on, bookmark without vs → force off, else → user pref
-  const isBookmarkNav = !!searchParams.get("t");
+  // Sync 360 mode from user preferences (bookmark nav persists to prefs in the effect below)
   useEffect(() => {
-    if (userPrefs) {
-      if (initialViewState.current) setIs360Mode(true);
-      else if (isBookmarkNav) setIs360Mode(false);
-      else setIs360Mode(userPrefs.player360Mode);
+    if (userPrefs) setIs360Mode(userPrefs.player360Mode);
+  }, [userPrefs]);
+
+  // On initial load from bookmark, override 360 mode and persist to user prefs
+  const bookmarkModeApplied = useRef(false);
+  useEffect(() => {
+    if (!userPrefs || bookmarkModeApplied.current) return;
+    bookmarkModeApplied.current = true;
+    const hasViewState = !!initialViewState.current;
+    const isBookmarkNav = !!searchParams.get("t");
+    let target: boolean | null = null;
+    if (hasViewState) target = true;
+    else if (isBookmarkNav) target = false;
+    if (target !== null && target !== userPrefs.player360Mode) {
+      setIs360Mode(target);
+      queryClient.setQueryData<UserPreferences>(["userPreferences"], (old) =>
+        old ? { ...old, player360Mode: target } : old
+      );
+      fetch("/api/settings/personal-metadata", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ player360Mode: target }),
+      }).catch(() => {});
     }
-  }, [userPrefs, isBookmarkNav]);
+  }, [userPrefs, searchParams, queryClient]);
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
   const totalDiscs = movie?.discCount ?? 1;
