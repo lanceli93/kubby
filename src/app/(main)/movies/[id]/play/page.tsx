@@ -84,6 +84,7 @@ export default function PlayerPage() {
   const disabledIconIds = new Set(userPrefs?.disabledBookmarkIcons ?? []);
   const subtleMarkers = userPrefs?.subtleBookmarkMarkers ?? false;
   const [is360Mode, setIs360Mode] = useState(false);
+  const resetViewRef = useRef<(() => void) | null>(null);
 
   // Sync 360 mode from user preferences on load
   useEffect(() => {
@@ -341,6 +342,13 @@ export default function PlayerPage() {
             addQuickBookmark.mutate();
           }
           break;
+        case "r":
+          if (is360Mode) {
+            e.preventDefault();
+            resetViewRef.current?.();
+            showOsd("View reset");
+          }
+          break;
         case "?":
           e.preventDefault();
           setShowHelp((v) => !v);
@@ -359,7 +367,7 @@ export default function PlayerPage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [volume, isMuted, playbackRate, session.isPlaying, showHelp, showBookmarkPanel]);
+  }, [volume, isMuted, playbackRate, session.isPlaying, showHelp, showBookmarkPanel, is360Mode]);
 
   // Close popover menus when clicking outside (handled by controls component internally now,
   // but we keep the global listener for encoder info popover backward compat)
@@ -427,6 +435,7 @@ export default function PlayerPage() {
         <Panorama360Player
           videoRef={session.videoRef}
           isPlaying={session.isPlaying}
+          onResetRef={(fn) => { resetViewRef.current = fn; }}
         />
       )}
 
@@ -500,6 +509,7 @@ export default function PlayerPage() {
         onToggleMute={toggleMute}
         onToggleFullscreen={toggleFullscreen}
         is360Mode={is360Mode}
+        onResetView={() => resetViewRef.current?.()}
         onToggleAutoHide={() => setAutoHideControls((v) => !v)}
         onToggle360Mode={() => {
           const next = !is360Mode;

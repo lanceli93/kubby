@@ -66,6 +66,7 @@ export interface PlayerControlsProps {
   customIcons: CustomIcon[];
   disabledIconIds: Set<string>;
   is360Mode: boolean;
+  onResetView?: () => void;
   onSeek: (seconds: number) => void;
   onSkip: (seconds: number) => void;
   onTogglePlay: () => void;
@@ -119,6 +120,7 @@ export function PlayerControls({
   onToggleMute,
   onToggleFullscreen,
   is360Mode,
+  onResetView,
   onToggleAutoHide,
   onToggle360Mode,
   onQuickBookmark,
@@ -287,7 +289,7 @@ export function PlayerControls({
             <PanelTop className="h-5 w-5" />
           </button>
 
-          {/* 360° mode toggle */}
+          {/* 360° mode toggle + reset view */}
           <button
             onClick={onToggle360Mode}
             className={`transition-colors cursor-pointer text-xs font-bold px-1.5 py-0.5 rounded ${
@@ -297,6 +299,15 @@ export function PlayerControls({
           >
             {tPlayer("mode360")}
           </button>
+          {is360Mode && onResetView && (
+            <button
+              onClick={onResetView}
+              className="text-white/60 hover:text-white transition-colors cursor-pointer text-xs px-1.5 py-0.5 rounded"
+              title="Reset view (R)"
+            >
+              ↺
+            </button>
+          )}
 
           {/* Resolution selector (transcode only) */}
           {playbackMode === "transcode" && (() => {

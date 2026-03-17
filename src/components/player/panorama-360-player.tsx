@@ -18,9 +18,10 @@ import {
 interface Panorama360PlayerProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   isPlaying: boolean;
+  onResetRef?: (resetFn: () => void) => void;
 }
 
-export function Panorama360Player({ videoRef, isPlaying }: Panorama360PlayerProps) {
+export function Panorama360Player({ videoRef, isPlaying, onResetRef }: Panorama360PlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -64,6 +65,14 @@ export function Panorama360Player({ videoRef, isPlaying }: Panorama360PlayerProp
     camera.position.set(0, 0, 0);
     cameraRef.current = camera;
     updateCamera();
+
+    onResetRef?.(() => {
+      lonRef.current = 0;
+      latRef.current = 0;
+      camera.fov = 75;
+      camera.updateProjectionMatrix();
+      updateCamera();
+    });
 
     const renderer = new WebGLRenderer({ antialias: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
