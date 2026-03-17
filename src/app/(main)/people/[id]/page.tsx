@@ -88,6 +88,8 @@ export default function PersonDetailPage() {
   const personDimensions = prefs?.personRatingDimensions ?? [];
 
   const [fanartMode, setFanartMode] = useState(false);
+  const [fanartError, setFanartError] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
 
   const { data: person } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
@@ -147,7 +149,7 @@ export default function PersonDetailPage() {
       {/* Hero Section with Fanart — matches movie detail layout */}
       <div className="relative md:min-h-[750px] w-full overflow-hidden">
         {/* Fanart Background */}
-        {person.fanartPath && (
+        {person.fanartPath && !fanartError && (
           <div className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto">
             <Image
               src={resolveImageSrc(person.fanartPath)}
@@ -155,6 +157,7 @@ export default function PersonDetailPage() {
               fill
               className="object-cover"
               priority
+              onError={() => setFanartError(true)}
             />
           </div>
         )}
@@ -177,13 +180,14 @@ export default function PersonDetailPage() {
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
           {/* Poster — 350×525 (2:3), same as movie detail */}
           <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
-            {person.photoPath ? (
+            {person.photoPath && !photoError ? (
               <Image
                 src={resolveImageSrc(person.photoPath)}
                 alt={person.name}
                 fill
                 className="object-cover"
                 sizes="350px"
+                onError={() => setPhotoError(true)}
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-white/[0.05] text-4xl text-muted-foreground">

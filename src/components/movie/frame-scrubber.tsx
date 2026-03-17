@@ -102,6 +102,7 @@ export function FrameScrubber({
   const [actorDropdownOpen, setActorDropdownOpen] = useState(false);
   const [flashBookmark, setFlashBookmark] = useState(false);
   const [flashScreenshot, setFlashScreenshot] = useState(false);
+  const [actorImgErrors, setActorImgErrors] = useState<Set<string>>(new Set());
 
   const barRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -572,11 +573,18 @@ export function FrameScrubber({
                           selectedActorId === person.id ? "text-primary" : "text-white/80"
                         }`}
                       >
-                        {person.photoPath ? (
+                        {person.photoPath && !actorImgErrors.has(person.id) ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
-                          <img src={resolveImageSrc(person.photoPath)} alt="" className="h-6 w-6 rounded-full object-cover" />
+                          <img
+                            src={resolveImageSrc(person.photoPath)}
+                            alt=""
+                            className="h-6 w-6 rounded-full object-cover"
+                            onError={() => setActorImgErrors(prev => new Set(prev).add(person.id))}
+                          />
                         ) : (
-                          <div className="h-6 w-6 rounded-full bg-white/10" />
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50">
+                            {person.name[0]?.toUpperCase()}
+                          </div>
                         )}
                         {person.name}
                       </button>

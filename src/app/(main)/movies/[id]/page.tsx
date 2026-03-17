@@ -162,6 +162,8 @@ export default function MovieDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [externalToast, setExternalToast] = useState<string | null>(null);
   const [bookmarkMode, setBookmarkMode] = useState(false);
+  const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
+  const onImgError = (path: string) => setImgErrors(prev => new Set(prev).add(path));
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
   const SUPPORTED_PLAYERS = ["IINA", "PotPlayer"];
@@ -337,7 +339,7 @@ export default function MovieDetailPage() {
       {/* Hero Section with Fanart — Jellyfin style */}
       <div className="relative md:min-h-[750px] w-full overflow-hidden">
         {/* Fanart Background */}
-        {movie.fanartPath && (
+        {movie.fanartPath && !imgErrors.has(movie.fanartPath) && (
           <div className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto">
             <Image
               src={resolveImageSrc(movie.fanartPath)}
@@ -345,6 +347,7 @@ export default function MovieDetailPage() {
               fill
               className="object-cover"
               priority
+              onError={() => onImgError(movie.fanartPath!)}
             />
           </div>
         )}
@@ -367,13 +370,14 @@ export default function MovieDetailPage() {
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 px-4 pb-6 md:px-20 md:pb-24 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
           {/* Poster — 350×525 (2:3) */}
           <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
-            {movie.posterPath ? (
+            {movie.posterPath && !imgErrors.has(movie.posterPath) ? (
               <Image
                 src={resolveImageSrc(movie.posterPath)}
                 alt={movie.title}
                 fill
                 className="object-cover"
                 sizes="350px"
+                onError={() => onImgError(movie.posterPath!)}
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
@@ -702,21 +706,23 @@ export default function MovieDetailPage() {
               >
                 {/* Disc poster with play overlay */}
                 <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
-                  {disc.posterPath ? (
+                  {disc.posterPath && !imgErrors.has(disc.posterPath) ? (
                     <Image
                       src={resolveImageSrc(disc.posterPath)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
                       className="object-cover"
                       sizes="107px"
+                      onError={() => onImgError(disc.posterPath!)}
                     />
-                  ) : movie.posterPath ? (
+                  ) : movie.posterPath && !imgErrors.has(movie.posterPath) ? (
                     <Image
                       src={resolveImageSrc(movie.posterPath)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
                       className="object-cover"
                       sizes="107px"
+                      onError={() => onImgError(movie.posterPath!)}
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
@@ -767,21 +773,23 @@ export default function MovieDetailPage() {
               >
                 {/* Disc poster with play overlay */}
                 <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
-                  {disc.posterPath ? (
+                  {disc.posterPath && !imgErrors.has(disc.posterPath) ? (
                     <Image
                       src={resolveImageSrc(disc.posterPath)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
                       className="object-cover"
                       sizes="107px"
+                      onError={() => onImgError(disc.posterPath!)}
                     />
-                  ) : movie.posterPath ? (
+                  ) : movie.posterPath && !imgErrors.has(movie.posterPath) ? (
                     <Image
                       src={resolveImageSrc(movie.posterPath)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
                       className="object-cover"
                       sizes="107px"
+                      onError={() => onImgError(movie.posterPath!)}
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
