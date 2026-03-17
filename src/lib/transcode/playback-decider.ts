@@ -14,12 +14,12 @@ interface DecideInput {
 }
 
 // Codecs that browsers can play natively
-const BROWSER_VIDEO_CODECS = new Set(["h264", "vp8", "vp9", "av1"]);
+const BROWSER_VIDEO_CODECS = new Set(["h264", "hevc", "h265", "vp8", "vp9", "av1"]);
 const BROWSER_AUDIO_CODECS = new Set(["aac", "mp3", "opus", "vorbis", "flac"]);
 
 // Containers browsers handle natively with matching codecs
 const DIRECT_PLAY_CONTAINERS: Record<string, { video: Set<string>; audio: Set<string> }> = {
-  mp4: { video: new Set(["h264", "av1"]), audio: new Set(["aac", "mp3", "flac"]) },
+  mp4: { video: new Set(["h264", "hevc", "h265", "av1"]), audio: new Set(["aac", "mp3", "flac"]) },
   m4v: { video: new Set(["h264"]), audio: new Set(["aac"]) },
   webm: { video: new Set(["vp8", "vp9", "av1"]), audio: new Set(["opus", "vorbis"]) },
 };
