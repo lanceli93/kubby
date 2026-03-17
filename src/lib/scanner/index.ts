@@ -476,9 +476,6 @@ export async function scanLibrary(
       formatName: probeResult?.formatName || null,
       discCount: isMultiDisc ? multiDiscResult.length : 1,
       tags: JSON.stringify(nfoData.tags),
-      isSpherical: probeResult?.spherical?.isSpherical ?? false,
-      sphericalProjection: probeResult?.spherical?.projection ?? null,
-      sphericalStereoMode: probeResult?.spherical?.stereoMode ?? null,
       mediaLibraryId: libraryId,
     };
 
@@ -546,9 +543,6 @@ export async function scanLibrary(
           container: discProbe?.container || discExt || null,
           totalBitrate: discProbe?.totalBitrate || null,
           formatName: discProbe?.formatName || null,
-          isSpherical: discProbe?.spherical?.isSpherical ?? false,
-          sphericalProjection: discProbe?.spherical?.projection ?? null,
-          sphericalStereoMode: discProbe?.spherical?.stereoMode ?? null,
         }).run();
 
         if (discProbe?.durationSeconds) {

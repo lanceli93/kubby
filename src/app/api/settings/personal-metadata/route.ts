@@ -37,6 +37,7 @@ export async function GET() {
         disabledBookmarkIcons: [],
         quickBookmarkTemplate: null,
         subtleBookmarkMarkers: false,
+        player360Mode: false,
         serverPlatform,
       });
     }
@@ -63,6 +64,7 @@ export async function GET() {
         ? JSON.parse(row.quickBookmarkTemplate)
         : null,
       subtleBookmarkMarkers: row.subtleBookmarkMarkers,
+      player360Mode: row.player360Mode,
       serverPlatform,
     });
   } catch (error) {
@@ -149,6 +151,9 @@ export async function PUT(request: NextRequest) {
       subtleBookmarkMarkers: body.subtleBookmarkMarkers !== undefined
         ? body.subtleBookmarkMarkers
         : existing?.subtleBookmarkMarkers ?? false,
+      player360Mode: body.player360Mode !== undefined
+        ? body.player360Mode
+        : existing?.player360Mode ?? false,
     };
 
     if (existing) {

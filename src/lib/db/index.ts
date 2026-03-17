@@ -270,13 +270,8 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `movie_people` ADD `age_at_release` integer",
     // 0022: favorite flag for people
     "ALTER TABLE `user_person_data` ADD `is_favorite` integer DEFAULT 0",
-    // 0023: spherical/360 video metadata
-    "ALTER TABLE `movies` ADD `is_spherical` integer DEFAULT 0",
-    "ALTER TABLE `movies` ADD `spherical_projection` text",
-    "ALTER TABLE `movies` ADD `spherical_stereo_mode` text",
-    "ALTER TABLE `movie_discs` ADD `is_spherical` integer DEFAULT 0",
-    "ALTER TABLE `movie_discs` ADD `spherical_projection` text",
-    "ALTER TABLE `movie_discs` ADD `spherical_stereo_mode` text",
+    // 0023: player 360° mode preference
+    "ALTER TABLE `user_preferences` ADD `player_360_mode` integer NOT NULL DEFAULT 0",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

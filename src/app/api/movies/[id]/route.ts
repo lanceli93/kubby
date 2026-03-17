@@ -92,9 +92,6 @@ export async function PUT(
     if (body.audioChannels !== undefined) updateData.audioChannels = body.audioChannels ? Number(body.audioChannels) : null;
     if (body.container !== undefined) updateData.container = body.container;
     if (body.tags !== undefined) updateData.tags = JSON.stringify(body.tags);
-    if (body.isSpherical !== undefined) updateData.isSpherical = !!body.isSpherical;
-    if (body.sphericalProjection !== undefined) updateData.sphericalProjection = body.sphericalProjection || null;
-    if (body.sphericalStereoMode !== undefined) updateData.sphericalStereoMode = body.sphericalStereoMode || null;
 
     db.update(movies).set(updateData).where(eq(movies.id, id)).run();
 

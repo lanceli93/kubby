@@ -405,8 +405,6 @@
     "role": "Role",
     "addCast": "Add Person",
     "birthInputFormatError": "Please enter a date (YYYY-MM-DD) or year (YYYY)",
-    "sphericalVideo": "360° Video",
-    "sphericalVideoDesc": "Enable panoramic 360° playback for this video",
     "saving": "Saving...",
     "editImages": "Edit Images",
     "poster": "Poster",
@@ -526,7 +524,10 @@
     "descDirect": "Browser native playback — no transcoding needed",
     "descRemux": "Repackaging streams to HLS — no re-encoding",
     "labelPlayback": "Playback",
-    "labelEncoder": "Encoder"
+    "labelEncoder": "Encoder",
+    "mode360": "360°",
+    "mode360On": "360° mode on",
+    "mode360Off": "360° mode off"
   },
   "folderPicker": {
     "selectFolder": "Select Folder",

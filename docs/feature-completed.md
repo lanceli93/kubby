@@ -1,15 +1,17 @@
 # Completed Features
 
-## 2026-03-17: VR/360 Detection & Data Layer (Phase 1)
+## 2026-03-17: VR/360 Player Mode Toggle (Phase 1)
 
-Added spherical/360° video detection and data layer support.
+Added player-level 360° mode toggle that persists per user.
 
 ### Changes
-- **DB Schema**: Added `is_spherical`, `spherical_projection`, `spherical_stereo_mode` columns to `movies` and `movie_discs` tables (migration #0023)
-- **Probe**: `detectSpherical()` in `probe.ts` checks ffprobe `side_data_list` for "Spherical Mapping", `format.tags`, and per-stream tags
-- **Scanner**: Automatically detects and saves spherical metadata during library scan
-- **API**: GET `/api/movies/[id]` auto-includes spherical fields; PUT accepts `isSpherical` for manual override
-- **MetadataEditor**: Added "360° Video" toggle switch in General tab with i18n support (en/zh)
+- **DB**: Added `player_360_mode` to `user_preferences` table (migration #0023)
+- **User Preferences API**: GET/PUT `/api/settings/personal-metadata` supports `player360Mode`
+- **Player Controls**: 360° toggle button in the bottom control bar, persists state via user preferences
+- **i18n**: Added player.mode360/mode360On/mode360Off keys (en/zh)
+
+### Design Decision
+360° mode is a player-level toggle (not per-movie). Users enable/disable it themselves in the player controls. No automatic detection needed — avoids false positives and keeps the implementation simple.
 
 ## 2026-03-17: Player Refactoring for VR/360 Support (Phase 0)
 

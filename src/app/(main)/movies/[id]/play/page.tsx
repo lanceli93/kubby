@@ -77,6 +77,12 @@ export default function PlayerPage() {
   const { data: userPrefs } = useUserPreferences();
   const disabledIconIds = new Set(userPrefs?.disabledBookmarkIcons ?? []);
   const subtleMarkers = userPrefs?.subtleBookmarkMarkers ?? false;
+  const [is360Mode, setIs360Mode] = useState(false);
+
+  // Sync 360 mode from user preferences on load
+  useEffect(() => {
+    if (userPrefs) setIs360Mode(userPrefs.player360Mode);
+  }, [userPrefs]);
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
   const totalDiscs = movie?.discCount ?? 1;
@@ -480,7 +486,18 @@ export default function PlayerPage() {
         onVolumeChange={changeVolume}
         onToggleMute={toggleMute}
         onToggleFullscreen={toggleFullscreen}
+        is360Mode={is360Mode}
         onToggleAutoHide={() => setAutoHideControls((v) => !v)}
+        onToggle360Mode={() => {
+          const next = !is360Mode;
+          setIs360Mode(next);
+          showOsd(next ? "360° ON" : "360° OFF");
+          fetch("/api/settings/personal-metadata", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ player360Mode: next }),
+          }).catch(() => {});
+        }}
         onQuickBookmark={() => addQuickBookmark.mutate()}
         onDetailedBookmark={() => {
           if (session.videoRef.current && !session.videoRef.current.paused) session.videoRef.current.pause();

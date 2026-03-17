@@ -405,8 +405,6 @@
     "role": "角色",
     "addCast": "添加人员",
     "birthInputFormatError": "请输入日期 (YYYY-MM-DD) 或年份 (YYYY)",
-    "sphericalVideo": "360° 全景视频",
-    "sphericalVideoDesc": "为此视频启用 360° 全景播放模式",
     "saving": "保存中...",
     "editImages": "编辑图片",
     "poster": "海报",
@@ -526,7 +524,10 @@
     "descDirect": "浏览器原生播放 — 无需转码",
     "descRemux": "重新封装为 HLS — 不重新编码",
     "labelPlayback": "播放模式",
-    "labelEncoder": "编码器"
+    "labelEncoder": "编码器",
+    "mode360": "360°",
+    "mode360On": "360° 模式已开启",
+    "mode360Off": "360° 模式已关闭"
   },
   "folderPicker": {
     "selectFolder": "选择文件夹",

@@ -14,6 +14,7 @@ export interface UserPreferences {
   disabledBookmarkIcons: string[];
   quickBookmarkTemplate: { iconType?: string; tags?: string[]; note?: string } | null;
   subtleBookmarkMarkers: boolean;
+  player360Mode: boolean;
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 

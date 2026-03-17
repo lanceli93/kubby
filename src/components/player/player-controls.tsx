@@ -65,6 +65,7 @@ export interface PlayerControlsProps {
   subtleMarkers: boolean;
   customIcons: CustomIcon[];
   disabledIconIds: Set<string>;
+  is360Mode: boolean;
   onSeek: (seconds: number) => void;
   onSkip: (seconds: number) => void;
   onTogglePlay: () => void;
@@ -73,6 +74,7 @@ export interface PlayerControlsProps {
   onToggleMute: () => void;
   onToggleFullscreen: () => void;
   onToggleAutoHide: () => void;
+  onToggle360Mode: () => void;
   onQuickBookmark: () => void;
   onDetailedBookmark: () => void;
   onResolutionChange: (maxWidth: number) => void;
@@ -116,7 +118,9 @@ export function PlayerControls({
   onVolumeChange,
   onToggleMute,
   onToggleFullscreen,
+  is360Mode,
   onToggleAutoHide,
+  onToggle360Mode,
   onQuickBookmark,
   onDetailedBookmark,
   onResolutionChange,
@@ -281,6 +285,17 @@ export function PlayerControls({
             title={autoHideControls ? "Auto-hide: on" : "Auto-hide: off (controls always visible)"}
           >
             <PanelTop className="h-5 w-5" />
+          </button>
+
+          {/* 360° mode toggle */}
+          <button
+            onClick={onToggle360Mode}
+            className={`transition-colors cursor-pointer text-xs font-bold px-1.5 py-0.5 rounded ${
+              is360Mode ? "bg-primary/30 text-primary" : "text-white/60 hover:text-white"
+            }`}
+            title={is360Mode ? tPlayer("mode360On") : tPlayer("mode360Off")}
+          >
+            {tPlayer("mode360")}
           </button>
 
           {/* Resolution selector (transcode only) */}

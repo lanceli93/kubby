@@ -19,22 +19,15 @@ Current `play/page.tsx` is a 1370-line monolith. Must decompose before adding 36
 
 ---
 
-## Phase 1: Detection & Data Layer
+## Phase 1: Player-Level 360° Mode Toggle
 
-- [x] Add columns to `movies` table in Drizzle schema (`src/lib/db/schema.ts`):
-  - `is_spherical` (integer, default 0)
-  - `spherical_projection` (text, nullable) — `"equirectangular"` | `"cubemap"`
-  - `spherical_stereo_mode` (text, nullable) — `"mono"` | `"sbs"` | `"tb"`
-- [x] Add same columns to `movieDiscs` table for multi-disc movies
-- [x] Auto-migration in `db/index.ts` (migration #0023)
-- [x] Implement `detectSpherical()` in `src/lib/scanner/probe.ts`:
-  - Check `side_data_list` for `"Spherical Mapping"`
-  - Check `format.tags` for `spherical-video` / `is_spherical`
-  - Check per-stream tags as fallback
-- [x] Integrate `detectSpherical()` into scanner flow (`src/lib/scanner/index.ts`)
-- [x] `/api/movies/[id]` response auto-includes spherical fields (via `...movie` spread)
-- [x] PUT `/api/movies/[id]` accepts `isSpherical` / `sphericalProjection` / `sphericalStereoMode`
-- [x] Add "360° Video" manual toggle in MetadataEditor component (General tab)
+**Design decision**: 360° mode is a player-level toggle per user, not per-movie detection. Users enable/disable it in the player controls themselves. This avoids detection failures and keeps the implementation simple.
+
+- [x] Add `player_360_mode` to `user_preferences` table (migration #0023)
+- [x] GET/PUT `/api/settings/personal-metadata` supports `player360Mode`
+- [x] 360° toggle button in PlayerControls (bottom bar, next to auto-hide)
+- [x] State synced from user preferences on load, persisted on toggle
+- [x] i18n keys for player.mode360/mode360On/mode360Off (en/zh)
 
 ---
 
