@@ -401,6 +401,15 @@ export default function PlayerPage() {
         }}
       />
 
+      {/* Freeze-frame overlay: a canvas drawn with the last video frame,
+          shown during HLS session swaps to cover the black flash.
+          Hidden by default; the hook shows/hides it via direct DOM. */}
+      <canvas
+        ref={session.freezeCanvasRef}
+        className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+        style={{ display: "none" }}
+      />
+
       <PlayerTopBar
         title={movie?.title || ""}
         currentDiscLabel={currentDiscLabel}

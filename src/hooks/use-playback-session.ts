@@ -34,6 +34,7 @@ export interface UsePlaybackSessionReturn {
   sessionIdRef: React.RefObject<string | null>;
   hlsRef: React.RefObject<Hls | null>;
   heartbeatRef: React.RefObject<ReturnType<typeof setInterval> | null>;
+  freezeCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   changeResolution: (maxWidth: number) => Promise<void>;
 }
 
@@ -68,25 +69,29 @@ export function usePlaybackSession({
     return (videoRef.current?.currentTime || 0) + hlsTimeOffsetRef.current;
   }, []);
 
-  // Capture the current video frame as a data-URL poster so the video
-  // element shows a freeze-frame instead of flashing black during the
-  // brief gap between destroying old HLS and attaching new HLS.
+  // A <canvas> rendered on top of the <video> by the page component.
+  // We draw the current frame to it *synchronously* before destroying old
+  // HLS, so it covers the video element during the MediaSource swap.
+  // Using direct DOM manipulation avoids React re-render latency.
+  const freezeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const setFreezeFrame = useCallback(() => {
     const video = videoRef.current;
-    if (!video || !video.videoWidth || !video.videoHeight) return;
+    const canvas = freezeCanvasRef.current;
+    if (!video || !canvas || !video.videoWidth || !video.videoHeight) return;
     try {
-      const c = document.createElement("canvas");
-      c.width = video.videoWidth;
-      c.height = video.videoHeight;
-      c.getContext("2d")?.drawImage(video, 0, 0);
-      video.poster = c.toDataURL("image/jpeg", 0.4);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d")?.drawImage(video, 0, 0);
+      canvas.style.display = "block";
     } catch {
-      // Canvas tainted or other error — ignore, worst case is a brief flash
+      // Canvas tainted or other error — ignore
     }
   }, []);
 
   const clearFreezeFrame = useCallback(() => {
-    if (videoRef.current) videoRef.current.poster = "";
+    const canvas = freezeCanvasRef.current;
+    if (canvas) canvas.style.display = "none";
   }, []);
 
   const seekTo = useCallback(
@@ -429,6 +434,7 @@ export function usePlaybackSession({
     sessionIdRef,
     hlsRef,
     heartbeatRef,
+    freezeCanvasRef,
     changeResolution,
   };
 }
