@@ -338,6 +338,22 @@ export function usePlaybackSession({
           hlsDurationRef.current = null;
         }
 
+        // Debug: log decide response and attach video error handler
+        console.log("[player] decide:", data);
+        if (data.debug) {
+          const d = data.debug;
+          showOsd(`${data.mode} | ${d.videoCodec}/${d.audioCodec} ${d.container} ${d.videoWidth}x${d.videoHeight}`);
+        }
+        const errorHandler = () => {
+          const err = video.error;
+          const codes: Record<number, string> = { 1: "ABORTED", 2: "NETWORK", 3: "DECODE", 4: "SRC_NOT_SUPPORTED" };
+          const msg = `Video error: ${codes[err?.code ?? 0] || err?.code} ${err?.message || ""}`;
+          console.error("[player]", msg, "src:", video.src?.slice(0, 100));
+          showOsd(msg);
+        };
+        video.removeEventListener("error", errorHandler);
+        video.addEventListener("error", errorHandler);
+
         if (data.mode === "direct") {
           oldHls?.destroy();
           clearFreezeFrame();
@@ -376,11 +392,15 @@ export function usePlaybackSession({
             });
 
             hls.on(Hls.Events.ERROR, (_event, errorData) => {
-              if (errorData.fatal && errorData.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                if (hlsSeekingRef.current) return;
-                const realTime = getRealTime();
-                if (realTime > 0 && sessionIdRef.current) {
-                  seekTo(realTime);
+              console.error("[hls]", errorData.type, errorData.details, errorData.fatal, errorData.reason);
+              if (errorData.fatal) {
+                showOsd(`HLS: ${errorData.type} ${errorData.details}`);
+                if (errorData.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                  if (hlsSeekingRef.current) return;
+                  const realTime = getRealTime();
+                  if (realTime > 0 && sessionIdRef.current) {
+                    seekTo(realTime);
+                  }
                 }
               }
             });
