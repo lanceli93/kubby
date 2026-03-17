@@ -423,9 +423,15 @@ export default function PlayerPage() {
           }
         }}
         onCanPlay={() => {
-          if (session.pendingSeekRef.current !== null) {
-            if (session.videoRef.current) session.videoRef.current.currentTime = session.pendingSeekRef.current;
+          if (session.pendingSeekRef.current !== null && session.videoRef.current) {
+            const video = session.videoRef.current;
+            video.currentTime = session.pendingSeekRef.current;
             session.pendingSeekRef.current = null;
+            // Force frame render: play briefly then pause to display the seeked frame
+            // (iOS WebKit won't render a frame for a paused+seeked video)
+            if (video.paused) {
+              video.play().then(() => video.pause()).catch(() => {});
+            }
           }
         }}
         onEnded={() => {
