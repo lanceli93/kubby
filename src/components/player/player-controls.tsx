@@ -10,7 +10,6 @@ import {
   Minimize,
   SkipBack,
   SkipForward,
-  Gauge,
   Bookmark,
   BookmarkPlus,
   PanelTop,
@@ -363,15 +362,14 @@ export function PlayerControls({
                 e.stopPropagation();
                 setShowSpeedMenu(!showSpeedMenu);
               }}
-              className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-sm ${
+              className={`rounded px-1.5 py-0.5 text-xs transition-colors cursor-pointer ${
                 playbackRate !== 1
                   ? "bg-white/20 text-white"
                   : "text-white/60 hover:text-white"
               }`}
               title="Playback speed"
             >
-              <Gauge className="h-4 w-4" />
-              <span className="text-xs">{playbackRate}x</span>
+              {playbackRate}x
             </button>
             {showSpeedMenu && (
               <div
