@@ -14,6 +14,7 @@ import {
   Bookmark,
   BookmarkPlus,
   PanelTop,
+  RotateCcw,
 } from "lucide-react";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -302,10 +303,10 @@ export function PlayerControls({
           {is360Mode && onResetView && (
             <button
               onClick={onResetView}
-              className="text-white/60 hover:text-white transition-colors cursor-pointer text-xs px-1.5 py-0.5 rounded"
+              className="text-white/60 hover:text-white transition-colors cursor-pointer"
               title="Reset view (R)"
             >
-              ↺
+              <RotateCcw className="h-5 w-5" />
             </button>
           )}
 
