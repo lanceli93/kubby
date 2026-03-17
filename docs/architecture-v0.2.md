@@ -15,6 +15,7 @@
 | NFO 解析 | fast-xml-parser | 5.3.5 |
 | 国际化 | next-intl | 4.8.2 |
 | 图标 | lucide-react | 0.563.0 |
+| 3D 渲染 | Three.js (360° 全景播放) | 0.175.x |
 | 运行时 | Node.js | 25.x |
 
 ---
@@ -111,9 +112,10 @@ kubby/
 │   │   │   ├── library-card.tsx                    # 媒体库卡片 (16:9, 320x180)
 │   │   │   └── folder-picker.tsx                   # 服务端文件夹选择器弹窗
 │   │   ├── player/
-│   │   │   ├── player-controls.tsx                  # 底部控制栏 (进度条/传输/音量/倍速/分辨率/全屏)
+│   │   │   ├── player-controls.tsx                  # 底部控制栏 (进度条/传输/音量/倍速/分辨率/全屏/360°切换)
 │   │   │   ├── player-overlays.tsx                  # 叠加层 (OSD/帮助/书签面板/中央播放按钮)
-│   │   │   └── player-top-bar.tsx                   # 顶部栏 (返回/标题/碟片计数/帮助)
+│   │   │   ├── player-top-bar.tsx                   # 顶部栏 (返回/标题/碟片计数/帮助)
+│   │   │   └── panorama-360-player.tsx              # Three.js 360° 全景播放器 (球体+VideoTexture+拖拽/缩放)
 │   │   └── ui/                                     # shadcn/ui 组件 (17个)
 │   │       ├── avatar.tsx, badge.tsx, button.tsx, card.tsx
 │   │       ├── dialog.tsx, dropdown-menu.tsx, input.tsx, label.tsx
@@ -333,6 +335,7 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | disabled_bookmark_icons | text | JSON 数组, 禁用的书签图标 ID 列表 |
 | quick_bookmark_template | text | JSON 对象, 快速书签预设 `{ iconType?, tags?, note? }` |
 | subtle_bookmark_markers | integer (bool) | 进度条书签标记是否使用半透明白色, 默认 false |
+| player_360_mode | integer (bool) | 360° 全景播放模式开关, 默认 false |
 
 #### movie_discs (多碟电影)
 | 列 | 类型 | 说明 |
@@ -388,6 +391,7 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | tags | text | JSON 数组, 用户标签 |
 | note | text | 用户备注 |
 | thumbnail_path | text | 视频截图绝对路径 |
+| view_state | text | JSON `{lon, lat, fov}`, 360° 书签的相机视角 (可空) |
 | created_at | text | 时间戳 |
 
 **索引**: (user_id, movie_id), movie_id
@@ -736,6 +740,37 @@ Player (page.tsx)
 - 进度条书签标记: 彩色圆点 + 图标, hover 放大, 点击定位; 支持低调模式 (半透明白色)
 - 3 秒无操作自动隐藏控制栏 (可通过 toggle 按钮关闭自动隐藏)
 
+### 360° 全景播放
+
+播放器内置 360° 全景模式, 用户通过控制栏 `360°` 按钮手动开关, 状态跟用户走 (`user_preferences.player_360_mode`)。
+
+**渲染架构** (全部在客户端浏览器执行, Server 仅提供视频流):
+```
+<video> (hidden, HLS/直连解码) → VideoTexture → SphereGeometry (BackSide) → WebGLRenderer
+                                                       ↑ camera at origin
+                                                       ↑ Pointer drag → lon/lat → lookAt
+```
+
+**组件**: `panorama-360-player.tsx` — Three.js 动态导入 (`ssr: false`), 代码分离为独立 chunk (~500KB), 仅 360 模式激活时加载。
+
+**交互**:
+- 鼠标/触摸拖拽旋转视角 (Pointer Events, lon/lat 球面坐标)
+- 滚轮缩放 FOV (30°–120°)
+- 双指 pinch-to-zoom (移动端 FOV 缩放)
+- `R` 键 / ↺ 按钮重置视角到正前方 + FOV 75°
+- 拖拽 vs 点击检测 (拖拽不触发播放/暂停)
+
+**性能优化**:
+- 视频暂停时停止 `requestAnimationFrame` 循环, 拖拽/缩放按需渲染单帧
+- `pixelRatio` 上限 2, 移动端可降至 1
+- 球体精度 60×40 段, 移动端可降至 32×24
+
+**书签集成**:
+- 360° 模式下书签缩略图截取当前视角画面 (WebGL `preserveDrawingBuffer` + `toBlob`)
+- 书签保存相机视角 `view_state` JSON (`{lon, lat, fov}`)
+- 从 BookmarkCard 导航时 URL 携带 `&vs=lon,lat,fov`, 自动开启 360° 模式并恢复视角
+- 进度条书签标记点击也恢复视角
+
 ---
 
 ## 人物照片墙
@@ -797,7 +832,7 @@ Player (page.tsx)
 | `/` | 首页 | Jellyfin 风格 Tab 导航: Home Tab (媒体库卡片(未扫描显示overlay)+继续观看+最近添加+收藏ScrollRow) / Favorites Tab (全局收藏网格) |
 | `/movies?libraryId=X` | 媒体库浏览 | 需 libraryId, 3 Tab: Movies (排序下拉+网格) / Favorites (库内收藏网格) / Genres (按类型分组ScrollRow) |
 | `/movies/[id]` | 电影详情 | Jellyfin 风格: fanart 充分可见(仅底部渐变) + 左侧海报(300×450) + 右侧 text-shadow 信息面板(标题/元数据行/小型按钮行/Overview/Metadata 纵向列表) + 帧浏览书签模式(BookmarkPlus按钮, FrameScrubber两栏面板: 帧预览+进度条覆盖层/书签表单+截图到演员相册) + 书签 ScrollRow + 演员卡片 + 推荐 |
-| `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 书签 (B/Shift+B) + 倍速 + 进度条图标标记 + 自动隐藏控制栏 (可 toggle) |
+| `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 书签 (B/Shift+B) + 倍速 + 进度条图标标记 + 自动隐藏控制栏 (可 toggle) + 360° 全景模式 |
 | `/people/[id]` | 演员详情 | fanart 渐变 + 大卡片 + 参演作品网格 + 照片墙(Justified 行布局+Lightbox+上传/删除) |
 | `/search` | 搜索 | 搜索框 + 电影结果 + 演员结果 |
 | `/settings` | 用户设置 | 个人资料 / 密码 / 语言切换 / 账户信息, i18n |
