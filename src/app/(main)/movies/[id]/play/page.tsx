@@ -418,12 +418,14 @@ export default function PlayerPage() {
           } else {
             session.setDuration(session.videoRef.current?.duration || 0);
           }
+          if (session.isPlaying || currentDisc > 1) {
+            session.videoRef.current?.play().catch(() => {});
+          }
+        }}
+        onCanPlay={() => {
           if (session.pendingSeekRef.current !== null) {
             if (session.videoRef.current) session.videoRef.current.currentTime = session.pendingSeekRef.current;
             session.pendingSeekRef.current = null;
-          }
-          if (session.isPlaying || currentDisc > 1) {
-            session.videoRef.current?.play().catch(() => {});
           }
         }}
         onEnded={() => {
