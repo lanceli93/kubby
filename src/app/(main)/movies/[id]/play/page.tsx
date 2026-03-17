@@ -100,10 +100,15 @@ export default function PlayerPage() {
     }
   }
 
-  // Sync 360 mode from user preferences on load, or force on if URL has viewState
+  // Sync 360 mode: bookmark with vs → force on, bookmark without vs → force off, else → user pref
+  const isBookmarkNav = !!searchParams.get("t");
   useEffect(() => {
-    if (userPrefs) setIs360Mode(initialViewState.current ? true : userPrefs.player360Mode);
-  }, [userPrefs]);
+    if (userPrefs) {
+      if (initialViewState.current) setIs360Mode(true);
+      else if (isBookmarkNav) setIs360Mode(false);
+      else setIs360Mode(userPrefs.player360Mode);
+    }
+  }, [userPrefs, isBookmarkNav]);
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
   const totalDiscs = movie?.discCount ?? 1;
