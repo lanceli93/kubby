@@ -23,6 +23,13 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
     && encoderConfig?.hwaccel === "cuda"
     && isNvdecSupported(sourceVideoCodec);
 
+  // Fix timestamps and discard corrupt frames (helps AVI/MPEG4 containers
+  // that lack proper timestamps or produce garbage after imprecise seeking)
+  args.push("-fflags", "+genpts+discardcorrupt");
+
+  // Increase analysis limits for containers with poor headers (AVI, WMV, etc.)
+  args.push("-analyzeduration", "10M", "-probesize", "10M");
+
   // Fast input seeking (before -i)
   if (seekToSeconds && seekToSeconds > 0) {
     args.push("-ss", String(seekToSeconds));
@@ -36,6 +43,11 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
 
   args.push("-i", inputPath);
 
+  // Normalize output timestamps from 0 after seeking
+  if (seekToSeconds && seekToSeconds > 0) {
+    args.push("-start_at_zero");
+  }
+
   // Video codec
   if (decision.videoAction === "copy") {
     args.push("-c:v", "copy");
@@ -45,17 +57,28 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
       args.push("-threads", "0");
     }
 
+    // Build video filter chain
+    const vfParts: string[] = [];
+
     // Scale filter — use scale_cuda when frames are in GPU memory
     if (maxWidth && maxWidth > 0) {
       if (useCudaDecode) {
-        args.push("-vf", `scale_cuda='min(${maxWidth},iw)':-2`);
+        vfParts.push(`scale_cuda='min(${maxWidth},iw)':-2`);
       } else {
-        args.push("-vf", `scale='min(${maxWidth},iw)':-2`);
+        vfParts.push(`scale='min(${maxWidth},iw)':-2`);
       }
+    }
+
+    if (vfParts.length > 0) {
+      args.push("-vf", vfParts.join(","));
     }
 
     // Encoder + quality args
     args.push("-c:v", enc?.name ?? "libx264", ...(enc?.qualityArgs ?? ["-preset", "ultrafast", "-crf", "23"]));
+
+    // Force an IDR keyframe at the very start so HLS playback begins immediately
+    // without black/corrupt frames (critical after seeking in AVI/MPEG4)
+    args.push("-force_key_frames", "expr:eq(t,0)");
 
     // Dynamic bitrate based on effective output resolution
     const effectiveWidth = (maxWidth && maxWidth > 0) ? maxWidth : (sourceVideoWidth ?? 1920);
@@ -72,10 +95,11 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
     args.push("-c:a", "aac", "-b:a", "192k");
   }
 
-  // HLS output
+  // HLS output — short first segment for faster playback start
   args.push(
     "-f", "hls",
     "-hls_time", "6",
+    "-hls_init_time", "1",
     "-hls_list_size", "0",
     "-hls_playlist_type", "event",
     "-hls_segment_filename", `${outputDir}/segment_%04d.ts`,
