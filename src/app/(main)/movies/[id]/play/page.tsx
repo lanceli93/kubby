@@ -3,12 +3,18 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useEffect, useCallback, useState } from "react";
+import dynamic from "next/dynamic";
 import { useUserPreferences, type UserPreferences } from "@/hooks/use-user-preferences";
 import { usePlaybackSession } from "@/hooks/use-playback-session";
 import { useProgressSave } from "@/hooks/use-progress-save";
 import { PlayerTopBar } from "@/components/player/player-top-bar";
 import { PlayerControls, formatTime, type BookmarkData } from "@/components/player/player-controls";
 import { CenterPlayButton, OsdOverlay, HelpOverlay, BookmarkPanel } from "@/components/player/player-overlays";
+
+const Panorama360Player = dynamic(
+  () => import("@/components/player/panorama-360-player").then((m) => m.Panorama360Player),
+  { ssr: false },
+);
 
 interface DiscData {
   discNumber: number;
@@ -371,7 +377,7 @@ export default function PlayerPage() {
     >
       <video
         ref={session.videoRef}
-        className="h-full w-full"
+        className={is360Mode ? "absolute h-0 w-0 opacity-0" : "h-full w-full"}
         playsInline
         disableRemotePlayback
         onPlay={() => session.setIsPlaying(true)}
@@ -416,6 +422,13 @@ export default function PlayerPage() {
         className="pointer-events-none absolute inset-0 h-full w-full object-contain"
         style={{ display: "none" }}
       />
+
+      {is360Mode && (
+        <Panorama360Player
+          videoRef={session.videoRef}
+          isPlaying={session.isPlaying}
+        />
+      )}
 
       <PlayerTopBar
         title={movie?.title || ""}

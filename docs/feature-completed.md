@@ -1,5 +1,25 @@
 # Completed Features
 
+## 2026-03-17: Basic 360° Panoramic Player (Phase 2)
+
+Implemented Three.js-based 360° panoramic video player with mouse/touch drag rotation and scroll zoom.
+
+### New Files
+- `src/components/player/panorama-360-player.tsx` — Three.js sphere renderer with VideoTexture, pointer drag rotation, scroll wheel FOV zoom
+
+### Changes
+- **page.tsx**: Dynamic import of Panorama360Player (SSR: false), conditionally rendered when 360° mode is on. Video element hidden but stays in DOM for HLS/playback.
+- **Bundle**: three.js code-split into separate ~500KB chunk, lazy-loaded only when 360 mode is activated
+
+### Features
+- Inverted sphere geometry with BackSide material for equirectangular projection
+- Mouse/touch drag to rotate camera (Pointer Events, works on mobile)
+- Scroll wheel FOV zoom (30°–120°)
+- Drag vs click detection (dragging doesn't trigger play/pause)
+- ResizeObserver for responsive canvas
+- Proper cleanup on unmount (dispose all Three.js resources)
+- Render loop runs continuously for smooth VideoTexture updates
+
 ## 2026-03-17: VR/360 Player Mode Toggle (Phase 1)
 
 Added player-level 360° mode toggle that persists per user.

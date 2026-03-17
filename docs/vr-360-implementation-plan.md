@@ -33,20 +33,19 @@ Current `play/page.tsx` is a 1370-line monolith. Must decompose before adding 36
 
 ## Phase 2: Basic 360 Rendering
 
-- [ ] Install `three` as dependency (`npm install three @types/three`)
-- [ ] Create `src/components/player/panorama-360-player.tsx`:
-  - Three.js Scene with inverted `SphereGeometry` (500, 60, 40)
+- [x] Install `three` and `@types/three`
+- [x] Create `src/components/player/panorama-360-player.tsx`:
+  - Three.js Scene with inverted `SphereGeometry` (500, 60, 40) + BackSide material
   - `PerspectiveCamera` at origin (FOV 75)
   - `VideoTexture` from hidden `<video>` element
   - `WebGLRenderer` with `pixelRatio` capped at 2
   - `ResizeObserver` for responsive canvas
   - Proper `dispose()` cleanup on unmount
-- [ ] Implement `useViewControl` hook — mouse drag to rotate camera (Pointer Events)
-- [ ] Implement scroll wheel FOV zoom (range 30-120 degrees)
-- [ ] SSR handling: `dynamic(() => import(...), { ssr: false })`
-- [ ] Dynamic import Three.js inside `useEffect` to avoid server-side errors
-- [ ] Add loading skeleton during Three.js initialization + video buffering
-- [ ] Conditional rendering in `play/page.tsx`: `is_spherical` -> `<Panorama360Player>` else `<StandardPlayer>`
+- [x] Mouse/touch drag to rotate camera (Pointer Events)
+- [x] Scroll wheel FOV zoom (range 30°–120°)
+- [x] SSR handling: `dynamic(() => import(...), { ssr: false })`
+- [x] Conditional rendering: `is360Mode` → `<Panorama360Player>` else standard `<video>`
+- [x] Three.js code-split into separate chunk (~500KB), lazy-loaded
 
 ---
 
@@ -84,18 +83,7 @@ Current `play/page.tsx` is a 1370-line monolith. Must decompose before adding 36
 
 ---
 
-## Phase 5: UX Polish
 
-- [ ] First-time hint overlay: "Drag to look around" with animated hand icon, dismiss on first interaction
-- [ ] Compass/minimap indicator at bottom of screen showing current viewing direction
-- [ ] 360 badge on movie detail page (icon + label next to resolution/codec info)
-- [ ] 360 filter option in movie list/library view
-- [ ] Adaptive quality: monitor FPS, auto-downgrade rendering if sustained < 30fps
-- [ ] Keyboard shortcuts for 360:
-  - Arrow keys: rotate view (when not in seek mode)
-  - R: reset view to front
-  - G: toggle gyroscope
-- [ ] Smooth camera transitions (spring animation when resetting view)
 
 ---
 
