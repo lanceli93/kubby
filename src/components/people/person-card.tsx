@@ -67,6 +67,7 @@ export function PersonCard({
   const { data: prefs } = useUserPreferences();
   const showTierBadge = prefs?.showPersonTierBadge !== false;
   const showRatingBadge = prefs?.showPersonRatingBadge !== false;
+  const [imgError, setImgError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
@@ -83,13 +84,14 @@ export function PersonCard({
         className="relative overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]"
         style={{ width, height }}
       >
-        {photoPath ? (
+        {photoPath && !imgError ? (
           <Image
             src={resolveImageSrc(photoPath, width * 2)}
             alt={name}
             fill
             className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
             sizes={`${width}px`}
+            onError={() => setImgError(true)}
             {...(photoBlur ? { placeholder: "blur" as const, blurDataURL: photoBlur } : {})}
           />
         ) : (

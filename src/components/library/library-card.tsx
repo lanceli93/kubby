@@ -69,6 +69,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
   const [jellyfinCompatConfirmOpen, setJellyfinCompatConfirmOpen] = useState(false);
   const [jellyfinCompatConfirmAction, setJellyfinCompatConfirmAction] = useState<"enable" | "disable">("enable");
   const [editSaving, setEditSaving] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const libScan = useLibraryScan(id);
   const scanning = libScan.scanning;
@@ -112,13 +113,14 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
     >
       {/* Cover image area */}
       <div className="relative w-full overflow-hidden rounded-md ring-1 ring-white/[0.06] bg-white/[0.05]" style={{ height: 200 }}>
-        {coverImage ? (
+        {coverImage && !imgError ? (
           <Image
             src={resolveImageSrc(coverImage)}
             alt={name}
             fill
             className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
             sizes="360px"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

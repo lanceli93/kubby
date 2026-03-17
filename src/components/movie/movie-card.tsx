@@ -94,6 +94,7 @@ export function MovieCard({
   const tMeta = useTranslations("metadata");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteFiles, setDeleteFiles] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
@@ -109,13 +110,14 @@ export function MovieCard({
     >
       {/* Poster */}
       <div className={`relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06] ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
-        {posterPath ? (
+        {posterPath && !imgError ? (
           <Image
             src={resolveImageSrc(posterPath, 360)}
             alt={title}
             fill
             className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
             sizes="180px"
+            onError={() => setImgError(true)}
             {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
           />
         ) : (

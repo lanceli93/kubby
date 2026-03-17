@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -30,6 +31,7 @@ export function ContinueWatchingCard({
 }: ContinueWatchingCardProps) {
   const router = useRouter();
   const t = useTranslations("movies");
+  const [imgError, setImgError] = useState(false);
   const imageSrc = fanartPath || posterPath;
   const displayTitle = discLabel ? `${discLabel} · ${title}` : title;
   const playHref = currentDisc && currentDisc > 1
@@ -41,13 +43,14 @@ export function ContinueWatchingCard({
       <Link href={`/movies/${id}`}>
         {/* Landscape card — 16:9 */}
         <div className="relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]" style={{ aspectRatio: "16/9" }}>
-          {imageSrc ? (
+          {imageSrc && !imgError ? (
             <Image
               src={resolveImageSrc(imageSrc, 640)}
               alt={title}
               fill
               className="object-cover transition-fluid group-hover:scale-105"
               sizes="320px"
+              onError={() => setImgError(true)}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
