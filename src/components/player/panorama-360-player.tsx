@@ -20,9 +20,10 @@ interface Panorama360PlayerProps {
   isPlaying: boolean;
   onResetRef?: (resetFn: () => void) => void;
   onCaptureRef?: (captureFn: () => Promise<Blob | null>) => void;
+  onViewRef?: (fns: { getView: () => { lon: number; lat: number; fov: number }; setView: (v: { lon: number; lat: number; fov: number }) => void }) => void;
 }
 
-export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRef }: Panorama360PlayerProps) {
+export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRef, onViewRef }: Panorama360PlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -81,6 +82,17 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
       return new Promise<Blob | null>((resolve) => {
         renderer.domElement.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
       });
+    });
+
+    onViewRef?.({
+      getView: () => ({ lon: lonRef.current, lat: latRef.current, fov: camera.fov }),
+      setView: (v) => {
+        lonRef.current = v.lon;
+        latRef.current = v.lat;
+        camera.fov = v.fov;
+        camera.updateProjectionMatrix();
+        updateCamera();
+      },
     });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));

@@ -36,6 +36,7 @@ export interface BookmarkData {
   tags?: string[];
   note?: string;
   thumbnailPath?: string | null;
+  viewState?: { lon: number; lat: number; fov: number } | null;
 }
 
 interface CustomIcon {
@@ -79,6 +80,7 @@ export interface PlayerControlsProps {
   onQuickBookmark: () => void;
   onDetailedBookmark: () => void;
   onResolutionChange: (maxWidth: number) => void;
+  onRestoreView?: (viewState: { lon: number; lat: number; fov: number }) => void;
   showOsd: (msg: string) => void;
 }
 
@@ -126,6 +128,7 @@ export function PlayerControls({
   onQuickBookmark,
   onDetailedBookmark,
   onResolutionChange,
+  onRestoreView,
   showOsd,
 }: PlayerControlsProps) {
   const tPlayer = useTranslations("player");
@@ -180,6 +183,7 @@ export function PlayerControls({
               onClick={(e) => {
                 e.stopPropagation();
                 onSeek(bm.timestampSeconds);
+                if (bm.viewState && onRestoreView) onRestoreView(bm.viewState);
               }}
             >
               <div className="mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] transition-transform duration-150 group-hover/marker:scale-150">

@@ -139,6 +139,7 @@ export const movieBookmarks = sqliteTable("movie_bookmarks", {
   tags: text("tags"),
   note: text("note"),
   thumbnailPath: text("thumbnail_path"),
+  viewState: text("view_state"), // JSON: {lon, lat, fov} for 360° bookmarks
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 }, (table) => [
   index("idx_mb_user_movie").on(table.userId, table.movieId),

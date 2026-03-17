@@ -35,6 +35,7 @@ export async function GET(
     const result = rows.map((row) => ({
       ...row,
       tags: row.tags ? JSON.parse(row.tags) : [],
+      viewState: row.viewState ? JSON.parse(row.viewState) : null,
     }));
 
     return NextResponse.json(result);
@@ -62,6 +63,7 @@ export async function POST(
     const iconType = (formData.get("iconType") as string) || "bookmark";
     const tagsRaw = formData.get("tags") as string | null;
     const note = formData.get("note") as string | null;
+    const viewState = formData.get("viewState") as string | null;
     const thumbnail = formData.get("thumbnail") as File | null;
 
     if (isNaN(timestampSeconds)) {
@@ -93,6 +95,7 @@ export async function POST(
         tags,
         note: note || null,
         thumbnailPath,
+        viewState: viewState || null,
       })
       .run();
 
@@ -106,6 +109,7 @@ export async function POST(
       tags: tags ? JSON.parse(tags) : [],
       note: note || null,
       thumbnailPath,
+      viewState: viewState ? JSON.parse(viewState) : null,
     });
   } catch (error) {
     console.error("Create bookmark error:", error);
