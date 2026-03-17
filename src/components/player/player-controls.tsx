@@ -362,7 +362,7 @@ export function PlayerControls({
                 e.stopPropagation();
                 setShowSpeedMenu(!showSpeedMenu);
               }}
-              className={`rounded px-1.5 py-0.5 text-xs transition-colors cursor-pointer ${
+              className={`rounded px-1.5 py-0.5 text-sm transition-colors cursor-pointer ${
                 playbackRate !== 1
                   ? "bg-white/20 text-white"
                   : "text-white/60 hover:text-white"
