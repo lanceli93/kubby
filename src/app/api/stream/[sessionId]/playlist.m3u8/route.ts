@@ -23,9 +23,24 @@ export async function GET(
   }
 
   const playlistPath = path.join(session.outputDir, "playlist.m3u8");
-  let content = fs.readFileSync(playlistPath, "utf-8");
+  const rawContent = fs.readFileSync(playlistPath, "utf-8");
+
+  // Log raw playlist from FFmpeg (first request only, to avoid spam)
+  if (!session.playlistLogged) {
+    const lines = rawContent.split("\n").slice(0, 20).join("\n");
+    console.log(`[playlist:${sessionId.slice(0, 8)}] raw (first 20 lines):\n${lines}`);
+
+    // Log files in output dir
+    try {
+      const files = fs.readdirSync(session.outputDir);
+      console.log(`[playlist:${sessionId.slice(0, 8)}] files: ${files.join(", ")}`);
+    } catch { /* ignore */ }
+
+    session.playlistLogged = true;
+  }
 
   // Rewrite segment paths to route through our API
+  let content = rawContent;
   const segBase = `/api/stream/${sessionId}/segment`;
   // 1. Standalone segment lines: segment_0000.ts or segment_0000.m4s
   content = content.replace(
@@ -37,6 +52,8 @@ export async function GET(
     /URI="(init\.mp4)"/g,
     `URI="${segBase}/$1"`,
   );
+
+  console.log(`[playlist:${sessionId.slice(0, 8)}] rewritten (first 10 lines):\n${content.split("\n").slice(0, 10).join("\n")}`);
 
   return new Response(content, {
     headers: {

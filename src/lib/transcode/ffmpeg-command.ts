@@ -51,6 +51,10 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
   // Video codec
   if (decision.videoAction === "copy") {
     args.push("-c:v", "copy");
+    // Apple HLS requires hvc1 tag for HEVC (FFmpeg defaults to hev1)
+    if (forceHevcFmp4) {
+      args.push("-tag:v", "hvc1");
+    }
   } else {
     const enc = encoderConfig;
     if (!enc || enc.name === "libx264") {

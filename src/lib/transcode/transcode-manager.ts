@@ -22,6 +22,7 @@ export interface TranscodeSession {
   sourceVideoCodec: string | null;
   sourceVideoWidth: number | null;
   retriedWithSoftware?: boolean;
+  playlistLogged?: boolean;
 }
 
 const IDLE_TIMEOUT_MS = 90 * 1000; // 90 seconds (heartbeat keeps active sessions alive)
@@ -159,14 +160,16 @@ class TranscodeManager {
     if (!session) return false;
 
     const playlistPath = path.join(session.outputDir, "playlist.m3u8");
-    const firstSegmentPath = path.join(session.outputDir, "segment_0000.ts");
+    const firstSegTs = path.join(session.outputDir, "segment_0000.ts");
+    const firstSegM4s = path.join(session.outputDir, "segment_0000.m4s");
     const deadline = Date.now() + timeoutMs;
 
     // Wait for both the playlist AND the first segment to exist.
     // The playlist can appear before any segments are written, which causes
-    // hls.js to 404 on segment_0000.ts and trigger a fatal network error.
+    // hls.js to 404 on segment_0000 and trigger a fatal network error.
+    // Supports both .ts (MPEG-TS) and .m4s (fMP4 for HEVC) segments.
     while (Date.now() < deadline) {
-      if (fs.existsSync(playlistPath) && fs.existsSync(firstSegmentPath)) {
+      if (fs.existsSync(playlistPath) && (fs.existsSync(firstSegTs) || fs.existsSync(firstSegM4s))) {
         return true;
       }
       await new Promise((r) => setTimeout(r, 250));

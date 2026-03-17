@@ -14,6 +14,7 @@ export async function GET(
 
   // Validate segment name to prevent path traversal
   if (!SEGMENT_PATTERN.test(name)) {
+    console.log(`[segment] REJECTED invalid name: ${name}`);
     return new Response("Invalid segment name", { status: 400 });
   }
 
@@ -21,6 +22,7 @@ export async function GET(
   const session = manager.getSession(sessionId);
 
   if (!session) {
+    console.log(`[segment] Session not found: ${sessionId.slice(0, 8)} for ${name}`);
     return new Response("Session not found", { status: 404 });
   }
 
@@ -34,12 +36,14 @@ export async function GET(
   }
 
   if (!fs.existsSync(segmentPath)) {
+    console.log(`[segment] NOT FOUND after ${attempts} attempts: ${name}`);
     return new Response("Segment not found", { status: 404 });
   }
 
   const data = fs.readFileSync(segmentPath);
   const ext = path.extname(name);
   const contentType = ext === ".m4s" || ext === ".mp4" ? "video/mp4" : "video/mp2t";
+  console.log(`[segment] ${sessionId.slice(0, 8)}/${name} → ${contentType} (${data.length} bytes)`);
   return new Response(data, {
     headers: {
       "Content-Type": contentType,

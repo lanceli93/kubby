@@ -673,9 +673,15 @@ Player (page.tsx)
 ```
 
 **决策逻辑** (`src/lib/transcode/playback-decider.ts`):
-- **direct**: MP4+H.264+AAC, WebM+VP8/VP9+Opus — 浏览器原生播放
+- **direct**: MP4+H.264/HEVC+AAC, WebM+VP8/VP9+Opus — 浏览器原生播放
 - **remux**: 浏览器兼容编码但容器不支持 (MKV/MOV/TS+H.264) — copy streams to HLS
 - **transcode**: 编码不兼容 (mpeg4/wmv2/flv1 等) — 重编码为 H.264+AAC HLS
+
+**iOS/移动端播放决策覆盖** (`stream/decide/route.ts`, 客户端发 `noHevc=1`):
+- HEVC 任意分辨率 → **remux** (stream copy 到 HLS fMP4, iOS 原生 HEVC 硬解)
+- H.264 > 4K → **transcode** 降至 2.5K (iPhone H.264 硬解上限约 4096x2304)
+- H.264 ≤ 4K → **direct** (正常 MP4 直播)
+- 移动端默认 `maxWidth=2560`, remux 时忽略 (stream copy 不能缩放)
 
 **硬件加速编码** (`src/lib/transcode/hw-accel.ts`):
 - 自动检测优先级: `h264_videotoolbox` (macOS) → `h264_nvenc` (NVIDIA) → `libx264` (CPU 兜底)
@@ -686,12 +692,13 @@ Player (page.tsx)
 - 分辨率自适应码率: 480p 2M / 720p 4M / 1080p 6M / 4K 12M / 5K 16M / 6K 20M / 7-8K+ 25M (maxrate), bufsize = 2x maxrate
 
 **FFmpeg 参数** (`src/lib/transcode/ffmpeg-command.ts`):
-- Remux: `-c:v copy -c:a copy -f hls -hls_time 6 -hls_list_size 0`
+- Remux (H.264): `-c:v copy -c:a copy -f hls -hls_time 6 -hls_list_size 0` (MPEG-TS 段)
+- Remux (HEVC): `-c:v copy -tag:v hvc1 -c:a copy -f hls -hls_segment_type fmp4 -hls_time 6` (fMP4 段 + Apple 必需的 hvc1 tag)
 - Transcode (NVENC + NVDEC 支持的编码): `-hwaccel cuda -hwaccel_output_format cuda -vf scale_cuda='min({maxWidth},iw)':-2 -c:v h264_nvenc -preset p4 -cq 23 -maxrate {动态} -bufsize {动态}` (全 GPU 零拷贝管线)
 - Transcode (NVENC + NVDEC 不支持的编码): `-vf scale='min({maxWidth},iw)':-2 -c:v h264_nvenc -preset p4 -cq 23 -maxrate {动态} -bufsize {动态}` (CPU 解码 + GPU 编码)
 - Transcode (VideoToolbox): `-vf scale='min({maxWidth},iw)':-2 -c:v h264_videotoolbox -q:v 65 -maxrate {动态} -bufsize {动态}`
 - Transcode (libx264 兜底): `-threads 0 -vf scale='min({maxWidth},iw)':-2 -c:v libx264 -preset ultrafast -crf 23 -maxrate {动态} -bufsize {动态}`
-- `maxWidth` 可配置 (默认 1920), 通过 decide API 的 `maxWidth` 查询参数传入, 支持 1920/1280/854 (1080p/720p/480p)
+- `maxWidth` 可配置, 通过 decide API 的 `maxWidth` 查询参数传入, 支持 3840/2560/1920/1280/854 (4K/2.5K/1080p/720p/480p)
 - 快速输入 seek: `-ss {seconds}` 在 `-i` 之前
 
 **TranscodeManager** (`src/lib/transcode/transcode-manager.ts`):
@@ -702,8 +709,9 @@ Player (page.tsx)
 - 跨平台进程终止: Windows 使用 `TerminateProcess` (SIGTERM 不可靠); Unix 使用 SIGTERM + 2 秒 SIGKILL 兜底; 3 秒安全超时
 - 进程退出时 (SIGTERM/SIGINT) 杀死所有 FFmpeg 进程 + 清理缓存目录
 - FFmpeg 不可用时降级为 direct play + 警告
-- 硬件编码失败时自动 fallback 到 libx264 (同一 session 内, 透明重启 FFmpeg 进程)
+- 硬件编码失败时自动 fallback 到 libx264 (同一 session 内, 透明重启 FFmpeg 进程; remux/stream copy 跳过此逻辑)
 - Session 保存 sourceVideoCodec/sourceVideoWidth, seek 时传递给新 FFmpeg 进程
+- `waitForPlaylist` 兼容 `.ts` 和 `.m4s` 段格式
 
 ### 服务端
 
@@ -713,8 +721,8 @@ Player (page.tsx)
 - 根据文件扩展名设置 Content-Type
 
 **HLS API Routes** (`/api/stream/[sessionId]/`):
-- `playlist.m3u8` — 等待 FFmpeg 生成 m3u8, 重写 segment 路径
-- `segment/[name]` — 校验 segment 名称 (防路径遍历), 等待+重试不存在的 segment
+- `playlist.m3u8` — 等待 FFmpeg 生成 m3u8, 重写 segment 路径 (支持 `.ts` 和 fMP4 的 `.m4s`/`init.mp4`)
+- `segment/[name]` — 校验 segment 名称 (防路径遍历), 等待+重试不存在的 segment, 支持 `.ts`/`.m4s`/`.mp4` Content-Type
 - `POST` — seek 操作 (杀旧 FFmpeg, 从新位置重启)
 - `PATCH` — 心跳端点, 更新 lastAccessedAt 防止空闲超时清理
 - `DELETE` — 停止 session, 清理临时文件
@@ -724,7 +732,8 @@ Player (page.tsx)
 `/movies/[id]/play` 页面:
 - 加载时调用 decide endpoint 判断播放模式
 - Direct: 设置 `video.src` (原有行为)
-- HLS: 使用 HLS.js `loadSource()` + `attachMedia()` (Safari fallback: native HLS)
+- HLS (H.264): 使用 HLS.js `loadSource()` + `attachMedia()`
+- HLS (HEVC): 强制使用 iOS 原生 HLS 播放器 (hls.js/MSE 不支持 HEVC 解码, `bufferAddCodecError`)
 - OSD 提示 "Remuxing..." / "Transcoding..."
 - HLS 时间偏移跟踪: `hlsTimeOffsetRef` 追踪 FFmpeg `-ss` 起点, `getRealTime()` 返回原始视频中的真实位置
 - HLS 感知 seek: `seekTo()` 函数通过 POST seek API 重启 FFmpeg, 500ms 防抖 + AbortController 取消进行中的 fetch, 防止快速点击产生多个孤儿 FFmpeg 进程
@@ -735,7 +744,19 @@ Player (page.tsx)
 - 每 10 秒自动保存播放进度 (`PUT /api/movies/[id]/user-data`)
 - 播放完成自动标记已看 + 更新播放次数
 - 控制栏: 拖动进度条, 快进/快退 10s, 音量, 倍速, 全屏, 统一模式徽标 (Direct/Remux/HW/SW, 点击显示详情)
-- 转码分辨率选择器: 仅在 transcode 模式显示, 支持 1080p/720p/480p, 切换时在当前位置重启 FFmpeg
+- 转码分辨率选择器: 仅在 transcode 模式显示, 支持 4K/2.5K/1080p/720p/480p, 切换时在当前位置重启 FFmpeg
+- 移动端控制栏双行布局: 上行播放控制居中, 下行时间+功能按钮
+
+**HEVC/移动端播放踩坑记录**:
+- HEVC MP4 direct play: 桌面端 (Chrome/Edge 有系统 HEVC 解码器) 可用, iOS 不可用 (range request 方式不支持)
+- iOS HEVC 必须走 HLS: remux (stream copy) 到 HLS, 用原生播放器解码, 零转码开销
+- Apple HLS HEVC 必须用 fMP4 段: MPEG-TS (`.ts`) 不支持 HEVC, 必须用 `-hls_segment_type fmp4` 生成 `init.mp4` + `.m4s`
+- Apple 要求 `hvc1` codec tag: FFmpeg 默认 `hev1`, 必须加 `-tag:v hvc1` 否则 iOS 静默失败 (黑屏无报错)
+- hls.js (MSE) 不支持 HEVC: iOS Chrome 的 `Hls.isSupported()` 返回 true 但 MSE 无法解码 HEVC → `bufferAddCodecError`, 必须绕过 hls.js 用原生 HLS
+- iPhone H.264 硬解上限约 4096x2304: 5K+ H.264 视频 direct play 返回 `SRC_NOT_SUPPORTED`, 需转码降分辨率
+- iPhone HEVC 硬解支持 8K (A14+): 同分辨率 HEVC 比 H.264 兼容性好得多
+- remux 不能加 maxWidth: stream copy 无法缩放, FFmpeg 加 scale filter 会崩溃 (`Failed to inject frame into filter`)
+- DB 路径可移植性: `people.photoPath` 存相对路径 (`metadata/people/...`), 运行时用 `resolveDataPath()` 拼绝对路径, 迁移数据目录后无需重新刮削
 - 书签系统: B 键快速书签 (使用模板预设), Shift+B 详细书签 (选图标/标签/备注)
 - 进度条书签标记: 彩色圆点 + 图标, hover 放大, 点击定位; 支持低调模式 (半透明白色)
 - 3 秒无操作自动隐藏控制栏 (可通过 toggle 按钮关闭自动隐藏)
