@@ -22,6 +22,7 @@ Self-hosted movie server built with Next.js. Dark cinema theme, Jellyfin-compati
 | Data fetching | TanStack React Query |
 | i18n | next-intl (cookie-driven, en/zh) |
 | Transcoding | FFmpeg (on-demand HLS via transcode-manager singleton) |
+| 3D/360° | Three.js (dynamic import, code-split ~500KB chunk) |
 | Launcher | Go (getlantern/systray) for macOS/Windows desktop packaging |
 
 ## Key Architecture Patterns
@@ -30,7 +31,9 @@ Self-hosted movie server built with Next.js. Dark cinema theme, Jellyfin-compati
 - **globalThis singleton**: `src/lib/transcode/transcode-manager.ts` survives Next.js dev hot reload
 - **HLS playback decision**: `src/lib/transcode/playback-decider.ts` — direct (MP4/WebM) / remux (MKV/MOV/TS with H.264) / transcode (mpeg4/wmv2/flv1)
 - **Centralized paths**: `src/lib/paths.ts` manages all data/config/metadata paths via `KUBBY_DATA_DIR` env
+- **Data directory resolution** (launcher): `KUBBY_DATA_DIR` env > `config.json` `dataDir` > OS default. Windows installer provides custom page; upgrade preserves previous choice via registry
 - **Auth split**: `auth.config.ts` (lightweight, Edge-compatible) + `auth.ts` (full, with DB) — middleware imports the lightweight one
+- **360° panorama**: `src/components/player/panorama-360-player.tsx` — Three.js sphere + VideoTexture, dynamic import (`ssr: false`). Player-level toggle persisted in `user_preferences.player_360_mode`. Bookmarks save camera `view_state` (lon/lat/fov), restored via URL `&vs=` param or seek bar click. Render loop pauses when video is paused; pinch-to-zoom on mobile.
 
 ## UI Design System
 
