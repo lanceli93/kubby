@@ -87,36 +87,42 @@ export default function PlayerPage() {
   const resetViewRef = useRef<(() => void) | null>(null);
   const capture360Ref = useRef<(() => Promise<Blob | null>) | null>(null);
   const view360Ref = useRef<{ getView: () => { lon: number; lat: number; fov: number }; setView: (v: { lon: number; lat: number; fov: number }) => void } | null>(null);
-  const initialViewState = useRef<{ lon: number; lat: number; fov: number } | null | undefined>(undefined);
-  if (initialViewState.current === undefined) {
+  // Parse vs= param once on mount: "lon,lat,fov" → viewState, "off" → force non-360, absent → null
+  const vsParamRef = useRef<{ mode: "360"; view: { lon: number; lat: number; fov: number } } | { mode: "flat" } | null>(undefined as unknown as null);
+  if (vsParamRef.current === (undefined as unknown as null)) {
     const vsParam = searchParams.get("vs");
-    if (vsParam) {
+    if (vsParam === "off") {
+      vsParamRef.current = { mode: "flat" };
+    } else if (vsParam) {
       const parts = vsParam.split(",").map(Number);
-      initialViewState.current = parts.length === 3 && parts.every((n) => !isNaN(n))
-        ? { lon: parts[0], lat: parts[1], fov: parts[2] }
+      vsParamRef.current = parts.length === 3 && parts.every((n) => !isNaN(n))
+        ? { mode: "360", view: { lon: parts[0], lat: parts[1], fov: parts[2] } }
         : null;
     } else {
-      initialViewState.current = null;
+      vsParamRef.current = null;
+    }
+    // Remove vs= from URL so refresh uses user preference
+    if (vsParam) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("vs");
+      window.history.replaceState(window.history.state, "", url.toString());
     }
   }
+  const initialViewState = vsParamRef.current?.mode === "360" ? vsParamRef.current.view : null;
 
-  // Sync 360 mode from user preferences (bookmark nav persists to prefs in the effect below)
+  // Sync 360 mode from user preferences
   useEffect(() => {
     if (userPrefs) setIs360Mode(userPrefs.player360Mode);
   }, [userPrefs]);
 
-  // On initial load from bookmark, override 360 mode and persist to user prefs
-  const bookmarkModeApplied = useRef(false);
+  // On bookmark navigation, override 360 mode and persist
+  const bookmarkOverrideApplied = useRef(false);
   useEffect(() => {
-    if (!userPrefs || bookmarkModeApplied.current) return;
-    bookmarkModeApplied.current = true;
-    const hasViewState = !!initialViewState.current;
-    const isBookmarkNav = !!searchParams.get("t");
-    let target: boolean | null = null;
-    if (hasViewState) target = true;
-    else if (isBookmarkNav) target = false;
-    if (target !== null && target !== userPrefs.player360Mode) {
-      setIs360Mode(target);
+    if (!userPrefs || bookmarkOverrideApplied.current || !vsParamRef.current) return;
+    bookmarkOverrideApplied.current = true;
+    const target = vsParamRef.current.mode === "360";
+    setIs360Mode(target);
+    if (target !== userPrefs.player360Mode) {
       queryClient.setQueryData<UserPreferences>(["userPreferences"], (old) =>
         old ? { ...old, player360Mode: target } : old
       );
@@ -126,7 +132,8 @@ export default function PlayerPage() {
         body: JSON.stringify({ player360Mode: target }),
       }).catch(() => {});
     }
-  }, [userPrefs, searchParams, queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPrefs]);
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
   const totalDiscs = movie?.discCount ?? 1;
@@ -491,9 +498,8 @@ export default function PlayerPage() {
           onCaptureRef={(fn) => { capture360Ref.current = fn; }}
           onViewRef={(fns) => {
             view360Ref.current = fns;
-            if (initialViewState.current) {
-              fns.setView(initialViewState.current);
-              initialViewState.current = null;
+            if (initialViewState) {
+              fns.setView(initialViewState);
             }
           }}
         />

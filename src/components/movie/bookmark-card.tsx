@@ -72,7 +72,9 @@ export function BookmarkCard({
   const builtin = getBuiltinIcon(bookmark.iconType || "bookmark");
   const customIcon = !builtin ? customIcons?.find((c) => c.id === bookmark.iconType) : undefined;
   const discParam = bookmark.discNumber && bookmark.discNumber > 1 ? `&disc=${bookmark.discNumber}` : "";
-  const vsParam = bookmark.viewState ? `&vs=${bookmark.viewState.lon.toFixed(2)},${bookmark.viewState.lat.toFixed(2)},${bookmark.viewState.fov.toFixed(0)}` : "";
+  const vsParam = bookmark.viewState
+    ? `&vs=${bookmark.viewState.lon.toFixed(2)},${bookmark.viewState.lat.toFixed(2)},${bookmark.viewState.fov.toFixed(0)}`
+    : "&vs=off";
   const href = `/movies/${movieId}/play?t=${bookmark.timestampSeconds}${discParam}${vsParam}`;
 
   function openEdit() {
