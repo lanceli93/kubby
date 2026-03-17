@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { BUILTIN_BOOKMARK_ICONS } from "@/lib/bookmark-icons";
+import { resolveDataPath } from "@/lib/paths";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -333,7 +334,7 @@ export async function GET(request: NextRequest) {
       id: r.id,
       name: r.name,
       type: r.type,
-      photoPath: stampPath(r.photo_path, r.photo_mtime),
+      photoPath: stampPath(r.photo_path ? resolveDataPath(r.photo_path) : null, r.photo_mtime),
       personalRating: r.personal_rating,
       movieCount: r.movie_count,
     }));

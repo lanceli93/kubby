@@ -7,6 +7,7 @@ import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
+import { resolveDataPath } from "@/lib/paths";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -177,7 +178,7 @@ export async function GET(
 
     return NextResponse.json({
       ...person,
-      photoPath: stampPath(person.photoPath, person.photoMtime),
+      photoPath: stampPath(person.photoPath ? resolveDataPath(person.photoPath) : null, person.photoMtime),
       photoBlur: person.photoBlur,
       tags: parsedTags,
       fanartPath: stampPathFs(fanartPath), // person fanart has no DB mtime — use fs fallback (1 call)

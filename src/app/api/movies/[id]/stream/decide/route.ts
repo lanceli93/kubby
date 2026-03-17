@@ -49,7 +49,11 @@ export async function GET(
     }
   }
 
-  const decision = decidePlayback({ container, videoCodec, audioCodec });
+  // If client signals no HEVC support, override codec so decider treats it as non-browser-playable
+  const noHevc = request.nextUrl.searchParams.get("noHevc") === "1";
+  const effectiveVideoCodec = noHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec) ? "hevc_unsupported" : videoCodec;
+
+  const decision = decidePlayback({ container, videoCodec: effectiveVideoCodec, audioCodec });
 
   // Direct play — no transcode needed
   if (decision.mode === "direct") {

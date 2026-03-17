@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { movies, movieDiscs, userMovieData, people, moviePeople, userPersonData } from "@/lib/db/schema";
 import { eq, desc, asc, like, sql, and, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { resolveDataPath } from "@/lib/paths";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -415,7 +416,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         movies: movieResults,
-        people: peopleResults.map((p) => ({ ...p, photoPath: stampPath(p.photoPath, p.photoMtime) })),
+        people: peopleResults.map((p) => ({ ...p, photoPath: stampPath(p.photoPath ? resolveDataPath(p.photoPath) : null, p.photoMtime) })),
       });
     }
 

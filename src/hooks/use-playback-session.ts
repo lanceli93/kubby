@@ -222,6 +222,10 @@ export function usePlaybackSession({
       if (isMultiDisc) qp.set("disc", String(currentDisc));
       if (realTime > 0) qp.set("startAt", String(realTime));
       if (maxWidth > 0) qp.set("maxWidth", String(maxWidth));
+      const tv = document.createElement("video");
+      if (!tv.canPlayType('video/mp4; codecs="hvc1"')) {
+        qp.set("noHevc", "1");
+      }
       const qs = qp.toString();
 
       const res = await fetch(`/api/movies/${movieId}/stream/decide?${qs}`);
@@ -287,6 +291,11 @@ export function usePlaybackSession({
     if (isMultiDisc) queryParams.set("disc", String(currentDisc));
     if (startAt > 0) queryParams.set("startAt", String(startAt));
     if (selectedMaxWidth > 0) queryParams.set("maxWidth", String(selectedMaxWidth));
+    // Detect HEVC support so server can fall back to transcode if needed
+    const testVid = document.createElement("video");
+    if (!testVid.canPlayType('video/mp4; codecs="hvc1"')) {
+      queryParams.set("noHevc", "1");
+    }
     const queryStr = queryParams.toString();
 
     fetch(`/api/movies/${movieId}/stream/decide${queryStr ? `?${queryStr}` : ""}`)

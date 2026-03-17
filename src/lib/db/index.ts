@@ -1,7 +1,8 @@
 import { drizzle, BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "./schema";
-import { getDbPath } from "@/lib/paths";
+import { getDbPath, getDataDir } from "@/lib/paths";
+import path from "path";
 
 let _db: BetterSQLite3Database<typeof schema> | null = null;
 
@@ -278,6 +279,30 @@ function initDb(): BetterSQLite3Database<typeof schema> {
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }
   }
+
+  // 0025: Migrate absolute photoPath to relative (idempotent — skips already-relative paths)
+  try {
+    const dataDir = getDataDir();
+    const normalizedPrefix = path.normalize(dataDir) + path.sep;
+    const posixPrefix = normalizedPrefix.replace(/\\/g, "/");
+    const rows = sqlite.prepare("SELECT id, photo_path FROM people WHERE photo_path IS NOT NULL").all() as Array<{ id: string; photo_path: string }>;
+    const update = sqlite.prepare("UPDATE people SET photo_path = ? WHERE id = ?");
+    for (const row of rows) {
+      const p = row.photo_path;
+      if (path.isAbsolute(p)) {
+        const normalized = path.normalize(p);
+        let relative: string | null = null;
+        if (normalized.startsWith(normalizedPrefix)) {
+          relative = normalized.slice(normalizedPrefix.length).replace(/\\/g, "/");
+        } else if (p.replace(/\\/g, "/").startsWith(posixPrefix)) {
+          relative = p.replace(/\\/g, "/").slice(posixPrefix.length);
+        }
+        if (relative) {
+          update.run(relative, row.id);
+        }
+      }
+    }
+  } catch { /* non-critical: old absolute paths still work via resolveDataPath fallback */ }
 
   _db = drizzle(sqlite, { schema });
   return _db;

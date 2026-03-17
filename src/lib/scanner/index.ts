@@ -11,7 +11,7 @@ import { writeActorsToNfo } from "./nfo-writer";
 import { fetchMovieCredits, fetchPersonDetails, downloadTmdbImage, getPersonPhotoPath, TMDB_PROFILE_SIZE } from "@/lib/tmdb";
 import { parseFolderPaths } from "@/lib/folder-paths";
 import { generateBlurDataURL, getFileMtime } from "@/lib/blur-utils";
-import { getPeopleMetadataDir } from "@/lib/paths";
+import { getPeopleMetadataDir, toRelativeDataPath } from "@/lib/paths";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v", ".ts"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
@@ -129,7 +129,7 @@ function getOrCreatePerson(
     const updates: Record<string, unknown> = {};
     // Update photoPath if we now have one and the existing record doesn't
     if (photoPath && !existing.photoPath) {
-      updates.photoPath = photoPath;
+      updates.photoPath = toRelativeDataPath(photoPath);
       updates.photoMtime = photoMtime ?? null;
       updates.photoBlur = photoBlur ?? null;
     }
@@ -160,7 +160,7 @@ function getOrCreatePerson(
       id,
       name,
       type,
-      photoPath: photoPath || null,
+      photoPath: photoPath ? toRelativeDataPath(photoPath) : null,
       photoMtime: photoMtime ?? null,
       photoBlur: photoBlur ?? null,
       tmdbId: bio?.tmdbId ? String(bio.tmdbId) : null,

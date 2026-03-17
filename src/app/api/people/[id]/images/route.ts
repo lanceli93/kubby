@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
 import { generateBlurDataURL } from "@/lib/blur-utils";
+import { toRelativeDataPath, resolveDataPath } from "@/lib/paths";
 
 // POST /api/people/[id]/images?type=poster|fanart — upload image
 export async function POST(
@@ -46,8 +47,7 @@ export async function POST(
       fs.writeFileSync(destPath, buffer);
       const mtime = fs.statSync(destPath).mtimeMs;
       const blur = await generateBlurDataURL(destPath);
-      // Update DB with absolute path, mtime, and blur (matches existing photoPath convention)
-      db.update(people).set({ photoPath: destPath, photoMtime: mtime, photoBlur: blur }).where(eq(people.id, id)).run();
+      db.update(people).set({ photoPath: toRelativeDataPath(destPath), photoMtime: mtime, photoBlur: blur }).where(eq(people.id, id)).run();
       return NextResponse.json({ path: destPath });
     } else {
       const destPath = path.join(personDir, "fanart.jpg");
@@ -87,8 +87,9 @@ export async function DELETE(
     const personDir = getPersonDir(person);
 
     if (type === "poster") {
-      if (person.photoPath && fs.existsSync(person.photoPath)) {
-        fs.unlinkSync(person.photoPath);
+      if (person.photoPath) {
+        const absPhoto = resolveDataPath(person.photoPath);
+        if (fs.existsSync(absPhoto)) fs.unlinkSync(absPhoto);
       }
       db.update(people).set({ photoPath: null, photoMtime: null, photoBlur: null }).where(eq(people.id, id)).run();
     } else {

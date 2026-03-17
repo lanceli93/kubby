@@ -6,6 +6,7 @@ import { movies, moviePeople, people, userMovieData, userPersonData, mediaStream
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
+import { resolveDataPath } from "@/lib/paths";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -340,7 +341,7 @@ export async function GET(
       genres: movie.genres ? JSON.parse(movie.genres) : [],
       studios: movie.studios ? JSON.parse(movie.studios) : [],
       tags: movie.tags ? JSON.parse(movie.tags) : [],
-      cast: cast.map((c) => ({ ...c, photoPath: stampPath(c.photoPath, c.photoMtime), photoBlur: c.photoBlur })),
+      cast: cast.map((c) => ({ ...c, photoPath: stampPath(c.photoPath ? resolveDataPath(c.photoPath) : null, c.photoMtime), photoBlur: c.photoBlur })),
       directors,
       allPeople,
       discs: discs.map((d) => ({
