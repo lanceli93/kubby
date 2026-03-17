@@ -49,13 +49,18 @@ export async function GET(
     }
   }
 
-  // If client signals no HEVC support, override codec so decider treats it as non-browser-playable
-  const noHevc = request.nextUrl.searchParams.get("noHevc") === "1";
-  const effectiveVideoCodec = noHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec) ? "hevc_unsupported" : videoCodec;
-
-  const decision = decidePlayback({ container, videoCodec: effectiveVideoCodec, audioCodec });
+  const noDirectHevc = request.nextUrl.searchParams.get("noHevc") === "1";
+  const decision = decidePlayback({ container, videoCodec, audioCodec });
 
   // Direct play — no transcode needed
+  // But if client can't direct-play HEVC MP4, force remux (HEVC stream copy to HLS)
+  // iOS can decode HEVC natively via HLS, just not via direct MP4 range requests
+  if (decision.mode === "direct" && noDirectHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec)) {
+    decision.mode = "remux";
+    decision.videoAction = "copy";
+    decision.audioAction = audioCodec ? "copy" : "none";
+  }
+
   if (decision.mode === "direct") {
     const directUrl = discNumber > 1
       ? `/api/movies/${id}/stream?disc=${discNumber}`
