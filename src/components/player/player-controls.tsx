@@ -417,7 +417,10 @@ export function PlayerControls({
               )}
             </button>
             {showVolumeSlider && (
-              <div className="ml-2 flex w-20 items-center">
+              <div
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg bg-zinc-900/95 px-2 py-3 shadow-xl backdrop-blur"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <input
                   type="range"
                   min={0}
@@ -425,7 +428,8 @@ export function PlayerControls({
                   step={0.05}
                   value={isMuted ? 0 : volume}
                   onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-                  className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/30 accent-primary [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                  className="h-24 w-1 cursor-pointer appearance-none rounded-full bg-white/30 accent-primary"
+                  style={{ writingMode: "vertical-lr", direction: "rtl" } as React.CSSProperties}
                 />
               </div>
             )}
