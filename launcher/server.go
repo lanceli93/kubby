@@ -35,11 +35,7 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 		return nil, fmt.Errorf("create log dir: %w", err)
 	}
 
-	logFile, err := os.OpenFile(
-		filepath.Join(logDir, "kubby.log"),
-		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-		0644,
-	)
+	logWriter, err := NewRotatingWriter(logDir, "kubby.log")
 	if err != nil {
 		return nil, fmt.Errorf("open log file: %w", err)
 	}
@@ -56,14 +52,14 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 		"AUTH_TRUST_HOST=true",
 		"NODE_ENV=production",
 	)
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
+	cmd.Stdout = logWriter
+	cmd.Stderr = logWriter
 
 	// On Windows: hide the Node.js console window
 	hideConsoleWindow(cmd)
 
 	if err := cmd.Start(); err != nil {
-		logFile.Close()
+		logWriter.Close()
 		return nil, fmt.Errorf("start node: %w", err)
 	}
 
@@ -74,7 +70,7 @@ func StartServer(exeDir, dataDir string, port int, authSecret string) (*Server, 
 	// Monitor process exit in background
 	go func() {
 		_ = cmd.Wait()
-		logFile.Close()
+		logWriter.Close()
 		s.mu.Lock()
 		s.stopped = true
 		s.mu.Unlock()
