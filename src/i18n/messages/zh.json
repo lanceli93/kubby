@@ -513,6 +513,8 @@
   },
   "player": {
     "resOriginal": "原画",
+    "res4K": "4K",
+    "res2_5K": "2.5K",
     "res1080p": "1080p",
     "res720p": "720p",
     "res480p": "480p",

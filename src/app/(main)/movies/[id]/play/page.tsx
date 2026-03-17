@@ -56,7 +56,9 @@ export default function PlayerPage() {
   const [osdMessage, setOsdMessage] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
-  const [selectedMaxWidth, setSelectedMaxWidth] = useState(0);
+  const isMobile = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
+  // Mobile caps at 2.5K to avoid choking on high-res (e.g. 8K VR) content
+  const [selectedMaxWidth, setSelectedMaxWidth] = useState(isMobile ? 2560 : 0);
 
   // Bookmark panel state
   const [bookmarkIconType, setBookmarkIconType] = useState("bookmark");

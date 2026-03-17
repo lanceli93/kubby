@@ -23,6 +23,8 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 const RESOLUTION_OPTIONS = [
   { maxWidth: 0, labelKey: "resOriginal" as const },
+  { maxWidth: 3840, labelKey: "res4K" as const },
+  { maxWidth: 2560, labelKey: "res2_5K" as const },
   { maxWidth: 1920, labelKey: "res1080p" as const },
   { maxWidth: 1280, labelKey: "res720p" as const },
   { maxWidth: 854, labelKey: "res480p" as const },
@@ -206,6 +208,27 @@ export function PlayerControls({
         })}
       </div>
 
+      {/* Mobile: transport row (centered) */}
+      <div className="flex md:hidden items-center justify-center gap-4">
+        <button
+          onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
+          className="text-white/80 hover:text-white"
+          title="Rewind 10s"
+        >
+          <SkipBack className="h-5 w-5" />
+        </button>
+        <button onClick={onTogglePlay} className="text-white hover:text-white/90">
+          {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
+        </button>
+        <button
+          onClick={() => { onSkip(10); showOsd("+10s"); }}
+          className="text-white/80 hover:text-white"
+          title="Forward 10s"
+        >
+          <SkipForward className="h-5 w-5" />
+        </button>
+      </div>
+
       <div className="relative flex items-center justify-between">
         {/* Time display + encoder badge */}
         <div className="flex items-center gap-2">
@@ -246,8 +269,8 @@ export function PlayerControls({
           )}
         </div>
 
-        {/* Center controls */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 md:gap-4">
+        {/* Center controls — desktop only (mobile has its own row above) */}
+        <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4">
           <button
             onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
             className="text-white/80 hover:text-white"
@@ -271,7 +294,7 @@ export function PlayerControls({
         <div className="flex items-center gap-2 md:gap-3">
           <button
             onClick={onQuickBookmark}
-            className="hidden md:block text-white/60 hover:text-indigo-400 transition-colors"
+            className="text-white/60 hover:text-indigo-400 transition-colors"
             title="Quick bookmark (B)"
           >
             <Bookmark className="h-5 w-5" />

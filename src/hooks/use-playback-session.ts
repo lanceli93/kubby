@@ -222,9 +222,17 @@ export function usePlaybackSession({
       if (isMultiDisc) qp.set("disc", String(currentDisc));
       if (realTime > 0) qp.set("startAt", String(realTime));
       if (maxWidth > 0) qp.set("maxWidth", String(maxWidth));
-      const tv = document.createElement("video");
-      if (!tv.canPlayType('video/mp4; codecs="hvc1"')) {
+      const iosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (iosDevice) {
         qp.set("noHevc", "1");
+      } else {
+        const tv = document.createElement("video");
+        const hevc = tv.canPlayType('video/mp4; codecs="hvc1"')
+          || tv.canPlayType('video/mp4; codecs="hev1"')
+          || tv.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"');
+        if (!hevc) {
+          qp.set("noHevc", "1");
+        }
       }
       const qs = qp.toString();
 
@@ -291,10 +299,19 @@ export function usePlaybackSession({
     if (isMultiDisc) queryParams.set("disc", String(currentDisc));
     if (startAt > 0) queryParams.set("startAt", String(startAt));
     if (selectedMaxWidth > 0) queryParams.set("maxWidth", String(selectedMaxWidth));
-    // Detect HEVC support so server can fall back to transcode if needed
-    const testVid = document.createElement("video");
-    if (!testVid.canPlayType('video/mp4; codecs="hvc1"')) {
+    // iOS reports HEVC support via canPlayType but can't reliably direct-play
+    // HEVC MP4 over HTTP range requests — force HLS transcode on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
       queryParams.set("noHevc", "1");
+    } else {
+      const testVid = document.createElement("video");
+      const hevcSupport = testVid.canPlayType('video/mp4; codecs="hvc1"')
+        || testVid.canPlayType('video/mp4; codecs="hev1"')
+        || testVid.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"');
+      if (!hevcSupport) {
+        queryParams.set("noHevc", "1");
+      }
     }
     const queryStr = queryParams.toString();
 

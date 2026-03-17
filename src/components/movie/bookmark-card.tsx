@@ -121,9 +121,9 @@ export function BookmarkCard({
   }
 
   const card = (
-    <div className="group relative flex-shrink-0 w-[280px] md:w-[320px]">
-      {/* Thumbnail — height adapts to image's native aspect ratio */}
-      <div className="relative w-[280px] md:w-[320px] overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900">
+    <div className="group relative flex-shrink-0 w-[200px] md:w-[320px]">
+      {/* Thumbnail — height capped to prevent oversized cards from tall captures */}
+      <div className="relative w-[200px] md:w-[320px] max-h-[160px] md:max-h-[240px] overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900">
         {bookmark.thumbnailPath ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -233,7 +233,7 @@ export function BookmarkCard({
 
       {/* Note below card */}
       {bookmark.note && (
-        <p className="mt-1 max-w-[280px] md:max-w-[320px] truncate text-xs text-muted-foreground">
+        <p className="mt-1 max-w-[200px] md:max-w-[320px] truncate text-xs text-muted-foreground">
           {bookmark.note}
         </p>
       )}
