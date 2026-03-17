@@ -405,6 +405,8 @@
     "role": "角色",
     "addCast": "添加人员",
     "birthInputFormatError": "请输入日期 (YYYY-MM-DD) 或年份 (YYYY)",
+    "sphericalVideo": "360° 全景视频",
+    "sphericalVideoDesc": "为此视频启用 360° 全景播放模式",
     "saving": "保存中...",
     "editImages": "编辑图片",
     "poster": "海报",

@@ -23,6 +23,12 @@ export interface ProbeStream {
   sampleRate: number | null;
 }
 
+export interface SphericalInfo {
+  isSpherical: boolean;
+  projection: string | null;  // "equirectangular" | "cubemap"
+  stereoMode: string | null;  // "mono" | "sbs" | "tb"
+}
+
 export interface ProbeResult {
   // Legacy flat fields for backward compat
   videoCodec: string | null;
@@ -37,6 +43,7 @@ export interface ProbeResult {
   totalBitrate: number | null;
   fileSize: number | null;
   formatName: string | null;
+  spherical: SphericalInfo;
 }
 
 function parseFrameRate(rFrameRate: string | undefined): string | null {
@@ -118,6 +125,45 @@ function parseStream(raw: Record<string, unknown>): ProbeStream | null {
   return stream;
 }
 
+function detectSpherical(
+  rawStreams: Array<Record<string, unknown>>,
+  formatTags: Record<string, string>,
+  videoWidth: number | null,
+  videoHeight: number | null,
+): SphericalInfo {
+  // 1. Check side_data_list for "Spherical Mapping"
+  for (const stream of rawStreams) {
+    const sideDataList = stream.side_data_list as Array<Record<string, unknown>> | undefined;
+    if (sideDataList && Array.isArray(sideDataList)) {
+      for (const sd of sideDataList) {
+        const sdType = sd.side_data_type as string | undefined;
+        if (sdType?.includes("Spherical Mapping")) {
+          return {
+            isSpherical: true,
+            projection: (sd.projection as string) ?? "equirectangular",
+            stereoMode: "mono",
+          };
+        }
+      }
+    }
+  }
+
+  // 2. Check format tags
+  if (formatTags["spherical-video"] === "true" || formatTags["is_spherical"] === "true") {
+    return { isSpherical: true, projection: "equirectangular", stereoMode: "mono" };
+  }
+
+  // 3. Check per-stream tags (some injectors write to stream-level tags)
+  for (const stream of rawStreams) {
+    const tags = (stream.tags || {}) as Record<string, string>;
+    if (tags["spherical-video"] === "true" || tags["is_spherical"] === "true") {
+      return { isSpherical: true, projection: "equirectangular", stereoMode: "mono" };
+    }
+  }
+
+  return { isSpherical: false, projection: null, stereoMode: null };
+}
+
 export function probeVideo(filePath: string): Promise<ProbeResult | null> {
   const ffprobePath = process.env.FFPROBE_PATH || "ffprobe";
   return new Promise((resolve) => {
@@ -155,11 +201,14 @@ export function probeVideo(filePath: string): Promise<ProbeResult | null> {
 
             const ext = path.extname(filePath).toLowerCase().replace(".", "");
             const duration = format.duration ? parseFloat(format.duration) : null;
+            const formatTags = (format.tags || {}) as Record<string, string>;
+            const vw = videoStream?.width || null;
+            const vh = videoStream?.height || null;
 
             resolve({
               videoCodec: videoStream?.codec || null,
-              videoWidth: videoStream?.width || null,
-              videoHeight: videoStream?.height || null,
+              videoWidth: vw,
+              videoHeight: vh,
               audioCodec: audioStream?.codec || null,
               audioChannels: audioStream?.channels || null,
               durationSeconds: duration && !isNaN(duration) ? Math.round(duration) : null,
@@ -168,6 +217,7 @@ export function probeVideo(filePath: string): Promise<ProbeResult | null> {
               totalBitrate: format.bit_rate ? parseInt(String(format.bit_rate), 10) : null,
               fileSize: format.size ? parseInt(String(format.size), 10) : null,
               formatName: format.format_long_name || format.format_name || null,
+              spherical: detectSpherical(rawStreams, formatTags, vw, vh),
             });
           } catch {
             console.warn(`Failed to parse ffprobe output for ${filePath}`);

@@ -405,6 +405,8 @@
     "role": "Role",
     "addCast": "Add Person",
     "birthInputFormatError": "Please enter a date (YYYY-MM-DD) or year (YYYY)",
+    "sphericalVideo": "360° Video",
+    "sphericalVideoDesc": "Enable panoramic 360° playback for this video",
     "saving": "Saving...",
     "editImages": "Edit Images",
     "poster": "Poster",

@@ -48,6 +48,7 @@ interface MovieData {
   tags?: string[];
   tmdbId?: string;
   imdbId?: string;
+  isSpherical?: boolean;
   allPeople?: { id: string; name: string; type: string; role?: string; sortOrder?: number }[];
   userData?: {
     isPlayed: boolean;
@@ -89,6 +90,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     tags: [] as string[],
     tmdbId: "",
     imdbId: "",
+    isSpherical: false,
     personalRating: "",
   });
 
@@ -134,6 +136,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         tags: movie.tags || [],
         tmdbId: movie.tmdbId || "",
         imdbId: movie.imdbId || "",
+        isSpherical: movie.isSpherical ?? false,
         personalRating: movie.userData?.personalRating?.toString() || "",
       });
       if (movie.allPeople) {
@@ -214,6 +217,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
       tags: form.tags,
       tmdbId: form.tmdbId || null,
       imdbId: form.imdbId || null,
+      isSpherical: form.isSpherical,
       cast: castEntries,
     });
   };
@@ -479,6 +483,27 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                   />
                 </div>
               </div>
+            </div>
+
+            {/* 360° Video toggle */}
+            <div className="pt-2">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={form.isSpherical}
+                  onClick={() => setForm((f) => ({ ...f, isSpherical: !f.isSpherical }))}
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${form.isSpherical ? "bg-primary" : "bg-white/20"}`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${form.isSpherical ? "translate-x-[18px]" : "translate-x-[3px]"}`}
+                  />
+                </button>
+                <div>
+                  <span className="text-sm font-medium">{t("sphericalVideo")}</span>
+                  <p className="text-xs text-muted-foreground">{t("sphericalVideoDesc")}</p>
+                </div>
+              </label>
             </div>
           </TabsContent>
 

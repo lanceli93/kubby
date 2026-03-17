@@ -69,6 +69,9 @@ export const movies = sqliteTable("movies", {
   fanartMtime: real("fanart_mtime"),
   posterBlur: text("poster_blur"), // tiny base64 data URL for blur placeholder
   tags: text("tags"), // JSON array string
+  isSpherical: integer("is_spherical", { mode: "boolean" }).default(false),
+  sphericalProjection: text("spherical_projection"), // "equirectangular" | "cubemap"
+  sphericalStereoMode: text("spherical_stereo_mode"), // "mono" | "sbs" | "tb"
   mediaLibraryId: text("media_library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
   dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
 }, (table) => [
@@ -206,6 +209,9 @@ export const movieDiscs = sqliteTable("movie_discs", {
   container: text("container"),
   totalBitrate: integer("total_bitrate"),
   formatName: text("format_name"),
+  isSpherical: integer("is_spherical", { mode: "boolean" }).default(false),
+  sphericalProjection: text("spherical_projection"),
+  sphericalStereoMode: text("spherical_stereo_mode"),
 }, (table) => [
   index("idx_md_movie").on(table.movieId),
   index("idx_md_movie_disc").on(table.movieId, table.discNumber),

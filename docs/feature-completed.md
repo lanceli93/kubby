@@ -1,5 +1,16 @@
 # Completed Features
 
+## 2026-03-17: VR/360 Detection & Data Layer (Phase 1)
+
+Added spherical/360° video detection and data layer support.
+
+### Changes
+- **DB Schema**: Added `is_spherical`, `spherical_projection`, `spherical_stereo_mode` columns to `movies` and `movie_discs` tables (migration #0023)
+- **Probe**: `detectSpherical()` in `probe.ts` checks ffprobe `side_data_list` for "Spherical Mapping", `format.tags`, and per-stream tags
+- **Scanner**: Automatically detects and saves spherical metadata during library scan
+- **API**: GET `/api/movies/[id]` auto-includes spherical fields; PUT accepts `isSpherical` for manual override
+- **MetadataEditor**: Added "360° Video" toggle switch in General tab with i18n support (en/zh)
+
 ## 2026-03-17: Player Refactoring for VR/360 Support (Phase 0)
 
 Refactored the 1370-line monolithic player page into focused, reusable modules. Pure refactoring with zero behavior change, preparing for future VR/360 panoramic player that will share HLS session management, playback controls, bookmarks, and progress saving.
