@@ -123,17 +123,17 @@ export function BookmarkCard({
   const card = (
     <div className="group relative flex-shrink-0 w-[200px] md:w-[320px]">
       {/* Thumbnail — height capped to prevent oversized cards from tall captures */}
-      <div className="relative w-[200px] md:w-[320px] max-h-[160px] md:max-h-[240px] overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900">
+      <div className="relative w-[200px] md:w-[320px] aspect-video overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900">
         {bookmark.thumbnailPath ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={resolveImageSrc(bookmark.thumbnailPath, 640)}
             alt={`Bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`}
-            className="block w-full h-auto"
+            className="h-full w-full object-cover"
             draggable={false}
           />
         ) : (
-          <div className="flex h-[180px] items-center justify-center">
+          <div className="flex h-full items-center justify-center">
             <Clock className="h-8 w-8 text-white/20" />
           </div>
         )}

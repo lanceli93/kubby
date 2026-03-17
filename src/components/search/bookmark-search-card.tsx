@@ -93,18 +93,18 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
 
   const card = (
     <>
-      <div className="relative w-[280px] overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
+      <div className="relative w-[280px] aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
         {/* Image */}
         {imageSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={imageSrc}
             alt={`${bookmark.movieTitle} - ${formatTimestamp(bookmark.timestampSeconds)}`}
-            className={`block w-full ${bookmark.thumbnailPath ? "h-auto" : "h-[168px] object-cover"}`}
+            className="h-full w-full object-cover"
             draggable={false}
           />
         ) : (
-          <div className="flex h-[158px] items-center justify-center">
+          <div className="flex h-full items-center justify-center">
             <Clock className="h-8 w-8 text-white/20" />
           </div>
         )}
