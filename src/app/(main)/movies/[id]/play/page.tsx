@@ -3,7 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useEffect, useCallback, useState } from "react";
-import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useUserPreferences, type UserPreferences } from "@/hooks/use-user-preferences";
 import { usePlaybackSession } from "@/hooks/use-playback-session";
 import { useProgressSave } from "@/hooks/use-progress-save";
 import { PlayerTopBar } from "@/components/player/player-top-bar";
@@ -492,6 +492,9 @@ export default function PlayerPage() {
           const next = !is360Mode;
           setIs360Mode(next);
           showOsd(next ? "360° ON" : "360° OFF");
+          queryClient.setQueryData<UserPreferences>(["userPreferences"], (old) =>
+            old ? { ...old, player360Mode: next } : old
+          );
           fetch("/api/settings/personal-metadata", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
