@@ -23,7 +23,7 @@ export async function GET(
   const startAtParam = request.nextUrl.searchParams.get("startAt");
   const startAt = startAtParam ? Math.max(0, parseInt(startAtParam, 10) || 0) : 0;
   const maxWidthParam = request.nextUrl.searchParams.get("maxWidth");
-  const maxWidth = maxWidthParam ? parseInt(maxWidthParam, 10) || undefined : undefined;
+  let maxWidth = maxWidthParam ? parseInt(maxWidthParam, 10) || undefined : undefined;
 
   // Get codec info for the specific disc
   let container = movie.container;
@@ -52,11 +52,23 @@ export async function GET(
   const noDirectHevc = request.nextUrl.searchParams.get("noHevc") === "1";
   const decision = decidePlayback({ container, videoCodec, audioCodec });
 
-  // iOS can't direct-play HEVC MP4, but CAN play HEVC via native HLS
-  if (decision.mode === "direct" && noDirectHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec)) {
-    decision.mode = "remux";
-    decision.videoAction = "copy";
-    decision.audioAction = audioCodec ? "copy" : "none";
+  // iOS-specific overrides (noHevc flag doubles as iOS indicator)
+  if (decision.mode === "direct" && noDirectHevc) {
+    const isHevc = videoCodec && /^(hevc|h265)$/i.test(videoCodec);
+    const isOversize = (videoWidth ?? 0) > 4096;
+
+    if (isHevc) {
+      // HEVC MP4 can't direct-play on iOS, but native HLS handles HEVC fine
+      decision.mode = "remux";
+      decision.videoAction = "copy";
+      decision.audioAction = audioCodec ? "copy" : "none";
+    } else if (isOversize) {
+      // H.264 above 4K exceeds iOS hardware decode limit — must transcode down
+      decision.mode = "transcode";
+      decision.videoAction = "transcode";
+      decision.audioAction = audioCodec ? "copy" : "none";
+      if (!maxWidth) maxWidth = 2560; // default to 2.5K for mobile
+    }
   }
 
   console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
