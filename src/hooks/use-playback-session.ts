@@ -377,7 +377,16 @@ export function usePlaybackSession({
             setCurrentTime(startAt);
           }
 
-          if (Hls.isSupported()) {
+          // HEVC HLS must use native player — hls.js/MSE doesn't support HEVC codec
+          const isHevcStream = data.videoCodec && /^(hevc|h265)$/i.test(data.videoCodec);
+          const useNativeHls = isHevcStream && video.canPlayType("application/vnd.apple.mpegurl");
+
+          if (useNativeHls) {
+            oldHls?.destroy();
+            clearFreezeFrame();
+            video.src = hlsUrl;
+            showOsd(data.mode === "remux" ? "Remuxing (native)..." : "Transcoding...");
+          } else if (Hls.isSupported()) {
             const hls = new Hls({
               maxBufferLength: 30,
               maxMaxBufferLength: 60,

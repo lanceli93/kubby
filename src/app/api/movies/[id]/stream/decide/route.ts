@@ -52,16 +52,14 @@ export async function GET(
   const noDirectHevc = request.nextUrl.searchParams.get("noHevc") === "1";
   const decision = decidePlayback({ container, videoCodec, audioCodec });
 
-  console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
-
-  // Direct play — no transcode needed
-  // But if client can't direct-play HEVC MP4, force remux (HEVC stream copy to HLS)
-  // iOS can decode HEVC natively via HLS, just not via direct MP4 range requests
+  // iOS can't direct-play HEVC MP4, but CAN play HEVC via native HLS
   if (decision.mode === "direct" && noDirectHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec)) {
     decision.mode = "remux";
     decision.videoAction = "copy";
     decision.audioAction = audioCodec ? "copy" : "none";
   }
+
+  console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
 
   // Include codec debug info in response
   const debugInfo = { container, videoCodec, audioCodec, videoWidth, videoHeight: movie.videoHeight };
@@ -102,6 +100,7 @@ export async function GET(
     encoder,
     maxWidth: maxWidth ?? 0,
     videoWidth,
+    videoCodec,
     debug: debugInfo,
   });
 }
