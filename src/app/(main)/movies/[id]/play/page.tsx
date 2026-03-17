@@ -100,9 +100,9 @@ export default function PlayerPage() {
     }
   }
 
-  // Sync 360 mode from user preferences on load
+  // Sync 360 mode from user preferences on load, or force on if URL has viewState
   useEffect(() => {
-    if (userPrefs) setIs360Mode(userPrefs.player360Mode);
+    if (userPrefs) setIs360Mode(initialViewState.current ? true : userPrefs.player360Mode);
   }, [userPrefs]);
 
   const isMultiDisc = (movie?.discCount ?? 1) > 1;
