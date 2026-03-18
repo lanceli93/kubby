@@ -77,6 +77,8 @@ Version priority: `KUBBY_VERSION` env (CI from git tag) > `package.json` `"versi
 
 > **Pitfall: NEVER use `gh release create`** — CI auto-creates a draft release with built assets when a `v*` tag is pushed. Using `gh release create` creates a **duplicate** release (one with assets, one without). Always use `gh release edit` + `gh api PATCH` to add notes and publish the CI-created draft. See `references/release-workflow.md` step 5-6.
 
+> **Pitfall: Schema changes require TWO updates.** Adding a column to `src/lib/db/schema.ts` is NOT enough — you MUST also add a corresponding `ALTER TABLE ... ADD` statement to the `pending` migration array in `src/lib/db/index.ts`. The migration array runs on every startup with try/catch (skips if column exists). Without it, existing databases will crash with `no such column` errors. `npx drizzle-kit push` only works for local dev; production/packaged builds rely solely on the migration array.
+
 > **Pitfall: Tag push builds ALL platforms.** For testing a single platform, use `gh workflow run release.yml --field platform=win-x64` (or `darwin-arm64`/`darwin-x64`). Only push a `v*` tag when doing a full release.
 
 ## Common Commands
