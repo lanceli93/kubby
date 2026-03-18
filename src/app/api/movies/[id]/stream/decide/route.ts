@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { execFile } from "child_process";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, mediaStreams } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -106,6 +107,26 @@ export async function GET(
   }
 
   console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} profile=${videoProfile} pixFmt=${videoPixFmt} level=${videoLevel} bitDepth=${videoBitDepth} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
+
+  // Log full ffprobe video stream details for HEVC diagnostics on iOS
+  if (noDirectHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec)) {
+    const ffprobePath = process.env.FFPROBE_PATH || "ffprobe";
+    execFile(
+      ffprobePath,
+      ["-v", "quiet", "-print_format", "json", "-select_streams", "v:0", "-show_streams", filePath],
+      { timeout: 15000, maxBuffer: 2 * 1024 * 1024 },
+      (err, stdout) => {
+        if (err) return;
+        try {
+          const data = JSON.parse(stdout);
+          const vs = data.streams?.[0];
+          if (vs) {
+            console.log(`[decide:probe] ${movie.title} | codec_tag=${vs.codec_tag_string} color_space=${vs.color_space} color_transfer=${vs.color_transfer} color_primaries=${vs.color_primaries} color_range=${vs.color_range} has_b_frames=${vs.has_b_frames} refs=${vs.refs} field_order=${vs.field_order} chroma_location=${vs.chroma_location} bits_per_raw=${vs.bits_per_raw_sample} pix_fmt=${vs.pix_fmt} level=${vs.level} profile=${vs.profile} bitrate=${vs.bit_rate} nb_frames=${vs.nb_frames} r_frame_rate=${vs.r_frame_rate}`);
+          }
+        } catch { /* non-critical */ }
+      }
+    );
+  }
 
   // Include codec debug info in response
   const debugInfo = { container, videoCodec, audioCodec, videoWidth, videoHeight: movie.videoHeight };
