@@ -346,188 +346,208 @@ export function PlayerControls({
         </div>
 
         {/* Right controls */}
-        <div className="flex items-center gap-2 md:gap-3">
-          <button
-            onClick={onQuickBookmark}
-            className="text-white/60 hover:text-indigo-400 transition-colors"
-            title="Quick bookmark (B)"
-          >
-            <Bookmark className="h-5 w-5" />
-          </button>
-          <button
-            onClick={onDetailedBookmark}
-            className="hidden md:block text-white/60 hover:text-yellow-400 transition-colors cursor-pointer"
-            title="Detailed bookmark (Shift+B)"
-          >
-            <BookmarkPlus className="h-5 w-5" />
-          </button>
-          <button
-            onClick={onToggleAutoHide}
-            className={`hidden md:block transition-colors cursor-pointer ${
-              autoHideControls ? "text-white/60 hover:text-white" : "text-indigo-400 hover:text-indigo-300"
-            }`}
-            title={autoHideControls ? "Auto-hide: on" : "Auto-hide: off (controls always visible)"}
-          >
-            <PanelTop className="h-5 w-5" />
-          </button>
-
-          {/* 360° mode toggle + reset view */}
-          <button
-            onClick={onToggle360Mode}
-            className={`transition-colors cursor-pointer text-xs font-bold px-1.5 py-0.5 rounded ${
-              is360Mode ? "bg-primary/30 text-primary" : "text-white/60 hover:text-white"
-            }`}
-            title={is360Mode ? tPlayer("mode360On") : tPlayer("mode360Off")}
-          >
-            {tPlayer("mode360")}
-          </button>
-          {is360Mode && onResetView && (
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Group: Bookmarks */}
+          <div className="flex items-center gap-1 md:gap-1.5">
             <button
-              onClick={onResetView}
-              className="text-white/60 hover:text-white transition-colors cursor-pointer"
-              title="Reset view (R)"
+              onClick={onQuickBookmark}
+              className="flex items-center justify-center h-6 w-6 md:h-auto md:w-auto text-white/60 hover:text-indigo-400 transition-colors"
+              title="Quick bookmark (B)"
             >
-              <RotateCcw className="h-5 w-5" />
+              <Bookmark className="h-4 w-4 md:h-5 md:w-5" />
             </button>
-          )}
-          {/* Resolution selector (transcode only) */}
-          {playbackMode === "transcode" && (() => {
-            const filtered = RESOLUTION_OPTIONS.filter(
-              (opt) => opt.maxWidth === 0 || !sourceVideoWidth || sourceVideoWidth > opt.maxWidth
-            );
-            return (
-              <div className="relative">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowResMenu((v) => !v);
-                  }}
-                  className="text-xs rounded px-1.5 py-0.5 text-white/60 hover:text-white transition-colors cursor-pointer"
-                  title="Transcode resolution"
-                >
-                  {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}
-                </button>
-                {showResMenu && (
-                  <div
-                    className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {filtered.map((opt) => (
-                      <button
-                        key={opt.maxWidth}
-                        onClick={() => {
-                          setShowResMenu(false);
-                          if (opt.maxWidth === selectedMaxWidth) return;
-                          onResolutionChange(opt.maxWidth);
-                          showOsd(tPlayer("switchingTo", { label: tPlayer(opt.labelKey) }));
-                        }}
-                        className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
-                          opt.maxWidth === selectedMaxWidth
-                            ? "bg-white/10 text-white"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        {tPlayer(opt.labelKey)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Speed control */}
-          <div className="relative">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowSpeedMenu(!showSpeedMenu);
-              }}
-              className={`rounded px-1.5 py-0.5 text-sm transition-colors cursor-pointer ${
-                playbackRate !== 1
-                  ? "bg-white/20 text-white"
-                  : "text-white/60 hover:text-white"
+              onClick={onDetailedBookmark}
+              className="hidden md:flex items-center justify-center text-white/60 hover:text-yellow-400 transition-colors cursor-pointer"
+              title="Detailed bookmark (Shift+B)"
+            >
+              <BookmarkPlus className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="w-px h-4 bg-white/20 hidden md:block" />
+
+          {/* Group: Mode */}
+          <div className="flex items-center gap-1 md:gap-1.5">
+            <button
+              onClick={onToggle360Mode}
+              className={`text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
+                is360Mode
+                  ? "bg-primary/25 text-primary"
+                  : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
               }`}
-              title="Playback speed"
+              title={is360Mode ? tPlayer("mode360On") : tPlayer("mode360Off")}
             >
-              {playbackRate}x
+              {tPlayer("mode360")}
             </button>
-            {showSpeedMenu && (
-              <div
-                className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
-                onClick={(e) => e.stopPropagation()}
+            {is360Mode && onResetView && (
+              <button
+                onClick={onResetView}
+                className="flex items-center justify-center h-6 w-6 md:h-auto md:w-auto text-white/60 hover:text-white transition-colors cursor-pointer"
+                title="Reset view (R)"
               >
-                {SPEED_OPTIONS.map((rate) => (
+                <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
+              </button>
+            )}
+          </div>
+
+          <div className="w-px h-4 bg-white/20" />
+
+          {/* Group: Playback settings */}
+          <div className="flex items-center gap-1 md:gap-1.5">
+            {/* Resolution selector (transcode only) */}
+            {playbackMode === "transcode" && (() => {
+              const filtered = RESOLUTION_OPTIONS.filter(
+                (opt) => opt.maxWidth === 0 || !sourceVideoWidth || sourceVideoWidth > opt.maxWidth
+              );
+              return (
+                <div className="relative flex items-center">
                   <button
-                    key={rate}
-                    onClick={() => {
-                      onSpeedChange(rate);
-                      setShowSpeedMenu(false);
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowResMenu((v) => !v);
                     }}
-                    className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
-                      rate === playbackRate
-                        ? "bg-white/10 text-white"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
-                    }`}
+                    className="text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 bg-white/10 text-white/60 hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
+                    title="Transcode resolution"
                   >
-                    {rate}x{rate === 1 ? " (Normal)" : ""}
+                    {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
+                  {showResMenu && (
+                    <div
+                      className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {filtered.map((opt) => (
+                        <button
+                          key={opt.maxWidth}
+                          onClick={() => {
+                            setShowResMenu(false);
+                            if (opt.maxWidth === selectedMaxWidth) return;
+                            onResolutionChange(opt.maxWidth);
+                            showOsd(tPlayer("switchingTo", { label: tPlayer(opt.labelKey) }));
+                          }}
+                          className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
+                            opt.maxWidth === selectedMaxWidth
+                              ? "bg-white/10 text-white"
+                              : "text-white/70 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          {tPlayer(opt.labelKey)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
-          {/* Volume control */}
-          <div
-            ref={volumeAreaRef}
-            className="relative hidden md:flex items-center"
-            onMouseEnter={() => setShowVolumeSlider(true)}
-            onMouseLeave={() => setShowVolumeSlider(false)}
-          >
-            <button
-              onClick={onToggleMute}
-              className="text-white/60 hover:text-white"
-              title={isMuted ? "Unmute (M)" : "Mute (M)"}
-            >
-              {isMuted || volume === 0 ? (
-                <VolumeX className="h-5 w-5" />
-              ) : (
-                <Volume2 className="h-5 w-5" />
-              )}
-            </button>
-            {showVolumeSlider && (
-              <div
-                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg bg-zinc-900/95 px-2 py-3 shadow-xl backdrop-blur"
-                onClick={(e) => e.stopPropagation()}
+            {/* Speed control */}
+            <div className="relative flex items-center">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSpeedMenu(!showSpeedMenu);
+                }}
+                className={`text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
+                  playbackRate !== 1
+                    ? "bg-primary/25 text-primary"
+                    : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
+                }`}
+                title="Playback speed"
               >
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={isMuted ? 0 : volume}
-                  onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-                  className="h-24 w-1 cursor-pointer appearance-none rounded-full bg-white/30 accent-primary"
-                  style={{ writingMode: "vertical-lr", direction: "rtl" } as React.CSSProperties}
-                />
-              </div>
-            )}
+                {playbackRate}x
+              </button>
+              {showSpeedMenu && (
+                <div
+                  className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {SPEED_OPTIONS.map((rate) => (
+                    <button
+                      key={rate}
+                      onClick={() => {
+                        onSpeedChange(rate);
+                        setShowSpeedMenu(false);
+                      }}
+                      className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
+                        rate === playbackRate
+                          ? "bg-white/10 text-white"
+                          : "text-white/70 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      {rate}x{rate === 1 ? " (Normal)" : ""}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Fullscreen */}
-          {!isIOS && (
+          <div className="w-px h-4 bg-white/20 hidden md:block" />
+
+          {/* Group: System */}
+          <div className="flex items-center gap-1 md:gap-1.5">
             <button
-              onClick={onToggleFullscreen}
-              className="text-white/60 hover:text-white"
-              title="Fullscreen (F)"
+              onClick={onToggleAutoHide}
+              className={`hidden md:flex items-center justify-center transition-colors cursor-pointer ${
+                autoHideControls ? "text-white/60 hover:text-white" : "text-indigo-400 hover:text-indigo-300"
+              }`}
+              title={autoHideControls ? "Auto-hide: on" : "Auto-hide: off (controls always visible)"}
             >
-              {isFullscreen ? (
-                <Minimize className="h-5 w-5" />
-              ) : (
-                <Maximize className="h-5 w-5" />
-              )}
+              <PanelTop className="h-5 w-5" />
             </button>
-          )}
+            {/* Volume control */}
+            <div
+              ref={volumeAreaRef}
+              className="relative hidden md:flex items-center"
+              onMouseEnter={() => setShowVolumeSlider(true)}
+              onMouseLeave={() => setShowVolumeSlider(false)}
+            >
+              <button
+                onClick={onToggleMute}
+                className="text-white/60 hover:text-white"
+                title={isMuted ? "Unmute (M)" : "Mute (M)"}
+              >
+                {isMuted || volume === 0 ? (
+                  <VolumeX className="h-5 w-5" />
+                ) : (
+                  <Volume2 className="h-5 w-5" />
+                )}
+              </button>
+              {showVolumeSlider && (
+                <div
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-lg bg-zinc-900/95 px-2 py-3 shadow-xl backdrop-blur"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={isMuted ? 0 : volume}
+                    onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                    className="h-24 w-1 cursor-pointer appearance-none rounded-full bg-white/30 accent-primary"
+                    style={{ writingMode: "vertical-lr", direction: "rtl" } as React.CSSProperties}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Fullscreen (not supported on iOS WebKit) */}
+            {!isIOS && (
+              <button
+                onClick={onToggleFullscreen}
+                className="flex items-center justify-center h-6 w-6 md:h-auto md:w-auto text-white/60 hover:text-white"
+                title="Fullscreen (F)"
+              >
+                {isFullscreen ? (
+                  <Minimize className="h-4 w-4 md:h-5 md:w-5" />
+                ) : (
+                  <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
