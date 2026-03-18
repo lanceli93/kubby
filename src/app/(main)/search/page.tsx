@@ -750,16 +750,38 @@ function SearchContent() {
                           {group.bookmarks.length} clips
                         </span>
                       </div>
-                      <ScrollRow>
-                        {group.bookmarks.map((bookmark) => (
-                          <BookmarkSearchCard
-                            key={bookmark.id}
-                            bookmark={bookmark}
-                            externalEnabled={externalEnabled}
-                            onExternalLaunch={launchExternalForMovie}
-                          />
-                        ))}
-                      </ScrollRow>
+                      {(() => {
+                        const landscape = group.bookmarks.filter((b) => (b.thumbnailAspect ?? 1.78) >= 1);
+                        const portrait = group.bookmarks.filter((b) => (b.thumbnailAspect ?? 1.78) < 1);
+                        return (
+                          <div className="flex flex-col gap-2">
+                            {landscape.length > 0 && (
+                              <ScrollRow>
+                                {landscape.map((bookmark) => (
+                                  <BookmarkSearchCard
+                                    key={bookmark.id}
+                                    bookmark={bookmark}
+                                    externalEnabled={externalEnabled}
+                                    onExternalLaunch={launchExternalForMovie}
+                                  />
+                                ))}
+                              </ScrollRow>
+                            )}
+                            {portrait.length > 0 && (
+                              <ScrollRow>
+                                {portrait.map((bookmark) => (
+                                  <BookmarkSearchCard
+                                    key={bookmark.id}
+                                    bookmark={bookmark}
+                                    externalEnabled={externalEnabled}
+                                    onExternalLaunch={launchExternalForMovie}
+                                  />
+                                ))}
+                              </ScrollRow>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>
