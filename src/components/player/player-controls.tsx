@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
   Play,
   Pause,
@@ -135,12 +135,47 @@ export function PlayerControls({
 }: PlayerControlsProps) {
   const tPlayer = useTranslations("player");
   const volumeAreaRef = useRef<HTMLDivElement>(null);
+  const seekBarRef = useRef<HTMLDivElement>(null);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showResMenu, setShowResMenu] = useState(false);
   const [showEncoderInfo, setShowEncoderInfo] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragProgress, setDragProgress] = useState(0);
+  const dragProgressRef = useRef(0);
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const displayProgress = isDragging ? dragProgress : progress;
+  const displayTime = isDragging ? (dragProgress / 100) * duration : currentTime;
+
+  const calcProgress = useCallback((clientX: number) => {
+    const bar = seekBarRef.current;
+    if (!bar) return 0;
+    const rect = bar.getBoundingClientRect();
+    return Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100));
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const p = calcProgress(e.clientX);
+    setIsDragging(true);
+    setDragProgress(p);
+    dragProgressRef.current = p;
+  }, [calcProgress]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return;
+    const p = calcProgress(e.clientX);
+    setDragProgress(p);
+    dragProgressRef.current = p;
+  }, [isDragging, calcProgress]);
+
+  const handlePointerUp = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    onSeek((dragProgressRef.current / 100) * duration);
+  }, [isDragging, duration, onSeek]);
 
   return (
     <div
@@ -149,23 +184,43 @@ export function PlayerControls({
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Seek bar */}
+      {/* Seek bar — expanded touch target with drag support */}
       <div
-        className="group relative h-1 cursor-pointer rounded-full bg-white/30"
-        onClick={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const ratio = (e.clientX - rect.left) / rect.width;
-          onSeek(ratio * duration);
-        }}
+        ref={seekBarRef}
+        className="group relative cursor-pointer select-none touch-none py-3 -my-3"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
-        <div
-          className="h-full rounded-full bg-primary transition-all"
-          style={{ width: `${progress}%` }}
-        />
-        <div
-          className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-primary opacity-0 transition-opacity group-hover:opacity-100"
-          style={{ left: `${progress}%` }}
-        />
+        {/* Center time display while dragging */}
+        {isDragging && (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-20 pointer-events-none">
+            <div className="rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-3 shadow-2xl">
+              <span className="text-3xl md:text-4xl font-medium text-white tabular-nums tracking-tight">
+                {formatTime(displayTime)}
+              </span>
+            </div>
+          </div>
+        )}
+        <div className={`relative rounded-full bg-white/30 transition-[height] duration-150 ${isDragging ? "h-1.5" : "h-1"}`}>
+          <div
+            className="h-full rounded-full bg-primary"
+            style={{ width: `${displayProgress}%` }}
+          />
+          {/* Glow ring (visible during drag) */}
+          {isDragging && (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-7 w-7 rounded-full bg-primary/30"
+              style={{ left: `${displayProgress}%` }}
+            />
+          )}
+          {/* Thumb dot */}
+          <div
+            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-primary ${isDragging ? "h-4 w-4 opacity-100 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity duration-150"}`}
+            style={{ left: `${displayProgress}%` }}
+          />
+        </div>
         {/* Bookmark markers */}
         {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => {
           const builtin = getBuiltinIcon(bm.iconType || "bookmark");
@@ -233,7 +288,7 @@ export function PlayerControls({
         {/* Time display + encoder badge */}
         <div className="flex items-center gap-2">
           <span className="tabular-nums text-xs md:text-sm text-white/80">
-            {formatTime(currentTime)} / {formatTime(duration)}
+            {formatTime(displayTime)} / {formatTime(duration)}
           </span>
           {playbackMode && (
             <div className="relative">

@@ -101,10 +101,17 @@ export function usePlaybackSession({
       if (!videoRef.current) return;
       const clamped = Math.max(0, targetSeconds);
 
-      if (!sessionIdRef.current || !hlsRef.current) {
+      // Direct play (no HLS session) — just set currentTime
+      if (!sessionIdRef.current) {
         videoRef.current.currentTime = clamped;
         return;
       }
+
+      // Native HLS (session exists but no hls.js instance) — server-side seek
+      // needed because the playlist may not have generated segments up to the
+      // target position yet, so video.currentTime alone would clamp to the
+      // furthest available segment.
+      const isNativeHls = !hlsRef.current;
 
       hlsSeekingRef.current = true;
       hlsTimeOffsetRef.current = Math.floor(clamped);
@@ -127,7 +134,7 @@ export function usePlaybackSession({
         const oldHls = hlsRef.current;
         hlsRef.current = null;
         // Snapshot current frame so poster fills the gap during HLS swap
-        setFreezeFrame();
+        if (!isNativeHls) setFreezeFrame();
 
         fetch(`/api/stream/${sessionIdRef.current}`, {
           method: "POST",
@@ -146,7 +153,12 @@ export function usePlaybackSession({
               hlsTimeOffsetRef.current = Math.floor(clamped);
               setCurrentTime(Math.floor(clamped));
 
-              if (Hls.isSupported()) {
+              // Native HLS (HEVC on iOS) — set src directly
+              if (isNativeHls) {
+                videoRef.current.src = data.hlsUrl;
+                videoRef.current.play().catch(() => {});
+                hlsSeekingRef.current = false;
+              } else if (Hls.isSupported()) {
                 const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
                 hlsRef.current = hls;
                 hls.loadSource(data.hlsUrl);
@@ -189,7 +201,12 @@ export function usePlaybackSession({
     (seconds: number) => {
       if (!videoRef.current) return;
       const realTarget = getRealTime() + seconds;
-      if (hlsTimeOffsetRef.current > 0 && realTarget < hlsTimeOffsetRef.current && sessionIdRef.current && hlsRef.current) {
+      // For native HLS (hlsRef is null but session exists), always use seekTo
+      // so the server creates a new session from the target position
+      const isNativeHls = sessionIdRef.current && !hlsRef.current;
+      if (isNativeHls) {
+        seekTo(Math.max(0, realTarget));
+      } else if (hlsTimeOffsetRef.current > 0 && realTarget < hlsTimeOffsetRef.current && sessionIdRef.current && hlsRef.current) {
         seekTo(Math.max(0, realTarget));
       } else {
         videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime + seconds);
