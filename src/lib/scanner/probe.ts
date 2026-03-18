@@ -17,6 +17,8 @@ export interface ProbeStream {
   bitDepth: number | null;
   frameRate: string | null;
   hdrType: string | null;
+  pixFmt: string | null;
+  level: number | null;
   // Audio-specific
   channels: number | null;
   channelLayout: string | null;
@@ -109,6 +111,8 @@ function parseStream(raw: Record<string, unknown>): ProbeStream | null {
     bitDepth: raw.bits_per_raw_sample ? parseInt(String(raw.bits_per_raw_sample), 10) : null,
     frameRate: parseFrameRate(raw.r_frame_rate as string | undefined),
     hdrType: codecType === "video" ? detectHdrType(raw) : null,
+    pixFmt: raw.pix_fmt ? String(raw.pix_fmt) : null,
+    level: typeof raw.level === "number" ? raw.level : null,
     // Audio
     channels: raw.channels ? Number(raw.channels) : null,
     channelLayout: raw.channel_layout ? String(raw.channel_layout) : null,

@@ -234,6 +234,8 @@ export const mediaStreams = sqliteTable("media_streams", {
   bitDepth: integer("bit_depth"),
   frameRate: text("frame_rate"),
   hdrType: text("hdr_type"),
+  pixFmt: text("pix_fmt"),
+  level: integer("level"),
   // Audio-specific
   channels: integer("channels"),
   channelLayout: text("channel_layout"),

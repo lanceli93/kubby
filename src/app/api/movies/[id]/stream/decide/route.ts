@@ -56,13 +56,17 @@ export async function GET(
   // Look up HEVC profile to check iOS hardware decoder compatibility
   let videoProfile: string | null = null;
   let videoBitDepth: number | null = null;
+  let videoPixFmt: string | null = null;
+  let videoLevel: number | null = null;
   if (noDirectHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec)) {
-    const videoStream = db.select({ profile: mediaStreams.profile, bitDepth: mediaStreams.bitDepth })
+    const videoStream = db.select({ profile: mediaStreams.profile, bitDepth: mediaStreams.bitDepth, pixFmt: mediaStreams.pixFmt, level: mediaStreams.level })
       .from(mediaStreams)
       .where(and(eq(mediaStreams.movieId, id), eq(mediaStreams.streamType, "video"), eq(mediaStreams.discNumber, discNumber)))
       .get();
     videoProfile = videoStream?.profile ?? null;
     videoBitDepth = videoStream?.bitDepth ?? null;
+    videoPixFmt = videoStream?.pixFmt ?? null;
+    videoLevel = videoStream?.level ?? null;
   }
 
   // iOS HEVC compatibility: Main and Main 10 profiles with 8/10-bit are hardware-decodable.
@@ -101,7 +105,7 @@ export async function GET(
     if (!maxWidth) maxWidth = 2560;
   }
 
-  console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} profile=${videoProfile} bitDepth=${videoBitDepth} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
+  console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} profile=${videoProfile} pixFmt=${videoPixFmt} level=${videoLevel} bitDepth=${videoBitDepth} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
 
   // Include codec debug info in response
   const debugInfo = { container, videoCodec, audioCodec, videoWidth, videoHeight: movie.videoHeight };

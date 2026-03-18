@@ -510,6 +510,8 @@ export async function scanLibrary(
           bitDepth: stream.bitDepth,
           frameRate: stream.frameRate,
           hdrType: stream.hdrType,
+          pixFmt: stream.pixFmt,
+          level: stream.level,
           channels: stream.channels,
           channelLayout: stream.channelLayout,
           sampleRate: stream.sampleRate,
