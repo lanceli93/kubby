@@ -220,9 +220,8 @@ export function PlayerControls({
             className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-primary ${isDragging ? "h-4 w-4 opacity-100 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity duration-150"}`}
             style={{ left: `${displayProgress}%` }}
           />
-        </div>
-        {/* Bookmark markers */}
-        {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => {
+          {/* Bookmark markers */}
+          {bookmarks?.filter((bm) => (bm.discNumber || 1) === currentDisc).map((bm) => {
           const builtin = getBuiltinIcon(bm.iconType || "bookmark");
           const customIcon = !builtin ? customIcons.find((c) => c.id === bm.iconType) : undefined;
           const naturalColor = builtin?.hexColor ?? customIcon?.dotColor ?? "#ffffff";
@@ -261,6 +260,7 @@ export function PlayerControls({
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* Mobile: transport row (centered) */}

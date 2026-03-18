@@ -58,6 +58,8 @@ export function usePlaybackSession({
   const seekCounterRef = useRef(0);
   const seekDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seekAbortRef = useRef<AbortController | null>(null);
+  const seekInFlightRef = useRef(false);
+  const queuedSeekRef = useRef<number | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
@@ -118,37 +120,37 @@ export function usePlaybackSession({
       setCurrentTime(Math.floor(clamped));
       showOsd("Seeking...");
 
+      // If a seek is already in flight, queue this one instead of aborting.
+      // Aborting causes the client to miss the new sessionId while the server
+      // already deleted the old session → subsequent seeks 404.
+      if (seekInFlightRef.current) {
+        queuedSeekRef.current = clamped;
+        if (seekDebounceRef.current) clearTimeout(seekDebounceRef.current);
+        return;
+      }
+
       if (seekDebounceRef.current) {
         clearTimeout(seekDebounceRef.current);
       }
 
       seekDebounceRef.current = setTimeout(() => {
-        if (seekAbortRef.current) {
-          seekAbortRef.current.abort();
-        }
-        const controller = new AbortController();
-        seekAbortRef.current = controller;
-
-        const counter = ++seekCounterRef.current;
+        seekInFlightRef.current = true;
 
         const oldHls = hlsRef.current;
         hlsRef.current = null;
-        // Snapshot current frame so poster fills the gap during HLS swap
         if (!isNativeHls) setFreezeFrame();
 
         fetch(`/api/stream/${sessionIdRef.current}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(clamped) }),
-          signal: controller.signal,
         })
-          .then((r) => r.json())
+          .then((r) => {
+            if (!r.ok) return null;
+            return r.json();
+          })
           .then((data) => {
-            if (seekCounterRef.current !== counter) {
-              oldHls?.destroy();
-              return;
-            }
-            if (data.sessionId && videoRef.current) {
+            if (data?.sessionId && videoRef.current) {
               sessionIdRef.current = data.sessionId;
               hlsTimeOffsetRef.current = Math.floor(clamped);
               setCurrentTime(Math.floor(clamped));
@@ -187,10 +189,17 @@ export function usePlaybackSession({
               oldHls?.destroy();
             }
           })
-          .catch((err) => {
-            oldHls?.destroy();
-            if (err?.name === "AbortError") return;
+          .catch(() => {
             hlsSeekingRef.current = false;
+          })
+          .finally(() => {
+            seekInFlightRef.current = false;
+            // Process queued seek if user dragged again during this seek
+            if (queuedSeekRef.current !== null) {
+              const next = queuedSeekRef.current;
+              queuedSeekRef.current = null;
+              seekTo(next);
+            }
           });
       }, 500);
     },
