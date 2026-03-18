@@ -236,12 +236,20 @@ export default function MovieDetailPage() {
 
   const { data: bookmarks = [] } = useQuery<BookmarkData[]>({
     queryKey: ["movie-bookmarks", movieId],
-    queryFn: () => fetch(`/api/movies/${movieId}/bookmarks`).then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch(`/api/movies/${movieId}/bookmarks`);
+      if (!r.ok) throw new Error("Failed to fetch bookmarks");
+      return r.json();
+    },
   });
 
   const { data: customIcons = [] } = useQuery<CustomIconData[]>({
     queryKey: ["bookmark-icons"],
-    queryFn: () => fetch("/api/settings/bookmark-icons").then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch("/api/settings/bookmark-icons");
+      if (!r.ok) throw new Error("Failed to fetch bookmark icons");
+      return r.json();
+    },
   });
 
   const deleteBookmark = useMutation({
