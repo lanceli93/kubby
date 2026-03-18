@@ -275,12 +275,14 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `user_preferences` ADD `player_360_mode` integer NOT NULL DEFAULT 0",
     // 0024: 360° view state for bookmarks
     "ALTER TABLE `movie_bookmarks` ADD `view_state` text",
+    // 0025: bookmark thumbnail aspect ratio
+    "ALTER TABLE `movie_bookmarks` ADD `thumbnail_aspect` real",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }
   }
 
-  // 0025: Migrate absolute photoPath to relative (idempotent — skips already-relative paths)
+  // 0026: Migrate absolute photoPath to relative (idempotent — skips already-relative paths)
   // Extracts "metadata/people/..." from any absolute path, regardless of old dataDir
   try {
     const rows = sqlite.prepare("SELECT id, photo_path FROM people WHERE photo_path IS NOT NULL").all() as Array<{ id: string; photo_path: string }>;
