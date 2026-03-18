@@ -236,6 +236,7 @@ export const mediaStreams = sqliteTable("media_streams", {
   hdrType: text("hdr_type"),
   pixFmt: text("pix_fmt"),
   level: integer("level"),
+  hasBFrames: integer("has_b_frames"),
   // Audio-specific
   channels: integer("channels"),
   channelLayout: text("channel_layout"),

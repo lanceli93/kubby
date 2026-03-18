@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execFile, execFileSync } from "child_process";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, mediaStreams } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -54,7 +53,7 @@ export async function GET(
   const decision = decidePlayback({ container, videoCodec, audioCodec });
 
   // iOS-specific overrides (noHevc flag doubles as iOS indicator)
-  // Probe HEVC video stream for detailed codec parameters
+  // Look up HEVC stream details from DB for iOS compatibility checks
   let videoProfile: string | null = null;
   let videoBitDepth: number | null = null;
   let videoPixFmt: string | null = null;
@@ -63,35 +62,17 @@ export async function GET(
   const isHevc = !!videoCodec && /^(hevc|h265)$/i.test(videoCodec);
 
   if (noDirectHevc && isHevc) {
-    // Live ffprobe for has_b_frames (not stored in DB) + other diagnostics
-    try {
-      const ffprobePath = process.env.FFPROBE_PATH || "ffprobe";
-      const stdout = execFileSync(ffprobePath,
-        ["-v", "quiet", "-print_format", "json", "-select_streams", "v:0", "-show_streams", filePath],
-        { timeout: 15000, maxBuffer: 2 * 1024 * 1024 },
-      ).toString();
-      const vs = JSON.parse(stdout).streams?.[0];
-      if (vs) {
-        videoProfile = vs.profile && vs.profile !== "unknown" ? vs.profile : null;
-        videoBitDepth = vs.bits_per_raw_sample ? parseInt(vs.bits_per_raw_sample, 10) : null;
-        videoPixFmt = vs.pix_fmt ?? null;
-        videoLevel = typeof vs.level === "number" ? vs.level : null;
-        hasBFrames = typeof vs.has_b_frames === "number" ? vs.has_b_frames : null;
-        console.log(`[decide:probe] ${movie.title} | codec_tag=${vs.codec_tag_string} color_space=${vs.color_space} color_transfer=${vs.color_transfer} color_primaries=${vs.color_primaries} color_range=${vs.color_range} has_b_frames=${vs.has_b_frames} refs=${vs.refs} pix_fmt=${vs.pix_fmt} level=${vs.level} profile=${vs.profile} bitrate=${vs.bit_rate} r_frame_rate=${vs.r_frame_rate}`);
-      }
-    } catch { /* ffprobe failed — fall back to DB values */ }
-
-    // Fallback to DB if ffprobe didn't run
-    if (videoProfile === null) {
-      const videoStream = db.select({ profile: mediaStreams.profile, bitDepth: mediaStreams.bitDepth, pixFmt: mediaStreams.pixFmt, level: mediaStreams.level })
-        .from(mediaStreams)
-        .where(and(eq(mediaStreams.movieId, id), eq(mediaStreams.streamType, "video"), eq(mediaStreams.discNumber, discNumber)))
-        .get();
-      videoProfile = videoStream?.profile ?? null;
-      videoBitDepth = videoStream?.bitDepth ?? null;
-      videoPixFmt = videoStream?.pixFmt ?? null;
-      videoLevel = videoStream?.level ?? null;
-    }
+    const videoStream = db.select({
+      profile: mediaStreams.profile, bitDepth: mediaStreams.bitDepth,
+      pixFmt: mediaStreams.pixFmt, level: mediaStreams.level, hasBFrames: mediaStreams.hasBFrames,
+    }).from(mediaStreams)
+      .where(and(eq(mediaStreams.movieId, id), eq(mediaStreams.streamType, "video"), eq(mediaStreams.discNumber, discNumber)))
+      .get();
+    videoProfile = videoStream?.profile ?? null;
+    videoBitDepth = videoStream?.bitDepth ?? null;
+    videoPixFmt = videoStream?.pixFmt ?? null;
+    videoLevel = videoStream?.level ?? null;
+    hasBFrames = videoStream?.hasBFrames ?? null;
   }
 
   // iOS HEVC compatibility checks:

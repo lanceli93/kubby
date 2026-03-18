@@ -277,9 +277,10 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `movie_bookmarks` ADD `view_state` text",
     // 0025: bookmark thumbnail aspect ratio
     "ALTER TABLE `movie_bookmarks` ADD `thumbnail_aspect` real",
-    // 0026: video stream pix_fmt and level for iOS HEVC compatibility checks
+    // 0026: video stream pix_fmt, level, has_b_frames for iOS HEVC compatibility checks
     "ALTER TABLE `media_streams` ADD `pix_fmt` text",
     "ALTER TABLE `media_streams` ADD `level` integer",
+    "ALTER TABLE `media_streams` ADD `has_b_frames` integer",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

@@ -512,6 +512,7 @@ export async function scanLibrary(
           hdrType: stream.hdrType,
           pixFmt: stream.pixFmt,
           level: stream.level,
+          hasBFrames: stream.hasBFrames,
           channels: stream.channels,
           channelLayout: stream.channelLayout,
           sampleRate: stream.sampleRate,
