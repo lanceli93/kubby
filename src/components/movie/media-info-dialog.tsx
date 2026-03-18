@@ -31,6 +31,8 @@ interface MediaStream {
   bitDepth: number | null;
   frameRate: string | null;
   hdrType: string | null;
+  pixFmt: string | null;
+  level: number | null;
   channels: number | null;
   channelLayout: string | null;
   sampleRate: number | null;
@@ -116,6 +118,8 @@ function VideoStreamInfo({ stream, index, total, t }: { stream: MediaStream; ind
         <InfoRow label={t("frameRate")} value={stream.frameRate ? `${parseFloat(stream.frameRate).toFixed(3)} fps` : null} />
         <InfoRow label={t("bitrate")} value={formatBitrate(stream.bitrate)} />
         <InfoRow label={t("bitDepth")} value={stream.bitDepth ? `${stream.bitDepth}-bit` : null} />
+        <InfoRow label={t("pixelFormat")} value={stream.pixFmt} />
+        <InfoRow label={t("level")} value={stream.level != null ? String(stream.level) : null} />
         <InfoRow label={t("hdr")} value={stream.hdrType} />
         <InfoRow label={t("language")} value={stream.language} />
         <InfoRow label={t("title2")} value={stream.title} />

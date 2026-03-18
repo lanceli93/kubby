@@ -501,6 +501,8 @@
     "resolution": "分辨率",
     "frameRate": "帧率",
     "bitDepth": "位深",
+    "pixelFormat": "像素格式",
+    "level": "编码级别",
     "hdr": "HDR",
     "bitrate": "码率",
     "channels": "声道",

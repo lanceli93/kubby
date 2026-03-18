@@ -501,6 +501,8 @@
     "resolution": "Resolution",
     "frameRate": "Frame Rate",
     "bitDepth": "Bit Depth",
+    "pixelFormat": "Pixel Format",
+    "level": "Level",
     "hdr": "HDR",
     "bitrate": "Bitrate",
     "channels": "Channels",
