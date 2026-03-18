@@ -8,8 +8,8 @@ import {
   VolumeX,
   Maximize,
   Minimize,
-  SkipBack,
-  SkipForward,
+  ChevronsLeft,
+  ChevronsRight,
   Bookmark,
   BookmarkPlus,
   PanelTop,
@@ -270,7 +270,7 @@ export function PlayerControls({
           className="text-white/80 hover:text-white"
           title="Rewind 10s"
         >
-          <SkipBack className="h-5 w-5" />
+          <ChevronsLeft className="h-5 w-5" />
         </button>
         <button onClick={onTogglePlay} className="text-white hover:text-white/90">
           {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
@@ -280,7 +280,7 @@ export function PlayerControls({
           className="text-white/80 hover:text-white"
           title="Forward 10s"
         >
-          <SkipForward className="h-5 w-5" />
+          <ChevronsRight className="h-5 w-5" />
         </button>
       </div>
 
@@ -331,7 +331,7 @@ export function PlayerControls({
             className="text-white/80 hover:text-white"
             title="Rewind 10s"
           >
-            <SkipBack className="h-5 w-5" />
+            <ChevronsLeft className="h-5 w-5" />
           </button>
           <button onClick={onTogglePlay} className="text-white hover:text-white/90">
             {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
@@ -341,7 +341,7 @@ export function PlayerControls({
             className="text-white/80 hover:text-white"
             title="Forward 10s"
           >
-            <SkipForward className="h-5 w-5" />
+            <ChevronsRight className="h-5 w-5" />
           </button>
         </div>
 
@@ -390,7 +390,6 @@ export function PlayerControls({
               <RotateCcw className="h-5 w-5" />
             </button>
           )}
-
           {/* Resolution selector (transcode only) */}
           {playbackMode === "transcode" && (() => {
             const filtered = RESOLUTION_OPTIONS.filter(

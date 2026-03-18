@@ -123,7 +123,7 @@ export function BookmarkCard({
 
   const isPortrait = (bookmark.thumbnailAspect ?? 1.78) < 1;
   const cardWidth = isPortrait ? "w-[120px] md:w-[180px]" : "w-[200px] md:w-[320px]";
-  const aspectClass = isPortrait ? "aspect-[9/16]" : "aspect-video";
+  const aspectClass = isPortrait ? "aspect-[2/3]" : "aspect-video";
 
   const card = (
     <div className={`group relative flex-shrink-0 ${cardWidth}`}>

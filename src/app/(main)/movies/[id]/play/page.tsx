@@ -217,16 +217,6 @@ export default function PlayerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.isPlaying, autoHideControls]);
 
-  // Frame step (1/24s per step, cinema standard)
-  const FRAME_DURATION = 1 / 24;
-  function frameStep(direction: 1 | -1) {
-    const video = session.videoRef.current;
-    if (!video || !video.paused) return;
-    video.currentTime = Math.max(0, video.currentTime + direction * FRAME_DURATION);
-    session.setCurrentTime(session.getRealTime());
-    showOsd(direction > 0 ? "Frame \u25B6" : "\u25C0 Frame");
-  }
-
   // Speed helpers
   function changeSpeed(rate: number) {
     if (!session.videoRef.current) return;
@@ -284,23 +274,29 @@ export default function PlayerPage() {
 
   // Capture video frame for bookmark thumbnails, returns blob + aspect ratio
   async function captureVideoFrame(): Promise<{ blob: Blob | null; aspect: number | null }> {
+    let blob: Blob | null = null;
     if (is360Mode && capture360Ref.current) {
-      const blob = await capture360Ref.current();
-      // 360 capture uses renderer canvas dimensions
-      const renderer = document.querySelector("canvas");
-      const aspect = renderer ? renderer.width / renderer.height : null;
-      return { blob, aspect };
+      blob = await capture360Ref.current();
+    } else {
+      const video = session.videoRef.current;
+      if (!video || !video.videoWidth || !video.videoHeight) return { blob: null, aspect: null };
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return { blob: null, aspect: null };
+      ctx.drawImage(video, 0, 0);
+      blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     }
-    const video = session.videoRef.current;
-    if (!video || !video.videoWidth || !video.videoHeight) return { blob: null, aspect: null };
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return { blob: null, aspect: null };
-    ctx.drawImage(video, 0, 0);
-    const aspect = video.videoWidth / video.videoHeight;
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    // Read actual image dimensions from the blob
+    let aspect: number | null = null;
+    if (blob) {
+      try {
+        const bmp = await createImageBitmap(blob);
+        aspect = bmp.width / bmp.height;
+        bmp.close();
+      } catch { /* fallback: no aspect */ }
+    }
     return { blob, aspect };
   }
 
@@ -367,22 +363,14 @@ export default function PlayerPage() {
           break;
         case "ArrowLeft":
           e.preventDefault();
-          if (!session.isPlaying) {
-            frameStep(-1);
-          } else {
-            session.skip(e.shiftKey ? -30 : -5);
-            showOsd(e.shiftKey ? "\u221230s" : "\u22125s");
-          }
+          session.skip(e.shiftKey ? -30 : -5);
+          showOsd(e.shiftKey ? "\u221230s" : "\u22125s");
           resetControlsTimer();
           break;
         case "ArrowRight":
           e.preventDefault();
-          if (!session.isPlaying) {
-            frameStep(1);
-          } else {
-            session.skip(e.shiftKey ? 30 : 5);
-            showOsd(e.shiftKey ? "+30s" : "+5s");
-          }
+          session.skip(e.shiftKey ? 30 : 5);
+          showOsd(e.shiftKey ? "+30s" : "+5s");
           resetControlsTimer();
           break;
         case "ArrowUp":
@@ -402,20 +390,14 @@ export default function PlayerPage() {
           toggleMute();
           break;
         case ">":
+        case ".":
           e.preventDefault();
           cycleSpeed(1);
           break;
-        case ".":
-          e.preventDefault();
-          if (!session.isPlaying) { frameStep(1); } else { cycleSpeed(1); }
-          break;
         case "<":
-          e.preventDefault();
-          cycleSpeed(-1);
-          break;
         case ",":
           e.preventDefault();
-          if (!session.isPlaying) { frameStep(-1); } else { cycleSpeed(-1); }
+          cycleSpeed(-1);
           break;
         case "b":
         case "B":
@@ -603,7 +585,6 @@ export default function PlayerPage() {
         disabledIconIds={disabledIconIds}
         onSeek={session.seekTo}
         onSkip={session.skip}
-        onFrameStep={frameStep}
         onTogglePlay={session.togglePlay}
         onSpeedChange={changeSpeed}
         onVolumeChange={changeVolume}

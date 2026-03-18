@@ -386,6 +386,7 @@ export async function GET(request: NextRequest) {
       tags: string | null;
       note: string | null;
       thumbnail_path: string | null;
+      thumbnail_aspect: number | null;
       created_at: string;
       movie_id: string;
       movie_title: string;
@@ -403,6 +404,7 @@ export async function GET(request: NextRequest) {
         mb.tags,
         mb.note,
         mb.thumbnail_path,
+        mb.thumbnail_aspect,
         mb.created_at,
         mb.movie_id,
         m.title as movie_title,
@@ -444,6 +446,7 @@ export async function GET(request: NextRequest) {
       tags: r.tags ? (() => { try { return JSON.parse(r.tags) as string[]; } catch { return []; } })() : [],
       note: r.note,
       thumbnailPath: r.thumbnail_path,
+      thumbnailAspect: r.thumbnail_aspect ?? null,
       createdAt: r.created_at,
       movieId: r.movie_id,
       movieTitle: r.movie_title,

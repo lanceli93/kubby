@@ -13,6 +13,7 @@ export interface BookmarkSearchResult {
   tags?: string[];
   note?: string | null;
   thumbnailPath?: string | null;
+  thumbnailAspect?: number | null;
   createdAt: string;
   movieId: string;
   movieTitle: string;
@@ -91,9 +92,13 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
     return <FallbackIcon className={`h-3.5 w-3.5 ${fallback.color}`} />;
   }
 
+  const isPortrait = (bookmark.thumbnailAspect ?? 1.78) < 1;
+  const cardWidth = isPortrait ? "w-[140px]" : "w-[280px]";
+  const aspectClass = isPortrait ? "aspect-[2/3]" : "aspect-video";
+
   const card = (
     <>
-      <div className="relative w-[280px] aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
+      <div className={`relative ${cardWidth} ${aspectClass} overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900`}>
         {/* Image */}
         {imageSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -141,7 +146,7 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
 
       {/* Note below card */}
       {bookmark.note && (
-        <p className="mt-1 max-w-[280px] truncate text-xs text-muted-foreground">
+        <p className={`mt-1 truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[140px]" : "max-w-[280px]"}`}>
           {bookmark.note}
         </p>
       )}
