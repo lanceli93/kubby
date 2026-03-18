@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { movies, movieDiscs } from "@/lib/db/schema";
+import { movies, movieDiscs, mediaStreams } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { decidePlayback } from "@/lib/transcode/playback-decider";
 import { getTranscodeManager } from "@/lib/transcode/transcode-manager";
@@ -53,11 +53,34 @@ export async function GET(
   const decision = decidePlayback({ container, videoCodec, audioCodec });
 
   // iOS-specific overrides (noHevc flag doubles as iOS indicator)
+  // Look up HEVC profile to check iOS hardware decoder compatibility
+  let videoProfile: string | null = null;
+  let videoBitDepth: number | null = null;
+  if (noDirectHevc && videoCodec && /^(hevc|h265)$/i.test(videoCodec)) {
+    const videoStream = db.select({ profile: mediaStreams.profile, bitDepth: mediaStreams.bitDepth })
+      .from(mediaStreams)
+      .where(and(eq(mediaStreams.movieId, id), eq(mediaStreams.streamType, "video"), eq(mediaStreams.discNumber, discNumber)))
+      .get();
+    videoProfile = videoStream?.profile ?? null;
+    videoBitDepth = videoStream?.bitDepth ?? null;
+  }
+
+  // iOS HEVC compatibility: Main and Main 10 profiles with 8/10-bit are hardware-decodable.
+  // Other profiles (Main 4:2:2 10, Main 4:4:4, Rext) must be transcoded.
+  const IOS_HEVC_SAFE_PROFILES = new Set(["main", "main 10", "main still picture"]);
+
   if (decision.mode === "direct" && noDirectHevc) {
     const isHevc = videoCodec && /^(hevc|h265)$/i.test(videoCodec);
     const isOversize = (videoWidth ?? 0) > 4096;
+    const hevcProfileUnsupported = isHevc && videoProfile && !IOS_HEVC_SAFE_PROFILES.has(videoProfile.toLowerCase());
 
-    if (isHevc) {
+    if (isHevc && hevcProfileUnsupported) {
+      // HEVC with unsupported profile — remux won't help, must transcode
+      decision.mode = "transcode";
+      decision.videoAction = "transcode";
+      decision.audioAction = audioCodec ? "copy" : "none";
+      if (!maxWidth) maxWidth = 2560;
+    } else if (isHevc) {
       // HEVC MP4 can't direct-play on iOS, but native HLS handles HEVC fine
       decision.mode = "remux";
       decision.videoAction = "copy";
@@ -71,7 +94,14 @@ export async function GET(
     }
   }
 
-  console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
+  // Also catch remux HEVC with unsupported profile (non-MP4 containers like MKV)
+  if (decision.mode === "remux" && noDirectHevc && videoProfile && !IOS_HEVC_SAFE_PROFILES.has(videoProfile.toLowerCase())) {
+    decision.mode = "transcode";
+    decision.videoAction = "transcode";
+    if (!maxWidth) maxWidth = 2560;
+  }
+
+  console.log(`[decide] ${movie.title} | container=${container} video=${videoCodec} audio=${audioCodec} profile=${videoProfile} bitDepth=${videoBitDepth} | ${videoWidth}x${movie.videoHeight} | noHevc=${noDirectHevc} | decision=${decision.mode} (v:${decision.videoAction} a:${decision.audioAction})`);
 
   // Include codec debug info in response
   const debugInfo = { container, videoCodec, audioCodec, videoWidth, videoHeight: movie.videoHeight };
