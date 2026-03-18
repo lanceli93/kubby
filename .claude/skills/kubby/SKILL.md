@@ -34,6 +34,7 @@ Self-hosted movie server built with Next.js. Dark cinema theme, Jellyfin-compati
 - **Data directory resolution** (launcher): `KUBBY_DATA_DIR` env > `config.json` `dataDir` > OS default. Windows installer provides custom page; upgrade preserves previous choice via registry
 - **Auth split**: `auth.config.ts` (lightweight, Edge-compatible) + `auth.ts` (full, with DB) — middleware imports the lightweight one
 - **360° panorama**: `src/components/player/panorama-360-player.tsx` — Three.js sphere + VideoTexture, dynamic import (`ssr: false`). Player-level toggle persisted in `user_preferences.player_360_mode`. Bookmarks save camera `view_state` (lon/lat/fov), restored via URL `&vs=` param or seek bar click. Render loop pauses when video is paused; pinch-to-zoom on mobile.
+- **Player controls grouping**: `src/components/player/player-controls.tsx` — right-side buttons organized into 4 groups (Bookmarks | Mode | Playback | System) separated by `w-px h-4 bg-white/20` dividers. Text buttons (360°, speed, resolution) use unified chip style (`bg-white/10 rounded`, active `bg-primary/25 text-primary`). Mobile uses smaller icons (`h-4 w-4`) and tighter gaps (`gap-1 md:gap-1.5`) to prevent overflow. Fullscreen hidden on iOS (WebKit doesn't support Fullscreen API).
 
 ## UI Design System
 
@@ -56,6 +57,7 @@ Read these on demand based on your task:
 | File | When to read |
 |------|-------------|
 | `references/architecture.md` | Implementing features, fixing bugs, understanding DB schema, API endpoints, frontend components, scanner, player, i18n |
+| `docs/architecture-v03.md` | Latest architecture snapshot (v0.3) with player controls grouping, HEVC fMP4, bookmark aspect ratio split |
 | `references/release-workflow.md` | Packaging, testing builds, creating releases, publishing versions |
 
 ## Versioning
