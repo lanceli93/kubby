@@ -19,6 +19,7 @@ The UI was designed with [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev)
 - TMDB scraper for automatic metadata, posters, actor photos, and biographies
 - In-browser playback with progress tracking and multi-disc support
 - HLS transcoding — plays MKV, AVI, WMV, FLV, MOV, TS files in the browser via FFmpeg on-demand remux/transcode
+- Full mobile support — browse your library and watch videos (including VR 360°) on your phone's browser, with responsive UI, touch-optimized controls, and HEVC hardware decoding on iOS/Android
 - English / Chinese interface
 
 ## What Kubby adds
