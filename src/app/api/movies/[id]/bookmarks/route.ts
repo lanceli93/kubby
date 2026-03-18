@@ -64,6 +64,8 @@ export async function POST(
     const tagsRaw = formData.get("tags") as string | null;
     const note = formData.get("note") as string | null;
     const viewState = formData.get("viewState") as string | null;
+    const thumbnailAspectRaw = formData.get("thumbnailAspect") as string | null;
+    const thumbnailAspect = thumbnailAspectRaw ? parseFloat(thumbnailAspectRaw) || null : null;
     const thumbnail = formData.get("thumbnail") as File | null;
 
     if (isNaN(timestampSeconds)) {
@@ -95,6 +97,7 @@ export async function POST(
         tags,
         note: note || null,
         thumbnailPath,
+        thumbnailAspect,
         viewState: viewState || null,
       })
       .run();
@@ -109,6 +112,7 @@ export async function POST(
       tags: tags ? JSON.parse(tags) : [],
       note: note || null,
       thumbnailPath,
+      thumbnailAspect,
       viewState: viewState ? JSON.parse(viewState) : null,
     });
   } catch (error) {

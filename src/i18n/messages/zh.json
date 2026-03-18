@@ -285,6 +285,8 @@
     "configureExternalPlayer": "请先在设置 → 播放设置中配置外部播放器",
     "externalPlayerFailed": "启动外部播放器失败",
     "bookmarks": "书签",
+    "landscape": "横屏",
+    "portrait": "竖屏",
     "addBookmark": "添加书签",
     "quickBookmark": "快速书签",
     "detailedBookmark": "详细书签",

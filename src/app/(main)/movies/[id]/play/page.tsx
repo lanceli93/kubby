@@ -217,6 +217,16 @@ export default function PlayerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.isPlaying, autoHideControls]);
 
+  // Frame step (1/24s per step, cinema standard)
+  const FRAME_DURATION = 1 / 24;
+  function frameStep(direction: 1 | -1) {
+    const video = session.videoRef.current;
+    if (!video || !video.paused) return;
+    video.currentTime = Math.max(0, video.currentTime + direction * FRAME_DURATION);
+    session.setCurrentTime(session.getRealTime());
+    showOsd(direction > 0 ? "Frame \u25B6" : "\u25C0 Frame");
+  }
+
   // Speed helpers
   function changeSpeed(rate: number) {
     if (!session.videoRef.current) return;
@@ -272,20 +282,26 @@ export default function PlayerPage() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
-  // Capture video frame for bookmark thumbnails
-  async function captureVideoFrame(): Promise<Blob | null> {
+  // Capture video frame for bookmark thumbnails, returns blob + aspect ratio
+  async function captureVideoFrame(): Promise<{ blob: Blob | null; aspect: number | null }> {
     if (is360Mode && capture360Ref.current) {
-      return capture360Ref.current();
+      const blob = await capture360Ref.current();
+      // 360 capture uses renderer canvas dimensions
+      const renderer = document.querySelector("canvas");
+      const aspect = renderer ? renderer.width / renderer.height : null;
+      return { blob, aspect };
     }
     const video = session.videoRef.current;
-    if (!video || !video.videoWidth || !video.videoHeight) return null;
+    if (!video || !video.videoWidth || !video.videoHeight) return { blob: null, aspect: null };
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+    if (!ctx) return { blob: null, aspect: null };
     ctx.drawImage(video, 0, 0);
-    return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    const aspect = video.videoWidth / video.videoHeight;
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    return { blob, aspect };
   }
 
   // Bookmark mutations
@@ -293,7 +309,7 @@ export default function PlayerPage() {
 
   const addQuickBookmark = useMutation({
     mutationFn: async () => {
-      const thumbnail = await captureVideoFrame();
+      const { blob: thumbnail, aspect } = await captureVideoFrame();
       const formData = new FormData();
       formData.append("timestampSeconds", String(Math.floor(session.getRealTime())));
       formData.append("discNumber", String(currentDisc));
@@ -301,6 +317,7 @@ export default function PlayerPage() {
       if (qbTemplate?.tags && qbTemplate.tags.length > 0) formData.append("tags", JSON.stringify(qbTemplate.tags));
       if (qbTemplate?.note) formData.append("note", qbTemplate.note);
       if (thumbnail) formData.append("thumbnail", thumbnail, "thumb.jpg");
+      if (aspect) formData.append("thumbnailAspect", String(aspect));
       if (is360Mode && view360Ref.current) {
         formData.append("viewState", JSON.stringify(view360Ref.current.getView()));
       }
@@ -314,7 +331,7 @@ export default function PlayerPage() {
 
   const saveDetailedBookmark = useMutation({
     mutationFn: async () => {
-      const thumbnail = await captureVideoFrame();
+      const { blob: thumbnail, aspect } = await captureVideoFrame();
       const formData = new FormData();
       formData.append("timestampSeconds", String(Math.floor(session.getRealTime())));
       formData.append("discNumber", String(currentDisc));
@@ -322,6 +339,7 @@ export default function PlayerPage() {
       if (bookmarkTags.length > 0) formData.append("tags", JSON.stringify(bookmarkTags));
       if (bookmarkNote) formData.append("note", bookmarkNote);
       if (thumbnail) formData.append("thumbnail", thumbnail, "thumb.jpg");
+      if (aspect) formData.append("thumbnailAspect", String(aspect));
       if (is360Mode && view360Ref.current) formData.append("viewState", JSON.stringify(view360Ref.current.getView()));
       return fetch(`/api/movies/${movieId}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
     },
@@ -349,14 +367,22 @@ export default function PlayerPage() {
           break;
         case "ArrowLeft":
           e.preventDefault();
-          session.skip(e.shiftKey ? -30 : -5);
-          showOsd(e.shiftKey ? "\u221230s" : "\u22125s");
+          if (!session.isPlaying) {
+            frameStep(-1);
+          } else {
+            session.skip(e.shiftKey ? -30 : -5);
+            showOsd(e.shiftKey ? "\u221230s" : "\u22125s");
+          }
           resetControlsTimer();
           break;
         case "ArrowRight":
           e.preventDefault();
-          session.skip(e.shiftKey ? 30 : 5);
-          showOsd(e.shiftKey ? "+30s" : "+5s");
+          if (!session.isPlaying) {
+            frameStep(1);
+          } else {
+            session.skip(e.shiftKey ? 30 : 5);
+            showOsd(e.shiftKey ? "+30s" : "+5s");
+          }
           resetControlsTimer();
           break;
         case "ArrowUp":
@@ -376,14 +402,20 @@ export default function PlayerPage() {
           toggleMute();
           break;
         case ">":
-        case ".":
           e.preventDefault();
           cycleSpeed(1);
           break;
+        case ".":
+          e.preventDefault();
+          if (!session.isPlaying) { frameStep(1); } else { cycleSpeed(1); }
+          break;
         case "<":
-        case ",":
           e.preventDefault();
           cycleSpeed(-1);
+          break;
+        case ",":
+          e.preventDefault();
+          if (!session.isPlaying) { frameStep(-1); } else { cycleSpeed(-1); }
           break;
         case "b":
         case "B":
@@ -571,6 +603,7 @@ export default function PlayerPage() {
         disabledIconIds={disabledIconIds}
         onSeek={session.seekTo}
         onSkip={session.skip}
+        onFrameStep={frameStep}
         onTogglePlay={session.togglePlay}
         onSpeedChange={changeSpeed}
         onVolumeChange={changeVolume}

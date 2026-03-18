@@ -139,6 +139,7 @@ export const movieBookmarks = sqliteTable("movie_bookmarks", {
   tags: text("tags"),
   note: text("note"),
   thumbnailPath: text("thumbnail_path"),
+  thumbnailAspect: real("thumbnail_aspect"), // width/height ratio (e.g. 1.78 = 16:9, 0.56 = 9:16)
   viewState: text("view_state"), // JSON: {lon, lat, fov} for 360° bookmarks
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 }, (table) => [

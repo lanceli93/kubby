@@ -97,6 +97,7 @@ interface BookmarkData {
   tags?: string[];
   note?: string;
   thumbnailPath?: string | null;
+  thumbnailAspect?: number | null;
 }
 
 interface RecommendedMovie {
@@ -839,25 +840,48 @@ export default function MovieDetailPage() {
       )}
 
       {/* Bookmarks Section */}
-      {bookmarks.length > 0 && (
-        <section className="px-4 md:px-20 mt-4">
-          <ScrollRow title={`${t("bookmarks")} (${bookmarks.length})`}>
-            {bookmarks.map((bm) => (
-              <BookmarkCard
-                key={bm.id}
-                bookmark={bm}
-                movieId={movieId}
-                externalEnabled={externalEnabled}
-                onExternalLaunch={(disc, startSeconds) => launchExternal(disc, startSeconds)}
-                onUpdate={(id, data) => updateBookmark.mutate({ bookmarkId: id, data })}
-                onDelete={(id) => deleteBookmark.mutate(id)}
-                customIcons={customIcons}
-                disabledIconIds={prefs?.disabledBookmarkIcons}
-              />
-            ))}
-          </ScrollRow>
-        </section>
-      )}
+      {bookmarks.length > 0 && (() => {
+        const landscapeBm = bookmarks.filter((bm) => (bm.thumbnailAspect ?? 1.78) >= 1);
+        const portraitBm = bookmarks.filter((bm) => (bm.thumbnailAspect ?? 1.78) < 1);
+        return (
+          <section className="px-4 md:px-20 mt-4 space-y-2">
+            {landscapeBm.length > 0 && (
+              <ScrollRow title={portraitBm.length > 0 ? `${t("bookmarks")} — ${t("landscape")} (${landscapeBm.length})` : `${t("bookmarks")} (${landscapeBm.length})`}>
+                {landscapeBm.map((bm) => (
+                  <BookmarkCard
+                    key={bm.id}
+                    bookmark={bm}
+                    movieId={movieId}
+                    externalEnabled={externalEnabled}
+                    onExternalLaunch={(disc, startSeconds) => launchExternal(disc, startSeconds)}
+                    onUpdate={(id, data) => updateBookmark.mutate({ bookmarkId: id, data })}
+                    onDelete={(id) => deleteBookmark.mutate(id)}
+                    customIcons={customIcons}
+                    disabledIconIds={prefs?.disabledBookmarkIcons}
+                  />
+                ))}
+              </ScrollRow>
+            )}
+            {portraitBm.length > 0 && (
+              <ScrollRow title={landscapeBm.length > 0 ? `${t("bookmarks")} — ${t("portrait")} (${portraitBm.length})` : `${t("bookmarks")} (${portraitBm.length})`}>
+                {portraitBm.map((bm) => (
+                  <BookmarkCard
+                    key={bm.id}
+                    bookmark={bm}
+                    movieId={movieId}
+                    externalEnabled={externalEnabled}
+                    onExternalLaunch={(disc, startSeconds) => launchExternal(disc, startSeconds)}
+                    onUpdate={(id, data) => updateBookmark.mutate({ bookmarkId: id, data })}
+                    onDelete={(id) => deleteBookmark.mutate(id)}
+                    customIcons={customIcons}
+                    disabledIconIds={prefs?.disabledBookmarkIcons}
+                  />
+                ))}
+              </ScrollRow>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Cast Section */}
       {movie.cast.length > 0 && (

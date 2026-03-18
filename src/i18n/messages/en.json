@@ -285,6 +285,8 @@
     "configureExternalPlayer": "Please configure your external player in Settings first",
     "externalPlayerFailed": "Failed to launch external player",
     "bookmarks": "Bookmarks",
+    "landscape": "Landscape",
+    "portrait": "Portrait",
     "addBookmark": "Add Bookmark",
     "quickBookmark": "Quick Bookmark",
     "detailedBookmark": "Detailed Bookmark",

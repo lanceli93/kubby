@@ -22,6 +22,7 @@ interface BookmarkData {
   tags?: string[];
   note?: string;
   thumbnailPath?: string | null;
+  thumbnailAspect?: number | null;
   viewState?: { lon: number; lat: number; fov: number } | null;
 }
 
@@ -120,16 +121,19 @@ export function BookmarkCard({
     return <FallbackIcon className={`h-4 w-4 ${fallback.color}`} />;
   }
 
+  const isPortrait = (bookmark.thumbnailAspect ?? 1.78) < 1;
+  const cardWidth = isPortrait ? "w-[120px] md:w-[180px]" : "w-[200px] md:w-[320px]";
+  const aspectClass = isPortrait ? "aspect-[9/16]" : "aspect-video";
+
   const card = (
-    <div className="group relative flex-shrink-0 w-[200px] md:w-[320px]">
-      {/* Thumbnail — height capped to prevent oversized cards from tall captures */}
-      <div className="relative w-[200px] md:w-[320px] aspect-video overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900">
+    <div className={`group relative flex-shrink-0 ${cardWidth}`}>
+      <div className={`relative ${cardWidth} ${aspectClass} overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900`}>
         {bookmark.thumbnailPath ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={resolveImageSrc(bookmark.thumbnailPath, 640)}
             alt={`Bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-cover"
             draggable={false}
           />
         ) : (
@@ -233,7 +237,7 @@ export function BookmarkCard({
 
       {/* Note below card */}
       {bookmark.note && (
-        <p className="mt-1 max-w-[200px] md:max-w-[320px] truncate text-xs text-muted-foreground">
+        <p className={`mt-1 truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[120px] md:max-w-[180px]" : "max-w-[200px] md:max-w-[320px]"}`}>
           {bookmark.note}
         </p>
       )}
