@@ -129,7 +129,7 @@ export function BookmarkCard({
           <img
             src={resolveImageSrc(bookmark.thumbnailPath, 640)}
             alt={`Bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
             draggable={false}
           />
         ) : (

@@ -30,7 +30,7 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
   const animFrameRef = useRef<number>(0);
 
   // Spherical coordinates for camera look direction
-  const lonRef = useRef(0);
+  const lonRef = useRef(270);
   const latRef = useRef(0);
 
   // Drag state
@@ -111,9 +111,9 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
 
     // Register external callbacks (after renderOnce is available)
     onResetRef?.(() => {
-      lonRef.current = 0;
+      lonRef.current = 270;
       latRef.current = 0;
-      camera.fov = 75;
+      camera.fov = 120;
       camera.updateProjectionMatrix();
       updateCamera();
       renderOnce();
