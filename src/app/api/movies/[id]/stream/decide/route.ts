@@ -33,7 +33,11 @@ export async function GET(
   let durationSeconds = movie.runtimeSeconds;
   let videoWidth = movie.videoWidth;
 
-  if (discNumber > 1) {
+  // For multi-disc movies, always look up disc-specific info (including disc 1).
+  // movie.runtimeSeconds is the SUM of all discs — using it for CD1 would make
+  // the progress bar too long, causing seeks past CD1's actual end to fail.
+  const isMultiDisc = (movie.discCount ?? 1) > 1;
+  if (isMultiDisc) {
     const disc = db
       .select()
       .from(movieDiscs)
