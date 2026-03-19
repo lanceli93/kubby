@@ -414,7 +414,7 @@ export function PlayerControls({
       {/* Mobile: time + transport row */}
       <div className="flex md:hidden items-center">
         {!isLocked && (
-          <span className="tabular-nums text-xs text-white/80 w-24">
+          <span className="tabular-nums text-xs text-white/80 whitespace-nowrap min-w-24">
             {formatTime(displayTime)} / {formatTime(duration)}
           </span>
         )}
@@ -435,7 +435,7 @@ export function PlayerControls({
             <ChevronsRight className="h-5 w-5" />
           </button>
         </div>
-        {!isLocked && <div className="w-24" />}
+        {!isLocked && <div className="min-w-24" />}
       </div>
 
       {/* Desktop bottom row */}

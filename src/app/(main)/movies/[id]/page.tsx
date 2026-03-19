@@ -706,22 +706,16 @@ export default function MovieDetailPage() {
             {t("discs")} ({movie.discs.length})
           </h2>
           <div className="flex gap-3 overflow-x-auto pb-2">
-            {movie.discs.map((disc) => (
-              externalEnabled ? (
-              <button
-                key={disc.id}
-                onClick={() => launchExternal(disc.discNumber)}
-                className="glass-card group flex flex-shrink-0 gap-4 rounded-xl p-3 cursor-pointer text-left"
-              >
-                {/* Disc poster with play overlay */}
-                <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
+            {movie.discs.map((disc) => {
+              const poster = (
+                <div className="relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06] aspect-[2/3]">
                   {disc.posterPath && !imgErrors.has(disc.posterPath) ? (
                     <Image
                       src={resolveImageSrc(disc.posterPath)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
-                      className="object-cover"
-                      sizes="107px"
+                      className="object-cover transition-fluid group-hover:scale-105"
+                      sizes="140px"
                       onError={() => onImgError(disc.posterPath!)}
                     />
                   ) : movie.posterPath && !imgErrors.has(movie.posterPath) ? (
@@ -729,120 +723,67 @@ export default function MovieDetailPage() {
                       src={resolveImageSrc(movie.posterPath)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
-                      className="object-cover"
-                      sizes="107px"
+                      className="object-cover transition-fluid group-hover:scale-105"
+                      sizes="140px"
                       onError={() => onImgError(movie.posterPath!)}
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
                       <Disc className="h-6 w-6" />
                     </div>
                   )}
+                  {/* Resolution badge — top-left */}
+                  {getResolutionLabel(disc.videoWidth) && (
+                    <div className="absolute left-1.5 top-1.5 rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80 shadow-sm">
+                      {getResolutionLabel(disc.videoWidth)}
+                    </div>
+                  )}
+                  {/* Disc number badge — bottom-right, liquid glass */}
+                  <div className="absolute right-1.5 bottom-1.5 flex h-6 w-6 items-center justify-center rounded-full glass-badge text-[11px] font-bold text-white/90 shadow-lg">
+                    {disc.discNumber}
+                  </div>
                   {/* Centered play button on hover */}
-                  <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="glass-btn flex h-10 w-10 items-center justify-center rounded-full text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
+                  <div className="absolute inset-0 z-[3] flex items-center justify-center scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-fluid">
+                    <div className="glass-btn flex h-10 w-10 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95">
                       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
                     </div>
                   </div>
                 </div>
-                {/* Info on the right */}
-                <div className="flex flex-col justify-center gap-2 pr-3">
-                  <span className="text-base font-semibold text-foreground">
+              );
+              const info = (
+                <div className="mt-1.5 px-0.5 text-center">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {disc.label || `${t("disc")} ${disc.discNumber}`}
-                  </span>
+                  </p>
                   {disc.runtimeSeconds && disc.runtimeSeconds > 0 && (
-                    <span className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {formatRuntime(disc.runtimeSeconds)}
-                    </span>
+                    </p>
                   )}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {getResolutionLabel(disc.videoWidth) && (
-                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
-                        {getResolutionLabel(disc.videoWidth)}
-                      </span>
-                    )}
-                    {disc.videoCodec && (
-                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
-                        {disc.videoCodec}
-                      </span>
-                    )}
-                    {disc.audioCodec && (
-                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
-                        {disc.audioCodec}
-                      </span>
-                    )}
-                  </div>
                 </div>
-              </button>
+              );
+              return externalEnabled ? (
+                <button
+                  key={disc.id}
+                  onClick={() => launchExternal(disc.discNumber)}
+                  className="group flex-shrink-0 cursor-pointer text-left transition-[scale] duration-200 ease-out hover:scale-[1.03]"
+                  style={{ width: 140 }}
+                >
+                  {poster}
+                  {info}
+                </button>
               ) : (
-              <Link
-                key={disc.id}
-                href={`/movies/${movie.id}/play?disc=${disc.discNumber}`}
-                className="glass-card group flex flex-shrink-0 gap-4 rounded-xl p-3"
-              >
-                {/* Disc poster with play overlay */}
-                <div className="relative h-[160px] w-[107px] flex-shrink-0 overflow-hidden rounded-md">
-                  {disc.posterPath && !imgErrors.has(disc.posterPath) ? (
-                    <Image
-                      src={resolveImageSrc(disc.posterPath)}
-                      alt={disc.label || `Disc ${disc.discNumber}`}
-                      fill
-                      className="object-cover"
-                      sizes="107px"
-                      onError={() => onImgError(disc.posterPath!)}
-                    />
-                  ) : movie.posterPath && !imgErrors.has(movie.posterPath) ? (
-                    <Image
-                      src={resolveImageSrc(movie.posterPath)}
-                      alt={disc.label || `Disc ${disc.discNumber}`}
-                      fill
-                      className="object-cover"
-                      sizes="107px"
-                      onError={() => onImgError(movie.posterPath!)}
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
-                      <Disc className="h-6 w-6" />
-                    </div>
-                  )}
-                  {/* Centered play button on hover — matches MovieCard style */}
-                  <div className="absolute inset-0 z-[3] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="glass-btn flex h-10 w-10 items-center justify-center rounded-full text-white/90 transition-all duration-200 hover:scale-150 hover:bg-primary/80 hover:text-white">
-                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
-                    </div>
-                  </div>
-                </div>
-                {/* Info on the right */}
-                <div className="flex flex-col justify-center gap-2 pr-3">
-                  <span className="text-base font-semibold text-foreground">
-                    {disc.label || `${t("disc")} ${disc.discNumber}`}
-                  </span>
-                  {disc.runtimeSeconds && disc.runtimeSeconds > 0 && (
-                    <span className="text-sm text-muted-foreground">
-                      {formatRuntime(disc.runtimeSeconds)}
-                    </span>
-                  )}
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {getResolutionLabel(disc.videoWidth) && (
-                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
-                        {getResolutionLabel(disc.videoWidth)}
-                      </span>
-                    )}
-                    {disc.videoCodec && (
-                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
-                        {disc.videoCodec}
-                      </span>
-                    )}
-                    {disc.audioCodec && (
-                      <span className="rounded border border-white/20 px-2 py-0.5 text-[11px] font-semibold uppercase text-white/70">
-                        {disc.audioCodec}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-              )
-            ))}
+                <Link
+                  key={disc.id}
+                  href={`/movies/${movie.id}/play?disc=${disc.discNumber}`}
+                  className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03]"
+                  style={{ width: 140 }}
+                >
+                  {poster}
+                  {info}
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
