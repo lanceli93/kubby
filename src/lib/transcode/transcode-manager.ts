@@ -33,7 +33,6 @@ class TranscodeManager {
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
   private ffmpegAvailable: boolean | null = null;
   private encoderConfig: EncoderConfig | null = null;
-  private hwEncoderFailed = false; // Remember NVENC failure to avoid retrying
 
   constructor() {
     this.startCleanupInterval();
@@ -86,12 +85,7 @@ class TranscodeManager {
     const outputDir = path.join(getTranscodeCacheDir(), id);
     fs.mkdirSync(outputDir, { recursive: true });
 
-    // Use software encoder directly if NVENC has previously crashed (avoids repeated NVENC failures on 8K content)
-    const detectedConfig = this.getEncoderConfig();
-    const encoderConfig = (this.hwEncoderFailed && detectedConfig.isHardware) ? getLibx264Config() : detectedConfig;
-    if (this.hwEncoderFailed && detectedConfig.isHardware) {
-      console.log(`[transcode] Skipping NVENC (previously failed), using software encoder`);
-    }
+    const encoderConfig = this.getEncoderConfig();
     const isHevcCopy = decision.videoAction === "copy" && !!sourceVideoCodec && /^(hevc|h265)$/i.test(sourceVideoCodec);
     const args = buildFfmpegArgs({ inputPath: filePath, outputDir, decision, seekToSeconds, encoderConfig, maxWidth, sourceVideoCodec, sourceVideoWidth, forceHevcFmp4: isHevcCopy });
     const ffmpegProcess = spawn(getFfmpegPath(), args, {
@@ -119,9 +113,8 @@ class TranscodeManager {
       // Skip fallback for remux (stream copy) — no encoder involved
       const isStreamCopy = decision.videoAction === "copy";
       if (code !== 0 && encoderConfig.isHardware && !isStreamCopy && !session.retriedWithSoftware) {
-        console.log(`[transcode] Hardware encoder failed, falling back to software (will skip NVENC for future sessions)`);
+        console.log(`[transcode] Hardware encoder failed, falling back to software`);
         session.retriedWithSoftware = true;
-        this.hwEncoderFailed = true;
 
         // Clean up failed output
         this.cleanOutputDir(outputDir);
