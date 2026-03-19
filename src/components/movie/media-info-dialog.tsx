@@ -172,15 +172,19 @@ export function MediaInfoDialog({ movieId, open, onOpenChange }: MediaInfoDialog
 
   const { data, isLoading } = useQuery<MediaInfoData>({
     queryKey: ["media-info", movieId],
-    queryFn: () => fetch(`/api/movies/${movieId}/media-info`).then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch(`/api/movies/${movieId}/media-info`);
+      if (!r.ok) throw new Error("Failed to fetch media info");
+      return r.json();
+    },
     enabled: open,
   });
 
-  const videoStreams = data?.streams.filter((s) => s.streamType === "video") ?? [];
-  const audioStreams = data?.streams.filter((s) => s.streamType === "audio") ?? [];
-  const subtitleStreams = data?.streams.filter((s) => s.streamType === "subtitle") ?? [];
+  const videoStreams = data?.streams?.filter((s) => s.streamType === "video") ?? [];
+  const audioStreams = data?.streams?.filter((s) => s.streamType === "audio") ?? [];
+  const subtitleStreams = data?.streams?.filter((s) => s.streamType === "subtitle") ?? [];
 
-  const hasStreams = (data?.streams.length ?? 0) > 0;
+  const hasStreams = (data?.streams?.length ?? 0) > 0;
 
   // Determine default tab
   const defaultTab = videoStreams.length > 0 ? "video" : audioStreams.length > 0 ? "audio" : "subtitles";
