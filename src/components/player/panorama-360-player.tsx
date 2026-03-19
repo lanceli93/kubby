@@ -88,6 +88,7 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
 
     const material = new MeshBasicMaterial({ map: texture, side: BackSide });
     const sphere = new Mesh(geometry, material);
+    sphere.scale.x = -1; // flip X to correct mirrored UVs when viewing from inside
     scene.add(sphere);
 
     // Render loop — runs when playing; renders one frame then stops when paused
