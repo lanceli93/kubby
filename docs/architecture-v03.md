@@ -757,6 +757,7 @@ Player (page.tsx)
 - iPhone H.264 硬解上限约 4096x2304: 5K+ H.264 视频 direct play 返回 `SRC_NOT_SUPPORTED`, 需转码降分辨率
 - iPhone HEVC 硬解支持 8K (A14+): 同分辨率 HEVC 比 H.264 兼容性好得多
 - remux 不能加 maxWidth: stream copy 无法缩放, FFmpeg 加 scale filter 会崩溃 (`Failed to inject frame into filter`)
+- **iOS HEVC remux B-frame 解码失败**: HEVC `has_b_frames >= 2` 的视频 remux 到 HLS fMP4 后 iOS 报 `Decode:Media failed to decode`。原因是高 B-frame 数的 HEVC 在 stream copy 到 fMP4 时 composition time offset (CTS) 处理有问题, iOS 原生 HLS 播放器无法正确解码 B-frame 重排序后的段。`has_b_frames=1` 的视频不受影响 (即使 8K 54Mbps 也能正常 remux 播放)。修复: decide 时检查 `media_streams.has_b_frames`, `>= 2` 强制走 transcode 而非 remux。注意 profile/pixFmt/level 相同的视频可能因 B-frame 数不同而一个能放一个不能, 只看 profile 不够
 - DB 路径可移植性: `people.photoPath` 存相对路径 (`metadata/people/...`), 运行时用 `resolveDataPath()` 拼绝对路径, 迁移数据目录后无需重新刮削
 - 书签系统: B 键快速书签 (使用模板预设), Shift+B 详细书签 (选图标/标签/备注)
 - 进度条书签标记: 彩色圆点 + 图标, hover 放大, 点击定位; 支持低调模式 (半透明白色)
