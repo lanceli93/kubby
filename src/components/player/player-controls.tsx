@@ -411,32 +411,32 @@ export function PlayerControls({
         </div>
       </div>
 
-      {/* Mobile: time + transport row — hidden when locked */}
-      {!isLocked && (
-        <div className="flex md:hidden items-center">
+      {/* Mobile: time + transport row */}
+      <div className="flex md:hidden items-center">
+        {!isLocked && (
           <span className="tabular-nums text-xs text-white/80 w-24">
             {formatTime(displayTime)} / {formatTime(duration)}
           </span>
-          <div className="flex-1 flex items-center justify-center gap-4">
-            <button
-              onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
-              className="text-white/80 hover:text-white"
-            >
-              <ChevronsLeft className="h-5 w-5" />
-            </button>
-            <button onClick={onTogglePlay} className="text-white hover:text-white/90">
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-            </button>
-            <button
-              onClick={() => { onSkip(10); showOsd("+10s"); }}
-              className="text-white/80 hover:text-white"
-            >
-              <ChevronsRight className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="w-24" />
+        )}
+        <div className="flex-1 flex items-center justify-center gap-4">
+          <button
+            onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
+            className="text-white/80 hover:text-white"
+          >
+            <ChevronsLeft className="h-5 w-5" />
+          </button>
+          <button onClick={onTogglePlay} className="text-white hover:text-white/90">
+            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+          </button>
+          <button
+            onClick={() => { onSkip(10); showOsd("+10s"); }}
+            className="text-white/80 hover:text-white"
+          >
+            <ChevronsRight className="h-5 w-5" />
+          </button>
         </div>
-      )}
+        {!isLocked && <div className="w-24" />}
+      </div>
 
       {/* Desktop bottom row */}
       <div className="relative hidden md:flex items-center justify-between">

@@ -461,7 +461,7 @@ export default function PlayerPage() {
       className={`fixed inset-0 z-50 bg-black overflow-hidden ${!showControls ? "cursor-none" : ""}`}
       onMouseMove={resetControlsTimer}
       onTouchStart={resetControlsTimer}
-      onClick={isLocked ? undefined : session.togglePlay}
+      onClick={session.togglePlay}
     >
       <video
         ref={session.videoRef}
