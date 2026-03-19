@@ -178,12 +178,124 @@ export function PlayerControls({
   }, [isDragging, duration, onSeek]);
 
   return (
-    <div
-      className={`absolute inset-x-0 bottom-0 flex flex-col gap-2 md:gap-3 bg-gradient-to-t from-black/80 to-transparent px-3 md:px-8 pb-4 md:pb-6 pt-4 transition-opacity duration-300 ${
-        showControls ? "opacity-100" : "pointer-events-none opacity-0"
-      }`}
-      onClick={(e) => e.stopPropagation()}
-    >
+    <>
+      {/* Mobile: left side panel */}
+      <div
+        className={`md:hidden absolute left-2 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 transition-opacity duration-300 ${
+          showControls ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onQuickBookmark}
+          className="flex items-center justify-center h-10 w-10 rounded-full bg-black/30 backdrop-blur text-white/80 hover:text-indigo-400 transition-colors"
+          title="Quick bookmark (B)"
+        >
+          <Bookmark className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Mobile: right side panel */}
+      <div
+        className={`md:hidden absolute right-2 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 items-center transition-opacity duration-300 ${
+          showControls ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {playbackMode === "transcode" && (() => {
+          const filtered = RESOLUTION_OPTIONS.filter(
+            (opt) => opt.maxWidth === 0 || !sourceVideoWidth || sourceVideoWidth > opt.maxWidth
+          );
+          return (
+            <div className="relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowResMenu((v) => !v); }}
+                className="flex items-center justify-center min-w-10 h-10 px-2.5 rounded-full bg-black/30 backdrop-blur text-[11px] font-semibold text-white/80 hover:text-white transition-colors cursor-pointer"
+              >
+                {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}
+              </button>
+              {showResMenu && (
+                <div
+                  className="absolute right-full top-0 mr-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {filtered.map((opt) => (
+                    <button
+                      key={opt.maxWidth}
+                      onClick={() => {
+                        setShowResMenu(false);
+                        if (opt.maxWidth === selectedMaxWidth) return;
+                        onResolutionChange(opt.maxWidth);
+                        showOsd(tPlayer("switchingTo", { label: tPlayer(opt.labelKey) }));
+                      }}
+                      className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
+                        opt.maxWidth === selectedMaxWidth
+                          ? "bg-white/10 text-white"
+                          : "text-white/70 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      {tPlayer(opt.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+        <button
+          onClick={onToggle360Mode}
+          className={`flex items-center justify-center min-w-10 h-10 px-2.5 rounded-full backdrop-blur text-[11px] font-semibold transition-colors cursor-pointer ${
+            is360Mode ? "bg-primary/25 text-primary" : "bg-black/30 text-white/80 hover:text-white"
+          }`}
+        >
+          {tPlayer("mode360")}
+        </button>
+        {is360Mode && onResetView && (
+          <button
+            onClick={onResetView}
+            className="flex items-center justify-center h-10 w-10 rounded-full bg-black/30 backdrop-blur text-white/80 hover:text-white transition-colors cursor-pointer"
+            title="Reset view (R)"
+          >
+            <RotateCcw className="h-5 w-5" />
+          </button>
+        )}
+        <div className="relative">
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowSpeedMenu(!showSpeedMenu); }}
+            className={`flex items-center justify-center min-w-10 h-10 px-2.5 rounded-full backdrop-blur text-[11px] font-semibold transition-colors cursor-pointer ${
+              playbackRate !== 1 ? "bg-primary/25 text-primary" : "bg-black/30 text-white/80 hover:text-white"
+            }`}
+          >
+            {playbackRate}x
+          </button>
+          {showSpeedMenu && (
+            <div
+              className="absolute right-full top-0 mr-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {SPEED_OPTIONS.map((rate) => (
+                <button
+                  key={rate}
+                  onClick={() => { onSpeedChange(rate); setShowSpeedMenu(false); }}
+                  className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
+                    rate === playbackRate ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {rate}x{rate === 1 ? " (Normal)" : ""}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom controls */}
+      <div
+        className={`absolute inset-x-0 bottom-0 flex flex-col gap-2 md:gap-3 bg-gradient-to-t from-black/80 to-transparent px-3 md:px-8 pb-4 md:pb-6 pt-4 transition-opacity duration-300 ${
+          showControls ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
       {/* Seek bar — expanded touch target with drag support */}
       <div
         ref={seekBarRef}
@@ -263,28 +375,33 @@ export function PlayerControls({
         </div>
       </div>
 
-      {/* Mobile: transport row (centered) */}
-      <div className="flex md:hidden items-center justify-center gap-4">
-        <button
-          onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
-          className="text-white/80 hover:text-white"
-          title="Rewind 10s"
-        >
-          <ChevronsLeft className="h-5 w-5" />
-        </button>
-        <button onClick={onTogglePlay} className="text-white hover:text-white/90">
-          {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
-        </button>
-        <button
-          onClick={() => { onSkip(10); showOsd("+10s"); }}
-          className="text-white/80 hover:text-white"
-          title="Forward 10s"
-        >
-          <ChevronsRight className="h-5 w-5" />
-        </button>
+      {/* Mobile: time + transport row */}
+      <div className="flex md:hidden items-center">
+        <span className="tabular-nums text-xs text-white/80 w-24">
+          {formatTime(displayTime)} / {formatTime(duration)}
+        </span>
+        <div className="flex-1 flex items-center justify-center gap-4">
+          <button
+            onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
+            className="text-white/80 hover:text-white"
+          >
+            <ChevronsLeft className="h-5 w-5" />
+          </button>
+          <button onClick={onTogglePlay} className="text-white hover:text-white/90">
+            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+          </button>
+          <button
+            onClick={() => { onSkip(10); showOsd("+10s"); }}
+            className="text-white/80 hover:text-white"
+          >
+            <ChevronsRight className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="w-24" />
       </div>
 
-      <div className="relative flex items-center justify-between">
+      {/* Desktop bottom row */}
+      <div className="relative hidden md:flex items-center justify-between">
         {/* Time display + encoder badge */}
         <div className="flex items-center gap-2">
           <span className="tabular-nums text-xs md:text-sm text-white/80">
@@ -551,5 +668,6 @@ export function PlayerControls({
         </div>
       </div>
     </div>
+    </>
   );
 }

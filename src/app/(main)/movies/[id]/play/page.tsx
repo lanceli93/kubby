@@ -457,7 +457,7 @@ export default function PlayerPage() {
   return (
     <div
       ref={containerRef}
-      className={`relative h-full w-full bg-black overflow-hidden ${!showControls ? "cursor-none" : ""}`}
+      className={`fixed inset-0 z-50 bg-black overflow-hidden ${!showControls ? "cursor-none" : ""}`}
       onMouseMove={resetControlsTimer}
       onTouchStart={resetControlsTimer}
       onClick={session.togglePlay}
@@ -540,6 +540,8 @@ export default function PlayerPage() {
         currentDisc={currentDisc}
         totalDiscs={totalDiscs}
         showControls={showControls}
+        playbackMode={session.playbackMode}
+        encoderName={session.encoderName}
         onBack={() => {
           saveProgress.mutate({ seconds: session.getRealTime(), disc: currentDisc });
           router.back();
