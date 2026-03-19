@@ -758,6 +758,12 @@ Player (page.tsx)
 - iPhone HEVC 硬解支持 8K (A14+): 同分辨率 HEVC 比 H.264 兼容性好得多
 - remux 不能加 maxWidth: stream copy 无法缩放, FFmpeg 加 scale filter 会崩溃 (`Failed to inject frame into filter`)
 - **iOS HEVC remux B-frame 解码失败**: HEVC `has_b_frames >= 2` 的视频 remux 到 HLS fMP4 后 iOS 报 `Decode:Media failed to decode`。原因是高 B-frame 数的 HEVC 在 stream copy 到 fMP4 时 composition time offset (CTS) 处理有问题, iOS 原生 HLS 播放器无法正确解码 B-frame 重排序后的段。`has_b_frames=1` 的视频不受影响 (即使 8K 54Mbps 也能正常 remux 播放)。修复: decide 时检查 `media_streams.has_b_frames`, `>= 2` 强制走 transcode 而非 remux。注意 profile/pixFmt/level 相同的视频可能因 B-frame 数不同而一个能放一个不能, 只看 profile 不够
+- **NVENC fallback 竞态**: NVENC 转码 8K 视频约 30s 后崩溃 (`exit code null`), 自动 fallback 到 libx264。用户 seek 时 `seekSession()` 的 `killProcess()` 设 `session.process = null`, 但 NVENC `exit` handler 异步触发后覆盖 `session.process = fallbackProcess`, 在已删除的 outputDir 里启动 libx264 → `Failed to open file ... No such file or directory` → 级联崩溃。修复: `exit` handler 加 `if (!session.process) return;`, 如果 killProcess 已 null 化则不 spawn fallback
+- **多碟 session 泄漏**: 前端 seek 时调新 `decide` 而非 `seekSession`, 旧 session 不被清理。同一电影多个 FFmpeg 并发竞争资源。修复: `startSession()` 开头遍历并 SIGKILL 同 `movieId` 的所有旧 session
+- **多碟 media_streams 字段遗漏**: scanner 有两处 `media_streams` 插入 (disc 1 和 disc 2+), 新增字段 `pixFmt`/`level`/`hasBFrames` 只加到了 disc 1 的插入。CD2 的 `hasBFrames` 为 null → B-frame 检查不触发 → 错误走 remux。教训: schema 加字段时必须检查所有 insert 点, 不仅是 `replace_all` 匹配到的
+- **fetch 缺 r.ok 检查**: API 返回 `{ error: "..." }` (401/500) 时, React Query 的 `queryFn` 直接 `.json()` 不检查 status, 将 error 对象当作 data 存储。后续 `.filter()` 在非数组上调用崩溃 (`eP?.filter is not a function`)。`?.` 不帮忙因为值不是 undefined 而是对象。修复: 所有 queryFn 加 `if (!r.ok) throw new Error()`
+- **hls.js seek 404**: seek 时旧 hls.js 实例在 fetch 返回前仍在轮询已销毁 session 的 playlist → 404。修复: fetch 前调 `oldHls.stopLoad()` 停止轮询
+- **DB schema 迁移二步**: 改 schema 必须同时改 `src/lib/db/schema.ts` 和 `src/lib/db/index.ts` 的 migration 数组 (`ALTER TABLE ... ADD`), 否则已有数据库报 `no such column`
 - DB 路径可移植性: `people.photoPath` 存相对路径 (`metadata/people/...`), 运行时用 `resolveDataPath()` 拼绝对路径, 迁移数据目录后无需重新刮削
 - 书签系统: B 键快速书签 (使用模板预设), Shift+B 详细书签 (选图标/标签/备注)
 - 进度条书签标记: 彩色圆点 + 图标, hover 放大, 点击定位; 支持低调模式 (半透明白色)
