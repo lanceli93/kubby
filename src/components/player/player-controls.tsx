@@ -500,8 +500,8 @@ export function PlayerControls({
           </button>
         </div>
 
-        {/* Right controls — hidden when locked */}
-        {!isLocked && <div className="flex items-center gap-2 md:gap-4">
+        {/* Right controls — invisible when locked (keep layout to prevent seek bar shift) */}
+        <div className={`flex items-center gap-2 md:gap-4 transition-opacity duration-200 ${isLocked ? "opacity-0 pointer-events-none" : ""}`}>
           {/* Group: Bookmarks */}
           <div className="flex items-center gap-1 md:gap-1.5">
             <button
@@ -703,7 +703,7 @@ export function PlayerControls({
               </button>
             )}
           </div>
-        </div>}
+        </div>
       </div>
     </div>
     </>

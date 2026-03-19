@@ -451,9 +451,6 @@ export default function PlayerPage() {
 
   // Close popover menus when clicking outside (handled by controls component internally now,
   // but we keep the global listener for encoder info popover backward compat)
-  const currentDiscLabel = isMultiDisc
-    ? movie?.discs?.find((d) => d.discNumber === currentDisc)?.label || `Disc ${currentDisc}`
-    : null;
 
   return (
     <div
@@ -543,7 +540,6 @@ export default function PlayerPage() {
 
       <PlayerTopBar
         title={movie?.title || ""}
-        currentDiscLabel={currentDiscLabel}
         isMultiDisc={isMultiDisc}
         currentDisc={currentDisc}
         totalDiscs={totalDiscs}

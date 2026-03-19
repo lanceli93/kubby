@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 
 interface PlayerTopBarProps {
   title: string;
-  currentDiscLabel: string | null;
   isMultiDisc: boolean;
   currentDisc: number;
   totalDiscs: number;
@@ -19,7 +18,6 @@ interface PlayerTopBarProps {
 }
 
 export function PlayerTopBar({
-  currentDiscLabel,
   isMultiDisc,
   currentDisc,
   totalDiscs,
@@ -52,11 +50,6 @@ export function PlayerTopBar({
         >
           <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
         </button>
-        {!isLocked && currentDiscLabel && (
-          <span className="text-sm md:text-base font-medium text-white/60">
-            {currentDiscLabel}
-          </span>
-        )}
       </div>
 
       {/* Playback mode badge — mobile, centered (hidden when locked) */}
