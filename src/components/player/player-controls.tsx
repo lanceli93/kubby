@@ -460,7 +460,7 @@ export function PlayerControls({
               </button>
               {showEncoderInfo && (
                 <div
-                  className="absolute bottom-full left-0 mb-2 rounded-lg bg-zinc-900/95 px-3 py-2 shadow-xl backdrop-blur whitespace-nowrap"
+                  className="absolute bottom-full left-0 mb-2 z-20 rounded-lg bg-zinc-900/95 px-3 py-2 shadow-xl backdrop-blur whitespace-nowrap"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="text-xs text-white/50 mb-0.5">
@@ -569,7 +569,7 @@ export function PlayerControls({
                   </button>
                   {showResMenu && (
                     <div
-                      className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                      className="absolute bottom-full right-0 mb-2 z-20 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {filtered.map((opt) => (
@@ -614,7 +614,7 @@ export function PlayerControls({
               </button>
               {showSpeedMenu && (
                 <div
-                  className="absolute bottom-full right-0 mb-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                  className="absolute bottom-full right-0 mb-2 z-20 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {SPEED_OPTIONS.map((rate) => (
