@@ -105,6 +105,10 @@ class TranscodeManager {
       const session = this.sessions.get(id);
       if (!session) return;
 
+      // If session.process was already nulled by killProcess (seek/stop in progress),
+      // do NOT spawn a fallback — the session is being replaced
+      if (!session.process) return;
+
       // Runtime fallback: if hardware encoder failed, retry with libx264
       // Skip fallback for remux (stream copy) — no encoder involved
       const isStreamCopy = decision.videoAction === "copy";
