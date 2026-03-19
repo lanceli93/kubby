@@ -67,11 +67,11 @@ class TranscodeManager {
     sourceVideoCodec: string | null = null,
     sourceVideoWidth: number | null = null,
   ): string {
-    // Kill any existing sessions for the same movie+disc to prevent zombie FFmpeg processes
-    // This happens when the client seeks (calls decide again) without explicitly stopping the old session
+    // Kill any existing sessions for the same movie to prevent zombie FFmpeg processes
+    // This happens when the client seeks (calls decide again) or switches discs without stopping the old session
     for (const [existingId, existing] of this.sessions) {
-      if (existing.movieId === movieId && existing.discNumber === discNumber) {
-        console.log(`[transcode] Replacing existing session ${existingId.slice(0, 8)} for same movie+disc`);
+      if (existing.movieId === movieId) {
+        console.log(`[transcode] Replacing existing session ${existingId.slice(0, 8)} for same movie`);
         if (existing.process && !existing.process.killed) {
           try { existing.process.kill(process.platform === "win32" ? undefined : "SIGKILL"); } catch { /* */ }
           existing.process = null;
