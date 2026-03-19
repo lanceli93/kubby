@@ -138,6 +138,7 @@ export function usePlaybackSession({
 
         const oldHls = hlsRef.current;
         hlsRef.current = null;
+        oldHls?.stopLoad();
         if (!isNativeHls) setFreezeFrame();
 
         fetch(`/api/stream/${sessionIdRef.current}`, {
