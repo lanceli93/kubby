@@ -11,6 +11,7 @@ interface PlayerTopBarProps {
   currentDisc: number;
   totalDiscs: number;
   showControls: boolean;
+  isLocked?: boolean;
   playbackMode?: "direct" | "remux" | "transcode" | null;
   encoderName?: string | null;
   onBack: () => void;
@@ -23,6 +24,7 @@ export function PlayerTopBar({
   currentDisc,
   totalDiscs,
   showControls,
+  isLocked,
   playbackMode,
   encoderName,
   onBack,
@@ -50,15 +52,15 @@ export function PlayerTopBar({
         >
           <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
         </button>
-        {currentDiscLabel && (
+        {!isLocked && currentDiscLabel && (
           <span className="text-sm md:text-base font-medium text-white/60">
             {currentDiscLabel}
           </span>
         )}
       </div>
 
-      {/* Playback mode badge — mobile, centered */}
-      {modeLabel && (
+      {/* Playback mode badge — mobile, centered (hidden when locked) */}
+      {!isLocked && modeLabel && (
         <div className="md:hidden absolute left-1/2 -translate-x-1/2">
           <div className="relative">
             <button
@@ -91,20 +93,22 @@ export function PlayerTopBar({
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        {isMultiDisc && (
-          <span className="text-sm text-white/60">
-            {currentDisc} / {totalDiscs}
-          </span>
-        )}
-        <button
-          onClick={onToggleHelp}
-          className="text-white/40 hover:text-white/80"
-          title="Keyboard shortcuts (?)"
-        >
-          <HelpCircle className="h-5 w-5" />
-        </button>
-      </div>
+      {!isLocked && (
+        <div className="flex items-center gap-3">
+          {isMultiDisc && (
+            <span className="text-sm text-white/60">
+              {currentDisc} / {totalDiscs}
+            </span>
+          )}
+          <button
+            onClick={onToggleHelp}
+            className="text-white/40 hover:text-white/80"
+            title="Keyboard shortcuts (?)"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

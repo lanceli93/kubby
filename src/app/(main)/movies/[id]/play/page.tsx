@@ -534,23 +534,22 @@ export default function PlayerPage() {
         />
       )}
 
-      {!isLocked && (
-        <PlayerTopBar
-          title={movie?.title || ""}
-          currentDiscLabel={currentDiscLabel}
-          isMultiDisc={isMultiDisc}
-          currentDisc={currentDisc}
-          totalDiscs={totalDiscs}
-          showControls={showControls}
-          playbackMode={session.playbackMode}
-          encoderName={session.encoderName}
-          onBack={() => {
-            saveProgress.mutate({ seconds: session.getRealTime(), disc: currentDisc });
-            router.back();
-          }}
-          onToggleHelp={() => setShowHelp((v) => !v)}
-        />
-      )}
+      <PlayerTopBar
+        title={movie?.title || ""}
+        currentDiscLabel={currentDiscLabel}
+        isMultiDisc={isMultiDisc}
+        currentDisc={currentDisc}
+        totalDiscs={totalDiscs}
+        showControls={showControls}
+        isLocked={isLocked}
+        playbackMode={session.playbackMode}
+        encoderName={session.encoderName}
+        onBack={() => {
+          saveProgress.mutate({ seconds: session.getRealTime(), disc: currentDisc });
+          router.back();
+        }}
+        onToggleHelp={() => setShowHelp((v) => !v)}
+      />
 
       {!isLocked && <CenterPlayButton isPlaying={session.isPlaying} osdMessage={osdMessage} />}
       <OsdOverlay message={osdMessage} />
