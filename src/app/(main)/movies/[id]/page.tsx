@@ -495,7 +495,7 @@ export default function MovieDetailPage() {
                 </button>
               ) : (
                 <Link
-                  href={`/movies/${movie.id}/play?t=0`}
+                  href={`/movies/${movie.id}/play?disc=1&t=0`}
                   className="flex w-full md:w-auto items-center justify-center gap-2 rounded-xl bg-white/90 px-6 py-2.5 text-base font-semibold text-black shadow-lg shadow-white/10 transition-all hover:bg-white hover:shadow-white/20"
                 >
                   <Play className="h-5 w-5 fill-black" />
