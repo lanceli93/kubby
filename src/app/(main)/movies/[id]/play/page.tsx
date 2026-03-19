@@ -459,9 +459,16 @@ export default function PlayerPage() {
     <div
       ref={containerRef}
       className={`fixed inset-0 z-50 bg-black overflow-hidden ${!showControls ? "cursor-none" : ""}`}
-      onMouseMove={resetControlsTimer}
-      onTouchStart={resetControlsTimer}
-      onClick={session.togglePlay}
+      onMouseMove={(e) => {
+        // In 360° mode, suppress controls during drag (mouse button held)
+        if (is360Mode && e.buttons > 0) return;
+        resetControlsTimer();
+      }}
+      onTouchStart={is360Mode ? undefined : resetControlsTimer}
+      onClick={() => {
+        resetControlsTimer();
+        session.togglePlay();
+      }}
     >
       <video
         ref={session.videoRef}
