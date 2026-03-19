@@ -533,7 +533,9 @@
     "labelEncoder": "编码器",
     "mode360": "360°",
     "mode360On": "360° 模式已开启",
-    "mode360Off": "360° 模式已关闭"
+    "mode360Off": "360° 模式已关闭",
+    "speedLabel": "倍速",
+    "resolutionLabel": "分辨率"
   },
   "folderPicker": {
     "selectFolder": "选择文件夹",

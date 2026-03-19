@@ -14,6 +14,7 @@ import {
   BookmarkPlus,
   PanelTop,
   RotateCcw,
+  Gauge,
 } from "lucide-react";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -179,115 +180,132 @@ export function PlayerControls({
 
   return (
     <>
-      {/* Mobile: left side panel */}
+      {/* Mobile: left side panel — left-4 clears iOS back-swipe gesture zone */}
       <div
-        className={`md:hidden absolute left-2 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 transition-opacity duration-300 ${
+        className={`md:hidden absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-3 transition-opacity duration-300 ${
           showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onQuickBookmark}
-          className="flex items-center justify-center h-10 w-10 rounded-full bg-black/30 backdrop-blur text-white/80 hover:text-indigo-400 transition-colors"
-          title="Quick bookmark (B)"
+          className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
+          aria-label="Quick bookmark"
         >
           <Bookmark className="h-5 w-5" />
+        </button>
+        <button
+          onClick={onToggle360Mode}
+          className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm text-[11px] font-semibold active:scale-95 transition-all ${
+            is360Mode ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
+          }`}
+          aria-label={is360Mode ? tPlayer("mode360On") : tPlayer("mode360Off")}
+        >
+          {tPlayer("mode360")}
         </button>
       </div>
 
       {/* Mobile: right side panel */}
       <div
-        className={`md:hidden absolute right-2 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 items-center transition-opacity duration-300 ${
+        className={`md:hidden absolute right-3 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-3 items-center transition-opacity duration-300 ${
           showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {playbackMode === "transcode" && (() => {
-          const filtered = RESOLUTION_OPTIONS.filter(
-            (opt) => opt.maxWidth === 0 || !sourceVideoWidth || sourceVideoWidth > opt.maxWidth
-          );
-          return (
-            <div className="relative">
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowResMenu((v) => !v); }}
-                className="flex items-center justify-center min-w-10 h-10 px-2.5 rounded-full bg-black/30 backdrop-blur text-[11px] font-semibold text-white/80 hover:text-white transition-colors cursor-pointer"
-              >
-                {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}
-              </button>
-              {showResMenu && (
-                <div
-                  className="absolute right-full top-0 mr-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {filtered.map((opt) => (
-                    <button
-                      key={opt.maxWidth}
-                      onClick={() => {
-                        setShowResMenu(false);
-                        if (opt.maxWidth === selectedMaxWidth) return;
-                        onResolutionChange(opt.maxWidth);
-                        showOsd(tPlayer("switchingTo", { label: tPlayer(opt.labelKey) }));
-                      }}
-                      className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
-                        opt.maxWidth === selectedMaxWidth
-                          ? "bg-white/10 text-white"
-                          : "text-white/70 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      {tPlayer(opt.labelKey)}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })()}
-        <button
-          onClick={onToggle360Mode}
-          className={`flex items-center justify-center min-w-10 h-10 px-2.5 rounded-full backdrop-blur text-[11px] font-semibold transition-colors cursor-pointer ${
-            is360Mode ? "bg-primary/25 text-primary" : "bg-black/30 text-white/80 hover:text-white"
-          }`}
-        >
-          {tPlayer("mode360")}
-        </button>
         {is360Mode && onResetView && (
           <button
             onClick={onResetView}
-            className="flex items-center justify-center h-10 w-10 rounded-full bg-black/30 backdrop-blur text-white/80 hover:text-white transition-colors cursor-pointer"
-            title="Reset view (R)"
+            className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
+            aria-label="Reset view"
           >
             <RotateCcw className="h-5 w-5" />
           </button>
         )}
-        <div className="relative">
+        {playbackMode === "transcode" && (
           <button
-            onClick={(e) => { e.stopPropagation(); setShowSpeedMenu(!showSpeedMenu); }}
-            className={`flex items-center justify-center min-w-10 h-10 px-2.5 rounded-full backdrop-blur text-[11px] font-semibold transition-colors cursor-pointer ${
-              playbackRate !== 1 ? "bg-primary/25 text-primary" : "bg-black/30 text-white/80 hover:text-white"
-            }`}
+            onClick={(e) => { e.stopPropagation(); setShowResMenu((v) => !v); }}
+            className="flex items-center justify-center min-w-[44px] h-11 px-3 rounded-full bg-black/30 backdrop-blur-sm text-[11px] font-semibold text-white/80 active:scale-95 active:bg-white/10 transition-all"
+            aria-label="Transcode resolution"
           >
-            {playbackRate}x
+            {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}
           </button>
-          {showSpeedMenu && (
+        )}
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowSpeedMenu(!showSpeedMenu); }}
+          className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm active:scale-95 transition-all ${
+            playbackRate !== 1 ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
+          }`}
+          aria-label="Playback speed"
+        >
+          <Gauge className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Mobile: centered speed picker overlay */}
+      {showSpeedMenu && (
+        <div
+          className="md:hidden fixed inset-0 z-50 flex items-center justify-center"
+          onClick={() => setShowSpeedMenu(false)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[200px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-2 text-xs text-white/40 font-medium">{tPlayer("speedLabel")}</div>
+            {SPEED_OPTIONS.map((rate) => (
+              <button
+                key={rate}
+                onClick={() => { onSpeedChange(rate); setShowSpeedMenu(false); }}
+                className={`flex w-full items-center justify-between px-4 py-3 text-sm ${
+                  rate === playbackRate ? "text-primary" : "text-white/80"
+                }`}
+              >
+                <span>{rate}x{rate === 1 ? " (Normal)" : ""}</span>
+                {rate === playbackRate && <span className="text-primary">&#10003;</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile: centered resolution picker overlay */}
+      {showResMenu && (() => {
+        const filtered = RESOLUTION_OPTIONS.filter(
+          (opt) => opt.maxWidth === 0 || !sourceVideoWidth || sourceVideoWidth > opt.maxWidth
+        );
+        return (
+          <div
+            className="md:hidden fixed inset-0 z-50 flex items-center justify-center"
+            onClick={() => setShowResMenu(false)}
+          >
+            <div className="absolute inset-0 bg-black/50" />
             <div
-              className="absolute right-full top-0 mr-2 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+              className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[200px]"
               onClick={(e) => e.stopPropagation()}
             >
-              {SPEED_OPTIONS.map((rate) => (
+              <div className="px-4 py-2 text-xs text-white/40 font-medium">{tPlayer("resolutionLabel")}</div>
+              {filtered.map((opt) => (
                 <button
-                  key={rate}
-                  onClick={() => { onSpeedChange(rate); setShowSpeedMenu(false); }}
-                  className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
-                    rate === playbackRate ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"
+                  key={opt.maxWidth}
+                  onClick={() => {
+                    setShowResMenu(false);
+                    if (opt.maxWidth === selectedMaxWidth) return;
+                    onResolutionChange(opt.maxWidth);
+                    showOsd(tPlayer("switchingTo", { label: tPlayer(opt.labelKey) }));
+                  }}
+                  className={`flex w-full items-center justify-between px-4 py-3 text-sm ${
+                    opt.maxWidth === selectedMaxWidth ? "text-primary" : "text-white/80"
                   }`}
                 >
-                  {rate}x{rate === 1 ? " (Normal)" : ""}
+                  <span>{tPlayer(opt.labelKey)}</span>
+                  {opt.maxWidth === selectedMaxWidth && <span className="text-primary">&#10003;</span>}
                 </button>
               ))}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        );
+      })()}
 
       {/* Bottom controls */}
       <div
@@ -565,14 +583,14 @@ export function PlayerControls({
                   e.stopPropagation();
                   setShowSpeedMenu(!showSpeedMenu);
                 }}
-                className={`text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
+                className={`flex items-center justify-center transition-colors cursor-pointer ${
                   playbackRate !== 1
-                    ? "bg-primary/25 text-primary"
-                    : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
+                    ? "text-primary"
+                    : "text-white/60 hover:text-white"
                 }`}
                 title="Playback speed"
               >
-                {playbackRate}x
+                <Gauge className="h-5 w-5" />
               </button>
               {showSpeedMenu && (
                 <div

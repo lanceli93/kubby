@@ -533,7 +533,9 @@
     "labelEncoder": "Encoder",
     "mode360": "360°",
     "mode360On": "360° mode on",
-    "mode360Off": "360° mode off"
+    "mode360Off": "360° mode off",
+    "speedLabel": "Speed",
+    "resolutionLabel": "Resolution"
   },
   "folderPicker": {
     "selectFolder": "Select Folder",
