@@ -15,6 +15,7 @@ import {
   PanelTop,
   RotateCcw,
   Gauge,
+  Lock,
 } from "lucide-react";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -70,6 +71,8 @@ export interface PlayerControlsProps {
   customIcons: CustomIcon[];
   disabledIconIds: Set<string>;
   is360Mode: boolean;
+  isLocked: boolean;
+  onToggleLock: () => void;
   onResetView?: () => void;
   onSeek: (seconds: number) => void;
   onSkip: (seconds: number) => void;
@@ -125,6 +128,8 @@ export function PlayerControls({
   onToggleMute,
   onToggleFullscreen,
   is360Mode,
+  isLocked,
+  onToggleLock,
   onResetView,
   onToggleAutoHide,
   onToggle360Mode,
@@ -188,25 +193,38 @@ export function PlayerControls({
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={onQuickBookmark}
-          className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
-          aria-label="Quick bookmark"
-        >
-          <Bookmark className="h-5 w-5" />
-        </button>
-        <button
-          onClick={onToggle360Mode}
-          className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm text-[11px] font-semibold active:scale-95 transition-all ${
-            is360Mode ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
+          onClick={onToggleLock}
+          className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm active:scale-95 transition-all ${
+            isLocked ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
           }`}
-          aria-label={is360Mode ? tPlayer("mode360On") : tPlayer("mode360Off")}
+          aria-label={isLocked ? "Unlock controls" : "Lock controls"}
         >
-          {tPlayer("mode360")}
+          <Lock className="h-5 w-5" />
         </button>
+        {!isLocked && (
+          <>
+            <button
+              onClick={onQuickBookmark}
+              className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
+              aria-label="Quick bookmark"
+            >
+              <Bookmark className="h-5 w-5" />
+            </button>
+            <button
+              onClick={onToggle360Mode}
+              className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm text-[11px] font-semibold active:scale-95 transition-all ${
+                is360Mode ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
+              }`}
+              aria-label={is360Mode ? tPlayer("mode360On") : tPlayer("mode360Off")}
+            >
+              {tPlayer("mode360")}
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Mobile: right side panel */}
-      <div
+      {/* Mobile: right side panel — hidden when locked */}
+      {!isLocked && <div
         className={`md:hidden absolute right-3 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-3 items-center transition-opacity duration-300 ${
           showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
@@ -239,7 +257,7 @@ export function PlayerControls({
         >
           <Gauge className="h-5 w-5" />
         </button>
-      </div>
+      </div>}
 
       {/* Mobile: centered speed picker overlay */}
       {showSpeedMenu && (
@@ -393,30 +411,32 @@ export function PlayerControls({
         </div>
       </div>
 
-      {/* Mobile: time + transport row */}
-      <div className="flex md:hidden items-center">
-        <span className="tabular-nums text-xs text-white/80 w-24">
-          {formatTime(displayTime)} / {formatTime(duration)}
-        </span>
-        <div className="flex-1 flex items-center justify-center gap-4">
-          <button
-            onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
-            className="text-white/80 hover:text-white"
-          >
-            <ChevronsLeft className="h-5 w-5" />
-          </button>
-          <button onClick={onTogglePlay} className="text-white hover:text-white/90">
-            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-          </button>
-          <button
-            onClick={() => { onSkip(10); showOsd("+10s"); }}
-            className="text-white/80 hover:text-white"
-          >
-            <ChevronsRight className="h-5 w-5" />
-          </button>
+      {/* Mobile: time + transport row — hidden when locked */}
+      {!isLocked && (
+        <div className="flex md:hidden items-center">
+          <span className="tabular-nums text-xs text-white/80 w-24">
+            {formatTime(displayTime)} / {formatTime(duration)}
+          </span>
+          <div className="flex-1 flex items-center justify-center gap-4">
+            <button
+              onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
+              className="text-white/80 hover:text-white"
+            >
+              <ChevronsLeft className="h-5 w-5" />
+            </button>
+            <button onClick={onTogglePlay} className="text-white hover:text-white/90">
+              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+            </button>
+            <button
+              onClick={() => { onSkip(10); showOsd("+10s"); }}
+              className="text-white/80 hover:text-white"
+            >
+              <ChevronsRight className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="w-24" />
         </div>
-        <div className="w-24" />
-      </div>
+      )}
 
       {/* Desktop bottom row */}
       <div className="relative hidden md:flex items-center justify-between">

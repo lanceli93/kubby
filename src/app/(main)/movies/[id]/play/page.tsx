@@ -56,6 +56,7 @@ export default function PlayerPage() {
   const [osdMessage, setOsdMessage] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   const isMobile = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
   // Mobile caps at 2.5K to avoid choking on high-res (e.g. 8K VR) content
   const [selectedMaxWidth, setSelectedMaxWidth] = useState(isMobile ? 2560 : 0);
@@ -460,7 +461,7 @@ export default function PlayerPage() {
       className={`fixed inset-0 z-50 bg-black overflow-hidden ${!showControls ? "cursor-none" : ""}`}
       onMouseMove={resetControlsTimer}
       onTouchStart={resetControlsTimer}
-      onClick={session.togglePlay}
+      onClick={isLocked ? undefined : session.togglePlay}
     >
       <video
         ref={session.videoRef}
@@ -533,23 +534,25 @@ export default function PlayerPage() {
         />
       )}
 
-      <PlayerTopBar
-        title={movie?.title || ""}
-        currentDiscLabel={currentDiscLabel}
-        isMultiDisc={isMultiDisc}
-        currentDisc={currentDisc}
-        totalDiscs={totalDiscs}
-        showControls={showControls}
-        playbackMode={session.playbackMode}
-        encoderName={session.encoderName}
-        onBack={() => {
-          saveProgress.mutate({ seconds: session.getRealTime(), disc: currentDisc });
-          router.back();
-        }}
-        onToggleHelp={() => setShowHelp((v) => !v)}
-      />
+      {!isLocked && (
+        <PlayerTopBar
+          title={movie?.title || ""}
+          currentDiscLabel={currentDiscLabel}
+          isMultiDisc={isMultiDisc}
+          currentDisc={currentDisc}
+          totalDiscs={totalDiscs}
+          showControls={showControls}
+          playbackMode={session.playbackMode}
+          encoderName={session.encoderName}
+          onBack={() => {
+            saveProgress.mutate({ seconds: session.getRealTime(), disc: currentDisc });
+            router.back();
+          }}
+          onToggleHelp={() => setShowHelp((v) => !v)}
+        />
+      )}
 
-      <CenterPlayButton isPlaying={session.isPlaying} osdMessage={osdMessage} />
+      {!isLocked && <CenterPlayButton isPlaying={session.isPlaying} osdMessage={osdMessage} />}
       <OsdOverlay message={osdMessage} />
       <HelpOverlay show={showHelp} onClose={() => setShowHelp(false)} />
 
@@ -605,6 +608,8 @@ export default function PlayerPage() {
         onToggleMute={toggleMute}
         onToggleFullscreen={toggleFullscreen}
         is360Mode={is360Mode}
+        isLocked={isLocked}
+        onToggleLock={() => setIsLocked((v) => !v)}
         onResetView={() => resetViewRef.current?.()}
         onToggleAutoHide={() => setAutoHideControls((v) => !v)}
         onToggle360Mode={() => {
