@@ -185,24 +185,24 @@ export function PlayerControls({
 
   return (
     <>
-      {/* Mobile: left side panel — left-4 clears iOS back-swipe gesture zone */}
+      {/* Left side panel — lock button on all sizes, other buttons mobile-only */}
       <div
-        className={`md:hidden absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-3 transition-opacity duration-300 ${
+        className={`absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-3 transition-opacity duration-300 ${
           showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onToggleLock}
-          className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm active:scale-95 transition-all ${
-            isLocked ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
+          className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm active:scale-95 transition-all cursor-pointer ${
+            isLocked ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 hover:text-white active:bg-white/10"
           }`}
           aria-label={isLocked ? "Unlock controls" : "Lock controls"}
         >
           <Lock className="h-5 w-5" />
         </button>
         {!isLocked && (
-          <>
+          <div className="md:hidden flex flex-col gap-3">
             <button
               onClick={onQuickBookmark}
               className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
@@ -219,7 +219,7 @@ export function PlayerControls({
             >
               {tPlayer("mode360")}
             </button>
-          </>
+          </div>
         )}
       </div>
 
@@ -445,7 +445,7 @@ export function PlayerControls({
           <span className="tabular-nums text-xs md:text-sm text-white/80">
             {formatTime(displayTime)} / {formatTime(duration)}
           </span>
-          {playbackMode && (
+          {!isLocked && playbackMode && (
             <div className="relative">
               <button
                 onClick={(e) => {
@@ -500,8 +500,8 @@ export function PlayerControls({
           </button>
         </div>
 
-        {/* Right controls */}
-        <div className="flex items-center gap-2 md:gap-4">
+        {/* Right controls — hidden when locked */}
+        {!isLocked && <div className="flex items-center gap-2 md:gap-4">
           {/* Group: Bookmarks */}
           <div className="flex items-center gap-1 md:gap-1.5">
             <button
@@ -703,7 +703,7 @@ export function PlayerControls({
               </button>
             )}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
     </>
