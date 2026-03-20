@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Info, Trash2, Sparkles, Maximize2, Disc, Monitor, Check, AlertCircle, BookmarkPlus } from "lucide-react";
+import { Play, Heart, CheckCircle, MoreVertical, Pencil, ImageIcon, Info, Trash2, Sparkles, Maximize2, Disc, Monitor, AlertCircle, BookmarkPlus } from "lucide-react";
+import { GlassToast } from "@/components/ui/glass-toast";
 import { BookmarkCard, type CustomIconData } from "@/components/movie/bookmark-card";
 import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
@@ -956,30 +957,18 @@ export default function MovieDetailPage() {
       </Dialog>
 
       {/* External player toast */}
-      {externalToast && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 rounded-lg border px-5 py-3 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
-          externalToast === "__configure__"
-            ? "border-red-500/20 bg-red-500/10 text-white"
-            : "border-green-500/20 bg-green-500/10 text-green-400"
-        }`}>
-          {externalToast === "__configure__" ? (
-            <>
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <span>
-                {t("configureExternalPlayer")}{" "}
-                <Link href="/preferences/playback" className="underline font-semibold text-indigo-400 hover:text-indigo-300">
-                  {tSettings("playback")}
-                </Link>
-              </span>
-            </>
-          ) : (
-            <>
-              <Check className="h-4 w-4 flex-shrink-0" />
-              {externalToast}
-            </>
-          )}
-        </div>
-      )}
+      <GlassToast visible={!!externalToast} success={externalToast !== "__configure__"} position="top">
+        {externalToast === "__configure__" ? (
+          <span>
+            {t("configureExternalPlayer")}{" "}
+            <Link href="/preferences/playback" className="underline font-semibold text-primary hover:text-primary/80">
+              {tSettings("playback")}
+            </Link>
+          </span>
+        ) : (
+          externalToast
+        )}
+      </GlassToast>
     </div>
     </div>
   );

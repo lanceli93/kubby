@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Check, AlertCircle, Upload, Trash2 } from "lucide-react";
+import { X, Upload, Trash2 } from "lucide-react";
+import { GlassToast } from "@/components/ui/glass-toast";
 import { useTranslations } from "next-intl";
 import { BUILTIN_BOOKMARK_ICONS } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -624,25 +625,9 @@ export default function PersonalMetadataPage() {
         {saving ? tCommon("loading") : tCommon("save")}
       </button>
 
-      {/* Toast notification */}
-      <div
-        className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
-          toast
-            ? "translate-y-0 opacity-100"
-            : "translate-y-4 opacity-0 pointer-events-none"
-        } ${
-          toast?.success
-            ? "border-green-500/20 bg-green-500/10 text-green-400"
-            : "border-red-500/20 bg-red-500/10 text-red-400"
-        }`}
-      >
-        {toast?.success ? (
-          <Check className="h-4 w-4" />
-        ) : (
-          <AlertCircle className="h-4 w-4" />
-        )}
+      <GlassToast visible={!!toast} success={toast?.success}>
         {toast?.text}
-      </div>
+      </GlassToast>
     </div>
     </div>
   );

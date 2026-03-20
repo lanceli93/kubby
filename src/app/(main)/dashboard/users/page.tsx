@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { Shield, User, Plus, Trash2, KeyRound, Check, AlertCircle } from "lucide-react";
+import { Shield, User, Plus, Trash2, KeyRound } from "lucide-react";
+import { GlassToast } from "@/components/ui/glass-toast";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -423,25 +424,9 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Toast */}
-      <div
-        className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
-          toast
-            ? "translate-y-0 opacity-100"
-            : "translate-y-4 opacity-0 pointer-events-none"
-        } ${
-          toast?.success
-            ? "border-green-500/20 bg-green-500/10 text-green-400"
-            : "border-red-500/20 bg-red-500/10 text-red-400"
-        }`}
-      >
-        {toast?.success ? (
-          <Check className="h-4 w-4" />
-        ) : (
-          <AlertCircle className="h-4 w-4" />
-        )}
+      <GlassToast visible={!!toast} success={toast?.success}>
         {toast?.text}
-      </div>
+      </GlassToast>
     </div>
     </div>
   );

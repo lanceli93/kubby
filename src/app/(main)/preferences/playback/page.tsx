@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, AlertCircle, Monitor } from "lucide-react";
+import { Monitor } from "lucide-react";
+import { GlassToast } from "@/components/ui/glass-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string; winPath?: string; label: string; icon: string }> = {
@@ -218,23 +219,9 @@ export default function PlaybackPreferencesPage() {
         </div>
       </div>
 
-      {/* Toast */}
-      {playbackToast && (
-        <div
-          className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
-            playbackToast.success
-              ? "border-green-500/20 bg-green-500/10 text-green-400"
-              : "border-red-500/20 bg-red-500/10 text-red-400"
-          }`}
-        >
-          {playbackToast.success ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <AlertCircle className="h-4 w-4" />
-          )}
-          {playbackToast.text}
-        </div>
-      )}
+      <GlassToast visible={!!playbackToast} success={playbackToast?.success}>
+        {playbackToast?.text}
+      </GlassToast>
     </div>
     </div>
   );
