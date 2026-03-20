@@ -435,10 +435,10 @@ export function PersonGallery({
           50%      { box-shadow: 0 0 14px 3px rgba(96,165,250,0.6); }
         }
       `}</style>
-      <section ref={galleryRefCallback} className="flex flex-col gap-4 px-20 pb-12">
+      <section ref={galleryRefCallback} className="flex flex-col gap-4 px-4 md:px-20 pb-12">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-foreground">{tPerson("photos")}</h2>
-          <span className="text-sm text-[#666680]">
+          <span className="whitespace-nowrap text-sm text-[#666680]">
             ({tPerson("photosCount", { count: galleryImages.length })})
           </span>
           {galleryImages.length > 1 && (
@@ -448,14 +448,14 @@ export function PersonGallery({
           )}
           <button
             onClick={() => folderInputRef.current?.click()}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+            className="ml-auto hidden md:inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
           >
             <FolderOpen className="h-4 w-4" />
             {tPerson("uploadFolder")}
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+            className="ml-auto md:ml-0 inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
           >
             <ImagePlus className="h-4 w-4" />
             {tPerson("uploadPhotos")}
