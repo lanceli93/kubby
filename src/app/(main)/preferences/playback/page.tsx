@@ -219,24 +219,22 @@ export default function PlaybackPreferencesPage() {
       </div>
 
       {/* Toast */}
-      <div
-        className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
-          playbackToast
-            ? "translate-y-0 opacity-100"
-            : "translate-y-4 opacity-0 pointer-events-none"
-        } ${
-          playbackToast?.success
-            ? "border-green-500/20 bg-green-500/10 text-green-400"
-            : "border-red-500/20 bg-red-500/10 text-red-400"
-        }`}
-      >
-        {playbackToast?.success ? (
-          <Check className="h-4 w-4" />
-        ) : (
-          <AlertCircle className="h-4 w-4" />
-        )}
-        {playbackToast?.text}
-      </div>
+      {playbackToast && (
+        <div
+          className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
+            playbackToast.success
+              ? "border-green-500/20 bg-green-500/10 text-green-400"
+              : "border-red-500/20 bg-red-500/10 text-red-400"
+          }`}
+        >
+          {playbackToast.success ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          {playbackToast.text}
+        </div>
+      )}
     </div>
     </div>
   );
