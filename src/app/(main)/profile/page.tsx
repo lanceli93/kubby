@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { GlassToast } from "@/components/ui/glass-toast";
 
 export default function ProfilePage() {
   const { data: session } = useSession();
@@ -12,30 +13,34 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [profileMsg, setProfileMsg] = useState("");
-  const [passwordMsg, setPasswordMsg] = useState("");
+  const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  function showToast(text: string, success: boolean) {
+    clearTimeout(toastTimer.current);
+    setToast({ text, success });
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  }
 
   async function handleProfileSave(e: React.FormEvent) {
     e.preventDefault();
-    setProfileMsg("");
     try {
       const res = await fetch("/api/users/me", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ displayName }),
       });
-      if (res.ok) setProfileMsg(t("changesSaved"));
-      else setProfileMsg(t("failedToSave"));
+      if (res.ok) showToast(t("changesSaved"), true);
+      else showToast(t("failedToSave"), false);
     } catch {
-      setProfileMsg(t("somethingWentWrong"));
+      showToast(t("somethingWentWrong"), false);
     }
   }
 
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault();
-    setPasswordMsg("");
     if (newPassword !== confirmPassword) {
-      setPasswordMsg(t("passwordsDoNotMatch"));
+      showToast(t("passwordsDoNotMatch"), false);
       return;
     }
     try {
@@ -45,16 +50,16 @@ export default function ProfilePage() {
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       if (res.ok) {
-        setPasswordMsg(t("passwordUpdated"));
+        showToast(t("passwordUpdated"), true);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       } else {
         const data = await res.json();
-        setPasswordMsg(data.error || t("failedToUpdatePassword"));
+        showToast(data.error || t("failedToUpdatePassword"), false);
       }
     } catch {
-      setPasswordMsg(t("somethingWentWrong"));
+      showToast(t("somethingWentWrong"), false);
     }
   }
 
@@ -103,9 +108,6 @@ export default function ProfilePage() {
           </label>
           <p className="text-sm text-[#666680]">{session?.user?.email}</p>
         </div>
-        {profileMsg && (
-          <p className="text-sm text-primary">{profileMsg}</p>
-        )}
         <div className="flex justify-end">
           <button
             type="submit"
@@ -160,11 +162,6 @@ export default function ProfilePage() {
             required
           />
         </div>
-        {passwordMsg && (
-          <p className={`text-sm ${passwordMsg === t("passwordUpdated") ? "text-green-500" : "text-destructive"}`}>
-            {passwordMsg}
-          </p>
-        )}
         <div className="flex justify-end">
           <button
             type="submit"
@@ -188,6 +185,10 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+
+    <GlassToast visible={!!toast} success={toast?.success}>
+      {toast?.text}
+    </GlassToast>
     </div>
   );
 }

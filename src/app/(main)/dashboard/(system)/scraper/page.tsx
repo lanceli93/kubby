@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
+import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { GlassToast } from "@/components/ui/glass-toast";
 
 export default function ScraperSettingsPage() {
   const t = useTranslations("dashboard");
@@ -12,7 +13,14 @@ export default function ScraperSettingsPage() {
   const [configured, setConfigured] = useState(false);
   const [maskedKey, setMaskedKey] = useState("");
   const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+  const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  function showToast(text: string, success: boolean) {
+    clearTimeout(toastTimer.current);
+    setToast({ text, success });
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  }
 
   useEffect(() => {
     fetch("/api/settings/scraper")
@@ -27,7 +35,6 @@ export default function ScraperSettingsPage() {
   const handleSave = async () => {
     if (!apiKey.trim()) return;
     setSaving(true);
-    setStatus("idle");
     try {
       const res = await fetch("/api/settings/scraper", {
         method: "PUT",
@@ -36,15 +43,15 @@ export default function ScraperSettingsPage() {
       });
       const data = await res.json();
       if (res.ok && data.valid) {
-        setStatus("saved");
+        showToast(t("apiKeySaved"), true);
         setConfigured(true);
         setMaskedKey(apiKey.slice(0, 4) + "..." + apiKey.slice(-4));
         setApiKey("");
       } else {
-        setStatus("error");
+        showToast(t("apiKeyInvalid"), false);
       }
     } catch {
-      setStatus("error");
+      showToast(t("apiKeyInvalid"), false);
     } finally {
       setSaving(false);
     }
@@ -66,10 +73,7 @@ export default function ScraperSettingsPage() {
               <input
                 type={showKey ? "text" : "password"}
                 value={apiKey}
-                onChange={(e) => {
-                  setApiKey(e.target.value);
-                  setStatus("idle");
-                }}
+                onChange={(e) => setApiKey(e.target.value)}
                 placeholder={configured ? maskedKey : "Enter TMDB API key..."}
                 className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 pr-10 font-mono text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
               />
@@ -94,26 +98,17 @@ export default function ScraperSettingsPage() {
           </p>
         </div>
 
-        {status === "saved" && (
-          <div className="flex items-center gap-2 text-sm text-green-400">
-            <CheckCircle className="h-4 w-4" />
-            {t("apiKeySaved")}
-          </div>
-        )}
-        {status === "error" && (
-          <div className="flex items-center gap-2 text-sm text-destructive">
-            <XCircle className="h-4 w-4" />
-            {t("apiKeyInvalid")}
-          </div>
-        )}
-
-        {configured && status === "idle" && (
+        {configured && (
           <div className="flex items-center gap-2 text-sm text-green-400">
             <CheckCircle className="h-4 w-4" />
             TMDB API key configured
           </div>
         )}
       </div>
+
+      <GlassToast visible={!!toast} success={toast?.success}>
+        {toast?.text}
+      </GlassToast>
     </div>
   );
 }
