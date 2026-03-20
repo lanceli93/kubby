@@ -49,14 +49,23 @@ kubby/
 │   │   │   │       └── play/page.tsx               # 视频播放器编排 (hook 接线, 键盘快捷键, 数据获取)
 │   │   │   ├── people/[id]/page.tsx                # 演员详情 (fanart+大卡片+参演作品)
 │   │   │   ├── search/page.tsx                     # 搜索结果 (电影+演员)
-│   │   │   ├── settings/page.tsx                   # 用户设置 (个人资料/密码/语言切换/账户信息, i18n)
-│   │   │   ├── personal-metadata/page.tsx          # 个人元数据设置 (评分维度/书签图标管理/快速书签模板/低调标记)
+│   │   │   ├── profile/page.tsx                    # 个人资料 (头像/用户名/密码/账户类型)
+│   │   │   ├── preferences/                        # 用户偏好 (PreferencesSidebar 子导航)
+│   │   │   │   ├── layout.tsx                      # PreferencesSidebar 布局
+│   │   │   │   ├── page.tsx                        # 重定向到 card-badges
+│   │   │   │   ├── card-badges/page.tsx            # 卡片标记设置 (分辨率/评分/Tier 角标开关)
+│   │   │   │   ├── ratings-bookmarks/page.tsx      # 评分维度/书签图标管理/快速书签模板/低调标记
+│   │   │   │   ├── playback/page.tsx               # 外部播放器设置 (IINA/PotPlayer/Web Player)
+│   │   │   │   └── language/page.tsx               # 语言切换 (en/zh)
 │   │   │   └── dashboard/                          # 管理后台 (需 admin 权限)
-│   │   │       ├── layout.tsx                      # AdminSidebar 布局
-│   │   │       ├── page.tsx                        # 管理概览 (统计+活动+快速操作)
-│   │   │       ├── libraries/page.tsx              # 媒体库管理 (CRUD+扫描+文件夹选择器+刮削开关)
-│   │   │       ├── scraper/page.tsx               # 刮削器设置 (TMDB API key 管理)
-│   │   │       └── users/page.tsx                  # 用户管理 (CRUD: 添加/删除/改角色/重置密码, 末位管理员保护)
+│   │   │       ├── layout.tsx                      # 透传布局 (仅路由分组)
+│   │   │       ├── libraries/page.tsx              # 媒体库管理 (独立页面, 无子导航)
+│   │   │       ├── users/page.tsx                  # 用户管理 (独立页面, 无子导航)
+│   │   │       └── (system)/                       # 系统管理 (AdminSidebar 子导航)
+│   │   │           ├── layout.tsx                  # AdminSidebar 布局
+│   │   │           ├── page.tsx                    # 系统概览 (统计+活动+快速操作)
+│   │   │           ├── scraper/page.tsx            # 刮削器设置 (TMDB API key 管理)
+│   │   │           └── networking/page.tsx         # 网络设置 (端口/Docker 检测)
 │   │   └── api/                                    # API Routes (共 26+ 个端点)
 │   │       ├── auth/[...nextauth]/route.ts         # NextAuth 端点
 │   │       ├── dashboard/
@@ -97,9 +106,10 @@ kubby/
 │   ├── components/
 │   │   ├── layout/
 │   │   │   ├── app-header.tsx                      # 顶部导航栏 (logo+导航+搜索+头像, 响应式 px-3/md:px-8)
-│   │   │   ├── bottom-tabs.tsx                     # 移动端底部 Tab 栏 (Home/Movies/Search/Settings, md:hidden)
-│   │   │   ├── admin-sidebar.tsx                   # 管理侧边栏 (桌面: 垂直侧栏, 移动: 水平滚动导航条)
-│   │   │   └── nav-sidebar.tsx                     # 汉堡菜单侧边栏 (Home/Media/Dashboard/User)
+│   │   │   ├── bottom-tabs.tsx                     # 移动端底部 Tab 栏 (Home/Movies/Search/Preferences, md:hidden)
+│   │   │   ├── admin-sidebar.tsx                   # 系统管理子导航 (Overview/Scraper/Networking)
+│   │   │   ├── preferences-sidebar.tsx             # 偏好设置子导航 (Card Badges/Ratings & Bookmarks/Playback/Language)
+│   │   │   └── nav-sidebar.tsx                     # 汉堡菜单侧边栏 (Home/Media/Admin/User)
 │   │   ├── movie/
 │   │   │   ├── movie-card.tsx                      # 电影海报卡片 (2:3, 180x270, responsive 模式支持 w-full+aspect-[2/3])
 │   │   │   ├── bookmark-card.tsx                   # 书签缩略图卡片 (320px, 编辑/删除/图标)
@@ -116,12 +126,13 @@ kubby/
 │   │   │   ├── player-overlays.tsx                  # 叠加层 (OSD/帮助/书签面板/中央播放按钮)
 │   │   │   ├── player-top-bar.tsx                   # 顶部栏 (返回/标题/碟片计数/帮助)
 │   │   │   └── panorama-360-player.tsx              # Three.js 360° 全景播放器 (球体+VideoTexture+拖拽/缩放)
-│   │   └── ui/                                     # shadcn/ui 组件 (17个)
+│   │   └── ui/                                     # shadcn/ui 组件 + 自定义组件 (18个)
 │   │       ├── avatar.tsx, badge.tsx, button.tsx, card.tsx
 │   │       ├── dialog.tsx, dropdown-menu.tsx, input.tsx, label.tsx
 │   │       ├── progress.tsx, scroll-area.tsx, scroll-row.tsx, select.tsx
 │   │       ├── separator.tsx, slider.tsx, switch.tsx, tabs.tsx
-│   │       └── textarea.tsx
+│   │       ├── textarea.tsx
+│   │       └── glass-toast.tsx                     # 玻璃风格 Toast (全站统一, 居中底部/顶部)
 │   ├── i18n/
 │   │   ├── config.ts                               # 语言配置 (locales: en/zh, defaultLocale: en)
 │   │   ├── request.ts                              # next-intl 服务端配置 (从 cookie NEXT_LOCALE 读取)
@@ -864,21 +875,26 @@ Player (page.tsx)
 | `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 书签 (B/Shift+B) + 倍速 + 进度条图标标记 + 自动隐藏控制栏 (可 toggle) + 360° 全景模式 |
 | `/people/[id]` | 演员详情 | fanart 渐变 + 大卡片 + 参演作品网格 + 照片墙(Justified 行布局+Lightbox+上传/删除) |
 | `/search` | 搜索 | 搜索框 + 电影结果 + 演员结果 + 书签剪辑 (按宽高比分横屏/竖屏行) |
-| `/settings` | 用户设置 | 个人资料 / 密码 / 语言切换 / 账户信息, i18n |
-| `/dashboard` | 管理概览 | 4 个统计卡片 + 活动列表 + 快速操作 |
-| `/dashboard/libraries` | 媒体库管理 | 库卡片 + Dialog(含FolderPicker+刮削开关) + 扫描/删除 |
-| `/dashboard/scraper` | 刮削器设置 | TMDB API key 管理 (输入/验证/掩码显示) |
-| `/dashboard/users` | 用户管理 | 完整 CRUD: 添加用户 / 删除 / 角色切换 / 重置密码, 末位管理员保护, 自删除防护 |
-| `/dashboard/networking` | 网络设置 | 端口配置, Docker 模式检测, 重启提示 |
-| `/card-badges` | 卡片徽章设置 | 电影卡片(分辨率/评分)和演员卡片(段位)徽章开关, 预览卡片, 可展开规则说明 |
-| `/personal-metadata` | 个人元数据 | 多维度评分维度管理, 书签图标管理(内置9个+自定义上传), 快速书签模板 |
+| `/profile` | 个人资料 | 头像/用户名/密码/账户类型 |
+| `/preferences/card-badges` | 卡片标记 | 电影卡片(分辨率/评分)和演员卡片(段位)徽章开关, 预览卡片, 可展开规则说明 |
+| `/preferences/ratings-bookmarks` | 评分与书签 | 多维度评分维度管理, 书签图标管理(内置9个+自定义上传), 快速书签模板 |
+| `/preferences/playback` | 播放设置 | 外部播放器选择 (IINA/PotPlayer/Web Player), 本地/串流模式 |
+| `/preferences/language` | 语言设置 | en/zh 切换 |
+| `/dashboard` | 系统概览 | 4 个统计卡片 + 活动列表 + 快速操作 (System 子导航) |
+| `/dashboard/libraries` | 媒体库管理 | 库卡片 + Dialog(含FolderPicker+刮削开关) + 扫描/删除 (独立页面) |
+| `/dashboard/scraper` | 刮削器设置 | TMDB API key 管理 (输入/验证/掩码显示) (System 子导航) |
+| `/dashboard/users` | 用户管理 | 完整 CRUD: 添加用户 / 删除 / 角色切换 / 重置密码, 末位管理员保护, 自删除防护 (独立页面) |
+| `/dashboard/networking` | 网络设置 | 端口配置, Docker 模式检测, 重启提示 (System 子导航) |
 
 ### 共享组件
 
 | 组件 | 位置 | 说明 |
 |------|------|------|
-| `AppHeader` | `components/layout/` | 顶部导航: logo + 导航链接(Home/Dashboard) + 搜索图标 + 头像 (Movies 通过媒体库卡片进入, 不在顶部导航) |
-| `AdminSidebar` | `components/layout/` | 管理侧边栏: 概览/媒体库/用户/刮削器/网络, 渐变高亮+圆角指示器 |
+| `AppHeader` | `components/layout/` | 顶部导航: logo + 搜索图标 + 用户头像(→/profile) |
+| `NavSidebar` | `components/layout/` | 汉堡菜单侧边栏: Home / MEDIA(All Movies) / ADMIN(Libraries+Users+System, 仅管理员) / USER(Preferences+Profile+Sign Out) |
+| `AdminSidebar` | `components/layout/` | 系统管理子导航: Overview/Scraper/Networking, 渐变高亮+圆角指示器 |
+| `PreferencesSidebar` | `components/layout/` | 偏好设置子导航: Card Badges/Ratings & Bookmarks/Playback/Language |
+| `GlassToast` | `components/ui/` | 玻璃风格 Toast 通知: `bg-[#0a0a0f]/70 backdrop-blur-2xl`, 居中底部/顶部, success=primary icon / error=red icon, `aria-live="polite"` |
 | `AddLibraryCard` | `components/library/` | 空状态媒体库卡片 (虚线边框), 点击打开内联添加媒体库 Dialog |
 | `MovieCard` | `components/movie/` | 海报卡片 (180x270), 支持评分/收藏/进度条, hover 显示 watched/favorite 切换 + ⋯ 下拉菜单 (Play/Edit/MediaInfo/Delete) |
 | `PersonCard` | `components/people/` | 演员卡片 (sm:140x210, md:160x240, lg:240x340) |
@@ -1046,11 +1062,11 @@ Mobile-first CSS — 无前缀写手机样式, `md:` 前缀写桌面样式。统
 | **Login / Register** | `w-[480px]` → `w-full max-w-[480px] mx-4 md:mx-0`, 内边距缩小 |
 | **Home** | `px-12` → `px-4 md:px-12`, `gap-10` → `gap-6 md:gap-10`, Favorites 网格 `grid-cols-2` |
 | **Search** | 搜索框 `w-[800px]` → `w-full max-w-[800px]`, Category chips `flex-wrap` |
-| **Settings / PersonalMetadata / CardBadges** | `w-[720px]` → `w-full max-w-[720px]`, 容器 `px-4 md:px-0` |
+| **Profile / Preferences** | `w-[720px]` → `w-full max-w-[720px]`, 容器 `px-4 md:px-0`; Preferences 带 PreferencesSidebar 子导航 |
 | **Movie Detail** | Hero: 手机端 fanart banner (`h-[220px]`) + 隐藏 poster + 流式布局; 桌面保持 absolute 叠加; Play 按钮 `w-full md:w-auto`; 所有 section `px-4 md:px-20`; View fanart / Bookmark mode 按钮手机端隐藏 |
 | **Person Detail** | 与 Movie Detail 同构: fanart banner + 隐藏 poster + 响应式标题/padding |
 | **Movies Browse** | `px-12` → `px-4 md:px-12`, 电影网格 `grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)]`, MovieCard 传 `responsive` prop |
-| **Dashboard** | AdminSidebar `hidden md:flex` + 移动端水平滚动导航条; layout `flex-col md:flex-row` |
+| **Dashboard (System)** | AdminSidebar `hidden md:flex` + 移动端水平滚动导航条; `(system)` route group 布局 `flex-col md:flex-row`; Libraries/Users 独立页面无子导航 |
 
 ### 组件适配
 
@@ -1074,7 +1090,7 @@ Mobile-first CSS — 无前缀写手机样式, `md:` 前缀写桌面样式。统
 - 无字幕支持
 - ~~无远程元数据抓取~~ 已支持 TMDB 刮削器 (可选, 按媒体库启用, 自动生成 NFO + 下载海报/背景图)
 - Dashboard 活动日志为占位实现
-- i18n 覆盖 auth/setup/settings/home/movies/nav 页面, 包括 Tab 导航标签 + 卡片 hover 操作菜单文案
+- i18n 覆盖 auth/setup/profile/preferences/home/movies/nav/dashboard 页面, 包括 Tab 导航标签 + 卡片 hover 操作菜单文案
 
 ### 打包分发
 
