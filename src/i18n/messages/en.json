@@ -75,15 +75,16 @@
   "nav": {
     "home": "Home",
     "movies": "Movies",
-    "dashboard": "Dashboard",
     "search": "Search",
-    "settings": "Settings",
     "media": "Media",
-    "administration": "Administration",
-    "user": "User",
     "allMovies": "All Movies",
-    "personalMetadata": "Personal Metadata",
-    "cardBadges": "Card Badges"
+    "admin": "Admin",
+    "libraries": "Libraries",
+    "users": "Users",
+    "system": "System",
+    "user": "User",
+    "preferences": "Preferences",
+    "profile": "Profile"
   },
   "home": {
     "continueWatching": "Continue Watching",
@@ -178,6 +179,7 @@
     "mediaLibraries": "Media Libraries",
     "users": "Users",
     "administration": "Administration",
+    "system": "System",
     "totalMovies": "Total Movies",
     "diskUsage": "Disk Usage",
     "recentActivity": "Recent Activity",
@@ -438,6 +440,13 @@
     "width": "W",
     "height": "H",
     "tierRulesTitle": "Tier is determined by personal rating:"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "cardBadges": "Card Badges",
+    "ratingsBookmarks": "Ratings & Bookmarks",
+    "playback": "Playback",
+    "language": "Language"
   },
   "personalMetadata": {
     "title": "Personal Metadata Settings",

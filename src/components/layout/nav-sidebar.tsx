@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, LayoutDashboard, Settings, LogOut, X, SlidersHorizontal, BadgeCheck } from "lucide-react";
+import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
@@ -36,21 +36,47 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
 
   const mediaItems = [
     { href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true },
-    { href: "/personal-metadata", label: tNav("personalMetadata"), icon: SlidersHorizontal },
-    { href: "/card-badges", label: tNav("cardBadges"), icon: BadgeCheck },
   ];
 
   const adminItems = [
-    { href: "/dashboard", label: tNav("dashboard"), icon: LayoutDashboard },
+    { href: "/dashboard/libraries", label: tNav("libraries"), icon: Folder },
+    { href: "/dashboard/users", label: tNav("users"), icon: Users },
+    { href: "/dashboard", label: tNav("system"), icon: Server, matchSystem: true },
   ];
 
   const userItems = [
-    { href: "/settings", label: tNav("settings"), icon: Settings },
+    { href: "/preferences", label: tNav("preferences"), icon: Settings, matchPrefix: true },
+    { href: "/profile", label: tNav("profile"), icon: UserCircle },
   ];
 
-  const isActive = (href: string, matchPrefix?: boolean) => {
+  const isActive = (href: string, matchPrefix?: boolean, matchSystem?: boolean) => {
+    if (matchSystem) {
+      // System: active on /dashboard, /dashboard/scraper, /dashboard/networking
+      // but NOT on /dashboard/libraries or /dashboard/users
+      return pathname === "/dashboard" || pathname.startsWith("/dashboard/scraper") || pathname.startsWith("/dashboard/networking");
+    }
     if (matchPrefix) return pathname.startsWith(href);
-    return pathname === href;
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
+  const renderItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; matchPrefix?: boolean; matchSystem?: boolean }) => {
+    const Icon = item.icon;
+    const active = isActive(item.href, item.matchPrefix, item.matchSystem);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onClose}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
+          active
+            ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+            : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+        {item.label}
+      </Link>
+    );
   };
 
   return (
@@ -82,25 +108,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
         <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-2">
           {/* Home */}
           <div className="flex flex-col gap-0.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
-                    active
-                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
-                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            {navItems.map(renderItem)}
           </div>
 
           {/* Media */}
@@ -108,54 +116,16 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
               {tNav("media")}
             </p>
-            {mediaItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href, item.matchPrefix);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
-                    active
-                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
-                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            {mediaItems.map(renderItem)}
           </div>
 
-          {/* Administration (admin only) */}
+          {/* Admin (admin only) */}
           {isAdmin && (
             <div className="flex flex-col gap-0.5">
               <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                {tNav("administration")}
+                {tNav("admin")}
               </p>
-              {adminItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => {
-                      onClose();
-                    }}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
-                      active
-                        ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
-                        : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {adminItems.map(renderItem)}
             </div>
           )}
 
@@ -164,25 +134,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
               {tNav("user")}
             </p>
-            {userItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
-                    active
-                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
-                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            {userItems.map(renderItem)}
             <button
               onClick={() => {
                 onClose();

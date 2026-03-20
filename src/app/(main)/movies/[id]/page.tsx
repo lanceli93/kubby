@@ -967,8 +967,8 @@ export default function MovieDetailPage() {
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>
                 {t("configureExternalPlayer")}{" "}
-                <Link href="/settings" className="underline font-semibold text-indigo-400 hover:text-indigo-300">
-                  {tSettings("settings")} → {tSettings("playback")}
+                <Link href="/preferences/playback" className="underline font-semibold text-indigo-400 hover:text-indigo-300">
+                  {tSettings("playback")}
                 </Link>
               </span>
             </>

@@ -8,7 +8,7 @@ const tabs = [
   { label: "Home", href: "/", icon: House },
   { label: "Movies", href: "/movies", icon: Film },
   { label: "Search", href: "/search", icon: Search },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Preferences", href: "/preferences", icon: Settings },
 ];
 
 export function BottomTabs() {

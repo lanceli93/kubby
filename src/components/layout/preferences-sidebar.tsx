@@ -2,30 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Wand2, Globe } from "lucide-react";
+import { BadgeCheck, SlidersHorizontal, Play, Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-export function AdminSidebar() {
+export function PreferencesSidebar() {
   const pathname = usePathname();
-  const t = useTranslations("dashboard");
+  const t = useTranslations("preferences");
 
   const sidebarItems = [
-    { label: t("overview"), href: "/dashboard", icon: LayoutDashboard },
-    { label: t("scraperSettings"), href: "/dashboard/scraper", icon: Wand2 },
-    { label: t("networking"), href: "/dashboard/networking", icon: Globe },
+    { label: t("cardBadges"), href: "/preferences/card-badges", icon: BadgeCheck },
+    { label: t("ratingsBookmarks"), href: "/preferences/ratings-bookmarks", icon: SlidersHorizontal },
+    { label: t("playback"), href: "/preferences/playback", icon: Play },
+    { label: t("language"), href: "/preferences/language", icon: Languages },
   ];
 
   return (
     <>
       <aside className="hidden md:flex w-60 flex-col gap-1 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6 ring-1 ring-white/[0.06]">
         <span className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
-          {t("system")}
+          {t("title")}
         </span>
         <div className="mx-3 mb-2 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />
         {sidebarItems.map((item) => {
-          const isActive = item.href === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname.startsWith(item.href);
+          const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
             <Link
@@ -53,9 +52,7 @@ export function AdminSidebar() {
       {/* Mobile horizontal nav */}
       <nav className="flex md:hidden overflow-x-auto border-b border-white/[0.06] bg-black/30 backdrop-blur-xl px-2 py-2 gap-1">
         {sidebarItems.map((item) => {
-          const isActive = item.href === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname.startsWith(item.href);
+          const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
             <Link

@@ -166,6 +166,7 @@ export default function UsersPage() {
   });
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("users")}</h1>
@@ -441,6 +442,7 @@ export default function UsersPage() {
         )}
         {toast?.text}
       </div>
+    </div>
     </div>
   );
 }

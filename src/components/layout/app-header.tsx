@@ -48,10 +48,9 @@ export function AppHeader() {
   const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
   const isPlayerPage = /^\/movies\/[^/]+\/play$/.test(pathname);
   const isSearchPage = pathname === "/search";
-  const isSettingsPage = pathname === "/settings";
-  const isPersonalMetadataPage = pathname === "/personal-metadata";
-  const isCardBadgesPage = pathname === "/card-badges";
-  const needsBackNav = isMovieDetail || isPersonDetail || isSearchPage || isSettingsPage || isPersonalMetadataPage || isCardBadgesPage;
+  const isProfilePage = pathname === "/profile";
+  const isPreferencesPage = pathname.startsWith("/preferences");
+  const needsBackNav = isMovieDetail || isPersonDetail || isSearchPage || isProfilePage || isPreferencesPage;
   const libraryId = searchParams.get("libraryId");
   const personId = searchParams.get("personId");
   const filterGenre = searchParams.get("genre");
@@ -171,7 +170,7 @@ export function AppHeader() {
           <Search className="h-5 w-5" />
         </Link>
         <Link
-          href="/settings"
+          href="/profile"
           className={`transition-colors ${
             isTransparent
               ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"

@@ -176,6 +176,7 @@ export default function LibrariesPage() {
   };
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -856,6 +857,7 @@ export default function LibrariesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }

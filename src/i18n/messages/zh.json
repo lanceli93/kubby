@@ -75,15 +75,16 @@
   "nav": {
     "home": "首页",
     "movies": "电影",
-    "dashboard": "仪表盘",
     "search": "搜索",
-    "settings": "设置",
     "media": "媒体",
-    "administration": "管理",
-    "user": "用户",
     "allMovies": "所有电影",
-    "personalMetadata": "个人元数据",
-    "cardBadges": "卡片标记"
+    "admin": "管理",
+    "libraries": "媒体库",
+    "users": "用户",
+    "system": "系统",
+    "user": "用户",
+    "preferences": "偏好设置",
+    "profile": "个人资料"
   },
   "home": {
     "continueWatching": "继续观看",
@@ -178,6 +179,7 @@
     "mediaLibraries": "媒体库",
     "users": "用户",
     "administration": "管理",
+    "system": "系统",
     "totalMovies": "电影总数",
     "diskUsage": "磁盘用量",
     "recentActivity": "最近活动",
@@ -438,6 +440,13 @@
     "width": "宽",
     "height": "高",
     "tierRulesTitle": "评级由个人评分决定："
+  },
+  "preferences": {
+    "title": "偏好设置",
+    "cardBadges": "卡片标记",
+    "ratingsBookmarks": "评分与书签",
+    "playback": "播放",
+    "language": "语言"
   },
   "personalMetadata": {
     "title": "个人元数据设置",

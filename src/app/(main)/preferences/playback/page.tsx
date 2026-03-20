@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useTranslations, useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
-import { setLocale } from "@/i18n/locale";
+import { useTranslations } from "next-intl";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, AlertCircle, Monitor } from "lucide-react";
@@ -15,19 +12,11 @@ const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string
   PotPlayer: { platform: "win", winPath: "C:\\Program Files\\PotPlayer\\PotPlayerMini64.exe", label: "Windows", icon: "/icons/potplayer.png" },
 };
 
-export default function SettingsPage() {
-  const { data: session } = useSession();
+export default function PlaybackPreferencesPage() {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { data: prefs } = useUserPreferences();
-  const [displayName, setDisplayName] = useState(session?.user?.name || "");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [profileMsg, setProfileMsg] = useState("");
-  const [passwordMsg, setPasswordMsg] = useState("");
   const [playbackSaving, setPlaybackSaving] = useState(false);
   const [playbackToast, setPlaybackToast] = useState<{ text: string; success: boolean } | null>(null);
   const playbackToastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -41,7 +30,6 @@ export default function SettingsPage() {
   const [playerPath, setPlayerPath] = useState("");
   const [playerMode, setPlayerMode] = useState<string>("local");
   const [isLocalhost, setIsLocalhost] = useState(false);
-  const locale = useLocale();
 
   useEffect(() => {
     const host = window.location.hostname;
@@ -52,7 +40,6 @@ export default function SettingsPage() {
     (navigator.platform?.toLowerCase().includes("mac") || navigator.userAgent?.toLowerCase().includes("mac"));
   const serverIsMac = prefs?.serverPlatform === "darwin";
 
-  // Which platform determines available players: local → server, stream → client
   function getEffectivePlatform(mode: string): "mac" | "win" {
     return (mode === "local" ? serverIsMac : clientIsMac) ? "mac" : "win";
   }
@@ -64,7 +51,6 @@ export default function SettingsPage() {
       setPlayerMode(effectiveMode);
       setPlayerPath(prefs.externalPlayerPath || "");
 
-      // Validate saved player is available on the effective platform
       const savedName = prefs.externalPlayerName || "";
       if (savedName && !isPlayerCompatible(savedName, effectiveMode)) {
         setPlayerName("");
@@ -126,203 +112,18 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleProfileSave(e: React.FormEvent) {
-    e.preventDefault();
-    setProfileMsg("");
-    try {
-      const res = await fetch("/api/users/me", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName }),
-      });
-      if (res.ok) setProfileMsg(t("changesSaved"));
-      else setProfileMsg(t("failedToSave"));
-    } catch {
-      setProfileMsg(t("somethingWentWrong"));
-    }
-  }
-
-  async function handlePasswordChange(e: React.FormEvent) {
-    e.preventDefault();
-    setPasswordMsg("");
-    if (newPassword !== confirmPassword) {
-      setPasswordMsg(t("passwordsDoNotMatch"));
-      return;
-    }
-    try {
-      const res = await fetch("/api/users/me/password", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-      if (res.ok) {
-        setPasswordMsg(t("passwordUpdated"));
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      } else {
-        const data = await res.json();
-        setPasswordMsg(data.error || t("failedToUpdatePassword"));
-      }
-    } catch {
-      setPasswordMsg(t("somethingWentWrong"));
-    }
-  }
-
-  const initials = session?.user?.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
-
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("settings")}</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("playback")}</h1>
 
-      {/* Profile */}
-      <form
-        onSubmit={handleProfileSave}
-        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
-      >
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("profile")}</h2>
-        <div className="flex items-center gap-5">
-          <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_24px_rgba(59,130,246,0.2)]">
-            {initials}
-            <div className="absolute inset-0 rounded-full ring-2 ring-primary/20" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">
-              {session?.user?.email}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
-            {t("displayName")}
-          </label>
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
-            {t("username")}
-          </label>
-          <p className="text-sm text-[#666680]">{session?.user?.email}</p>
-        </div>
-        {profileMsg && (
-          <p className="text-sm text-primary">{profileMsg}</p>
-        )}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
-          >
-            {tCommon("save")}
-          </button>
-        </div>
-      </form>
-
-      {/* Change Password */}
-      <form
-        onSubmit={handlePasswordChange}
-        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
-      >
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
-          {t("changePassword")}
-        </h2>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
-            {t("currentPassword")}
-          </label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
-            {t("newPassword")}
-          </label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
-            {t("confirmNewPassword")}
-          </label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
-            required
-          />
-        </div>
-        {passwordMsg && (
-          <p className={`text-sm ${passwordMsg === t("passwordUpdated") ? "text-green-500" : "text-destructive"}`}>
-            {passwordMsg}
-          </p>
-        )}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
-          >
-            {tCommon("save")}
-          </button>
-        </div>
-      </form>
-
-      {/* Language */}
       <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("language")}</h2>
-        <p className="text-sm text-muted-foreground">{t("languageDesc")}</p>
-        <Select
-          value={locale}
-          onValueChange={async (newLocale) => {
-            await setLocale(newLocale);
-            await fetch("/api/users/me", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ locale: newLocale }),
-            });
-            router.refresh();
-          }}
-        >
-          <SelectTrigger className="h-11 w-48 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="zh">中文</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Playback */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("playback")}</h2>
         <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
         <div className="flex flex-col gap-1.5">
           <label className="text-[13px] font-medium text-muted-foreground">
             {t("playerName")}
           </label>
           <div className="flex flex-col gap-1.5">
-            {/* None option */}
             <button
               type="button"
               onClick={() => handlePlayerChange("")}
@@ -336,7 +137,6 @@ export default function SettingsPage() {
               <span>None</span>
               <span className="text-xs text-muted-foreground">(Web Player)</span>
             </button>
-            {/* Player options */}
             {Object.entries(PLAYER_PRESETS).map(([name, preset]) => {
               const disabled = !isPlayerCompatible(name, playerMode);
               const selected = playerName === name;
@@ -418,21 +218,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Account Info */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("accountInfo")}</h2>
-        <div className="flex gap-2 text-sm">
-          <span className="text-[#666680]">{t("accountType")}:</span>
-          <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${
-            session?.user?.isAdmin ? "bg-primary/10 text-primary" : "bg-white/5 text-muted-foreground"
-          }`}>
-            {session?.user?.isAdmin ? t("administrator") : t("user")}
-          </span>
-        </div>
-      </div>
-    </div>
-
-      {/* Playback toast */}
+      {/* Toast */}
       <div
         className={`fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
           playbackToast
@@ -451,6 +237,7 @@ export default function SettingsPage() {
         )}
         {playbackToast?.text}
       </div>
+    </div>
     </div>
   );
 }
