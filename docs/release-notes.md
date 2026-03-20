@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.3.2 (2026-03-20) — Navigation Overhaul & Polish
+
+Major usability improvements: cleaner navigation structure, unified glass-style toast notifications, and numerous player/transcoding fixes.
+
+### Navigation Restructure
+
+- **Flattened admin access** — Libraries and Users are now direct sidebar entries under ADMIN, no longer buried inside Dashboard
+- **New Preferences hub** — Card Badges, Ratings & Bookmarks, Playback, and Language grouped under `/preferences` with dedicated sidebar navigation
+- **Profile page** — Split from old Settings; profile, password, and account info now live at `/profile`
+- **System sub-nav** — Dashboard overview, Scraper, and Networking grouped under System with their own sidebar
+- **Cleaner MEDIA section** — Only contains actual content (All Movies); preference pages moved out
+
+### Glass Toast Notifications
+
+- **New `GlassToast` component** — Unified toast replacing 7 different inline/flat implementations across the app
+- **Cinema-matching style** — `backdrop-blur-2xl` glass effect matching the nav panel aesthetic (was flat green/red)
+- **Centered positioning** — Bottom-center placement avoids sidebar overlap (was bottom-left)
+- **Accessibility** — Added `aria-live="polite"` for screen readers
+- **Replaced inline text feedback** — Profile "Changes saved" and Scraper "API key saved" now use toast instead of inline text
+
+### Player & Transcoding Fixes
+
+- **Multi-disc fixes** — Play All now correctly starts from disc 1; CD1 uses disc-specific duration
+- **HLS seek stability** — Old hls.js polling stopped before seek; prevents 404 on stale playlist
+- **Session management** — Duplicate transcode sessions properly killed on seek and disc switching
+- **NVENC failure recovery** — Hardware encoder failures remembered and skipped in subsequent sessions
+- **iOS HEVC remux** — Added B-frame detection for proper fMP4 remuxing
+- **Immersive mode** — Fixed seek bar shift and removed disc label clutter from top bar
+- **Disc cards redesign** — Vertical layout with mobile-friendly time display
+
+### Mobile
+
+- **Detail pages** — Fixed mobile layout for movie/person detail pages and gallery section
+
+### Platforms
+
+| Platform | Format |
+|----------|--------|
+| macOS (Apple Silicon) | Kubby-arm64.dmg |
+| macOS (Intel) | Kubby-x64.dmg |
+| Windows | KubbySetup.exe |
+| Docker (amd64) | `ghcr.io/lanceli93/kubby:0.3.2` |
+
+---
+
 ## v0.1.1 (2026-02-28) — Bug Fixes
 
 Patch release fixing several issues found after v0.1.0.
