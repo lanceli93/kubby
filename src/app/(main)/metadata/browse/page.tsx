@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { RefreshCw, Film, Users, Search } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -275,23 +276,28 @@ export default function MetadataBrowsePage() {
 
 function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => void }) {
   const [imgError, setImgError] = useState(false);
+  const hasPoster = item.posterPath && !imgError;
 
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
+      className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
       style={{ width: CARD_WIDTH }}
     >
+      {/* Poster */}
       <div
         className="relative overflow-hidden rounded-lg bg-white/[0.04]"
-        style={{ width: CARD_WIDTH, height: POSTER_HEIGHT }}
+        style={{ height: POSTER_HEIGHT }}
       >
-        {item.posterPath && !imgError ? (
-          <img
-            src={resolveImageSrc(item.posterPath, CARD_WIDTH * 2)}
+        {hasPoster ? (
+          <Image
+            src={resolveImageSrc(item.posterPath!)}
             alt={item.title}
-            className="h-full w-full object-cover"
-            loading="lazy"
+            fill
+            className="object-cover"
+            sizes={`${CARD_WIDTH}px`}
+            placeholder={item.posterBlur ? "blur" : undefined}
+            blurDataURL={item.posterBlur || undefined}
             onError={() => setImgError(true)}
           />
         ) : (
@@ -301,6 +307,7 @@ function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => 
         )}
         <MissingDot count={item.missingFields.length} fields={item.missingFields} />
       </div>
+      {/* Title */}
       <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.title}</p>
       {item.year && (
         <p className="truncate text-center text-[11px] text-muted-foreground">{item.year}</p>
@@ -313,23 +320,28 @@ function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => 
 
 function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () => void }) {
   const [imgError, setImgError] = useState(false);
+  const hasPhoto = item.photoPath && !imgError;
 
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
+      className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
       style={{ width: CARD_WIDTH }}
     >
+      {/* Photo */}
       <div
         className="relative overflow-hidden rounded-lg bg-white/[0.04]"
-        style={{ width: CARD_WIDTH, height: POSTER_HEIGHT }}
+        style={{ height: POSTER_HEIGHT }}
       >
-        {item.photoPath && !imgError ? (
-          <img
-            src={resolveImageSrc(item.photoPath, CARD_WIDTH * 2)}
+        {hasPhoto ? (
+          <Image
+            src={resolveImageSrc(item.photoPath!)}
             alt={item.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
+            fill
+            className="object-cover"
+            sizes={`${CARD_WIDTH}px`}
+            placeholder={item.photoBlur ? "blur" : undefined}
+            blurDataURL={item.photoBlur || undefined}
             onError={() => setImgError(true)}
           />
         ) : (
@@ -339,6 +351,7 @@ function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () =
         )}
         <MissingDot count={item.missingFields.length} fields={item.missingFields} />
       </div>
+      {/* Name */}
       <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.name}</p>
     </div>
   );
