@@ -439,6 +439,7 @@
     "heightFormatError": "身高须为正数（0–300 cm）",
     "weightFormatError": "体重须为正数（0–500 kg）",
     "measurementsFormatError": "三围格式须为 N-N-N（如 88-60-90）",
+    "cupSizeFormatError": "罩杯须为单个大写字母（A–Z）",
     "saving": "保存中...",
     "editImages": "编辑图片",
     "poster": "海报",

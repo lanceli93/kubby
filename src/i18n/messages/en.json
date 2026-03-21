@@ -439,6 +439,7 @@
     "heightFormatError": "Height must be a positive number (0–300 cm)",
     "weightFormatError": "Weight must be a positive number (0–500 kg)",
     "measurementsFormatError": "Measurements must be in N-N-N format (e.g. 88-60-90)",
+    "cupSizeFormatError": "Cup size must be a single uppercase letter (A–Z)",
     "saving": "Saving...",
     "editImages": "Edit Images",
     "poster": "Poster",

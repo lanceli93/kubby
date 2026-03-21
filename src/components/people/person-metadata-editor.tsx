@@ -179,6 +179,12 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
       return;
     }
 
+    // Validate cup size (single uppercase letter A-Z)
+    if (form.cupSize && !/^[A-Z]$/.test(form.cupSize.trim())) {
+      showToast(t("cupSizeFormatError"), false);
+      return;
+    }
+
     // Compute personal rating: if dimensions configured, use average of dimension values
     let personalRating: number | null = form.personalRating ? Number(form.personalRating) : null;
     let dimRatingsToSend: Record<string, number> | null = null;
