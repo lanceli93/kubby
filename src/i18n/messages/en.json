@@ -432,7 +432,8 @@
     "deleteImage": "Delete",
     "noImage": "No image",
     "usingMovieFanart": "Using movie fanart",
-    "deleteMedia": "Delete Media"
+    "deleteMedia": "Delete Media",
+    "yearDateMismatch": "Year and premiere date are inconsistent"
   },
   "cardBadges": {
     "title": "Card Badge Settings",

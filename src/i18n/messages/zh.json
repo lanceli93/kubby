@@ -432,7 +432,8 @@
     "deleteImage": "删除",
     "noImage": "无图片",
     "usingMovieFanart": "使用电影背景图",
-    "deleteMedia": "删除媒体"
+    "deleteMedia": "删除媒体",
+    "yearDateMismatch": "年份与上映日期不一致"
   },
   "cardBadges": {
     "title": "卡片标记设置",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { GlassToast } from "@/components/ui/glass-toast";
 
 interface MovieMetadataEditorProps {
   movieId: string;
@@ -99,6 +100,8 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   const [tagInput, setTagInput] = useState("");
   const [dimensionRatings, setDimensionRatings] = useState<Record<string, number>>({});
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Star rating helpers for Personal tab (no-dimension mode)
   const ratingNum = form.personalRating ? Number(form.personalRating) : null;
@@ -167,7 +170,22 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     },
   });
 
+  const showToast = (text: string, success: boolean) => {
+    clearTimeout(toastTimer.current);
+    setToast({ text, success });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+
   const handleSave = async () => {
+    // Check year/premiereDate consistency
+    if (form.year && form.premiereDate) {
+      const dateYear = parseInt(form.premiereDate.split("-")[0], 10);
+      if (dateYear && Number(form.year) !== dateYear) {
+        showToast(t("yearDateMismatch"), false);
+        return;
+      }
+    }
+
     // Compute personal rating: if dimensions configured, use average of dimension values
     let personalRating: number | null = form.personalRating ? Number(form.personalRating) : null;
     let dimRatingsToSend: Record<string, number> | null = null;
@@ -261,6 +279,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[700px] sm:rounded-lg overflow-y-auto">
         <DialogHeader>
@@ -748,5 +767,9 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <GlassToast visible={!!toast} success={toast?.success}>
+      {toast?.text}
+    </GlassToast>
+    </>
   );
 }
