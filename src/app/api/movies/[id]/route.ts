@@ -6,6 +6,7 @@ import { movies, moviePeople, people, userMovieData, userPersonData, mediaStream
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
+import { computeAgeAtRelease } from "@/lib/scanner";
 import { resolveDataPath } from "@/lib/paths";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
@@ -123,6 +124,7 @@ export async function PUT(
           person = db.select().from(people).where(eq(people.id, personId)).get()!;
         }
 
+        const age = computeAgeAtRelease(person.birthDate, movie.premiereDate, movie.year, person.birthYear);
         db.insert(moviePeople)
           .values({
             id: crypto.randomUUID(),
@@ -130,8 +132,24 @@ export async function PUT(
             personId: person.id,
             role,
             sortOrder: i,
+            ageAtRelease: age,
           })
           .run();
+      }
+    }
+
+    // Recalculate ageAtRelease for all cast when release date/year changes
+    if ((body.year !== undefined || body.premiereDate !== undefined) && body.cast === undefined) {
+      const updatedMovie = db.select({ premiereDate: movies.premiereDate, year: movies.year }).from(movies).where(eq(movies.id, id)).get()!;
+      const linkedPeople = db
+        .select({ mpId: moviePeople.id, birthDate: people.birthDate, birthYear: people.birthYear })
+        .from(moviePeople)
+        .innerJoin(people, eq(moviePeople.personId, people.id))
+        .where(eq(moviePeople.movieId, id))
+        .all();
+      for (const p of linkedPeople) {
+        const age = computeAgeAtRelease(p.birthDate, updatedMovie.premiereDate, updatedMovie.year, p.birthYear);
+        db.update(moviePeople).set({ ageAtRelease: age }).where(eq(moviePeople.id, p.mpId)).run();
       }
     }
 
