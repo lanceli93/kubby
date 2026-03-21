@@ -47,6 +47,7 @@ interface PersonDetail {
   weight?: number | null;
   measurements?: string | null;
   cupSize?: string | null;
+  whr?: number | null;
   tmdbId?: string | null;
   imdbId?: string | null;
   userData?: {
@@ -346,6 +347,12 @@ export default function PersonDetailPage() {
                     <>
                       <span className="text-white/50">{tPerson("cupSize")}: </span>
                       <span className="text-white/90">{person.cupSize}</span>
+                    </>
+                  )}
+                  {person.whr && (
+                    <>
+                      <span className="text-white/50"> / {tPerson("whr")}: </span>
+                      <span className="text-white/90">{person.whr.toFixed(2)}</span>
                     </>
                   )}
                 </div>

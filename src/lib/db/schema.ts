@@ -90,6 +90,7 @@ export const people = sqliteTable("people", {
   weight: integer("weight"), // kg
   measurements: text("measurements"), // e.g. "88-60-90"
   cupSize: text("cup_size"), // e.g. "C"
+  whr: real("whr"), // waist-to-hip ratio, auto-calculated from measurements
   tmdbId: text("tmdb_id"),
   overview: text("overview"),
   birthDate: text("birth_date"),

@@ -91,7 +91,12 @@ export async function PUT(
     if (body.deathDate !== undefined) updateData.deathDate = body.deathDate;
     if (body.height !== undefined) updateData.height = body.height ? Number(body.height) : null;
     if (body.weight !== undefined) updateData.weight = body.weight ? Number(body.weight) : null;
-    if (body.measurements !== undefined) updateData.measurements = body.measurements || null;
+    if (body.measurements !== undefined) {
+      updateData.measurements = body.measurements || null;
+      // Auto-calculate waist-to-hip ratio from measurements (bust-waist-hip format)
+      const m = body.measurements?.match(/^\d+-(\d+)-(\d+)$/);
+      updateData.whr = m ? Math.round((Number(m[1]) / Number(m[2])) * 100) / 100 : null;
+    }
     if (body.cupSize !== undefined) updateData.cupSize = body.cupSize || null;
     if (body.tags !== undefined) updateData.tags = body.tags ? JSON.stringify(body.tags) : null;
 

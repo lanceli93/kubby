@@ -40,6 +40,7 @@ interface PersonData {
   weight?: number | null;
   measurements?: string | null;
   cupSize?: string | null;
+  whr?: number | null;
   tags?: string[];
   userData?: {
     personalRating?: number | null;
@@ -344,6 +345,19 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   value={form.cupSize}
                   onChange={(e) => setForm((f) => ({ ...f, cupSize: e.target.value }))}
                   placeholder="C"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("whr")}</Label>
+                <Input
+                  value={(() => {
+                    const m = form.measurements.match(/^\d+-(\d+)-(\d+)$/);
+                    return m ? (Number(m[1]) / Number(m[2])).toFixed(2) : "";
+                  })()}
+                  readOnly
+                  tabIndex={-1}
+                  className="text-muted-foreground cursor-default"
+                  placeholder="—"
                 />
               </div>
             </div>
