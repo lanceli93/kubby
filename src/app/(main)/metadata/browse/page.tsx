@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, memo, useTransition } from "react";
+import { useState, useEffect, useCallback, useRef, memo, useTransition, useReducer } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Cherry } from "lucide-react";
@@ -33,23 +33,76 @@ interface BrowsePerson {
 const CARD_WIDTH = 140;
 const POSTER_HEIGHT = 210;
 
+interface BrowseState {
+  activeTab: TabType;
+  missingFilter: MissingFilter;
+  debouncedSearch: string;
+  movieItems: BrowseMovie[];
+  personItems: BrowsePerson[];
+  total: number;
+  page: number;
+  loading: boolean;
+  refreshing: boolean;
+}
+
+type BrowseAction =
+  | { type: "SET_TAB"; tab: TabType }
+  | { type: "SET_FILTER"; filter: MissingFilter }
+  | { type: "SET_SEARCH"; search: string }
+  | { type: "FETCH_START" }
+  | { type: "FETCH_SUCCESS"; items: BrowseMovie[] | BrowsePerson[]; total: number; tab: TabType; append: boolean }
+  | { type: "FETCH_ERROR" }
+  | { type: "REFRESH_START" }
+  | { type: "LOAD_NEXT_PAGE" };
+
+function browseReducer(state: BrowseState, action: BrowseAction): BrowseState {
+  switch (action.type) {
+    case "SET_TAB":
+      return { ...state, activeTab: action.tab, missingFilter: (state.missingFilter === "height" || state.missingFilter === "cupSize") && action.tab === "movies" ? "" : state.missingFilter, page: 1, movieItems: [], personItems: [], loading: true };
+    case "SET_FILTER":
+      return { ...state, missingFilter: action.filter, page: 1, movieItems: [], personItems: [], loading: true };
+    case "SET_SEARCH":
+      return { ...state, debouncedSearch: action.search, page: 1, movieItems: [], personItems: [], loading: true };
+    case "FETCH_START":
+      return { ...state, loading: true };
+    case "FETCH_SUCCESS":
+      if (action.tab === "movies") {
+        return { ...state, movieItems: action.append ? [...state.movieItems, ...action.items as BrowseMovie[]] : action.items as BrowseMovie[], total: action.total, loading: false, refreshing: false };
+      }
+      return { ...state, personItems: action.append ? [...state.personItems, ...action.items as BrowsePerson[]] : action.items as BrowsePerson[], total: action.total, loading: false, refreshing: false };
+    case "FETCH_ERROR":
+      return { ...state, loading: false, refreshing: false };
+    case "REFRESH_START":
+      return { ...state, refreshing: true, page: 1, movieItems: [], personItems: [], loading: true };
+    case "LOAD_NEXT_PAGE":
+      return { ...state, page: state.page + 1 };
+    default:
+      return state;
+  }
+}
+
 export default function MetadataBrowsePage() {
   const t = useTranslations("dashboard");
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<TabType>("movies");
-  const [missingFilter, setMissingFilter] = useState<MissingFilter>("");
+  const [state, dispatch] = useReducer(browseReducer, {
+    activeTab: "movies",
+    missingFilter: "",
+    debouncedSearch: "",
+    movieItems: [],
+    personItems: [],
+    total: 0,
+    page: 1,
+    loading: false,
+    refreshing: false,
+  });
+
+  const { activeTab, missingFilter, debouncedSearch, movieItems, personItems, total, page, loading, refreshing } = state;
+
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [movieItems, setMovieItems] = useState<BrowseMovie[]>([]);
-  const [personItems, setPersonItems] = useState<BrowsePerson[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Editor state — use transition to avoid blocking UI when mounting heavy editor
+  // Editor state
   const [editMovieId, setEditMovieId] = useState<string | null>(null);
   const [editPersonId, setEditPersonId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -64,60 +117,45 @@ export default function MetadataBrowsePage() {
   // Debounce search input
   useEffect(() => {
     clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => setDebouncedSearch(search), 300);
+    searchTimer.current = setTimeout(() => dispatch({ type: "SET_SEARCH", search }), 300);
     return () => clearTimeout(searchTimer.current);
   }, [search]);
 
+  // Fetch data when tab/filter/search changes
+  const fetchRef = useRef({ activeTab, missingFilter, debouncedSearch });
+  fetchRef.current = { activeTab, missingFilter, debouncedSearch };
+
   const fetchItems = useCallback(
     async (pageNum: number, append = false) => {
-      setLoading(true);
+      const { activeTab: tab, missingFilter: filter, debouncedSearch: q } = fetchRef.current;
       try {
-        const params = new URLSearchParams({
-          type: activeTab,
-          page: String(pageNum),
-          limit: "40",
-        });
-        if (missingFilter) params.set("missing", missingFilter);
-        if (debouncedSearch) params.set("search", debouncedSearch);
+        const params = new URLSearchParams({ type: tab, page: String(pageNum), limit: "40" });
+        if (filter) params.set("missing", filter);
+        if (q) params.set("search", q);
 
         const res = await fetch(`/api/metadata/incomplete?${params}`);
         const data = await res.json();
-
-        if (activeTab === "movies") {
-          setMovieItems((prev) => (append ? [...prev, ...data.items] : data.items));
-        } else {
-          setPersonItems((prev) => (append ? [...prev, ...data.items] : data.items));
-        }
-        setTotal(data.total);
+        dispatch({ type: "FETCH_SUCCESS", items: data.items, total: data.total, tab, append });
       } catch (error) {
         console.error("Failed to fetch metadata:", error);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+        dispatch({ type: "FETCH_ERROR" });
       }
     },
-    [activeTab, missingFilter, debouncedSearch]
+    []
   );
 
-  // Reset and fetch page 1 when tab/filter/search changes
+  // Trigger fetch on tab/filter/search change
   useEffect(() => {
-    setPage(1);
-    setMovieItems([]);
-    setPersonItems([]);
     fetchItems(1);
-  }, [fetchItems]);
+  }, [activeTab, missingFilter, debouncedSearch, fetchItems]);
 
   const fetchNextPage = useCallback(() => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchItems(nextPage, true);
+    dispatch({ type: "LOAD_NEXT_PAGE" });
+    fetchItems(page + 1, true);
   }, [page, fetchItems]);
 
   const handleRefresh = () => {
-    setRefreshing(true);
-    setPage(1);
-    setMovieItems([]);
-    setPersonItems([]);
+    dispatch({ type: "REFRESH_START" });
     fetchItems(1);
     queryClient.invalidateQueries({ queryKey: ["movie"] });
     queryClient.invalidateQueries({ queryKey: ["person"] });
@@ -168,12 +206,7 @@ export default function MetadataBrowsePage() {
               return (
                 <button
                   key={tab.key}
-                  onClick={() => {
-                    setActiveTab(tab.key);
-                    if (tab.key === "movies" && (missingFilter === "height" || missingFilter === "cupSize")) {
-                      setMissingFilter("");
-                    }
-                  }}
+                  onClick={() => dispatch({ type: "SET_TAB", tab: tab.key })}
                   className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-fluid cursor-pointer ${
                     activeTab === tab.key
                       ? "bg-primary/20 text-primary"
@@ -234,7 +267,7 @@ export default function MetadataBrowsePage() {
             return (
               <button
                 key={f.key}
-                onClick={() => setMissingFilter(f.key)}
+                onClick={() => dispatch({ type: "SET_FILTER", filter: f.key })}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-fluid cursor-pointer ${
                   missingFilter === f.key
                     ? "bg-primary/15 text-primary border-primary/30"
