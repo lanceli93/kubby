@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Circle } from "lucide-react";
+import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Cherry } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
@@ -137,7 +137,7 @@ export default function MetadataBrowsePage() {
     { key: "fanart", label: t("missingFanart"), icon: ImageOff },
     ...(activeTab === "people" ? [
       { key: "height" as MissingFilter, label: t("missingHeight"), icon: Ruler },
-      { key: "cupSize" as MissingFilter, label: t("missingCupSize"), icon: Circle },
+      { key: "cupSize" as MissingFilter, label: t("missingCupSize"), icon: Cherry },
     ] : []),
   ];
 
@@ -390,7 +390,7 @@ const missingIconMap: Record<string, { icon: typeof FileText; label: string }> =
   date: { icon: Calendar, label: "Date" },
   fanart: { icon: ImageOff, label: "Fanart" },
   height: { icon: Ruler, label: "Height" },
-  cupSize: { icon: Circle, label: "Cup Size" },
+  cupSize: { icon: Cherry, label: "Cup Size" },
 };
 
 function MissingIndicators({ fields }: { fields: string[] }) {
