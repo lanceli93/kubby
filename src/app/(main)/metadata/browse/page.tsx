@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { RefreshCw, Film, Users, Search } from "lucide-react";
-import { MovieCard } from "@/components/movie/movie-card";
-import { PersonCard } from "@/components/people/person-card";
+import { resolveImageSrc } from "@/lib/image-utils";
+import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
+import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 import { useQueryClient } from "@tanstack/react-query";
 
 type TabType = "movies" | "people";
@@ -16,25 +18,19 @@ interface BrowseMovie {
   year?: number;
   posterPath?: string | null;
   posterBlur?: string | null;
-  communityRating?: number | null;
-  personalRating?: number | null;
-  videoWidth?: number | null;
-  videoHeight?: number | null;
-  isFavorite?: boolean;
-  isPlayed?: boolean;
   missingFields: string[];
 }
 
 interface BrowsePerson {
   id: string;
   name: string;
-  type: string;
   photoPath?: string | null;
   photoBlur?: string | null;
-  personalRating?: number | null;
-  isFavorite?: boolean;
   missingFields: string[];
 }
+
+const CARD_WIDTH = 140;
+const POSTER_HEIGHT = 210;
 
 export default function MetadataBrowsePage() {
   const t = useTranslations("dashboard");
@@ -51,6 +47,10 @@ export default function MetadataBrowsePage() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Editor state
+  const [editMovieId, setEditMovieId] = useState<string | null>(null);
+  const [editPersonId, setEditPersonId] = useState<string | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -90,7 +90,6 @@ export default function MetadataBrowsePage() {
     [activeTab, missingFilter, debouncedSearch]
   );
 
-  // Reset and fetch when tab, filter, or search changes
   useEffect(() => {
     setPage(1);
     setMovieItems([]);
@@ -131,15 +130,15 @@ export default function MetadataBrowsePage() {
   ];
 
   return (
+    <>
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">
         {t("metadataBrowse")}
       </h1>
 
-      {/* Controls Row */}
+      {/* Controls */}
       <div className="flex flex-col gap-3">
-        {/* Top: Tabs + Search + Count + Refresh */}
         <div className="flex items-center gap-4">
           {/* Tab Switcher */}
           <div className="inline-flex gap-1 rounded-lg border border-white/[0.06] bg-white/[0.03] p-1">
@@ -221,40 +220,21 @@ export default function MetadataBrowsePage() {
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-3">
             {activeTab === "movies"
               ? movieItems.map((item) => (
-                  <div key={item.id} className="relative" style={{ width: 150 }}>
-                    <MovieCard
-                      id={item.id}
-                      title={item.title}
-                      year={item.year}
-                      posterPath={item.posterPath}
-                      posterBlur={item.posterBlur}
-                      rating={item.communityRating}
-                      personalRating={item.personalRating}
-                      videoWidth={item.videoWidth}
-                      videoHeight={item.videoHeight}
-                      isFavorite={item.isFavorite}
-                      isWatched={item.isPlayed}
-                      responsive
-                    />
-                    <MissingDot count={item.missingFields.length} fields={item.missingFields} />
-                  </div>
+                  <BrowseMovieCard
+                    key={item.id}
+                    item={item}
+                    onClick={() => setEditMovieId(item.id)}
+                  />
                 ))
               : personItems.map((item) => (
-                  <div key={item.id} className="relative">
-                    <PersonCard
-                      id={item.id}
-                      name={item.name}
-                      photoPath={item.photoPath}
-                      photoBlur={item.photoBlur}
-                      personalRating={item.personalRating}
-                      isFavorite={item.isFavorite}
-                      size="sm"
-                    />
-                    <MissingDot count={item.missingFields.length} fields={item.missingFields} />
-                  </div>
+                  <BrowsePersonCard
+                    key={item.id}
+                    item={item}
+                    onClick={() => setEditPersonId(item.id)}
+                  />
                 ))}
           </div>
 
@@ -273,8 +253,112 @@ export default function MetadataBrowsePage() {
       )}
     </div>
     </div>
+
+    {/* Editors — rendered once, outside the scroll container */}
+    {editMovieId && (
+      <MovieMetadataEditor
+        movieId={editMovieId}
+        open={true}
+        onOpenChange={(open) => { if (!open) setEditMovieId(null); }}
+      />
+    )}
+    {editPersonId && (
+      <PersonMetadataEditor
+        personId={editPersonId}
+        open={true}
+        onOpenChange={(open) => { if (!open) setEditPersonId(null); }}
+      />
+    )}
+    </>
   );
 }
+
+/* ── Lightweight Movie Card ── */
+
+function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => void }) {
+  const [imgError, setImgError] = useState(false);
+  const hasPoster = item.posterPath && !imgError;
+
+  return (
+    <div
+      onClick={onClick}
+      className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
+      style={{ width: CARD_WIDTH }}
+    >
+      {/* Poster */}
+      <div
+        className="relative overflow-hidden rounded-lg bg-white/[0.04]"
+        style={{ height: POSTER_HEIGHT }}
+      >
+        {hasPoster ? (
+          <Image
+            src={resolveImageSrc(item.posterPath!, CARD_WIDTH * 2)}
+            alt={item.title}
+            fill
+            className="object-cover"
+            sizes={`${CARD_WIDTH}px`}
+            placeholder={item.posterBlur ? "blur" : undefined}
+            blurDataURL={item.posterBlur || undefined}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Film className="h-8 w-8 text-muted-foreground/30" />
+          </div>
+        )}
+        <MissingDot count={item.missingFields.length} fields={item.missingFields} />
+      </div>
+      {/* Title */}
+      <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.title}</p>
+      {item.year && (
+        <p className="truncate text-center text-[11px] text-muted-foreground">{item.year}</p>
+      )}
+    </div>
+  );
+}
+
+/* ── Lightweight Person Card ── */
+
+function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () => void }) {
+  const [imgError, setImgError] = useState(false);
+  const hasPhoto = item.photoPath && !imgError;
+
+  return (
+    <div
+      onClick={onClick}
+      className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
+      style={{ width: CARD_WIDTH }}
+    >
+      {/* Photo */}
+      <div
+        className="relative overflow-hidden rounded-lg bg-white/[0.04]"
+        style={{ height: POSTER_HEIGHT }}
+      >
+        {hasPhoto ? (
+          <Image
+            src={resolveImageSrc(item.photoPath!, CARD_WIDTH * 2)}
+            alt={item.name}
+            fill
+            className="object-cover"
+            sizes={`${CARD_WIDTH}px`}
+            placeholder={item.photoBlur ? "blur" : undefined}
+            blurDataURL={item.photoBlur || undefined}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-2xl font-semibold text-muted-foreground/30">
+            {item.name.charAt(0)}
+          </div>
+        )}
+        <MissingDot count={item.missingFields.length} fields={item.missingFields} />
+      </div>
+      {/* Name */}
+      <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.name}</p>
+    </div>
+  );
+}
+
+/* ── Missing indicator dot ── */
 
 const missingLabelMap: Record<string, string> = {
   overview: "Overview",
@@ -284,12 +368,10 @@ const missingLabelMap: Record<string, string> = {
 
 function MissingDot({ count, fields }: { count: number; fields: string[] }) {
   if (count === 0) return null;
-
   const tooltip = fields.map((f) => missingLabelMap[f] || f).join(", ");
-
   return (
     <div
-      className="absolute bottom-[52px] left-1.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold text-black shadow-sm"
+      className="absolute bottom-1.5 left-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold text-black shadow-sm"
       title={`Missing: ${tooltip}`}
     >
       {count}
