@@ -140,14 +140,14 @@ export default function MetadataBrowsePage() {
   return (
     <>
     <div className="h-full overflow-y-scroll">
-    <div className="stagger-children flex flex-col gap-6 p-8 px-10">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+    <div className="stagger-children flex flex-col gap-6 p-4 sm:p-8 sm:px-10">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
         {t("metadataBrowse")}
       </h1>
 
       {/* Controls */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* Tab Switcher */}
           <div className="inline-flex gap-1 rounded-lg border border-white/[0.06] bg-white/[0.03] p-1">
             {tabs.map((tab) => {
@@ -156,7 +156,7 @@ export default function MetadataBrowsePage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-medium transition-fluid cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-fluid cursor-pointer ${
                     activeTab === tab.key
                       ? "bg-primary/20 text-primary"
                       : "text-muted-foreground hover:text-foreground"
@@ -167,18 +167,6 @@ export default function MetadataBrowsePage() {
                 </button>
               );
             })}
-          </div>
-
-          {/* Search */}
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={activeTab === "movies" ? "Search movies..." : "Search actors..."}
-              className="h-9 w-full rounded-md border border-white/[0.06] bg-white/[0.05] pl-9 pr-3 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
-            />
           </div>
 
           {/* Count + Refresh */}
@@ -195,6 +183,18 @@ export default function MetadataBrowsePage() {
               <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
             </button>
           </div>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={activeTab === "movies" ? "Search movies..." : "Search actors..."}
+            className="h-9 w-full sm:max-w-xs rounded-md border border-white/[0.06] bg-white/[0.05] pl-9 pr-3 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+          />
         </div>
 
         {/* Filter Chips */}
