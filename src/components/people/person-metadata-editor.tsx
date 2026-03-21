@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { GlassToast } from "@/components/ui/glass-toast";
 
 interface PersonMetadataEditorProps {
   personId: string;
@@ -79,7 +80,8 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
 
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [birthInputError, setBirthInputError] = useState("");
+  const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const datePickerRef = useRef<HTMLInputElement>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [dimensionRatings, setDimensionRatings] = useState<Record<string, number>>({});
@@ -124,13 +126,64 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     },
   });
 
+  const showToast = (text: string, success: boolean) => {
+    clearTimeout(toastTimer.current);
+    setToast({ text, success });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+
   const handleSave = async () => {
+    // Validate birth input
+    let birthDate: string | null = null;
+    let birthYear: number | null = null;
+    const trimmed = form.birthInput.trim();
+    if (trimmed) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        birthDate = trimmed;
+        birthYear = Number(trimmed.slice(0, 4));
+      } else if (/^\d{4}$/.test(trimmed)) {
+        birthYear = Number(trimmed);
+      } else {
+        showToast(t("birthInputFormatError"), false);
+        return;
+      }
+    }
+
+    // Validate death date
+    if (form.deathDate && !/^\d{4}-\d{2}-\d{2}$/.test(form.deathDate)) {
+      showToast(t("deathDateFormatError"), false);
+      return;
+    }
+
+    // Validate height
+    if (form.height) {
+      const h = Number(form.height);
+      if (isNaN(h) || h <= 0 || h > 300) {
+        showToast(t("heightFormatError"), false);
+        return;
+      }
+    }
+
+    // Validate weight
+    if (form.weight) {
+      const w = Number(form.weight);
+      if (isNaN(w) || w <= 0 || w > 500) {
+        showToast(t("weightFormatError"), false);
+        return;
+      }
+    }
+
+    // Validate measurements
+    if (form.measurements && !/^\d+-\d+-\d+$/.test(form.measurements.trim())) {
+      showToast(t("measurementsFormatError"), false);
+      return;
+    }
+
     // Compute personal rating: if dimensions configured, use average of dimension values
     let personalRating: number | null = form.personalRating ? Number(form.personalRating) : null;
     let dimRatingsToSend: Record<string, number> | null = null;
 
     if (personDimensions.length > 0) {
-      // Only use current dimensions, discard stale keys
       const cleanRatings: Record<string, number> = {};
       for (const dim of personDimensions) {
         if (dimensionRatings[dim] != null && dimensionRatings[dim] > 0) cleanRatings[dim] = dimensionRatings[dim];
@@ -153,23 +206,6 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
         dimensionRatings: dimRatingsToSend,
       }),
     });
-
-    // Validate and parse unified birth input
-    let birthDate: string | null = null;
-    let birthYear: number | null = null;
-    const trimmed = form.birthInput.trim();
-    if (trimmed) {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-        birthDate = trimmed;
-        birthYear = Number(trimmed.slice(0, 4));
-      } else if (/^\d{4}$/.test(trimmed)) {
-        birthYear = Number(trimmed);
-      } else {
-        setBirthInputError(t("birthInputFormatError"));
-        return;
-      }
-    }
-    setBirthInputError("");
 
     mutation.mutate({
       name: form.name,
@@ -257,10 +293,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 <Input
                   className="flex-1"
                   value={form.birthInput}
-                  onChange={(e) => {
-                    setForm((f) => ({ ...f, birthInput: e.target.value }));
-                    setBirthInputError("");
-                  }}
+                  onChange={(e) => setForm((f) => ({ ...f, birthInput: e.target.value }))}
                   placeholder="1990-05-15 or 1990"
                 />
                 <div
@@ -276,7 +309,6 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                     onChange={(e) => {
                       if (e.target.value) {
                         setForm((f) => ({ ...f, birthInput: e.target.value }));
-                        setBirthInputError("");
                       }
                     }}
                   />
@@ -288,9 +320,6 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   </button>
                 </div>
               </div>
-              {birthInputError && (
-                <p className="text-xs text-red-400">{birthInputError}</p>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -646,6 +675,10 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
           </button>
         </DialogFooter>
       </DialogContent>
+
+      <GlassToast visible={!!toast} success={toast?.success} className="z-[100]">
+        {toast?.text}
+      </GlassToast>
     </Dialog>
   );
 }
