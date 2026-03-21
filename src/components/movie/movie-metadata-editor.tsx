@@ -279,7 +279,6 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   };
 
   return (
-    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[700px] sm:rounded-lg overflow-y-auto">
         <DialogHeader>
@@ -765,11 +764,10 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
             {mutation.isPending ? t("saving") : tCommon("save")}
           </button>
         </DialogFooter>
+        <GlassToast visible={!!toast} success={toast?.success}>
+          {toast?.text}
+        </GlassToast>
       </DialogContent>
     </Dialog>
-    <GlassToast visible={!!toast} success={toast?.success}>
-      {toast?.text}
-    </GlassToast>
-    </>
   );
 }
