@@ -90,6 +90,7 @@ export default function MetadataProvidersPage() {
   };
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">
         {t("metadataProviders")}
@@ -164,6 +165,7 @@ export default function MetadataProvidersPage() {
       <GlassToast visible={!!toast} success={toast?.success}>
         {toast?.text}
       </GlassToast>
+    </div>
     </div>
   );
 }

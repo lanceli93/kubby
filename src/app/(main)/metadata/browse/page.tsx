@@ -131,6 +131,7 @@ export default function MetadataBrowsePage() {
   ];
 
   return (
+    <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">
         {t("metadataBrowse")}
@@ -220,10 +221,10 @@ export default function MetadataBrowsePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
+          <div className="flex flex-wrap gap-4">
             {activeTab === "movies"
               ? movieItems.map((item) => (
-                  <div key={item.id} className="flex flex-col">
+                  <div key={item.id} className="flex flex-col" style={{ width: 150 }}>
                     <MovieCard
                       id={item.id}
                       title={item.title}
@@ -270,6 +271,7 @@ export default function MetadataBrowsePage() {
           )}
         </>
       )}
+    </div>
     </div>
   );
 }
