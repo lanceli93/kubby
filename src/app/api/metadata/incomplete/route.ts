@@ -25,6 +25,7 @@ function computeMissingFields(
     if (!row.birthDate && !row.birthYear) missing.push("date");
     if (!row.fanartPath) missing.push("fanart");
     if (!row.height) missing.push("height");
+    if (!row.cupSize) missing.push("cupSize");
   }
   return missing;
 }
@@ -173,7 +174,7 @@ function handlePeople(
 
   if (missingFilters.includes("any")) {
     conditions.push(
-      sql`(p.overview IS NULL OR p.overview = '' OR (p.birth_date IS NULL AND p.birth_year IS NULL) OR p.fanart_path IS NULL OR p.fanart_path = '' OR p.height IS NULL)`
+      sql`(p.overview IS NULL OR p.overview = '' OR (p.birth_date IS NULL AND p.birth_year IS NULL) OR p.fanart_path IS NULL OR p.fanart_path = '' OR p.height IS NULL OR p.cup_size IS NULL OR p.cup_size = '')`
     );
   } else {
     for (const f of missingFilters) {
@@ -189,6 +190,9 @@ function handlePeople(
           break;
         case "height":
           conditions.push(sql`p.height IS NULL`);
+          break;
+        case "cupSize":
+          conditions.push(sql`(p.cup_size IS NULL OR p.cup_size = '')`);
           break;
       }
     }
@@ -225,6 +229,7 @@ function handlePeople(
     fanart_path: string | null;
     height: number | null;
     measurements: string | null;
+    cup_size: string | null;
     personal_rating: number | null;
     is_favorite: number | null;
   }>(sql`
@@ -241,6 +246,7 @@ function handlePeople(
       p.fanart_path,
       p.height,
       p.measurements,
+      p.cup_size,
       upd.personal_rating,
       upd.is_favorite
     FROM people p
@@ -269,6 +275,7 @@ function handlePeople(
       fanartPath: r.fanart_path,
       height: r.height,
       measurements: r.measurements,
+      cupSize: r.cup_size,
     }),
   }));
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler } from "lucide-react";
+import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Circle } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
@@ -11,7 +11,7 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useQueryClient } from "@tanstack/react-query";
 
 type TabType = "movies" | "people";
-type MissingFilter = "" | "any" | "overview" | "date" | "fanart" | "height";
+type MissingFilter = "" | "any" | "overview" | "date" | "fanart" | "height" | "cupSize";
 
 interface BrowseMovie {
   id: string;
@@ -137,6 +137,7 @@ export default function MetadataBrowsePage() {
     { key: "fanart", label: t("missingFanart"), icon: ImageOff },
     ...(activeTab === "people" ? [
       { key: "height" as MissingFilter, label: t("missingHeight"), icon: Ruler },
+      { key: "cupSize" as MissingFilter, label: t("missingCupSize"), icon: Circle },
     ] : []),
   ];
 
@@ -161,7 +162,7 @@ export default function MetadataBrowsePage() {
                   key={tab.key}
                   onClick={() => {
                     setActiveTab(tab.key);
-                    if (tab.key === "movies" && missingFilter === "height") {
+                    if (tab.key === "movies" && (missingFilter === "height" || missingFilter === "cupSize")) {
                       setMissingFilter("");
                     }
                   }}
@@ -389,6 +390,7 @@ const missingIconMap: Record<string, { icon: typeof FileText; label: string }> =
   date: { icon: Calendar, label: "Date" },
   fanart: { icon: ImageOff, label: "Fanart" },
   height: { icon: Ruler, label: "Height" },
+  cupSize: { icon: Circle, label: "Cup Size" },
 };
 
 function MissingIndicators({ fields }: { fields: string[] }) {
