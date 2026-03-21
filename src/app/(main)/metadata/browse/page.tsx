@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Cherry } from "lucide-react";
@@ -260,14 +260,14 @@ export default function MetadataBrowsePage() {
                   <BrowseMovieCard
                     key={item.id}
                     item={item}
-                    onClick={() => setEditMovieId(item.id)}
+                    onSelect={setEditMovieId}
                   />
                 ))
               : personItems.map((item) => (
                   <BrowsePersonCard
                     key={item.id}
                     item={item}
-                    onClick={() => setEditPersonId(item.id)}
+                    onSelect={setEditPersonId}
                   />
                 ))}
           </div>
@@ -300,13 +300,13 @@ export default function MetadataBrowsePage() {
 
 /* ── Lightweight Movie Card ── */
 
-function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => void }) {
+const BrowseMovieCard = memo(function BrowseMovieCard({ item, onSelect }: { item: BrowseMovie; onSelect: (id: string) => void }) {
   const [imgError, setImgError] = useState(false);
   const hasPoster = item.posterPath && !imgError;
 
   return (
     <div
-      onClick={onClick}
+      onClick={() => onSelect(item.id)}
       className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
       style={{ width: CARD_WIDTH }}
     >
@@ -340,17 +340,17 @@ function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => 
       )}
     </div>
   );
-}
+});
 
 /* ── Lightweight Person Card ── */
 
-function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () => void }) {
+const BrowsePersonCard = memo(function BrowsePersonCard({ item, onSelect }: { item: BrowsePerson; onSelect: (id: string) => void }) {
   const [imgError, setImgError] = useState(false);
   const hasPhoto = item.photoPath && !imgError;
 
   return (
     <div
-      onClick={onClick}
+      onClick={() => onSelect(item.id)}
       className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
       style={{ width: CARD_WIDTH }}
     >
@@ -381,7 +381,7 @@ function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () =
       <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.name}</p>
     </div>
   );
-}
+});
 
 /* ── Missing field icon indicators ── */
 
