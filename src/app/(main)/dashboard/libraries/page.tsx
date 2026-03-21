@@ -425,7 +425,7 @@ export default function LibrariesPage() {
                     <div className="flex-1">
                       <p className="text-sm text-destructive">{scraperError}</p>
                       <Link
-                        href="/dashboard/scraper"
+                        href="/metadata/scraper"
                         className="mt-1 inline-block text-sm font-medium text-primary hover:underline"
                       >
                         Go to Scraper Settings
@@ -722,7 +722,7 @@ export default function LibrariesPage() {
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 <div className="flex-1">
                   <p className="text-sm text-destructive">{editScraperError}</p>
-                  <Link href="/dashboard/scraper" className="mt-1 inline-block text-sm font-medium text-primary hover:underline">
+                  <Link href="/metadata/scraper" className="mt-1 inline-block text-sm font-medium text-primary hover:underline">
                     Go to Scraper Settings
                   </Link>
                 </div>

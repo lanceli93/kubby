@@ -78,6 +78,8 @@
     "search": "Search",
     "media": "Media",
     "allMovies": "All Movies",
+    "metadata": "Metadata",
+    "scraper": "Scraper",
     "admin": "Admin",
     "libraries": "Libraries",
     "users": "Users",

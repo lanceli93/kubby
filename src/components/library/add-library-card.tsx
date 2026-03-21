@@ -329,7 +329,7 @@ export function AddLibraryCard() {
                 <div className="flex-1">
                   <p className="text-sm text-destructive">{scraperError}</p>
                   <Link
-                    href="/dashboard/scraper"
+                    href="/metadata/scraper"
                     className="mt-1 inline-block text-sm font-medium text-primary hover:underline"
                   >
                     Go to Scraper Settings

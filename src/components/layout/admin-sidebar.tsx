@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Wand2, Globe } from "lucide-react";
+import { LayoutDashboard, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export function AdminSidebar() {
@@ -11,7 +11,6 @@ export function AdminSidebar() {
 
   const sidebarItems = [
     { label: t("overview"), href: "/dashboard", icon: LayoutDashboard },
-    { label: t("scraperSettings"), href: "/dashboard/scraper", icon: Wand2 },
     { label: t("networking"), href: "/dashboard/networking", icon: Globe },
   ];
 

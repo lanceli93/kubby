@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle } from "lucide-react";
+import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
@@ -38,6 +38,10 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
     { href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true },
   ];
 
+  const metadataItems = [
+    { href: "/metadata/scraper", label: tNav("scraper"), icon: Wand2, matchPrefix: true },
+  ];
+
   const adminItems = [
     { href: "/dashboard/libraries", label: tNav("libraries"), icon: Folder },
     { href: "/dashboard/users", label: tNav("users"), icon: Users },
@@ -51,9 +55,9 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
 
   const isActive = (href: string, matchPrefix?: boolean, matchSystem?: boolean) => {
     if (matchSystem) {
-      // System: active on /dashboard, /dashboard/scraper, /dashboard/networking
+      // System: active on /dashboard and /dashboard/networking
       // but NOT on /dashboard/libraries or /dashboard/users
-      return pathname === "/dashboard" || pathname.startsWith("/dashboard/scraper") || pathname.startsWith("/dashboard/networking");
+      return pathname === "/dashboard" || pathname.startsWith("/dashboard/networking");
     }
     if (matchPrefix) return pathname.startsWith(href);
     return pathname === href || pathname.startsWith(href + "/");
@@ -118,6 +122,16 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
             </p>
             {mediaItems.map(renderItem)}
           </div>
+
+          {/* Metadata (admin only) */}
+          {isAdmin && (
+            <div className="flex flex-col gap-0.5">
+              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {tNav("metadata")}
+              </p>
+              {metadataItems.map(renderItem)}
+            </div>
+          )}
 
           {/* Admin (admin only) */}
           {isAdmin && (
