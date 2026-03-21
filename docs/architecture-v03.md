@@ -66,7 +66,8 @@ kubby/
 │   │   │           ├── page.tsx                    # 系统概览 (统计+活动+快速操作)
 │   │   │           └── networking/page.tsx         # 网络设置 (端口/Docker 检测)
 │   │   │   └── metadata/
-│   │   │       └── scraper/page.tsx                  # 元数据中心 (TMDB API key + NFO 回写开关 + 不完整元数据浏览器)
+│   │   │       ├── scraper/page.tsx                  # 元数据提供者 (TMDB API key + NFO 回写开关)
+│   │   │       └── browse/page.tsx                   # 元数据浏览器 (影片/演员卡片网格, 过滤+搜索+无限滚动, 一键编辑)
 │   │   └── api/                                    # API Routes (共 26+ 个端点)
 │   │       ├── auth/[...nextauth]/route.ts         # NextAuth 端点
 │   │       ├── dashboard/
@@ -97,7 +98,9 @@ kubby/
 │   │       │   ├── route.ts                        # GET/PUT 演员详情+参演作品
 │   │       │   └── gallery/route.ts                # GET/POST/DELETE 演员照片墙
 │   │       ├── metadata/
-│   │       │   └── incomplete/route.ts               # GET 不完整元数据查询 (type/missing/page/limit)
+│   │       │   └── incomplete/route.ts               # GET 元数据浏览+过滤 (type/missing/search/page/limit)
+│   │       ├── settings/
+│   │       │   └── nfo-writeback/route.ts            # GET/PUT NFO 回写开关 (settings 表 key-value)
 │   │       ├── setup/
 │   │       │   ├── status/route.ts                 # GET 是否需要首次设置
 │   │       │   └── complete/route.ts               # POST 完成首次设置 (创建 admin + 可选媒体库)
@@ -287,8 +290,24 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | id | text PK | UUID |
 | name | text | 姓名 |
 | type | text | enum: actor/director/writer/producer |
-| photo_path | text | 照片路径 (来自 NFO thumb) |
-| tmdb_id | text | 预留 |
+| photo_path | text | 照片路径 (**相对于 KUBBY_DATA_DIR**, 如 `metadata/people/A/Actor/photo.jpg`) |
+| photo_mtime | real | 照片修改时间 (缓存失效用) |
+| photo_blur | text | 照片模糊占位图 (base64 data URL) |
+| fanart_path | text | 自有背景图路径 (相对于 KUBBY_DATA_DIR, 不含影片回退) |
+| height | integer | 身高 (cm) |
+| weight | integer | 体重 (kg) |
+| measurements | text | 三围 (如 "88-60-90") |
+| cup_size | text | 罩杯 (如 "C") |
+| whr | real | 腰臀比 (从三围自动计算) |
+| tmdb_id | text | TMDB ID |
+| overview | text | 简介 |
+| birth_date | text | 出生日期 (YYYY-MM-DD) |
+| birth_year | integer | 出生年份 |
+| place_of_birth | text | 出生地 |
+| death_date | text | 逝世日期 |
+| imdb_id | text | IMDb ID |
+| tags | text | 标签 (JSON 数组) |
+| date_added | text | 添加时间 |
 
 **索引**: name
 
@@ -300,8 +319,11 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | person_id | text FK | CASCADE |
 | role | text | 角色名 (仅演员) |
 | sort_order | integer | 排序 |
+| age_at_release | integer | 出演时年龄 (从 birthDate/birthYear + premiereDate/year 自动计算) |
 
 **索引**: movie_id, person_id
+
+> **ageAtRelease 自动计算**: scanner 扫描时计算; 编辑演员 birthDate/birthYear 时重算所有关联影片; 编辑影片 year/premiereDate 时重算所有演员。优先用 birthDate 年份, fallback 到 birthYear。
 
 #### user_movie_data
 | 列 | 类型 | 说明 |

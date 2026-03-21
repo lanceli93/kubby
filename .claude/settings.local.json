@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash(ls:*)",
       "Bash(git status:*)",
@@ -47,7 +48,36 @@
       "Bash(git:*)",
       "Bash(curl:*)",
       "mcp__chrome-devtools__handle_dialog",
-      "Bash(gh release:*)"
+      "Bash(gh release:*)",
+      "Bash(for skill:*)",
+      "Bash(python3:*)",
+      "mcp__chrome-devtools__hover",
+      "Bash(npm ls:*)",
+      "Bash(grep -l three .next/static/chunks/*.js)",
+      "Bash(python3 -c \":*)",
+      "Read(//usr/local/go/bin/**)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(brew --prefix go)",
+      "Bash(/opt/homebrew/opt/go/bin/go build:*)",
+      "Read(//opt/homebrew/opt/**)",
+      "Read(//opt/homebrew/opt/go/libexec/bin/**)",
+      "Read(//opt/homebrew/**)",
+      "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
+      "Bash(go version:*)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(git commit:*)",
+      "Bash(pkill -f 'next dev')",
+      "Bash(pkill -f next-server)",
+      "Bash(cd /Users/lance/Documents/kubby/src/app/\\\\\\(main\\\\\\))",
+      "Bash(mv dashboard/page.tsx \"dashboard/\\(system\\)/page.tsx\")",
+      "Bash(mv dashboard/scraper/page.tsx \"dashboard/\\(system\\)/scraper/page.tsx\")",
+      "Bash(mv dashboard/networking/page.tsx \"dashboard/\\(system\\)/networking/page.tsx\")",
+      "Bash(rmdir dashboard/scraper dashboard/networking)",
+      "Bash(mv card-badges/page.tsx preferences/card-badges/page.tsx)",
+      "Bash(rmdir card-badges:*)",
+      "Bash(mv personal-metadata/page.tsx preferences/ratings-bookmarks/page.tsx)",
+      "Bash(rmdir personal-metadata:*)",
+      "Skill(update-config)"
     ]
   },
   "disabledMcpjsonServers": [

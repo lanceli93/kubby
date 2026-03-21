@@ -50,6 +50,7 @@ next-env.d.ts
 # third-party claude skills (local only)
 .claude/skills/ui-ux-pro-max/
 .claude/skills/ui-styling/
+.claude/skills/web-scrapper-reference/
 
 # packaging output
 /dist/
