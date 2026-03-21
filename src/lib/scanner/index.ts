@@ -177,14 +177,25 @@ function getOrCreatePerson(
 
 /**
  * Compute an actor's age at the time a movie was released.
- * Returns null if either birthDate or release info is missing.
+ * Accepts birthDate (YYYY-MM-DD) or standalone birthYear as fallback.
+ * Returns null if birth info or release info is missing.
  */
-function computeAgeAtRelease(
+export function computeAgeAtRelease(
   birthDate: string | null | undefined,
   premiereDate: string | null | undefined,
-  movieYear: number | null | undefined
+  movieYear: number | null | undefined,
+  birthYearOnly?: number | null
 ): number | null {
-  if (!birthDate) return null;
+  // Resolve birth year from birthDate or standalone birthYear
+  let bYear: number | null = null;
+  if (birthDate) {
+    bYear = parseInt(birthDate.split("-")[0], 10) || null;
+  }
+  if (!bYear && birthYearOnly) {
+    bYear = birthYearOnly;
+  }
+  if (!bYear) return null;
+
   let releaseYear: number | null = null;
   if (premiereDate) {
     releaseYear = parseInt(premiereDate.split("-")[0], 10) || null;
@@ -193,9 +204,7 @@ function computeAgeAtRelease(
     releaseYear = movieYear;
   }
   if (!releaseYear) return null;
-  const birthYear = parseInt(birthDate.split("-")[0], 10);
-  if (!birthYear) return null;
-  const age = releaseYear - birthYear;
+  const age = releaseYear - bYear;
   return age >= 0 ? age : null;
 }
 
@@ -648,9 +657,9 @@ export async function scanLibrary(
       const actorBlur = actor.thumb ? await generateBlurDataURL(actor.thumb) : null;
       const personId = getOrCreatePerson(actor.name, "actor", actor.thumb, actorMtime, actorBlur, bioData);
 
-      // Compute age at release from person's birthDate and movie's release info
-      const personRecord = db.select({ birthDate: people.birthDate }).from(people).where(eq(people.id, personId)).get();
-      const ageAtRelease = computeAgeAtRelease(personRecord?.birthDate, nfoData.premiereDate, nfoData.year);
+      // Compute age at release from person's birthDate/birthYear and movie's release info
+      const personRecord = db.select({ birthDate: people.birthDate, birthYear: people.birthYear }).from(people).where(eq(people.id, personId)).get();
+      const ageAtRelease = computeAgeAtRelease(personRecord?.birthDate, nfoData.premiereDate, nfoData.year, personRecord?.birthYear);
 
       db.insert(moviePeople)
         .values({

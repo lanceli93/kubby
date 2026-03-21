@@ -4,7 +4,8 @@ import fs from "fs";
 import fsPromises from "fs/promises";
 import { db } from "@/lib/db";
 import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
+import { computeAgeAtRelease } from "@/lib/scanner";
 import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
 import { resolveDataPath, toRelativeDataPath } from "@/lib/paths";
@@ -91,6 +92,21 @@ export async function PUT(
     if (body.tags !== undefined) updateData.tags = body.tags ? JSON.stringify(body.tags) : null;
 
     db.update(people).set(updateData).where(eq(people.id, id)).run();
+
+    // Recalculate ageAtRelease for all linked movies when birth info changes
+    if (body.birthDate !== undefined || body.birthYear !== undefined) {
+      const updatedPerson = db.select({ birthDate: people.birthDate, birthYear: people.birthYear }).from(people).where(eq(people.id, id)).get();
+      const linkedMovies = db
+        .select({ mpId: moviePeople.id, premiereDate: movies.premiereDate, year: movies.year })
+        .from(moviePeople)
+        .innerJoin(movies, eq(moviePeople.movieId, movies.id))
+        .where(eq(moviePeople.personId, id))
+        .all();
+      for (const m of linkedMovies) {
+        const age = computeAgeAtRelease(updatedPerson?.birthDate, m.premiereDate, m.year, updatedPerson?.birthYear);
+        db.update(moviePeople).set({ ageAtRelease: age }).where(eq(moviePeople.id, m.mpId)).run();
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
