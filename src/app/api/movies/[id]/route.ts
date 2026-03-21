@@ -97,8 +97,10 @@ export async function PUT(
 
     db.update(movies).set(updateData).where(eq(movies.id, id)).run();
 
-    // Handle cast updates
+    // Handle cast updates — read updated movie for correct year/premiereDate
     if (body.cast !== undefined && Array.isArray(body.cast)) {
+      const updatedMovie = db.select({ premiereDate: movies.premiereDate, year: movies.year }).from(movies).where(eq(movies.id, id)).get()!;
+
       // Delete all existing moviePeople rows for this movie
       db.delete(moviePeople).where(eq(moviePeople.movieId, id)).run();
 
@@ -124,7 +126,7 @@ export async function PUT(
           person = db.select().from(people).where(eq(people.id, personId)).get()!;
         }
 
-        const age = computeAgeAtRelease(person.birthDate, movie.premiereDate, movie.year, person.birthYear);
+        const age = computeAgeAtRelease(person.birthDate, updatedMovie.premiereDate, updatedMovie.year, person.birthYear);
         db.insert(moviePeople)
           .values({
             id: crypto.randomUUID(),
@@ -136,10 +138,8 @@ export async function PUT(
           })
           .run();
       }
-    }
-
-    // Recalculate ageAtRelease for all cast when release date/year changes
-    if ((body.year !== undefined || body.premiereDate !== undefined) && body.cast === undefined) {
+    } else if (body.year !== undefined || body.premiereDate !== undefined) {
+      // Cast not sent but release date changed — recalculate for existing cast
       const updatedMovie = db.select({ premiereDate: movies.premiereDate, year: movies.year }).from(movies).where(eq(movies.id, id)).get()!;
       const linkedPeople = db
         .select({ mpId: moviePeople.id, birthDate: people.birthDate, birthYear: people.birthYear })
