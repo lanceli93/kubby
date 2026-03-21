@@ -43,6 +43,8 @@ interface PersonDetail {
   birthYear?: number | null;
   placeOfBirth?: string | null;
   deathDate?: string | null;
+  height?: number | null;
+  measurements?: string | null;
   tmdbId?: string | null;
   imdbId?: string | null;
   userData?: {
@@ -310,6 +312,18 @@ export default function PersonDetailPage() {
                 <div>
                   <span className="text-white/50">{tPerson("birthPlace")}: </span>
                   <span className="text-white/90">{person.placeOfBirth}</span>
+                </div>
+              )}
+              {person.height && (
+                <div>
+                  <span className="text-white/50">{tPerson("height")}: </span>
+                  <span className="text-white/90">{person.height} cm</span>
+                </div>
+              )}
+              {person.measurements && (
+                <div>
+                  <span className="text-white/50">{tPerson("measurements")}: </span>
+                  <span className="text-white/90">{person.measurements}</span>
                 </div>
               )}
             </div>

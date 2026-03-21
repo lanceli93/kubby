@@ -24,6 +24,8 @@ function computeMissingFields(
   } else {
     if (!row.birthDate && !row.birthYear) missing.push("date");
     if (!row.fanartPath) missing.push("fanart");
+    if (!row.height) missing.push("height");
+    if (!row.measurements) missing.push("measurements");
   }
   return missing;
 }
@@ -172,7 +174,7 @@ function handlePeople(
 
   if (missingFilters.includes("any")) {
     conditions.push(
-      sql`(p.overview IS NULL OR p.overview = '' OR (p.birth_date IS NULL AND p.birth_year IS NULL) OR p.fanart_path IS NULL OR p.fanart_path = '')`
+      sql`(p.overview IS NULL OR p.overview = '' OR (p.birth_date IS NULL AND p.birth_year IS NULL) OR p.fanart_path IS NULL OR p.fanart_path = '' OR p.height IS NULL OR p.measurements IS NULL OR p.measurements = '')`
     );
   } else {
     for (const f of missingFilters) {
@@ -185,6 +187,12 @@ function handlePeople(
           break;
         case "fanart":
           conditions.push(sql`(p.fanart_path IS NULL OR p.fanart_path = '')`);
+          break;
+        case "height":
+          conditions.push(sql`p.height IS NULL`);
+          break;
+        case "measurements":
+          conditions.push(sql`(p.measurements IS NULL OR p.measurements = '')`);
           break;
       }
     }
@@ -219,6 +227,8 @@ function handlePeople(
     photo_mtime: number | null;
     photo_blur: string | null;
     fanart_path: string | null;
+    height: number | null;
+    measurements: string | null;
     personal_rating: number | null;
     is_favorite: number | null;
   }>(sql`
@@ -233,6 +243,8 @@ function handlePeople(
       p.photo_mtime,
       p.photo_blur,
       p.fanart_path,
+      p.height,
+      p.measurements,
       upd.personal_rating,
       upd.is_favorite
     FROM people p
@@ -259,6 +271,8 @@ function handlePeople(
       birthDate: r.birth_date,
       birthYear: r.birth_year,
       fanartPath: r.fanart_path,
+      height: r.height,
+      measurements: r.measurements,
     }),
   }));
 

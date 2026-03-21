@@ -36,6 +36,8 @@ interface PersonData {
   birthYear?: number;
   placeOfBirth?: string;
   deathDate?: string;
+  height?: number | null;
+  measurements?: string | null;
   tags?: string[];
   userData?: {
     personalRating?: number | null;
@@ -63,6 +65,8 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     birthInput: "",
     placeOfBirth: "",
     deathDate: "",
+    height: "",
+    measurements: "",
     tmdbId: "",
     imdbId: "",
     personalRating: "",
@@ -84,6 +88,8 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
         birthInput: person.birthDate || person.birthYear?.toString() || "",
         placeOfBirth: person.placeOfBirth || "",
         deathDate: person.deathDate || "",
+        height: person.height?.toString() || "",
+        measurements: person.measurements || "",
         tmdbId: person.tmdbId || "",
         imdbId: person.imdbId || "",
         personalRating: person.userData?.personalRating?.toString() || "",
@@ -166,6 +172,8 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
       birthYear,
       placeOfBirth: form.placeOfBirth || null,
       deathDate: form.deathDate || null,
+      height: form.height ? Number(form.height) : null,
+      measurements: form.measurements || null,
       tmdbId: form.tmdbId || null,
       imdbId: form.imdbId || null,
       tags: tags.length > 0 ? tags : null,
@@ -291,6 +299,27 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 value={form.deathDate}
                 onChange={(e) => setForm((f) => ({ ...f, deathDate: e.target.value }))}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("height")}</Label>
+                <Input
+                  type="number"
+                  value={form.height}
+                  onChange={(e) => setForm((f) => ({ ...f, height: e.target.value }))}
+                  placeholder="165"
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("measurements")}</Label>
+                <Input
+                  value={form.measurements}
+                  onChange={(e) => setForm((f) => ({ ...f, measurements: e.target.value }))}
+                  placeholder="88-60-90"
+                />
+              </div>
             </div>
 
             {/* Tags */}

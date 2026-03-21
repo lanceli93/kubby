@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff } from "lucide-react";
+import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Ratio } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
@@ -11,7 +11,7 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useQueryClient } from "@tanstack/react-query";
 
 type TabType = "movies" | "people";
-type MissingFilter = "" | "any" | "overview" | "date" | "fanart";
+type MissingFilter = "" | "any" | "overview" | "date" | "fanart" | "height" | "measurements";
 
 interface BrowseMovie {
   id: string;
@@ -135,6 +135,10 @@ export default function MetadataBrowsePage() {
     { key: "overview", label: t("missingOverview"), icon: FileText },
     { key: "date", label: t("missingDate"), icon: Calendar },
     { key: "fanart", label: t("missingFanart"), icon: ImageOff },
+    ...(activeTab === "people" ? [
+      { key: "height" as MissingFilter, label: t("missingHeight"), icon: Ruler },
+      { key: "measurements" as MissingFilter, label: t("missingMeasurements"), icon: Ratio },
+    ] : []),
   ];
 
   return (
@@ -156,7 +160,12 @@ export default function MetadataBrowsePage() {
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    if (tab.key === "movies" && (missingFilter === "height" || missingFilter === "measurements")) {
+                      setMissingFilter("");
+                    }
+                  }}
                   className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-fluid cursor-pointer ${
                     activeTab === tab.key
                       ? "bg-primary/20 text-primary"
@@ -380,6 +389,8 @@ const missingIconMap: Record<string, { icon: typeof FileText; label: string }> =
   overview: { icon: FileText, label: "Overview" },
   date: { icon: Calendar, label: "Date" },
   fanart: { icon: ImageOff, label: "Fanart" },
+  height: { icon: Ruler, label: "Height" },
+  measurements: { icon: Ratio, label: "Measurements" },
 };
 
 function MissingIndicators({ fields }: { fields: string[] }) {
