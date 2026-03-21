@@ -28,7 +28,8 @@ function computeMissingFields(
   return missing;
 }
 
-// GET /api/metadata/incomplete?type=movies|people&missing=overview,date,photo&page=1&limit=40
+// GET /api/metadata/browse?type=movies|people&missing=any|overview|date|photo&search=&page=1&limit=40
+// missing param: omit = all items, "any" = items missing at least one field, "overview"/"date"/"photo" = specific
 export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -44,14 +45,15 @@ export async function GET(request: NextRequest) {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+    const search = searchParams.get("search") || "";
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "40", 10)));
     const offset = (page - 1) * limit;
 
     if (type === "movies") {
-      return handleMovies(userId, missingFilters, limit, offset);
+      return handleMovies(userId, missingFilters, search, limit, offset);
     } else {
-      return handlePeople(userId, missingFilters, limit, offset);
+      return handlePeople(userId, missingFilters, search, limit, offset);
     }
   } catch (error) {
     console.error("Incomplete metadata error:", error);
@@ -62,14 +64,14 @@ export async function GET(request: NextRequest) {
 function handleMovies(
   userId: string,
   missingFilters: string[],
+  search: string,
   limit: number,
   offset: number
 ) {
-  // Build WHERE conditions for missing fields
   const conditions: ReturnType<typeof sql>[] = [];
 
-  if (missingFilters.length === 0) {
-    // "All" filter: show items missing ANY field
+  // "any" = items missing at least one field
+  if (missingFilters.includes("any")) {
     conditions.push(
       sql`(${movies.overview} IS NULL OR ${movies.overview} = '' OR (${movies.premiereDate} IS NULL AND ${movies.year} IS NULL) OR ${movies.posterPath} IS NULL OR ${movies.posterPath} = '')`
     );
@@ -89,23 +91,20 @@ function handleMovies(
     }
   }
 
-  if (conditions.length === 0) {
-    return NextResponse.json({ items: [], total: 0 });
+  if (search) {
+    conditions.push(sql`${movies.title} LIKE ${"%" + search + "%"}`);
   }
 
-  const whereClause = conditions.length === 1
-    ? conditions[0]
-    : sql`(${sql.join(conditions, sql` AND `)})`;
+  const whereClause = conditions.length > 0
+    ? (conditions.length === 1 ? conditions[0] : sql`(${sql.join(conditions, sql` AND `)})`)
+    : undefined;
 
   // Count
-  const [{ total }] = db
-    .select({ total: count() })
-    .from(movies)
-    .where(whereClause)
-    .all();
+  const countQuery = db.select({ total: count() }).from(movies);
+  const [{ total }] = (whereClause ? countQuery.where(whereClause) : countQuery).all();
 
   // Fetch with user data
-  const rows = db
+  let query = db
     .select({
       id: movies.id,
       title: movies.title,
@@ -136,7 +135,11 @@ function handleMovies(
         eq(userMovieData.userId, userId)
       )
     )
-    .where(whereClause)
+    .$dynamic();
+
+  if (whereClause) query = query.where(whereClause);
+
+  const rows = query
     .orderBy(movies.title)
     .limit(limit)
     .offset(offset)
@@ -160,12 +163,13 @@ function handleMovies(
 function handlePeople(
   userId: string,
   missingFilters: string[],
+  search: string,
   limit: number,
   offset: number
 ) {
   const conditions: ReturnType<typeof sql>[] = [];
 
-  if (missingFilters.length === 0) {
+  if (missingFilters.includes("any")) {
     conditions.push(
       sql`(p.overview IS NULL OR p.overview = '' OR (p.birth_date IS NULL AND p.birth_year IS NULL) OR p.photo_path IS NULL OR p.photo_path = '')`
     );
@@ -185,11 +189,13 @@ function handlePeople(
     }
   }
 
-  if (conditions.length === 0) {
-    return NextResponse.json({ items: [], total: 0 });
+  if (search) {
+    conditions.push(sql`p.name LIKE ${"%" + search + "%"}`);
   }
 
-  const whereClause = sql`WHERE ${sql.join(conditions, sql` AND `)}`;
+  const whereClause = conditions.length > 0
+    ? sql`WHERE ${sql.join(conditions, sql` AND `)}`
+    : sql``;
 
   const userJoin = sql`LEFT JOIN user_person_data upd ON upd.person_id = p.id AND upd.user_id = ${userId}`;
 

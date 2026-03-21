@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2 } from "lucide-react";
+import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
@@ -39,7 +39,8 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
   ];
 
   const metadataItems = [
-    { href: "/metadata/scraper", label: tNav("scraper"), icon: Wand2, matchPrefix: true },
+    { href: "/metadata/scraper", label: tNav("providers"), icon: Wand2 },
+    { href: "/metadata/browse", label: tNav("browse"), icon: LayoutGrid },
   ];
 
   const adminItems = [
