@@ -129,12 +129,12 @@ export default function MetadataBrowsePage() {
     { key: "people", label: "Actors", icon: Users },
   ];
 
-  const filters: { key: MissingFilter; label: string }[] = [
+  const filters: { key: MissingFilter; label: string; icon?: typeof FileText }[] = [
     { key: "", label: t("browseAll") },
     { key: "any", label: t("incomplete") },
-    { key: "overview", label: t("missingOverview") },
-    { key: "date", label: t("missingDate") },
-    { key: "fanart", label: t("missingFanart") },
+    { key: "overview", label: t("missingOverview"), icon: FileText },
+    { key: "date", label: t("missingDate"), icon: Calendar },
+    { key: "fanart", label: t("missingFanart"), icon: ImageOff },
   ];
 
   return (
@@ -212,19 +212,23 @@ export default function MetadataBrowsePage() {
 
         {/* Filter Chips */}
         <div className="flex flex-wrap gap-2">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setMissingFilter(f.key)}
-              className={`rounded-full px-3 py-1 text-xs font-medium border transition-fluid cursor-pointer ${
-                missingFilter === f.key
-                  ? "bg-primary/15 text-primary border-primary/30"
-                  : "bg-white/[0.03] text-muted-foreground border-white/[0.06] hover:bg-white/[0.05]"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+          {filters.map((f) => {
+            const Icon = f.icon;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setMissingFilter(f.key)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-fluid cursor-pointer ${
+                  missingFilter === f.key
+                    ? "bg-primary/15 text-primary border-primary/30"
+                    : "bg-white/[0.03] text-muted-foreground border-white/[0.06] hover:bg-white/[0.05]"
+                }`}
+              >
+                {Icon && <Icon className="h-3 w-3" />}
+                {f.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
