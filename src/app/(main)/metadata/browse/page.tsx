@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, memo } from "react";
+import { useState, useEffect, useCallback, useRef, memo, useTransition } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Cherry } from "lucide-react";
@@ -49,9 +49,17 @@ export default function MetadataBrowsePage() {
   const [refreshing, setRefreshing] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Editor state
+  // Editor state — use transition to avoid blocking UI when mounting heavy editor
   const [editMovieId, setEditMovieId] = useState<string | null>(null);
   const [editPersonId, setEditPersonId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  const openMovieEditor = useCallback((id: string) => {
+    startTransition(() => setEditMovieId(id));
+  }, []);
+  const openPersonEditor = useCallback((id: string) => {
+    startTransition(() => setEditPersonId(id));
+  }, []);
 
   // Debounce search input
   useEffect(() => {
@@ -260,14 +268,14 @@ export default function MetadataBrowsePage() {
                   <BrowseMovieCard
                     key={item.id}
                     item={item}
-                    onSelect={setEditMovieId}
+                    onSelect={openMovieEditor}
                   />
                 ))
               : personItems.map((item) => (
                   <BrowsePersonCard
                     key={item.id}
                     item={item}
-                    onSelect={setEditPersonId}
+                    onSelect={openPersonEditor}
                   />
                 ))}
           </div>
@@ -308,7 +316,7 @@ const BrowseMovieCard = memo(function BrowseMovieCard({ item, onSelect }: { item
     <div
       onClick={() => onSelect(item.id)}
       className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
-      style={{ width: CARD_WIDTH }}
+      style={{ width: CARD_WIDTH, contentVisibility: "auto", containIntrinsicSize: `${CARD_WIDTH}px ${POSTER_HEIGHT + 40}px` }}
     >
       {/* Poster */}
       <div
@@ -352,7 +360,7 @@ const BrowsePersonCard = memo(function BrowsePersonCard({ item, onSelect }: { it
     <div
       onClick={() => onSelect(item.id)}
       className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
-      style={{ width: CARD_WIDTH }}
+      style={{ width: CARD_WIDTH, contentVisibility: "auto", containIntrinsicSize: `${CARD_WIDTH}px ${POSTER_HEIGHT + 40}px` }}
     >
       {/* Photo */}
       <div
