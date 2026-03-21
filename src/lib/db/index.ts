@@ -281,6 +281,8 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `media_streams` ADD `pix_fmt` text",
     "ALTER TABLE `media_streams` ADD `level` integer",
     "ALTER TABLE `media_streams` ADD `has_b_frames` integer",
+    // 0028: person own fanart path
+    "ALTER TABLE `people` ADD `fanart_path` text",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

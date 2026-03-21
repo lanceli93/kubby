@@ -52,7 +52,7 @@ export async function POST(
     } else {
       const destPath = path.join(personDir, "fanart.jpg");
       fs.writeFileSync(destPath, buffer);
-      // fanart has no DB column for people — file-only
+      db.update(people).set({ fanartPath: toRelativeDataPath(destPath) }).where(eq(people.id, id)).run();
       return NextResponse.json({ path: destPath });
     }
   } catch (error) {
@@ -97,7 +97,7 @@ export async function DELETE(
       if (fs.existsSync(fanartPath)) {
         fs.unlinkSync(fanartPath);
       }
-      // No DB column for person fanart
+      db.update(people).set({ fanartPath: null }).where(eq(people.id, id)).run();
     }
 
     return NextResponse.json({ success: true });

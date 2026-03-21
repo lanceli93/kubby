@@ -11,7 +11,7 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useQueryClient } from "@tanstack/react-query";
 
 type TabType = "movies" | "people";
-type MissingFilter = "" | "any" | "overview" | "date" | "photo";
+type MissingFilter = "" | "any" | "overview" | "date" | "fanart";
 
 interface BrowseMovie {
   id: string;
@@ -134,7 +134,7 @@ export default function MetadataBrowsePage() {
     { key: "any", label: t("incomplete") },
     { key: "overview", label: t("missingOverview") },
     { key: "date", label: t("missingDate") },
-    { key: "photo", label: t("missingPhoto") },
+    { key: "fanart", label: t("missingFanart") },
   ];
 
   return (
@@ -362,7 +362,7 @@ function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () =
 const missingLabelMap: Record<string, string> = {
   overview: "Overview",
   date: "Date",
-  photo: "Photo",
+  fanart: "Fanart",
 };
 
 function MissingDot({ count, fields }: { count: number; fields: string[] }) {

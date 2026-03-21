@@ -7,7 +7,7 @@ import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
-import { resolveDataPath } from "@/lib/paths";
+import { resolveDataPath, toRelativeDataPath } from "@/lib/paths";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -145,16 +145,24 @@ export async function GET(
 
     // Check for person's own fanart first, then fall back to movie fanart
     const personDir = getPersonDir(person);
-    const ownFanartPath = nodePath.join(personDir, "fanart.jpg");
     let fanartPath: string | null = null;
     let fanartSource: "own" | "movie" | null = null;
 
-    if (fs.existsSync(ownFanartPath)) {
-      fanartPath = ownFanartPath;
+    if (person.fanartPath) {
+      // DB has own fanart recorded
+      fanartPath = resolveDataPath(person.fanartPath);
       fanartSource = "own";
     } else {
-      fanartPath = resolvedFilms.find((m) => m.fanartPath)?.fanartPath || null;
-      fanartSource = fanartPath ? "movie" : null;
+      // Backfill: legacy fanart exists on disk but not in DB
+      const ownFanartPath = nodePath.join(personDir, "fanart.jpg");
+      if (fs.existsSync(ownFanartPath)) {
+        fanartPath = ownFanartPath;
+        fanartSource = "own";
+        db.update(people).set({ fanartPath: toRelativeDataPath(ownFanartPath) }).where(eq(people.id, id)).run();
+      } else {
+        fanartPath = resolvedFilms.find((m) => m.fanartPath)?.fanartPath || null;
+        fanartSource = fanartPath ? "movie" : null;
+      }
     }
 
     // Get user data if authenticated

@@ -20,10 +20,10 @@ function computeMissingFields(
   if (!row.overview) missing.push("overview");
   if (type === "movies") {
     if (!row.premiereDate && !row.year) missing.push("date");
-    if (!row.posterPath) missing.push("photo");
+    if (!row.fanartPath) missing.push("fanart");
   } else {
     if (!row.birthDate && !row.birthYear) missing.push("date");
-    if (!row.photoPath) missing.push("photo");
+    if (!row.fanartPath) missing.push("fanart");
   }
   return missing;
 }
@@ -73,7 +73,7 @@ function handleMovies(
   // "any" = items missing at least one field
   if (missingFilters.includes("any")) {
     conditions.push(
-      sql`(${movies.overview} IS NULL OR ${movies.overview} = '' OR (${movies.premiereDate} IS NULL AND ${movies.year} IS NULL) OR ${movies.posterPath} IS NULL OR ${movies.posterPath} = '')`
+      sql`(${movies.overview} IS NULL OR ${movies.overview} = '' OR (${movies.premiereDate} IS NULL AND ${movies.year} IS NULL) OR ${movies.fanartPath} IS NULL OR ${movies.fanartPath} = '')`
     );
   } else {
     for (const f of missingFilters) {
@@ -84,8 +84,8 @@ function handleMovies(
         case "date":
           conditions.push(sql`(${movies.premiereDate} IS NULL AND ${movies.year} IS NULL)`);
           break;
-        case "photo":
-          conditions.push(sql`(${movies.posterPath} IS NULL OR ${movies.posterPath} = '')`);
+        case "fanart":
+          conditions.push(sql`(${movies.fanartPath} IS NULL OR ${movies.fanartPath} = '')`);
           break;
       }
     }
@@ -123,6 +123,7 @@ function handleMovies(
       audioChannels: movies.audioChannels,
       container: movies.container,
       runtimeSeconds: movies.runtimeSeconds,
+      fanartPath: movies.fanartPath,
       personalRating: userMovieData.personalRating,
       isFavorite: userMovieData.isFavorite,
       isPlayed: userMovieData.isPlayed,
@@ -171,7 +172,7 @@ function handlePeople(
 
   if (missingFilters.includes("any")) {
     conditions.push(
-      sql`(p.overview IS NULL OR p.overview = '' OR (p.birth_date IS NULL AND p.birth_year IS NULL) OR p.photo_path IS NULL OR p.photo_path = '')`
+      sql`(p.overview IS NULL OR p.overview = '' OR (p.birth_date IS NULL AND p.birth_year IS NULL) OR p.fanart_path IS NULL OR p.fanart_path = '')`
     );
   } else {
     for (const f of missingFilters) {
@@ -182,8 +183,8 @@ function handlePeople(
         case "date":
           conditions.push(sql`(p.birth_date IS NULL AND p.birth_year IS NULL)`);
           break;
-        case "photo":
-          conditions.push(sql`(p.photo_path IS NULL OR p.photo_path = '')`);
+        case "fanart":
+          conditions.push(sql`(p.fanart_path IS NULL OR p.fanart_path = '')`);
           break;
       }
     }
@@ -217,6 +218,7 @@ function handlePeople(
     photo_path: string | null;
     photo_mtime: number | null;
     photo_blur: string | null;
+    fanart_path: string | null;
     personal_rating: number | null;
     is_favorite: number | null;
   }>(sql`
@@ -230,6 +232,7 @@ function handlePeople(
       p.photo_path,
       p.photo_mtime,
       p.photo_blur,
+      p.fanart_path,
       upd.personal_rating,
       upd.is_favorite
     FROM people p
@@ -255,7 +258,7 @@ function handlePeople(
       overview: r.overview,
       birthDate: r.birth_date,
       birthYear: r.birth_year,
-      photoPath: r.photo_path,
+      fanartPath: r.fanart_path,
     }),
   }));
 
