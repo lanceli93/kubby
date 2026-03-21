@@ -126,7 +126,7 @@ export default function MetadataBrowsePage() {
 
   const tabs: { key: TabType; label: string; icon: typeof Film }[] = [
     { key: "movies", label: "Movies", icon: Film },
-    { key: "people", label: "People", icon: Users },
+    { key: "people", label: "Actors", icon: Users },
   ];
 
   const filters: { key: MissingFilter; label: string }[] = [
@@ -176,7 +176,7 @@ export default function MetadataBrowsePage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={activeTab === "movies" ? "Search movies..." : "Search people..."}
+              placeholder={activeTab === "movies" ? "Search movies..." : "Search actors..."}
               className="h-9 w-full rounded-md border border-white/[0.06] bg-white/[0.05] pl-9 pr-3 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
             />
           </div>
