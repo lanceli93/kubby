@@ -7,6 +7,7 @@ import { RefreshCw, Film, Users, Search } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useQueryClient } from "@tanstack/react-query";
 
 type TabType = "movies" | "people";
@@ -90,6 +91,7 @@ export default function MetadataBrowsePage() {
     [activeTab, missingFilter, debouncedSearch]
   );
 
+  // Reset and fetch page 1 when tab/filter/search changes
   useEffect(() => {
     setPage(1);
     setMovieItems([]);
@@ -97,11 +99,11 @@ export default function MetadataBrowsePage() {
     fetchItems(1);
   }, [fetchItems]);
 
-  const handleLoadMore = () => {
+  const fetchNextPage = useCallback(() => {
     const nextPage = page + 1;
     setPage(nextPage);
     fetchItems(nextPage, true);
-  };
+  }, [page, fetchItems]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -115,6 +117,12 @@ export default function MetadataBrowsePage() {
 
   const currentItems = activeTab === "movies" ? movieItems : personItems;
   const hasMore = currentItems.length < total;
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage: hasMore,
+    isFetchingNextPage: loading,
+    fetchNextPage,
+  });
 
   const tabs: { key: TabType; label: string; icon: typeof Film }[] = [
     { key: "movies", label: "Movies", icon: Film },
@@ -238,17 +246,8 @@ export default function MetadataBrowsePage() {
                 ))}
           </div>
 
-          {hasMore && (
-            <div className="flex justify-center pt-4">
-              <button
-                onClick={handleLoadMore}
-                disabled={loading}
-                className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-6 py-2.5 text-sm text-foreground hover:bg-white/[0.05] transition-fluid cursor-pointer active:scale-95 disabled:opacity-50"
-              >
-                {loading ? "..." : t("loadMore")}
-              </button>
-            </div>
-          )}
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-1" />
         </>
       )}
     </div>
