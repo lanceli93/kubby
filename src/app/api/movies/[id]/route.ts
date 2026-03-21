@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import fs from "fs/promises";
 import { db } from "@/lib/db";
-import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams, movieDiscs, mediaLibraries } from "@/lib/db/schema";
+import { movies, moviePeople, people, userMovieData, userPersonData, mediaStreams, movieDiscs, mediaLibraries, settings } from "@/lib/db/schema";
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { writeFullNfo, type NfoMovieData } from "@/lib/scanner/nfo-writer";
@@ -159,9 +159,11 @@ export async function PUT(
       .where(and(eq(moviePeople.movieId, id), eq(people.type, "director")))
       .all();
 
-    // Regenerate NFO file (skip in Jellyfin compat mode)
+    // Regenerate NFO file (skip in Jellyfin compat mode or when writeback is disabled)
     const movieLibrary = db.select().from(mediaLibraries).where(eq(mediaLibraries.id, updated.mediaLibraryId)).get();
-    if (updated.nfoPath && !movieLibrary?.jellyfinCompat) {
+    const nfoWritebackRow = db.select().from(settings).where(eq(settings.key, "nfo_writeback_enabled")).get();
+    const nfoWritebackEnabled = nfoWritebackRow ? nfoWritebackRow.value === "true" : true;
+    if (updated.nfoPath && !movieLibrary?.jellyfinCompat && nfoWritebackEnabled) {
       const nfoFullPath = nodePath.join(updated.folderPath, updated.nfoPath);
 
       // Fetch media streams for rich NFO fileinfo
