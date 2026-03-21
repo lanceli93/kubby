@@ -291,7 +291,7 @@ function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => 
       >
         {hasPoster ? (
           <Image
-            src={resolveImageSrc(item.posterPath!)}
+            src={resolveImageSrc(item.posterPath!, CARD_WIDTH * 2)}
             alt={item.title}
             fill
             className="object-cover"
@@ -335,7 +335,7 @@ function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () =
       >
         {hasPhoto ? (
           <Image
-            src={resolveImageSrc(item.photoPath!)}
+            src={resolveImageSrc(item.photoPath!, CARD_WIDTH * 2)}
             alt={item.name}
             fill
             className="object-cover"
