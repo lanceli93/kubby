@@ -224,7 +224,7 @@ export default function MetadataBrowsePage() {
           <div className="flex flex-wrap gap-4">
             {activeTab === "movies"
               ? movieItems.map((item) => (
-                  <div key={item.id} className="flex flex-col" style={{ width: 150 }}>
+                  <div key={item.id} className="relative" style={{ width: 150 }}>
                     <MovieCard
                       id={item.id}
                       title={item.title}
@@ -239,11 +239,11 @@ export default function MetadataBrowsePage() {
                       isWatched={item.isPlayed}
                       responsive
                     />
-                    <MissingBadges fields={item.missingFields} />
+                    <MissingDot count={item.missingFields.length} fields={item.missingFields} />
                   </div>
                 ))
               : personItems.map((item) => (
-                  <div key={item.id} className="flex flex-col">
+                  <div key={item.id} className="relative">
                     <PersonCard
                       id={item.id}
                       name={item.name}
@@ -253,7 +253,7 @@ export default function MetadataBrowsePage() {
                       isFavorite={item.isFavorite}
                       size="sm"
                     />
-                    <MissingBadges fields={item.missingFields} />
+                    <MissingDot count={item.missingFields.length} fields={item.missingFields} />
                   </div>
                 ))}
           </div>
@@ -276,25 +276,23 @@ export default function MetadataBrowsePage() {
   );
 }
 
-function MissingBadges({ fields }: { fields: string[] }) {
-  if (fields.length === 0) return null;
+const missingLabelMap: Record<string, string> = {
+  overview: "Overview",
+  date: "Date",
+  photo: "Photo",
+};
 
-  const labelMap: Record<string, string> = {
-    overview: "No Overview",
-    date: "No Date",
-    photo: "No Photo",
-  };
+function MissingDot({ count, fields }: { count: number; fields: string[] }) {
+  if (count === 0) return null;
+
+  const tooltip = fields.map((f) => missingLabelMap[f] || f).join(", ");
 
   return (
-    <div className="flex flex-wrap gap-1 mt-1.5 px-1">
-      {fields.map((field) => (
-        <span
-          key={field}
-          className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400"
-        >
-          {labelMap[field] || field}
-        </span>
-      ))}
+    <div
+      className="absolute bottom-[52px] left-1.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold text-black shadow-sm"
+      title={`Missing: ${tooltip}`}
+    >
+      {count}
     </div>
   );
 }
