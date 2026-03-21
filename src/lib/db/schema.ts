@@ -87,7 +87,9 @@ export const people = sqliteTable("people", {
   photoBlur: text("photo_blur"), // tiny base64 data URL for blur placeholder
   fanartPath: text("fanart_path"), // own fanart (not movie fallback)
   height: integer("height"), // cm
+  weight: integer("weight"), // kg
   measurements: text("measurements"), // e.g. "88-60-90"
+  cupSize: text("cup_size"), // e.g. "C"
   tmdbId: text("tmdb_id"),
   overview: text("overview"),
   birthDate: text("birth_date"),

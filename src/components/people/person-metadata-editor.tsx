@@ -37,7 +37,9 @@ interface PersonData {
   placeOfBirth?: string;
   deathDate?: string;
   height?: number | null;
+  weight?: number | null;
   measurements?: string | null;
+  cupSize?: string | null;
   tags?: string[];
   userData?: {
     personalRating?: number | null;
@@ -66,7 +68,9 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     placeOfBirth: "",
     deathDate: "",
     height: "",
+    weight: "",
     measurements: "",
+    cupSize: "",
     tmdbId: "",
     imdbId: "",
     personalRating: "",
@@ -89,7 +93,9 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
         placeOfBirth: person.placeOfBirth || "",
         deathDate: person.deathDate || "",
         height: person.height?.toString() || "",
+        weight: person.weight?.toString() || "",
         measurements: person.measurements || "",
+        cupSize: person.cupSize || "",
         tmdbId: person.tmdbId || "",
         imdbId: person.imdbId || "",
         personalRating: person.userData?.personalRating?.toString() || "",
@@ -173,7 +179,9 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
       placeOfBirth: form.placeOfBirth || null,
       deathDate: form.deathDate || null,
       height: form.height ? Number(form.height) : null,
+      weight: form.weight ? Number(form.weight) : null,
       measurements: form.measurements || null,
+      cupSize: form.cupSize || null,
       tmdbId: form.tmdbId || null,
       imdbId: form.imdbId || null,
       tags: tags.length > 0 ? tags : null,
@@ -313,11 +321,29 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 />
               </div>
               <div className="space-y-2">
+                <Label>{t("weight")}</Label>
+                <Input
+                  type="number"
+                  value={form.weight}
+                  onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))}
+                  placeholder="50"
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>{t("measurements")}</Label>
                 <Input
                   value={form.measurements}
                   onChange={(e) => setForm((f) => ({ ...f, measurements: e.target.value }))}
                   placeholder="88-60-90"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("cupSize")}</Label>
+                <Input
+                  value={form.cupSize}
+                  onChange={(e) => setForm((f) => ({ ...f, cupSize: e.target.value }))}
+                  placeholder="C"
                 />
               </div>
             </div>

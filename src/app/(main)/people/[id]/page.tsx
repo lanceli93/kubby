@@ -44,7 +44,9 @@ interface PersonDetail {
   placeOfBirth?: string | null;
   deathDate?: string | null;
   height?: number | null;
+  weight?: number | null;
   measurements?: string | null;
+  cupSize?: string | null;
   tmdbId?: string | null;
   imdbId?: string | null;
   userData?: {
@@ -314,16 +316,38 @@ export default function PersonDetailPage() {
                   <span className="text-white/90">{person.placeOfBirth}</span>
                 </div>
               )}
-              {person.height && (
+              {(person.height || person.weight) && (
                 <div>
-                  <span className="text-white/50">{tPerson("height")}: </span>
-                  <span className="text-white/90">{person.height} cm</span>
+                  {person.height && (
+                    <>
+                      <span className="text-white/50">{tPerson("height")}: </span>
+                      <span className="text-white/90">{person.height} cm</span>
+                    </>
+                  )}
+                  {person.height && person.weight && <span className="text-white/50"> / </span>}
+                  {person.weight && (
+                    <>
+                      <span className="text-white/50">{tPerson("weight")}: </span>
+                      <span className="text-white/90">{person.weight} kg</span>
+                    </>
+                  )}
                 </div>
               )}
-              {person.measurements && (
+              {(person.measurements || person.cupSize) && (
                 <div>
-                  <span className="text-white/50">{tPerson("measurements")}: </span>
-                  <span className="text-white/90">{person.measurements}</span>
+                  {person.measurements && (
+                    <>
+                      <span className="text-white/50">{tPerson("measurements")}: </span>
+                      <span className="text-white/90">{person.measurements}</span>
+                    </>
+                  )}
+                  {person.measurements && person.cupSize && <span className="text-white/50"> / </span>}
+                  {person.cupSize && (
+                    <>
+                      <span className="text-white/50">{tPerson("cupSize")}: </span>
+                      <span className="text-white/90">{person.cupSize}</span>
+                    </>
+                  )}
                 </div>
               )}
             </div>

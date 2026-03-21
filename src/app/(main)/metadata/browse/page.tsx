@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler, Ratio } from "lucide-react";
+import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff, Ruler } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
@@ -11,7 +11,7 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { useQueryClient } from "@tanstack/react-query";
 
 type TabType = "movies" | "people";
-type MissingFilter = "" | "any" | "overview" | "date" | "fanart" | "height" | "measurements";
+type MissingFilter = "" | "any" | "overview" | "date" | "fanart" | "height";
 
 interface BrowseMovie {
   id: string;
@@ -137,7 +137,6 @@ export default function MetadataBrowsePage() {
     { key: "fanart", label: t("missingFanart"), icon: ImageOff },
     ...(activeTab === "people" ? [
       { key: "height" as MissingFilter, label: t("missingHeight"), icon: Ruler },
-      { key: "measurements" as MissingFilter, label: t("missingMeasurements"), icon: Ratio },
     ] : []),
   ];
 
@@ -162,7 +161,7 @@ export default function MetadataBrowsePage() {
                   key={tab.key}
                   onClick={() => {
                     setActiveTab(tab.key);
-                    if (tab.key === "movies" && (missingFilter === "height" || missingFilter === "measurements")) {
+                    if (tab.key === "movies" && missingFilter === "height") {
                       setMissingFilter("");
                     }
                   }}
@@ -390,7 +389,6 @@ const missingIconMap: Record<string, { icon: typeof FileText; label: string }> =
   date: { icon: Calendar, label: "Date" },
   fanart: { icon: ImageOff, label: "Fanart" },
   height: { icon: Ruler, label: "Height" },
-  measurements: { icon: Ratio, label: "Measurements" },
 };
 
 function MissingIndicators({ fields }: { fields: string[] }) {

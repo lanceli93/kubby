@@ -90,7 +90,9 @@ export async function PUT(
     if (body.placeOfBirth !== undefined) updateData.placeOfBirth = body.placeOfBirth;
     if (body.deathDate !== undefined) updateData.deathDate = body.deathDate;
     if (body.height !== undefined) updateData.height = body.height ? Number(body.height) : null;
+    if (body.weight !== undefined) updateData.weight = body.weight ? Number(body.weight) : null;
     if (body.measurements !== undefined) updateData.measurements = body.measurements || null;
+    if (body.cupSize !== undefined) updateData.cupSize = body.cupSize || null;
     if (body.tags !== undefined) updateData.tags = body.tags ? JSON.stringify(body.tags) : null;
 
     db.update(people).set(updateData).where(eq(people.id, id)).run();
