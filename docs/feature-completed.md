@@ -1,5 +1,24 @@
 # Completed Features
 
+## 2026-03-21: Metadata Center MVP
+
+Expanded `/metadata/scraper` page from a simple API key config into a full Metadata Center with incomplete metadata browser and NFO writeback toggle.
+
+### New Files
+- `src/app/api/metadata/incomplete/route.ts` — GET endpoint querying movies/people with missing metadata (overview, date, photo filters, pagination)
+- `src/app/api/settings/nfo-writeback/route.ts` — GET/PUT for global NFO writeback toggle (settings table key-value)
+
+### Changes
+- **Scraper page** → Metadata Center: Settings card (TMDB key + NFO writeback toggle) + Incomplete Metadata browser (Movies/People tabs, filter chips, card grid with missing field badges, Load More pagination)
+- **Movie PUT**: checks `nfo_writeback_enabled` setting before writing NFO (in addition to existing `jellyfinCompat` check)
+- **Nav sidebar**: renamed "Scraper" to "Metadata" (en/zh)
+- **i18n**: 8 new keys in `dashboard` namespace (nfoWriteback, incompleteMetadata, missingOverview, etc.)
+
+### Reused Components
+- `MovieCard` and `PersonCard` rendered in responsive grid with missing field amber badges below
+- Card dropdown menus open existing `MovieMetadataEditor` / `PersonMetadataEditor` dialogs
+- Refresh button invalidates query cache for data freshness after edits
+
 ## 2026-03-17: Basic 360° Panoramic Player (Phase 2)
 
 Implemented Three.js-based 360° panoramic video player with mouse/touch drag rotation and scroll zoom.
