@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { RefreshCw, Film, Users, Search } from "lucide-react";
+import { RefreshCw, Film, Users, Search, FileText, Calendar, ImageOff } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
@@ -147,6 +147,7 @@ export default function MetadataBrowsePage() {
 
       {/* Controls */}
       <div className="flex flex-col gap-3">
+        {/* Row 1: Tabs + Search (desktop) + Count */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* Tab Switcher */}
           <div className="inline-flex gap-1 rounded-lg border border-white/[0.06] bg-white/[0.03] p-1">
@@ -169,6 +170,18 @@ export default function MetadataBrowsePage() {
             })}
           </div>
 
+          {/* Search — inline on desktop */}
+          <div className="relative hidden sm:block flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={activeTab === "movies" ? "Search movies..." : "Search actors..."}
+              className="h-9 w-full rounded-md border border-white/[0.06] bg-white/[0.05] pl-9 pr-3 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+            />
+          </div>
+
           {/* Count + Refresh */}
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm text-muted-foreground">
@@ -185,15 +198,15 @@ export default function MetadataBrowsePage() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
+        {/* Search — own row on mobile */}
+        <div className="relative sm:hidden">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={activeTab === "movies" ? "Search movies..." : "Search actors..."}
-            className="h-9 w-full sm:max-w-xs rounded-md border border-white/[0.06] bg-white/[0.05] pl-9 pr-3 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
+            className="h-9 w-full rounded-md border border-white/[0.06] bg-white/[0.05] pl-9 pr-3 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -305,7 +318,7 @@ function BrowseMovieCard({ item, onClick }: { item: BrowseMovie; onClick: () => 
             <Film className="h-8 w-8 text-muted-foreground/30" />
           </div>
         )}
-        <MissingDot count={item.missingFields.length} fields={item.missingFields} />
+        <MissingIndicators fields={item.missingFields} />
       </div>
       {/* Title */}
       <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.title}</p>
@@ -349,7 +362,7 @@ function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () =
             {item.name.charAt(0)}
           </div>
         )}
-        <MissingDot count={item.missingFields.length} fields={item.missingFields} />
+        <MissingIndicators fields={item.missingFields} />
       </div>
       {/* Name */}
       <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.name}</p>
@@ -357,23 +370,32 @@ function BrowsePersonCard({ item, onClick }: { item: BrowsePerson; onClick: () =
   );
 }
 
-/* ── Missing indicator dot ── */
+/* ── Missing field icon indicators ── */
 
-const missingLabelMap: Record<string, string> = {
-  overview: "Overview",
-  date: "Date",
-  fanart: "Fanart",
+const missingIconMap: Record<string, { icon: typeof FileText; label: string }> = {
+  overview: { icon: FileText, label: "Overview" },
+  date: { icon: Calendar, label: "Date" },
+  fanart: { icon: ImageOff, label: "Fanart" },
 };
 
-function MissingDot({ count, fields }: { count: number; fields: string[] }) {
-  if (count === 0) return null;
-  const tooltip = fields.map((f) => missingLabelMap[f] || f).join(", ");
+function MissingIndicators({ fields }: { fields: string[] }) {
+  if (fields.length === 0) return null;
   return (
-    <div
-      className="absolute bottom-1.5 left-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/90 px-1 text-[10px] font-bold text-black shadow-sm"
-      title={`Missing: ${tooltip}`}
-    >
-      {count}
+    <div className="absolute bottom-1.5 left-1.5 flex gap-1">
+      {fields.map((f) => {
+        const entry = missingIconMap[f];
+        if (!entry) return null;
+        const Icon = entry.icon;
+        return (
+          <div
+            key={f}
+            className="flex h-5 w-5 items-center justify-center rounded-md bg-black/60 backdrop-blur-sm"
+            title={`Missing: ${entry.label}`}
+          >
+            <Icon className="h-3 w-3 text-amber-400" />
+          </div>
+        );
+      })}
     </div>
   );
 }
