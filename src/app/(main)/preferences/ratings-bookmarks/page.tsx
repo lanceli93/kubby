@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Upload, Trash2, ChevronUp, ChevronDown, Pencil, Check, Plus } from "lucide-react";
+import { X, Upload, Trash2, ChevronUp, ChevronDown, Pencil, Plus, Minus } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { useTranslations } from "next-intl";
 import { BUILTIN_BOOKMARK_ICONS } from "@/lib/bookmark-icons";
@@ -64,6 +64,8 @@ export default function PersonalMetadataPage() {
   const [editValue, setEditValue] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
   const [deletingDim, setDeletingDim] = useState<{ type: "movie" | "person"; index: number; name: string; count: number | null } | null>(null);
+  const [movieWeights, setMovieWeights] = useState<Record<string, number>>({});
+  const [personWeights, setPersonWeights] = useState<Record<string, number>>({});
 
   // Custom icon upload state
   const [iconLabel, setIconLabel] = useState("");
@@ -87,6 +89,8 @@ export default function PersonalMetadataPage() {
       setQbIconType(tpl?.iconType || "bookmark");
       setQbTags(tpl?.tags || []);
       setQbNote(tpl?.note || "");
+      setMovieWeights(prefs.movieDimensionWeights || {});
+      setPersonWeights(prefs.personDimensionWeights || {});
     }
   }, [prefs]);
 
@@ -133,10 +137,17 @@ export default function PersonalMetadataPage() {
     const oldName = dims[index];
     if (trimmed && trimmed !== oldName && !dims.includes(trimmed)) {
       setDims((prev) => prev.map((d, i) => (i === index ? trimmed : d)));
+      // Rename weight key
+      const setWeights = type === "movie" ? setMovieWeights : setPersonWeights;
+      setWeights((prev) => {
+        if (!(oldName in prev)) return prev;
+        const updated = { ...prev, [trimmed]: prev[oldName] };
+        delete updated[oldName];
+        return updated;
+      });
       // Track rename: find original name (may have been renamed before)
       setRenames((prev) => {
         const updated = { ...prev };
-        // If oldName was itself a rename target, chain it
         const originalKey = Object.entries(updated).find(([, v]) => v === oldName)?.[0];
         if (originalKey) {
           updated[originalKey] = trimmed;
@@ -169,8 +180,17 @@ export default function PersonalMetadataPage() {
   const confirmDelete = () => {
     if (!deletingDim) return;
     const { type, index } = deletingDim;
+    const dims = type === "movie" ? movieDims : personDims;
     const setDims = type === "movie" ? setMovieDims : setPersonDims;
+    const setWeights = type === "movie" ? setMovieWeights : setPersonWeights;
+    const name = dims[index];
     setDims((prev) => prev.filter((_, i) => i !== index));
+    setWeights((prev) => {
+      if (!(name in prev)) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
     setDeletingDim(null);
   };
 
@@ -184,6 +204,8 @@ export default function PersonalMetadataPage() {
         body: JSON.stringify({
           movieRatingDimensions: movieDims,
           personRatingDimensions: personDims,
+          movieDimensionWeights: movieWeights,
+          personDimensionWeights: personWeights,
           disabledBookmarkIcons: Array.from(disabledIcons),
           subtleBookmarkMarkers: subtleMarkers,
           quickBookmarkTemplate: (qbIconType !== "bookmark" || qbTags.length > 0 || qbNote)
@@ -307,6 +329,28 @@ export default function PersonalMetadataPage() {
                 ) : (
                   <span className="flex-1 text-sm text-foreground">{dim}</span>
                 )}
+                {/* Weight control */}
+                <div className="flex items-center gap-0.5 rounded-md bg-white/[0.06] px-1 py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMovieWeights((prev) => ({ ...prev, [dim]: Math.max(0.5, (prev[dim] ?? 1) - 0.5) }))}
+                    disabled={(movieWeights[dim] ?? 1) <= 0.5}
+                    className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className={`min-w-[2rem] text-center text-xs tabular-nums ${(movieWeights[dim] ?? 1) !== 1 ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                    x{(movieWeights[dim] ?? 1).toFixed(1)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setMovieWeights((prev) => ({ ...prev, [dim]: Math.min(3, (prev[dim] ?? 1) + 0.5) }))}
+                    disabled={(movieWeights[dim] ?? 1) >= 3}
+                    className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
                 <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
                     type="button"
@@ -403,6 +447,28 @@ export default function PersonalMetadataPage() {
                 ) : (
                   <span className="flex-1 text-sm text-foreground">{dim}</span>
                 )}
+                {/* Weight control */}
+                <div className="flex items-center gap-0.5 rounded-md bg-white/[0.06] px-1 py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setPersonWeights((prev) => ({ ...prev, [dim]: Math.max(0.5, (prev[dim] ?? 1) - 0.5) }))}
+                    disabled={(personWeights[dim] ?? 1) <= 0.5}
+                    className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className={`min-w-[2rem] text-center text-xs tabular-nums ${(personWeights[dim] ?? 1) !== 1 ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                    x{(personWeights[dim] ?? 1).toFixed(1)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPersonWeights((prev) => ({ ...prev, [dim]: Math.min(3, (prev[dim] ?? 1) + 0.5) }))}
+                    disabled={(personWeights[dim] ?? 1) >= 3}
+                    className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
                 <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
                     type="button"

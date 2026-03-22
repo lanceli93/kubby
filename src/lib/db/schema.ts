@@ -195,6 +195,8 @@ export const userPreferences = sqliteTable("user_preferences", {
   quickBookmarkTemplate: text("quick_bookmark_template"), // JSON: { iconType?, tags?, note? }
   subtleBookmarkMarkers: integer("subtle_bookmark_markers", { mode: "boolean" }).notNull().default(false),
   player360Mode: integer("player_360_mode", { mode: "boolean" }).notNull().default(false),
+  movieDimensionWeights: text("movie_dimension_weights"), // JSON object, e.g. '{"Plot":2,"VFX":1}'
+  personDimensionWeights: text("person_dimension_weights"), // JSON object, e.g. '{"Appearance":2}'
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────

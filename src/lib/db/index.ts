@@ -290,6 +290,9 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `people` ADD `cup_size` text",
     // 0030: waist-to-hip ratio (auto-calculated from measurements)
     "ALTER TABLE `people` ADD `whr` real",
+    // 0031: dimension weights for weighted average ratings
+    "ALTER TABLE `user_preferences` ADD `movie_dimension_weights` text",
+    "ALTER TABLE `user_preferences` ADD `person_dimension_weights` text",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

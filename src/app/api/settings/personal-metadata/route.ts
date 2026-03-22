@@ -38,6 +38,8 @@ export async function GET() {
         quickBookmarkTemplate: null,
         subtleBookmarkMarkers: false,
         player360Mode: false,
+        movieDimensionWeights: {},
+        personDimensionWeights: {},
         serverPlatform,
       });
     }
@@ -65,6 +67,12 @@ export async function GET() {
         : null,
       subtleBookmarkMarkers: row.subtleBookmarkMarkers,
       player360Mode: row.player360Mode,
+      movieDimensionWeights: row.movieDimensionWeights
+        ? JSON.parse(row.movieDimensionWeights)
+        : {},
+      personDimensionWeights: row.personDimensionWeights
+        ? JSON.parse(row.personDimensionWeights)
+        : {},
       serverPlatform,
     });
   } catch (error) {
@@ -154,6 +162,12 @@ export async function PUT(request: NextRequest) {
       player360Mode: body.player360Mode !== undefined
         ? body.player360Mode
         : existing?.player360Mode ?? false,
+      movieDimensionWeights: body.movieDimensionWeights !== undefined
+        ? JSON.stringify(body.movieDimensionWeights)
+        : existing?.movieDimensionWeights ?? "{}",
+      personDimensionWeights: body.personDimensionWeights !== undefined
+        ? JSON.stringify(body.personDimensionWeights)
+        : existing?.personDimensionWeights ?? "{}",
     };
 
     if (existing) {

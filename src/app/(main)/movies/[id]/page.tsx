@@ -912,6 +912,7 @@ export default function MovieDetailPage() {
         onSave={savePersonalRating}
         dimensions={movieDimensions}
         dimensionRatings={movie.userData?.dimensionRatings}
+        dimensionWeights={prefs?.movieDimensionWeights}
       />
 
       {/* Delete confirmation dialog */}

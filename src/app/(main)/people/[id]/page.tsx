@@ -455,6 +455,7 @@ export default function PersonDetailPage() {
         onSave={savePersonalRating}
         dimensions={personDimensions}
         dimensionRatings={person.userData?.dimensionRatings}
+        dimensionWeights={prefs?.personDimensionWeights}
         showTier
       />
 

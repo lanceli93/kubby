@@ -15,6 +15,8 @@ export interface UserPreferences {
   quickBookmarkTemplate: { iconType?: string; tags?: string[]; note?: string } | null;
   subtleBookmarkMarkers: boolean;
   player360Mode: boolean;
+  movieDimensionWeights: Record<string, number>;
+  personDimensionWeights: Record<string, number>;
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 

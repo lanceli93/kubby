@@ -18,6 +18,7 @@ interface StarRatingDialogProps {
   onSave: (rating: number | null, dimensionRatings?: Record<string, number> | null) => void;
   dimensions?: string[];
   dimensionRatings?: Record<string, number> | null;
+  dimensionWeights?: Record<string, number>;
   showTier?: boolean;
 }
 
@@ -111,6 +112,7 @@ export function StarRatingDialog({
   onSave,
   dimensions,
   dimensionRatings: initialDimensionRatings,
+  dimensionWeights,
   showTier,
 }: StarRatingDialogProps) {
   const t = useTranslations("metadata");
@@ -135,13 +137,21 @@ export function StarRatingDialog({
     }
   }, [open, value, hasDimensions, initialDimensionRatings]);
 
-  // Compute average from dimension ratings (only current dimensions)
+  // Compute weighted average from dimension ratings (only current dimensions)
   const computeAverage = (ratings: Record<string, number>): number | null => {
     if (!dimensions || dimensions.length === 0) return null;
-    const values = dimensions.map((d) => ratings[d]).filter((v) => v != null && v > 0);
-    if (values.length === 0) return null;
-    const avg = values.reduce((a, b) => a + b, 0) / values.length;
-    return Math.round(avg * 10) / 10;
+    let weightedSum = 0;
+    let weightSum = 0;
+    for (const dim of dimensions) {
+      const val = ratings[dim];
+      if (val != null && val > 0) {
+        const w = dimensionWeights?.[dim] ?? 1;
+        weightedSum += val * w;
+        weightSum += w;
+      }
+    }
+    if (weightSum === 0) return null;
+    return Math.round((weightedSum / weightSum) * 10) / 10;
   };
 
   const displayRating = hoverRating ?? rating;
