@@ -307,10 +307,17 @@ export default function PersonalMetadataPage() {
         </p>
         {movieDims.length > 0 && (
           <div className="flex flex-col gap-1">
+            {/* Column headers */}
+            <div className="flex items-center gap-2 px-3 pb-1">
+              <span className="w-5" />
+              <span className="flex-1 text-[11px] text-muted-foreground/50">{t("dimName")}</span>
+              <span className="w-[5.5rem] text-center text-[11px] text-muted-foreground/50">{t("dimWeight")}</span>
+              <span className="w-[6.5rem]" />
+            </div>
             {movieDims.map((dim, i) => (
               <div
                 key={`movie-${i}`}
-                className="group flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 transition-fluid hover:bg-white/[0.07]"
+                className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 transition-fluid hover:bg-white/[0.07]"
               >
                 <span className="w-5 text-center text-xs tabular-nums text-muted-foreground/50">{i + 1}</span>
                 {editingDim?.type === "movie" && editingDim.index === i ? (
@@ -351,12 +358,12 @@ export default function PersonalMetadataPage() {
                     <Plus className="h-3 w-3" />
                   </button>
                 </div>
-                <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex items-center gap-0.5">
                   <button
                     type="button"
                     onClick={() => handleMoveDim("movie", i, -1)}
                     disabled={i === 0}
-                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                     aria-label="Move up"
                   >
                     <ChevronUp className="h-3.5 w-3.5" />
@@ -365,7 +372,7 @@ export default function PersonalMetadataPage() {
                     type="button"
                     onClick={() => handleMoveDim("movie", i, 1)}
                     disabled={i === movieDims.length - 1}
-                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                     aria-label="Move down"
                   >
                     <ChevronDown className="h-3.5 w-3.5" />
@@ -373,7 +380,7 @@ export default function PersonalMetadataPage() {
                   <button
                     type="button"
                     onClick={() => startEdit("movie", i)}
-                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground cursor-pointer transition-fluid"
                     aria-label="Rename"
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -381,7 +388,7 @@ export default function PersonalMetadataPage() {
                   <button
                     type="button"
                     onClick={() => startDelete("movie", i)}
-                    className="rounded p-1 text-muted-foreground hover:bg-red-500/20 hover:text-red-400 cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-red-500/20 hover:text-red-400 cursor-pointer transition-fluid"
                     aria-label="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -425,10 +432,17 @@ export default function PersonalMetadataPage() {
         </p>
         {personDims.length > 0 && (
           <div className="flex flex-col gap-1">
+            {/* Column headers */}
+            <div className="flex items-center gap-2 px-3 pb-1">
+              <span className="w-5" />
+              <span className="flex-1 text-[11px] text-muted-foreground/50">{t("dimName")}</span>
+              <span className="w-[5.5rem] text-center text-[11px] text-muted-foreground/50">{t("dimWeight")}</span>
+              <span className="w-[6.5rem]" />
+            </div>
             {personDims.map((dim, i) => (
               <div
                 key={`person-${i}`}
-                className="group flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 transition-fluid hover:bg-white/[0.07]"
+                className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 transition-fluid hover:bg-white/[0.07]"
               >
                 <span className="w-5 text-center text-xs tabular-nums text-muted-foreground/50">{i + 1}</span>
                 {editingDim?.type === "person" && editingDim.index === i ? (
@@ -469,12 +483,12 @@ export default function PersonalMetadataPage() {
                     <Plus className="h-3 w-3" />
                   </button>
                 </div>
-                <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex items-center gap-0.5">
                   <button
                     type="button"
                     onClick={() => handleMoveDim("person", i, -1)}
                     disabled={i === 0}
-                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                     aria-label="Move up"
                   >
                     <ChevronUp className="h-3.5 w-3.5" />
@@ -483,7 +497,7 @@ export default function PersonalMetadataPage() {
                     type="button"
                     onClick={() => handleMoveDim("person", i, 1)}
                     disabled={i === personDims.length - 1}
-                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                     aria-label="Move down"
                   >
                     <ChevronDown className="h-3.5 w-3.5" />
@@ -491,7 +505,7 @@ export default function PersonalMetadataPage() {
                   <button
                     type="button"
                     onClick={() => startEdit("person", i)}
-                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground cursor-pointer transition-fluid"
                     aria-label="Rename"
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -499,7 +513,7 @@ export default function PersonalMetadataPage() {
                   <button
                     type="button"
                     onClick={() => startDelete("person", i)}
-                    className="rounded p-1 text-muted-foreground hover:bg-red-500/20 hover:text-red-400 cursor-pointer transition-fluid"
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-red-500/20 hover:text-red-400 cursor-pointer transition-fluid"
                     aria-label="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
