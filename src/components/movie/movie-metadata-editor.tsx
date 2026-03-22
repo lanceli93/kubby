@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Star } from "lucide-react";
+import { X, Star, Upload, Trash2, ImageIcon, Info } from "lucide-react";
+import Image from "next/image";
+import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -47,6 +49,8 @@ interface MovieData {
   genres?: string[];
   studios?: string[];
   tags?: string[];
+  posterPath?: string | null;
+  fanartPath?: string | null;
   tmdbId?: string;
   imdbId?: string;
   allPeople?: { id: string; name: string; type: string; role?: string; sortOrder?: number }[];
@@ -176,6 +180,45 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
+  // Image editing state & handlers
+  const [imgUploading, setImgUploading] = useState<"poster" | "fanart" | null>(null);
+  const [imgDeleting, setImgDeleting] = useState<"poster" | "fanart" | null>(null);
+  const posterInputRef = useRef<HTMLInputElement>(null);
+  const fanartInputRef = useRef<HTMLInputElement>(null);
+  const imgBusy = imgUploading !== null || imgDeleting !== null;
+
+  const handleImageUpload = async (type: "poster" | "fanart", file: File) => {
+    setImgUploading(type);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await fetch(`/api/movies/${movieId}/images?type=${type}`, { method: "POST", body: formData });
+      queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+    } finally {
+      setImgUploading(null);
+    }
+  };
+
+  const handleImageDelete = async (type: "poster" | "fanart") => {
+    setImgDeleting(type);
+    try {
+      await fetch(`/api/movies/${movieId}/images`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+    } finally {
+      setImgDeleting(null);
+    }
+  };
+
+  const onImageFileSelected = (type: "poster" | "fanart") => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageUpload(type, file);
+    e.target.value = "";
+  };
+
   const handleSave = async () => {
     // Check year/premiereDate consistency
     if (form.year && form.premiereDate) {
@@ -290,6 +333,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
           <TabsList>
             <TabsTrigger value="general">{t("general")}</TabsTrigger>
             <TabsTrigger value="cast">{t("cast")}</TabsTrigger>
+            <TabsTrigger value="images">{t("images")}</TabsTrigger>
             <TabsTrigger value="personal">{t("personal")}</TabsTrigger>
           </TabsList>
 
@@ -567,6 +611,92 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
             >
               {t("addCast")}
             </button>
+          </TabsContent>
+
+          <TabsContent value="images" className="pt-4">
+            <div className="flex items-start gap-4">
+              {/* Poster */}
+              <div className="flex w-[180px] flex-shrink-0 flex-col gap-2">
+                <h3 className="text-xs font-medium text-white/50">{t("poster")}</h3>
+                <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
+                  {movie?.posterPath ? (
+                    <Image
+                      src={resolveImageSrc(movie.posterPath)}
+                      alt="Poster"
+                      fill
+                      className="object-cover"
+                      sizes="180px"
+                      key={movie.posterPath}
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-1.5 text-white/30">
+                      <ImageIcon className="h-8 w-8" />
+                      <span className="text-xs">{t("noImage")}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => posterInputRef.current?.click()}
+                    disabled={imgBusy}
+                    className="h-7 rounded-md border border-white/10 bg-white/5 px-2.5 text-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50 cursor-pointer"
+                  >
+                    {movie?.posterPath ? t("replaceImage") : t("uploadImage")}
+                  </button>
+                  {movie?.posterPath && (
+                    <button
+                      onClick={() => handleImageDelete("poster")}
+                      disabled={imgBusy}
+                      className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <input ref={posterInputRef} type="file" accept="image/*" className="hidden" onChange={onImageFileSelected("poster")} />
+              </div>
+
+              {/* Fanart */}
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <h3 className="text-xs font-medium text-white/50">{t("fanart")}</h3>
+                <div className="relative h-[250px] w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
+                  {movie?.fanartPath ? (
+                    <Image
+                      src={resolveImageSrc(movie.fanartPath)}
+                      alt="Fanart"
+                      fill
+                      className="object-cover"
+                      sizes="480px"
+                      key={movie.fanartPath}
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-1.5 text-white/30">
+                      <ImageIcon className="h-8 w-8" />
+                      <span className="text-xs">{t("noImage")}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => fanartInputRef.current?.click()}
+                    disabled={imgBusy}
+                    className="h-7 rounded-md border border-white/10 bg-white/5 px-2.5 text-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50 cursor-pointer"
+                  >
+                    {movie?.fanartPath ? t("replaceImage") : t("uploadImage")}
+                  </button>
+                  {movie?.fanartPath && (
+                    <button
+                      onClick={() => handleImageDelete("fanart")}
+                      disabled={imgBusy}
+                      className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <input ref={fanartInputRef} type="file" accept="image/*" className="hidden" onChange={onImageFileSelected("fanart")} />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="personal" className="space-y-4 pt-4">
