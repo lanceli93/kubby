@@ -296,7 +296,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[700px] sm:rounded-lg overflow-y-auto overflow-x-hidden">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[800px] sm:rounded-lg overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>{t("editMetadata")}</DialogTitle>
         </DialogHeader>
