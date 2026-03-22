@@ -10,7 +10,8 @@
     "confirm": "Confirm",
     "error": "Error",
     "success": "Success",
-    "enable": "Enable"
+    "enable": "Enable",
+    "delete": "Delete"
   },
   "auth": {
     "signIn": "Sign In",
