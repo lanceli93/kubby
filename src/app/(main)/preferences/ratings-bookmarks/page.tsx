@@ -153,9 +153,12 @@ export default function PersonalMetadataPage() {
   const startDelete = async (type: "movie" | "person", index: number) => {
     const dims = type === "movie" ? movieDims : personDims;
     const name = dims[index];
+    // If this dimension was renamed (unsaved), query by the original name in DB
+    const renameMap = type === "movie" ? movieRenames : personRenames;
+    const originalName = Object.entries(renameMap).find(([, v]) => v === name)?.[0] ?? name;
     setDeletingDim({ type, index, name, count: null });
     try {
-      const res = await fetch(`/api/settings/dimension-usage?type=${type}&name=${encodeURIComponent(name)}`);
+      const res = await fetch(`/api/settings/dimension-usage?type=${type}&name=${encodeURIComponent(originalName)}`);
       const data = await res.json();
       setDeletingDim((prev) => prev ? { ...prev, count: data.count ?? 0 } : null);
     } catch {
