@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import os from "os";
 import { db } from "@/lib/db";
-import { userPreferences } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { userPreferences, userMovieData, userPersonData } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 // GET /api/settings/personal-metadata
@@ -171,42 +171,54 @@ export async function PUT(request: NextRequest) {
         .run();
     }
 
-    // Handle dimension renames: batch update JSON keys in rating data
+    // Handle dimension renames: read-modify-write JSON keys in rating data
     const renames = body.renamedDimensions as { movie?: Record<string, string>; person?: Record<string, string> } | undefined;
     if (renames) {
-      if (renames.movie) {
-        for (const [oldName, newName] of Object.entries(renames.movie)) {
-          if (oldName && newName && oldName !== newName) {
-            const oldPath = `$."${oldName}"`;
-            const newPath = `$."${newName}"`;
-            db.run(sql`
-              UPDATE user_movie_data
-              SET dimension_ratings = json_insert(
-                json_remove(dimension_ratings, ${oldPath}),
-                ${newPath},
-                json_extract(dimension_ratings, ${oldPath})
-              )
-              WHERE user_id = ${userId}
-                AND json_extract(dimension_ratings, ${oldPath}) IS NOT NULL
-            `);
+      if (renames.movie && Object.keys(renames.movie).length > 0) {
+        const rows = db.select({ id: userMovieData.id, dimensionRatings: userMovieData.dimensionRatings })
+          .from(userMovieData)
+          .where(eq(userMovieData.userId, userId))
+          .all();
+        for (const row of rows) {
+          if (!row.dimensionRatings) continue;
+          const ratings = JSON.parse(row.dimensionRatings) as Record<string, number>;
+          let changed = false;
+          for (const [oldName, newName] of Object.entries(renames.movie!)) {
+            if (oldName in ratings && oldName !== newName) {
+              ratings[newName] = ratings[oldName];
+              delete ratings[oldName];
+              changed = true;
+            }
+          }
+          if (changed) {
+            db.update(userMovieData)
+              .set({ dimensionRatings: JSON.stringify(ratings) })
+              .where(eq(userMovieData.id, row.id))
+              .run();
           }
         }
       }
-      if (renames.person) {
-        for (const [oldName, newName] of Object.entries(renames.person)) {
-          if (oldName && newName && oldName !== newName) {
-            const oldPath = `$."${oldName}"`;
-            const newPath = `$."${newName}"`;
-            db.run(sql`
-              UPDATE user_person_data
-              SET dimension_ratings = json_insert(
-                json_remove(dimension_ratings, ${oldPath}),
-                ${newPath},
-                json_extract(dimension_ratings, ${oldPath})
-              )
-              WHERE user_id = ${userId}
-                AND json_extract(dimension_ratings, ${oldPath}) IS NOT NULL
-            `);
+      if (renames.person && Object.keys(renames.person).length > 0) {
+        const rows = db.select({ id: userPersonData.id, dimensionRatings: userPersonData.dimensionRatings })
+          .from(userPersonData)
+          .where(eq(userPersonData.userId, userId))
+          .all();
+        for (const row of rows) {
+          if (!row.dimensionRatings) continue;
+          const ratings = JSON.parse(row.dimensionRatings) as Record<string, number>;
+          let changed = false;
+          for (const [oldName, newName] of Object.entries(renames.person!)) {
+            if (oldName in ratings && oldName !== newName) {
+              ratings[newName] = ratings[oldName];
+              delete ratings[oldName];
+              changed = true;
+            }
+          }
+          if (changed) {
+            db.update(userPersonData)
+              .set({ dimensionRatings: JSON.stringify(ratings) })
+              .where(eq(userPersonData.id, row.id))
+              .run();
           }
         }
       }
