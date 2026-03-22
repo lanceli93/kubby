@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import os from "os";
 import { db } from "@/lib/db";
 import { userPreferences } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 // GET /api/settings/personal-metadata
@@ -169,6 +169,47 @@ export async function PUT(request: NextRequest) {
           ...data,
         })
         .run();
+    }
+
+    // Handle dimension renames: batch update JSON keys in rating data
+    const renames = body.renamedDimensions as { movie?: Record<string, string>; person?: Record<string, string> } | undefined;
+    if (renames) {
+      if (renames.movie) {
+        for (const [oldName, newName] of Object.entries(renames.movie)) {
+          if (oldName && newName && oldName !== newName) {
+            const oldPath = `$."${oldName}"`;
+            const newPath = `$."${newName}"`;
+            db.run(sql`
+              UPDATE user_movie_data
+              SET dimension_ratings = json_insert(
+                json_remove(dimension_ratings, ${oldPath}),
+                ${newPath},
+                json_extract(dimension_ratings, ${oldPath})
+              )
+              WHERE user_id = ${userId}
+                AND json_extract(dimension_ratings, ${oldPath}) IS NOT NULL
+            `);
+          }
+        }
+      }
+      if (renames.person) {
+        for (const [oldName, newName] of Object.entries(renames.person)) {
+          if (oldName && newName && oldName !== newName) {
+            const oldPath = `$."${oldName}"`;
+            const newPath = `$."${newName}"`;
+            db.run(sql`
+              UPDATE user_person_data
+              SET dimension_ratings = json_insert(
+                json_remove(dimension_ratings, ${oldPath}),
+                ${newPath},
+                json_extract(dimension_ratings, ${oldPath})
+              )
+              WHERE user_id = ${userId}
+                AND json_extract(dimension_ratings, ${oldPath}) IS NOT NULL
+            `);
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

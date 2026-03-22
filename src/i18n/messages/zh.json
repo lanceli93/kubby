@@ -524,7 +524,13 @@
     "templateType": "类型",
     "templateTags": "标签",
     "templateNote": "备注",
-    "templateNotePlaceholder": "可选备注..."
+    "templateNotePlaceholder": "可选备注...",
+    "deleteDimensionTitle": "删除维度",
+    "deleteDimensionConfirm": "删除「{name}」？将清除 {count} 个{type}的该维度评分。",
+    "deleteDimensionNoData": "删除「{name}」？暂无评分使用此维度。",
+    "deleteDimensionLoading": "正在检查使用情况...",
+    "movies": "电影",
+    "people": "人物"
   },
   "mediaInfoDialog": {
     "title": "媒体信息",

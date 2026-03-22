@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Upload, Trash2 } from "lucide-react";
+import { X, Upload, Trash2, ChevronUp, ChevronDown, Pencil, Check, Plus } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { useTranslations } from "next-intl";
 import { BUILTIN_BOOKMARK_ICONS } from "@/lib/bookmark-icons";
@@ -57,6 +57,14 @@ export default function PersonalMetadataPage() {
   const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  // Dimension management state
+  const [movieRenames, setMovieRenames] = useState<Record<string, string>>({});
+  const [personRenames, setPersonRenames] = useState<Record<string, string>>({});
+  const [editingDim, setEditingDim] = useState<{ type: "movie" | "person"; index: number } | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
+  const [deletingDim, setDeletingDim] = useState<{ type: "movie" | "person"; index: number; name: string; count: number | null } | null>(null);
+
   // Custom icon upload state
   const [iconLabel, setIconLabel] = useState("");
   const [iconFile, setIconFile] = useState<File | null>(null);
@@ -84,33 +92,89 @@ export default function PersonalMetadataPage() {
 
   const MAX_DIM_LENGTH = 20;
 
-  const handleMovieDimKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && movieInput.trim()) {
-      e.preventDefault();
-      if (movieDims.length >= 10) return;
-      const trimmed = movieInput.trim().slice(0, MAX_DIM_LENGTH);
-      if (!movieDims.includes(trimmed)) {
-        setMovieDims((d) => [...d, trimmed]);
-      }
-      setMovieInput("");
+  const handleAddDim = (type: "movie" | "person") => {
+    const input = type === "movie" ? movieInput : personInput;
+    const dims = type === "movie" ? movieDims : personDims;
+    const setDims = type === "movie" ? setMovieDims : setPersonDims;
+    const setInput = type === "movie" ? setMovieInput : setPersonInput;
+    if (!input.trim() || dims.length >= 10) return;
+    const trimmed = input.trim().slice(0, MAX_DIM_LENGTH);
+    if (!dims.includes(trimmed)) {
+      setDims((d) => [...d, trimmed]);
+    }
+    setInput("");
+  };
+
+  const handleMoveDim = (type: "movie" | "person", index: number, direction: -1 | 1) => {
+    const setDims = type === "movie" ? setMovieDims : setPersonDims;
+    setDims((prev) => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const startEdit = (type: "movie" | "person", index: number) => {
+    const dims = type === "movie" ? movieDims : personDims;
+    setEditingDim({ type, index });
+    setEditValue(dims[index]);
+    setTimeout(() => editInputRef.current?.focus(), 0);
+  };
+
+  const commitEdit = () => {
+    if (!editingDim) return;
+    const { type, index } = editingDim;
+    const dims = type === "movie" ? movieDims : personDims;
+    const setDims = type === "movie" ? setMovieDims : setPersonDims;
+    const setRenames = type === "movie" ? setMovieRenames : setPersonRenames;
+    const trimmed = editValue.trim().slice(0, MAX_DIM_LENGTH);
+    const oldName = dims[index];
+    if (trimmed && trimmed !== oldName && !dims.includes(trimmed)) {
+      setDims((prev) => prev.map((d, i) => (i === index ? trimmed : d)));
+      // Track rename: find original name (may have been renamed before)
+      setRenames((prev) => {
+        const updated = { ...prev };
+        // If oldName was itself a rename target, chain it
+        const originalKey = Object.entries(updated).find(([, v]) => v === oldName)?.[0];
+        if (originalKey) {
+          updated[originalKey] = trimmed;
+        } else {
+          updated[oldName] = trimmed;
+        }
+        return updated;
+      });
+    }
+    setEditingDim(null);
+    setEditValue("");
+  };
+
+  const startDelete = async (type: "movie" | "person", index: number) => {
+    const dims = type === "movie" ? movieDims : personDims;
+    const name = dims[index];
+    setDeletingDim({ type, index, name, count: null });
+    try {
+      const res = await fetch(`/api/settings/dimension-usage?type=${type}&name=${encodeURIComponent(name)}`);
+      const data = await res.json();
+      setDeletingDim((prev) => prev ? { ...prev, count: data.count ?? 0 } : null);
+    } catch {
+      setDeletingDim((prev) => prev ? { ...prev, count: 0 } : null);
     }
   };
 
-  const handlePersonDimKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && personInput.trim()) {
-      e.preventDefault();
-      if (personDims.length >= 10) return;
-      const trimmed = personInput.trim().slice(0, MAX_DIM_LENGTH);
-      if (!personDims.includes(trimmed)) {
-        setPersonDims((d) => [...d, trimmed]);
-      }
-      setPersonInput("");
-    }
+  const confirmDelete = () => {
+    if (!deletingDim) return;
+    const { type, index } = deletingDim;
+    const setDims = type === "movie" ? setMovieDims : setPersonDims;
+    setDims((prev) => prev.filter((_, i) => i !== index));
+    setDeletingDim(null);
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      const hasRenames = Object.keys(movieRenames).length > 0 || Object.keys(personRenames).length > 0;
       const res = await fetch("/api/settings/personal-metadata", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -122,10 +186,18 @@ export default function PersonalMetadataPage() {
           quickBookmarkTemplate: (qbIconType !== "bookmark" || qbTags.length > 0 || qbNote)
             ? { iconType: qbIconType, tags: qbTags, note: qbNote || undefined }
             : null,
+          ...(hasRenames && {
+            renamedDimensions: {
+              ...(Object.keys(movieRenames).length > 0 && { movie: movieRenames }),
+              ...(Object.keys(personRenames).length > 0 && { person: personRenames }),
+            },
+          }),
         }),
       });
       if (res.ok) {
         showToast(t("saved"), true);
+        setMovieRenames({});
+        setPersonRenames({});
         queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
       } else {
         showToast(t("failedToSave"), false);
@@ -208,32 +280,89 @@ export default function PersonalMetadataPage() {
         <p className="text-sm text-muted-foreground">
           {t("movieRatingDimensionsDesc")}
         </p>
-        <div className="flex flex-wrap gap-1.5 mb-1">
-          {movieDims.map((dim) => (
-            <span
-              key={dim}
-              className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-            >
-              {dim}
-              <button
-                type="button"
-                onClick={() => setMovieDims((d) => d.filter((x) => x !== dim))}
-                className="text-primary/60 hover:text-primary cursor-pointer"
+        {movieDims.length > 0 && (
+          <div className="flex flex-col gap-1">
+            {movieDims.map((dim, i) => (
+              <div
+                key={`movie-${i}`}
+                className="group flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 transition-fluid hover:bg-white/[0.07]"
               >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
+                <span className="w-5 text-center text-xs tabular-nums text-muted-foreground/50">{i + 1}</span>
+                {editingDim?.type === "movie" && editingDim.index === i ? (
+                  <input
+                    ref={editInputRef}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitEdit();
+                      if (e.key === "Escape") { setEditingDim(null); setEditValue(""); }
+                    }}
+                    onBlur={commitEdit}
+                    maxLength={MAX_DIM_LENGTH}
+                    className="h-7 flex-1 rounded-md border border-primary/50 bg-white/[0.05] px-2 text-sm text-foreground outline-none focus:border-primary"
+                  />
+                ) : (
+                  <span className="flex-1 text-sm text-foreground">{dim}</span>
+                )}
+                <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => handleMoveDim("movie", i, -1)}
+                    disabled={i === 0}
+                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    aria-label="Move up"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveDim("movie", i, 1)}
+                    disabled={i === movieDims.length - 1}
+                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    aria-label="Move down"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit("movie", i)}
+                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground cursor-pointer transition-fluid"
+                    aria-label="Rename"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startDelete("movie", i)}
+                    className="rounded p-1 text-muted-foreground hover:bg-red-500/20 hover:text-red-400 cursor-pointer transition-fluid"
+                    aria-label="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={movieInput}
+            onChange={(e) => setMovieInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddDim("movie"); } }}
+            placeholder={t("addDimensionPlaceholder")}
+            maxLength={MAX_DIM_LENGTH}
+            disabled={movieDims.length >= 10}
+            className="h-9 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={() => handleAddDim("movie")}
+            disabled={movieDims.length >= 10 || !movieInput.trim()}
+            className="flex h-9 items-center gap-1.5 rounded-lg bg-white/10 px-3 text-sm text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground active:scale-95 cursor-pointer disabled:opacity-30"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
         </div>
-        <input
-          value={movieInput}
-          onChange={(e) => setMovieInput(e.target.value)}
-          onKeyDown={handleMovieDimKeyDown}
-          placeholder={t("addDimensionPlaceholder")}
-          maxLength={MAX_DIM_LENGTH}
-          disabled={movieDims.length >= 10}
-          className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
-        />
         {movieDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
         )}
@@ -247,36 +376,126 @@ export default function PersonalMetadataPage() {
         <p className="text-sm text-muted-foreground">
           {t("personRatingDimensionsDesc")}
         </p>
-        <div className="flex flex-wrap gap-1.5 mb-1">
-          {personDims.map((dim) => (
-            <span
-              key={dim}
-              className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-            >
-              {dim}
-              <button
-                type="button"
-                onClick={() => setPersonDims((d) => d.filter((x) => x !== dim))}
-                className="text-primary/60 hover:text-primary cursor-pointer"
+        {personDims.length > 0 && (
+          <div className="flex flex-col gap-1">
+            {personDims.map((dim, i) => (
+              <div
+                key={`person-${i}`}
+                className="group flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 transition-fluid hover:bg-white/[0.07]"
               >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
+                <span className="w-5 text-center text-xs tabular-nums text-muted-foreground/50">{i + 1}</span>
+                {editingDim?.type === "person" && editingDim.index === i ? (
+                  <input
+                    ref={editInputRef}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitEdit();
+                      if (e.key === "Escape") { setEditingDim(null); setEditValue(""); }
+                    }}
+                    onBlur={commitEdit}
+                    maxLength={MAX_DIM_LENGTH}
+                    className="h-7 flex-1 rounded-md border border-primary/50 bg-white/[0.05] px-2 text-sm text-foreground outline-none focus:border-primary"
+                  />
+                ) : (
+                  <span className="flex-1 text-sm text-foreground">{dim}</span>
+                )}
+                <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => handleMoveDim("person", i, -1)}
+                    disabled={i === 0}
+                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    aria-label="Move up"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveDim("person", i, 1)}
+                    disabled={i === personDims.length - 1}
+                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    aria-label="Move down"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit("person", i)}
+                    className="rounded p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground cursor-pointer transition-fluid"
+                    aria-label="Rename"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startDelete("person", i)}
+                    className="rounded p-1 text-muted-foreground hover:bg-red-500/20 hover:text-red-400 cursor-pointer transition-fluid"
+                    aria-label="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={personInput}
+            onChange={(e) => setPersonInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddDim("person"); } }}
+            placeholder={t("addDimensionPlaceholder")}
+            maxLength={MAX_DIM_LENGTH}
+            disabled={personDims.length >= 10}
+            className="h-9 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={() => handleAddDim("person")}
+            disabled={personDims.length >= 10 || !personInput.trim()}
+            className="flex h-9 items-center gap-1.5 rounded-lg bg-white/10 px-3 text-sm text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground active:scale-95 cursor-pointer disabled:opacity-30"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
         </div>
-        <input
-          value={personInput}
-          onChange={(e) => setPersonInput(e.target.value)}
-          onKeyDown={handlePersonDimKeyDown}
-          placeholder={t("addDimensionPlaceholder")}
-          maxLength={MAX_DIM_LENGTH}
-          disabled={personDims.length >= 10}
-          className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
-        />
         {personDims.length >= 10 && (
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
         )}
       </div>
+
+      {/* Delete Dimension Confirmation */}
+      {deletingDim && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-xl border border-white/[0.08] bg-[#0a0a0f]/90 p-6 shadow-2xl backdrop-blur-2xl ring-1 ring-white/[0.06]">
+            <h3 className="text-base font-semibold text-foreground">{t("deleteDimensionTitle")}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {deletingDim.count === null
+                ? t("deleteDimensionLoading")
+                : deletingDim.count > 0
+                  ? t("deleteDimensionConfirm", { name: deletingDim.name, count: deletingDim.count, type: deletingDim.type === "movie" ? t("movies") : t("people") })
+                  : t("deleteDimensionNoData", { name: deletingDim.name })}
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeletingDim(null)}
+                className="rounded-lg bg-white/10 px-4 py-2 text-sm text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground cursor-pointer"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deletingDim.count === null}
+                className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 transition-fluid hover:bg-red-500/30 active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                {tCommon("delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bookmark Icons */}
       <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">

@@ -524,7 +524,13 @@
     "templateType": "Type",
     "templateTags": "Tags",
     "templateNote": "Note",
-    "templateNotePlaceholder": "Optional note..."
+    "templateNotePlaceholder": "Optional note...",
+    "deleteDimensionTitle": "Delete Dimension",
+    "deleteDimensionConfirm": "Delete \"{name}\"? This will clear ratings for this dimension from {count} {type}.",
+    "deleteDimensionNoData": "Delete \"{name}\"? No ratings use this dimension yet.",
+    "deleteDimensionLoading": "Checking usage...",
+    "movies": "movies",
+    "people": "people"
   },
   "mediaInfoDialog": {
     "title": "Media Info",
