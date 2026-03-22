@@ -120,10 +120,10 @@ kubby/
 │   │   │   ├── movie-card.tsx                      # 电影海报卡片 (2:3, 180x270, responsive 模式支持 w-full+aspect-[2/3])
 │   │   │   ├── bookmark-card.tsx                   # 书签缩略图卡片 (320px, 编辑/删除/图标)
 │   │   │   ├── frame-scrubber.tsx                  # 帧浏览器面板 (两栏布局, 截图到相册, 书签创建)
-│   │   │   └── movie-metadata-editor.tsx           # 电影元数据编辑弹窗 (General/Cast/Personal 三 Tab)
+│   │   │   └── movie-metadata-editor.tsx           # 电影元数据编辑弹窗 (General/Cast/Images/Personal 四 Tab, 800px)
 │   │   ├── people/
 │   │   │   ├── person-card.tsx                     # 演员卡片 (sm/md/lg 三种尺寸)
-│   │   │   └── person-metadata-editor.tsx          # 人物元数据编辑弹窗 (General/Personal 两 Tab)
+│   │   │   └── person-metadata-editor.tsx          # 人物元数据编辑弹窗 (General/Images/Personal 三 Tab, 800px, deathDate 隐藏)
 │   │   ├── library/
 │   │   │   ├── library-card.tsx                    # 媒体库卡片 (16:9, 320x180)
 │   │   │   └── folder-picker.tsx                   # 服务端文件夹选择器弹窗
@@ -1103,7 +1103,7 @@ Mobile-first CSS — 无前缀写手机样式, `md:` 前缀写桌面样式。统
 | **ScrollRow** | Chevron 按钮 `hidden md:flex`; 添加 `snap-x snap-mandatory md:snap-none` 触控滑动 |
 | **MovieCard** | 新增 `responsive` prop: `w-full` + `aspect-[2/3]` 替代固定 180×270, 用于网格布局 |
 | **BookmarkCard** | `w-[320px]` → `w-[280px] md:w-[320px]` |
-| **Dialog** (MetadataEditor / ImageEditor) | 手机端全屏: `max-h-[100dvh] rounded-none md:rounded-lg` |
+| **Dialog** (MetadataEditor / ImageEditor) | 手机端全屏: `max-h-[100dvh] rounded-none md:rounded-lg`; 桌面端 800px; Images tab 移动端纵向堆叠 (poster w-1/2 + fanart w-full aspect-video) |
 | **Main Layout** | `<main>` 添加 `pb-14 md:pb-0` 为底部 Tab 栏预留空间 |
 
 ---
