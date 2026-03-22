@@ -239,12 +239,14 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
       for (const dim of movieDimensions) {
         if (dimensionRatings[dim] != null && dimensionRatings[dim] > 0) cleanRatings[dim] = dimensionRatings[dim];
       }
-      const values = Object.values(cleanRatings);
-      if (values.length > 0) {
-        personalRating = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
-      } else {
-        personalRating = null;
+      const movieWeights = prefs?.movieDimensionWeights ?? {};
+      let weightedSum = 0, weightSum = 0;
+      for (const [dim, val] of Object.entries(cleanRatings)) {
+        const w = movieWeights[dim] ?? 1;
+        weightedSum += val * w;
+        weightSum += w;
       }
+      personalRating = weightSum > 0 ? Math.round((weightedSum / weightSum) * 10) / 10 : null;
       dimRatingsToSend = cleanRatings;
     }
 
@@ -785,9 +787,13 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                   </div>
                   <p className="text-lg font-bold text-[var(--gold)]">
                     {(() => {
-                      const values = movieDimensions.map((d) => dimensionRatings[d]).filter((v) => v != null && v > 0);
-                      if (values.length === 0) return "—";
-                      return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+                      const movieWeights = prefs?.movieDimensionWeights ?? {};
+                      let ws = 0, wt = 0;
+                      for (const d of movieDimensions) {
+                        const v = dimensionRatings[d];
+                        if (v != null && v > 0) { const w = movieWeights[d] ?? 1; ws += v * w; wt += w; }
+                      }
+                      return wt > 0 ? (ws / wt).toFixed(1) : "—";
                     })()}
                   </p>
                   <p className="text-xs text-muted-foreground">{t("personalRatingDesc")}</p>

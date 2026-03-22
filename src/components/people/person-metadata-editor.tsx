@@ -241,12 +241,14 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
       for (const dim of personDimensions) {
         if (dimensionRatings[dim] != null && dimensionRatings[dim] > 0) cleanRatings[dim] = dimensionRatings[dim];
       }
-      const values = Object.values(cleanRatings);
-      if (values.length > 0) {
-        personalRating = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
-      } else {
-        personalRating = null;
+      const personWeights = prefs?.personDimensionWeights ?? {};
+      let weightedSum = 0, weightSum = 0;
+      for (const [dim, val] of Object.entries(cleanRatings)) {
+        const w = personWeights[dim] ?? 1;
+        weightedSum += val * w;
+        weightSum += w;
       }
+      personalRating = weightSum > 0 ? Math.round((weightedSum / weightSum) * 10) / 10 : null;
       dimRatingsToSend = cleanRatings;
     }
 
@@ -676,9 +678,13 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   </div>
                   <p className="text-lg font-bold text-[var(--gold)]">
                     {(() => {
-                      const values = personDimensions.map((d) => dimensionRatings[d]).filter((v) => v != null && v > 0);
-                      if (values.length === 0) return "—";
-                      return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+                      const personWeights = prefs?.personDimensionWeights ?? {};
+                      let ws = 0, wt = 0;
+                      for (const d of personDimensions) {
+                        const v = dimensionRatings[d];
+                        if (v != null && v > 0) { const w = personWeights[d] ?? 1; ws += v * w; wt += w; }
+                      }
+                      return wt > 0 ? (ws / wt).toFixed(1) : "—";
                     })()}
                   </p>
                 </div>
@@ -687,9 +693,14 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 <div className="space-y-3">
                   <Label>{t("personalTier")}</Label>
                   {(() => {
-                    const values = personDimensions.map((d) => dimensionRatings[d]).filter((v) => v != null && v > 0);
-                    if (values.length === 0) return <p className="text-sm text-muted-foreground">{t("tierNoRating")}</p>;
-                    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                    const personWeights = prefs?.personDimensionWeights ?? {};
+                    let ws = 0, wt = 0;
+                    for (const d of personDimensions) {
+                      const v = dimensionRatings[d];
+                      if (v != null && v > 0) { const w = personWeights[d] ?? 1; ws += v * w; wt += w; }
+                    }
+                    if (wt === 0) return <p className="text-sm text-muted-foreground">{t("tierNoRating")}</p>;
+                    const avg = ws / wt;
                     const tier = getTier(avg);
                     return (
                       <div className="flex items-center gap-3">
