@@ -1,5 +1,27 @@
 # Completed Features
 
+## 2026-03-22: Rating Dimension Management Enhancement
+
+Upgraded rating dimension management from simple tag chips to a full managed list with rename, reorder, weighted average, and delete confirmation.
+
+### New Files
+- `src/app/api/settings/dimension-usage/route.ts` — GET endpoint returning count of records using a specific dimension (`?type=movie|person&name=xxx`), used for delete confirmation prompt
+
+### Changes
+- **Dimension list UI** (`ratings-bookmarks/page.tsx`): Tag chips replaced with ordered list. Each row shows: sequence number, dimension name, weight stepper (x0.5–x3.0), up/down move buttons, rename (pencil), delete (trash). Column headers (Name / Weight) label each section. Action buttons always visible (mobile-friendly, no hover-only).
+- **Inline rename**: Click pencil icon to enter edit mode (input replaces label), Enter confirms, Esc cancels. Tracks rename chain for unsaved multi-renames. On save, batch updates all `dimensionRatings` JSON keys via application-level read-modify-write.
+- **Reorder**: Up/down arrow buttons swap array positions. Array order = display order in StarRatingDialog. No backend change needed (only array order matters).
+- **Delete with confirmation**: Glass-style modal shows usage count ("will clear ratings from N movies/people"). Queries original name (pre-rename) when dimension was renamed but not yet saved.
+- **Dimension weights**: New `movie_dimension_weights` / `person_dimension_weights` columns in `user_preferences` (migration #0031). Weight stepper per dimension (x0.5 to x3.0, step 0.5, default x1.0). Non-default weights highlighted in primary color.
+- **Weighted average**: `computeAverage()` in `StarRatingDialog` changed from `sum/count` to `sum(rating×weight)/sum(weight)`. Weights passed from movie/person detail pages via `dimensionWeights` prop.
+- **Batch recalculation**: On preferences save, all existing `personalRating` values recalculated using current weights and dimensions. Ensures ratings stay in sync when weights change.
+- **Rename data migration**: PUT `/api/settings/personal-metadata` accepts `renamedDimensions: { movie?: {old: new}, person?: {old: new} }`. Reads all user's rating records, renames JSON keys in-memory, writes back. Scores preserved.
+- **i18n**: Added `dimName`, `dimWeight`, `deleteDimensionTitle`, `deleteDimensionConfirm`, `deleteDimensionNoData`, `deleteDimensionLoading`, `movies`, `people` keys to `personalMetadata` namespace. Added `common.delete`. Updated dimension descriptions to mention weighted average.
+
+### DB Schema
+- `user_preferences.movie_dimension_weights` (text, JSON object)
+- `user_preferences.person_dimension_weights` (text, JSON object)
+
 ## 2026-03-21: Metadata Center MVP
 
 Expanded `/metadata/scraper` page from a simple API key config into a full Metadata Center with incomplete metadata browser and NFO writeback toggle.
