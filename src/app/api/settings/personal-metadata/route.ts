@@ -238,6 +238,61 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Recalculate personalRating using current weights + dimensions
+    const movieDims: string[] = body.movieRatingDimensions ?? (existing?.movieRatingDimensions ? JSON.parse(existing.movieRatingDimensions) : []);
+    const personDims: string[] = body.personRatingDimensions ?? (existing?.personRatingDimensions ? JSON.parse(existing.personRatingDimensions) : []);
+    const movieWeights: Record<string, number> = body.movieDimensionWeights ?? (existing?.movieDimensionWeights ? JSON.parse(existing.movieDimensionWeights) : {});
+    const personWeights: Record<string, number> = body.personDimensionWeights ?? (existing?.personDimensionWeights ? JSON.parse(existing.personDimensionWeights) : {});
+
+    if (movieDims.length > 0) {
+      const rows = db.select({ id: userMovieData.id, dimensionRatings: userMovieData.dimensionRatings })
+        .from(userMovieData)
+        .where(eq(userMovieData.userId, userId))
+        .all();
+      for (const row of rows) {
+        if (!row.dimensionRatings) continue;
+        const ratings = JSON.parse(row.dimensionRatings) as Record<string, number>;
+        let weightedSum = 0, weightSum = 0;
+        for (const dim of movieDims) {
+          const val = ratings[dim];
+          if (val != null && val > 0) {
+            const w = movieWeights[dim] ?? 1;
+            weightedSum += val * w;
+            weightSum += w;
+          }
+        }
+        const avg = weightSum > 0 ? Math.round((weightedSum / weightSum) * 10) / 10 : null;
+        db.update(userMovieData)
+          .set({ personalRating: avg })
+          .where(eq(userMovieData.id, row.id))
+          .run();
+      }
+    }
+    if (personDims.length > 0) {
+      const rows = db.select({ id: userPersonData.id, dimensionRatings: userPersonData.dimensionRatings })
+        .from(userPersonData)
+        .where(eq(userPersonData.userId, userId))
+        .all();
+      for (const row of rows) {
+        if (!row.dimensionRatings) continue;
+        const ratings = JSON.parse(row.dimensionRatings) as Record<string, number>;
+        let weightedSum = 0, weightSum = 0;
+        for (const dim of personDims) {
+          const val = ratings[dim];
+          if (val != null && val > 0) {
+            const w = personWeights[dim] ?? 1;
+            weightedSum += val * w;
+            weightSum += w;
+          }
+        }
+        const avg = weightSum > 0 ? Math.round((weightedSum / weightSum) * 10) / 10 : null;
+        db.update(userPersonData)
+          .set({ personalRating: avg })
+          .where(eq(userPersonData.id, row.id))
+          .run();
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Update personal metadata settings error:", error);
