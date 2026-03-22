@@ -340,8 +340,8 @@ export default function PersonalMetadataPage() {
                 <div className="flex items-center gap-0.5 rounded-md bg-white/[0.06] px-1 py-0.5">
                   <button
                     type="button"
-                    onClick={() => setMovieWeights((prev) => ({ ...prev, [dim]: Math.max(0.5, (prev[dim] ?? 1) - 0.5) }))}
-                    disabled={(movieWeights[dim] ?? 1) <= 0.5}
+                    onClick={() => setMovieWeights((prev) => ({ ...prev, [dim]: Math.round(Math.max(0.1, (prev[dim] ?? 1) - 0.1) * 10) / 10 }))}
+                    disabled={(movieWeights[dim] ?? 1) <= 0.1}
                     className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                   >
                     <Minus className="h-3 w-3" />
@@ -351,7 +351,7 @@ export default function PersonalMetadataPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setMovieWeights((prev) => ({ ...prev, [dim]: Math.min(3, (prev[dim] ?? 1) + 0.5) }))}
+                    onClick={() => setMovieWeights((prev) => ({ ...prev, [dim]: Math.round(Math.min(3, (prev[dim] ?? 1) + 0.1) * 10) / 10 }))}
                     disabled={(movieWeights[dim] ?? 1) >= 3}
                     className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                   >
@@ -465,8 +465,8 @@ export default function PersonalMetadataPage() {
                 <div className="flex items-center gap-0.5 rounded-md bg-white/[0.06] px-1 py-0.5">
                   <button
                     type="button"
-                    onClick={() => setPersonWeights((prev) => ({ ...prev, [dim]: Math.max(0.5, (prev[dim] ?? 1) - 0.5) }))}
-                    disabled={(personWeights[dim] ?? 1) <= 0.5}
+                    onClick={() => setPersonWeights((prev) => ({ ...prev, [dim]: Math.round(Math.max(0.1, (prev[dim] ?? 1) - 0.1) * 10) / 10 }))}
+                    disabled={(personWeights[dim] ?? 1) <= 0.1}
                     className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                   >
                     <Minus className="h-3 w-3" />
@@ -476,7 +476,7 @@ export default function PersonalMetadataPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setPersonWeights((prev) => ({ ...prev, [dim]: Math.min(3, (prev[dim] ?? 1) + 0.5) }))}
+                    onClick={() => setPersonWeights((prev) => ({ ...prev, [dim]: Math.round(Math.min(3, (prev[dim] ?? 1) + 0.1) * 10) / 10 }))}
                     disabled={(personWeights[dim] ?? 1) >= 3}
                     className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
                   >
