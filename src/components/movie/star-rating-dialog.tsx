@@ -42,9 +42,9 @@ function StarRow({
   const displayRating = hoverRating ?? rating;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 md:gap-2">
       <div
-        className="flex items-center gap-0.5"
+        className="flex items-center gap-0"
         onMouseLeave={onLeave}
       >
         {[0, 1, 2, 3, 4].map((starIndex) => {
@@ -84,19 +84,19 @@ function StarRow({
           );
         })}
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1 md:gap-1.5">
         <button
           onClick={() => onFine(-0.1)}
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-xs transition-colors hover:bg-white/10"
+          className="flex h-5 w-5 md:h-7 md:w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-[10px] md:text-xs transition-colors hover:bg-white/10"
         >
           −
         </button>
-        <span className="min-w-[2.5rem] text-center text-sm font-bold text-[var(--gold)] tabular-nums">
+        <span className="min-w-[2rem] md:min-w-[2.5rem] text-center text-xs md:text-sm font-bold text-[var(--gold)] tabular-nums">
           {rating != null ? rating.toFixed(1) : "—"}
         </span>
         <button
           onClick={() => onFine(0.1)}
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-xs transition-colors hover:bg-white/10"
+          className="flex h-5 w-5 md:h-7 md:w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-[10px] md:text-xs transition-colors hover:bg-white/10"
         >
           +
         </button>
@@ -224,8 +224,8 @@ export function StarRatingDialog({
               {/* Dimension rows */}
               <div className="flex flex-col gap-3">
                 {dimensions.map((dim) => (
-                  <div key={dim} className="flex items-center gap-3">
-                    <span className="w-[8rem] shrink-0 text-sm text-white/70 truncate" title={dim}>{dim}</span>
+                  <div key={dim} className="flex items-center gap-1.5 md:gap-3">
+                    <span className="w-[3.5rem] md:w-[8rem] shrink-0 text-xs md:text-sm text-white/70 truncate" title={dim}>{dim}</span>
                     <StarRow
                       rating={dimRatings[dim] ?? null}
                       hoverRating={dimHovers[dim] ?? null}
@@ -233,7 +233,7 @@ export function StarRatingDialog({
                       onHover={(val) => setDimHovers((prev) => ({ ...prev, [dim]: val }))}
                       onLeave={() => setDimHovers((prev) => ({ ...prev, [dim]: null }))}
                       onFine={(delta) => handleDimFine(dim, delta)}
-                      starSize="h-6 w-6"
+                      starSize="h-5 w-5 md:h-6 md:w-6"
                     />
                   </div>
                 ))}
