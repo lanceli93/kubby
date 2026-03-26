@@ -289,7 +289,7 @@ export function PlayerControls({
 
       {/* Mobile: skip buttons spread at center (play/pause via screen tap) */}
       <div
-        className={`md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-between px-[20%] pointer-events-none transition-opacity duration-300 [-webkit-tap-highlight-color:transparent] ${
+        className={`md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center gap-32 pointer-events-none transition-opacity duration-300 [-webkit-tap-highlight-color:transparent] ${
           showControls ? "opacity-100" : "opacity-0"
         }`}
       >
