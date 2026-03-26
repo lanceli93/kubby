@@ -88,6 +88,8 @@ Version priority: `KUBBY_VERSION` env (CI from git tag) > `package.json` `"versi
 
 > **Pitfall: Tag push builds ALL platforms.** For testing a single platform, use `gh workflow run release.yml --field platform=win-x64` (or `darwin-arm64`/`darwin-x64`). Only push a `v*` tag when doing a full release.
 
+> **Release checklist (ALL steps mandatory when user says "发布/release"):** (1) bump `package.json` version + commit, (2) push main + push `v*` tag, (3) wait for CI success (`gh run list`), (4) write release notes via `gh release edit`, (5) publish draft via `gh api PATCH ...draft=false` with title + notes. Never stop after pushing the tag — the release is not done until step 5 is complete. See `references/release-workflow.md` for full details.
+
 ## Common Commands
 
 ```bash
