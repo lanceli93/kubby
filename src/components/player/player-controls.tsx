@@ -287,32 +287,25 @@ export function PlayerControls({
         </div>
       )}
 
-      {/* Mobile: center skip controls (play/pause via screen tap) */}
-      <div
-        className={`md:hidden absolute inset-0 z-10 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
+      {/* Mobile: skip buttons at left/right of center (play/pause via screen tap) */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onSkip(-10); showOsd("\u221210s"); }}
+        className={`md:hidden absolute left-[20%] top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all [-webkit-tap-highlight-color:transparent] ${
+          showControls ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
+        aria-label="Rewind 10s"
       >
-        <div
-          className="pointer-events-auto flex items-center gap-24"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
-            className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
-            aria-label="Rewind 10s"
-          >
-            <ChevronsLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => { onSkip(10); showOsd("+10s"); }}
-            className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
-            aria-label="Forward 10s"
-          >
-            <ChevronsRight className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
+        <ChevronsLeft className="h-5 w-5" />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onSkip(10); showOsd("+10s"); }}
+        className={`md:hidden absolute right-[20%] top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all [-webkit-tap-highlight-color:transparent] ${
+          showControls ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        aria-label="Forward 10s"
+      >
+        <ChevronsRight className="h-5 w-5" />
+      </button>
 
       {/* Mobile: centered resolution picker overlay */}
       {showResMenu && (() => {
