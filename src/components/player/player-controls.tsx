@@ -430,7 +430,7 @@ export function PlayerControls({
           return (
             <div
               key={bm.id}
-              className={`group/marker absolute z-10 flex flex-col items-center cursor-pointer -translate-x-1/2 ${subtleMarkers ? "opacity-40 hover:opacity-80" : "opacity-60"}`}
+              className={`group/marker absolute z-10 flex flex-col items-center cursor-pointer -translate-x-1/2 ${subtleMarkers ? "opacity-40 hover:opacity-80" : "opacity-50"}`}
               style={{
                 left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%`,
                 bottom: "-2px",
