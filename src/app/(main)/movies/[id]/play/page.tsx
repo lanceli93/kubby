@@ -44,6 +44,8 @@ export default function PlayerPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const osdTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const doubleTapTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const lastTapRef = useRef<{ time: number; x: number } | null>(null);
 
   const [currentDisc, setCurrentDisc] = useState<number>(1);
   const initializedRef = useRef(false);
@@ -462,9 +464,41 @@ export default function PlayerPage() {
         resetControlsTimer();
       }}
       onTouchStart={is360Mode ? undefined : resetControlsTimer}
-      onClick={() => {
+      onClick={(e) => {
         resetControlsTimer();
-        session.togglePlay();
+        if (!isMobile) {
+          session.togglePlay();
+          return;
+        }
+        // Mobile: double-tap left/right to skip, single tap to toggle play
+        const now = Date.now();
+        const lastTap = lastTapRef.current;
+        const midX = window.innerWidth / 2;
+        if (lastTap && now - lastTap.time < 300) {
+          // Double tap
+          clearTimeout(doubleTapTimer.current);
+          lastTapRef.current = null;
+          const lastSide = lastTap.x < midX ? "left" : "right";
+          const thisSide = e.clientX < midX ? "left" : "right";
+          if (lastSide === thisSide) {
+            if (thisSide === "left") {
+              session.skip(-10);
+              showOsd("\u221210s");
+            } else {
+              session.skip(10);
+              showOsd("+10s");
+            }
+          } else {
+            session.togglePlay();
+          }
+        } else {
+          // First tap — wait for potential second tap
+          lastTapRef.current = { time: now, x: e.clientX };
+          doubleTapTimer.current = setTimeout(() => {
+            lastTapRef.current = null;
+            session.togglePlay();
+          }, 300);
+        }
       }}
     >
       <video

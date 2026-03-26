@@ -20,7 +20,7 @@ interface CenterPlayButtonProps {
 export function CenterPlayButton({ isPlaying, osdMessage }: CenterPlayButtonProps) {
   if (isPlaying || osdMessage) return null;
   return (
-    <div className="pointer-events-none absolute inset-0 hidden md:flex items-center justify-center">
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
       <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white/20">
         <Play className="h-8 w-8 text-white" />
       </div>
