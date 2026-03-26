@@ -2,7 +2,7 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useUserPreferences, type UserPreferences } from "@/hooks/use-user-preferences";
 import { usePlaybackSession } from "@/hooks/use-playback-session";
@@ -99,7 +99,7 @@ export default function PlayerPage() {
   });
 
   const { data: userPrefs } = useUserPreferences();
-  const disabledIconIds = new Set(userPrefs?.disabledBookmarkIcons ?? []);
+  const disabledIconIds = useMemo(() => new Set(userPrefs?.disabledBookmarkIcons ?? []), [userPrefs?.disabledBookmarkIcons]);
   const subtleMarkers = userPrefs?.subtleBookmarkMarkers ?? false;
   const [is360Mode, setIs360Mode] = useState(false);
   const resetViewRef = useRef<(() => void) | null>(null);
