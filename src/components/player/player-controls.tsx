@@ -430,7 +430,7 @@ export function PlayerControls({
           return (
             <div
               key={bm.id}
-              className={`group/marker absolute z-10 flex flex-col items-center cursor-pointer -translate-x-1/2 ${subtleMarkers ? "opacity-40 hover:opacity-80" : "hover:opacity-100"}`}
+              className={`group/marker absolute z-10 flex flex-col items-center cursor-pointer -translate-x-1/2 transition-opacity duration-150 ${subtleMarkers ? "opacity-30 hover:opacity-70" : "opacity-50 hover:opacity-90"}`}
               style={{
                 left: `${duration > 0 ? (bm.timestampSeconds / duration) * 100 : 0}%`,
                 bottom: "-2px",
@@ -442,19 +442,19 @@ export function PlayerControls({
                 if (bm.viewState && onRestoreView) onRestoreView(bm.viewState);
               }}
             >
-              <div className="mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] transition-transform duration-150 group-hover/marker:scale-150">
+              <div className="mb-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] transition-transform duration-150 group-hover/marker:scale-125">
                 {MarkerIcon ? (
-                  <MarkerIcon className="h-5 w-5" style={{ color: markerColor }} />
+                  <MarkerIcon className="h-4 w-4" style={{ color: markerColor }} />
                 ) : customIcon ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={resolveImageSrc(customIcon.imagePath)} alt="" className={`h-5 w-5 object-contain ${subtleMarkers ? "brightness-200 grayscale" : ""}`} />
+                  <img src={resolveImageSrc(customIcon.imagePath)} alt="" className={`h-4 w-4 object-contain ${subtleMarkers ? "brightness-200 grayscale" : ""}`} />
                 ) : (() => {
                   const FallbackIcon = BUILTIN_BOOKMARK_ICONS[0].icon;
-                  return <FallbackIcon className="h-5 w-5" style={{ color: markerColor }} />;
+                  return <FallbackIcon className="h-4 w-4" style={{ color: markerColor }} />;
                 })()}
               </div>
               <div
-                className="h-2 w-2 rounded-full"
+                className="h-1.5 w-1.5 rounded-full"
                 style={{ backgroundColor: markerColor }}
               />
             </div>
