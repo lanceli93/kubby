@@ -586,7 +586,10 @@
     "mode360On": "360° 模式已开启",
     "mode360Off": "360° 模式已关闭",
     "speedLabel": "倍速",
-    "resolutionLabel": "分辨率"
+    "resolutionLabel": "分辨率",
+    "skipDurationLabel": "快进快退秒数",
+    "skipDurationUnit": "{seconds}秒",
+    "skipDurationHint": "双击屏幕左/右半边快退/快进"
   },
   "folderPicker": {
     "selectFolder": "选择文件夹",

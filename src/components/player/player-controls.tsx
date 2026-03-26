@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Gauge,
   Lock,
+  Timer,
 } from "lucide-react";
 import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -70,6 +71,7 @@ export interface PlayerControlsProps {
   subtleMarkers: boolean;
   customIcons: CustomIcon[];
   disabledIconIds: Set<string>;
+  skipSeconds: number;
   is360Mode: boolean;
   isLocked: boolean;
   onToggleLock: () => void;
@@ -86,6 +88,7 @@ export interface PlayerControlsProps {
   onQuickBookmark: () => void;
   onDetailedBookmark: () => void;
   onResolutionChange: (maxWidth: number) => void;
+  onSkipSecondsChange: (seconds: number) => void;
   onRestoreView?: (viewState: { lon: number; lat: number; fov: number }) => void;
   showOsd: (msg: string) => void;
 }
@@ -120,6 +123,7 @@ export function PlayerControls({
   subtleMarkers,
   customIcons,
   disabledIconIds,
+  skipSeconds,
   onSeek,
   onSkip,
   onTogglePlay,
@@ -136,6 +140,7 @@ export function PlayerControls({
   onQuickBookmark,
   onDetailedBookmark,
   onResolutionChange,
+  onSkipSecondsChange,
   onRestoreView,
   showOsd,
 }: PlayerControlsProps) {
@@ -144,6 +149,7 @@ export function PlayerControls({
   const seekBarRef = useRef<HTMLDivElement>(null);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showResMenu, setShowResMenu] = useState(false);
+  const [showSkipMenu, setShowSkipMenu] = useState(false);
   const [showEncoderInfo, setShowEncoderInfo] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -257,6 +263,15 @@ export function PlayerControls({
         >
           <Gauge className="h-5 w-5" />
         </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowSkipMenu((v) => !v); }}
+          className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm active:scale-95 transition-all ${
+            skipSeconds !== 10 ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
+          }`}
+          aria-label="Skip duration"
+        >
+          <Timer className="h-5 w-5" />
+        </button>
       </div>}
 
       {/* Mobile: centered speed picker overlay */}
@@ -283,6 +298,43 @@ export function PlayerControls({
                 {rate === playbackRate && <span className="text-primary">&#10003;</span>}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile: centered skip duration picker overlay */}
+      {showSkipMenu && (
+        <div
+          className="md:hidden fixed inset-0 z-50 flex items-center justify-center"
+          onClick={() => setShowSkipMenu(false)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-4 px-6 shadow-2xl border border-white/10 min-w-[260px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-xs text-white/40 font-medium mb-4">{tPlayer("skipDurationLabel")}</div>
+            <div className="flex items-center justify-center mb-3">
+              <span className="text-3xl font-semibold text-white tabular-nums">
+                {tPlayer("skipDurationUnit", { seconds: skipSeconds })}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={60}
+              step={1}
+              value={skipSeconds}
+              onChange={(e) => onSkipSecondsChange(parseInt(e.target.value))}
+              className="w-full h-1 cursor-pointer appearance-none rounded-full bg-white/30 accent-primary"
+            />
+            <div className="flex justify-between text-[10px] text-white/30 mt-1 mb-3">
+              <span>1s</span>
+              <span>60s</span>
+            </div>
+            <div className="text-[11px] text-white/30 text-center">
+              {tPlayer("skipDurationHint")}
+            </div>
           </div>
         </div>
       )}
@@ -470,9 +522,9 @@ export function PlayerControls({
         {/* Center controls — desktop only (mobile has its own row above) */}
         <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-4">
           <button
-            onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
+            onClick={() => { onSkip(-skipSeconds); showOsd(`\u2212${skipSeconds}s`); }}
             className="text-white/80 hover:text-white"
-            title="Rewind 10s"
+            title={`Rewind ${skipSeconds}s`}
           >
             <ChevronsLeft className="h-5 w-5" />
           </button>
@@ -480,9 +532,9 @@ export function PlayerControls({
             {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
           </button>
           <button
-            onClick={() => { onSkip(10); showOsd("+10s"); }}
+            onClick={() => { onSkip(skipSeconds); showOsd(`+${skipSeconds}s`); }}
             className="text-white/80 hover:text-white"
-            title="Forward 10s"
+            title={`Forward ${skipSeconds}s`}
           >
             <ChevronsRight className="h-5 w-5" />
           </button>

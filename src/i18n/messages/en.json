@@ -586,7 +586,10 @@
     "mode360On": "360° mode on",
     "mode360Off": "360° mode off",
     "speedLabel": "Speed",
-    "resolutionLabel": "Resolution"
+    "resolutionLabel": "Resolution",
+    "skipDurationLabel": "Skip Duration",
+    "skipDurationUnit": "{seconds}s",
+    "skipDurationHint": "Double-tap left/right side of screen to skip"
   },
   "folderPicker": {
     "selectFolder": "Select Folder",

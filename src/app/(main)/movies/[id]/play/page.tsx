@@ -59,6 +59,7 @@ export default function PlayerPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [showBookmarkPanel, setShowBookmarkPanel] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [skipSeconds, setSkipSeconds] = useState(10);
   const isMobile = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Android/i.test(navigator.userAgent);
   // Mobile caps at 2.5K to avoid choking on high-res (e.g. 8K VR) content
   const [selectedMaxWidth, setSelectedMaxWidth] = useState(isMobile ? 2560 : 0);
@@ -482,11 +483,11 @@ export default function PlayerPage() {
           const thisSide = e.clientX < midX ? "left" : "right";
           if (lastSide === thisSide) {
             if (thisSide === "left") {
-              session.skip(-10);
-              showOsd("\u221210s");
+              session.skip(-skipSeconds);
+              showOsd(`\u2212${skipSeconds}s`);
             } else {
-              session.skip(10);
-              showOsd("+10s");
+              session.skip(skipSeconds);
+              showOsd(`+${skipSeconds}s`);
             }
           } else {
             session.togglePlay();
@@ -636,6 +637,7 @@ export default function PlayerPage() {
         subtleMarkers={subtleMarkers}
         customIcons={customIcons}
         disabledIconIds={disabledIconIds}
+        skipSeconds={skipSeconds}
         onSeek={session.seekTo}
         onSkip={session.skip}
         onTogglePlay={session.togglePlay}
@@ -670,6 +672,7 @@ export default function PlayerPage() {
           setSelectedMaxWidth(maxWidth);
           await session.changeResolution(maxWidth);
         }}
+        onSkipSecondsChange={setSkipSeconds}
         onRestoreView={(vs) => view360Ref.current?.setView(vs)}
         showOsd={showOsd}
       />
