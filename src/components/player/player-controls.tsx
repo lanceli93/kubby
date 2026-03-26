@@ -287,25 +287,27 @@ export function PlayerControls({
         </div>
       )}
 
-      {/* Mobile: skip buttons at left/right of center (play/pause via screen tap) */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onSkip(-10); showOsd("\u221210s"); }}
-        className={`md:hidden absolute left-[20%] top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all [-webkit-tap-highlight-color:transparent] ${
-          showControls ? "opacity-100" : "pointer-events-none opacity-0"
+      {/* Mobile: skip buttons spread at center (play/pause via screen tap) */}
+      <div
+        className={`md:hidden absolute inset-x-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-between px-[20%] pointer-events-none transition-opacity duration-300 [-webkit-tap-highlight-color:transparent] ${
+          showControls ? "opacity-100" : "opacity-0"
         }`}
-        aria-label="Rewind 10s"
       >
-        <ChevronsLeft className="h-5 w-5" />
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onSkip(10); showOsd("+10s"); }}
-        className={`md:hidden absolute right-[20%] top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all [-webkit-tap-highlight-color:transparent] ${
-          showControls ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        aria-label="Forward 10s"
-      >
-        <ChevronsRight className="h-5 w-5" />
-      </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onSkip(-10); showOsd("\u221210s"); }}
+          className="pointer-events-auto flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all [-webkit-tap-highlight-color:transparent]"
+          aria-label="Rewind 10s"
+        >
+          <ChevronsLeft className="h-5 w-5" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onSkip(10); showOsd("+10s"); }}
+          className="pointer-events-auto flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all [-webkit-tap-highlight-color:transparent]"
+          aria-label="Forward 10s"
+        >
+          <ChevronsRight className="h-5 w-5" />
+        </button>
+      </div>
 
       {/* Mobile: centered resolution picker overlay */}
       {showResMenu && (() => {
