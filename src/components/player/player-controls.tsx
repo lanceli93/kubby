@@ -287,6 +287,40 @@ export function PlayerControls({
         </div>
       )}
 
+      {/* Mobile: center transport controls (skip/play/skip) */}
+      <div
+        className={`md:hidden absolute inset-0 z-10 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+          showControls ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div
+          className="pointer-events-auto flex items-center gap-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
+            className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
+            aria-label="Rewind 10s"
+          >
+            <ChevronsLeft className="h-5 w-5" />
+          </button>
+          <button
+            onClick={onTogglePlay}
+            className="flex items-center justify-center h-14 w-14 rounded-full bg-black/30 backdrop-blur-sm text-white active:scale-95 active:bg-white/10 transition-all"
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
+          </button>
+          <button
+            onClick={() => { onSkip(10); showOsd("+10s"); }}
+            className="flex items-center justify-center h-11 w-11 rounded-full bg-black/30 backdrop-blur-sm text-white/80 active:scale-95 active:bg-white/10 transition-all"
+            aria-label="Forward 10s"
+          >
+            <ChevronsRight className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
       {/* Mobile: centered resolution picker overlay */}
       {showResMenu && (() => {
         const filtered = RESOLUTION_OPTIONS.filter(
@@ -411,32 +445,14 @@ export function PlayerControls({
         </div>
       </div>
 
-      {/* Mobile: time + transport row */}
-      <div className="flex md:hidden items-center">
-        {!isLocked && (
-          <span className="tabular-nums text-xs text-white/80 whitespace-nowrap min-w-24">
+      {/* Mobile: time row (transport moved to center overlay) */}
+      {!isLocked && (
+        <div className="flex md:hidden items-center">
+          <span className="tabular-nums text-xs text-white/80 whitespace-nowrap">
             {formatTime(displayTime)} / {formatTime(duration)}
           </span>
-        )}
-        <div className="flex-1 flex items-center justify-center gap-4">
-          <button
-            onClick={() => { onSkip(-10); showOsd("\u221210s"); }}
-            className="text-white/80 hover:text-white"
-          >
-            <ChevronsLeft className="h-5 w-5" />
-          </button>
-          <button onClick={onTogglePlay} className="text-white hover:text-white/90">
-            {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-          </button>
-          <button
-            onClick={() => { onSkip(10); showOsd("+10s"); }}
-            className="text-white/80 hover:text-white"
-          >
-            <ChevronsRight className="h-5 w-5" />
-          </button>
         </div>
-        {!isLocked && <div className="min-w-24" />}
-      </div>
+      )}
 
       {/* Desktop bottom row */}
       <div className="relative hidden md:flex items-center justify-between">
