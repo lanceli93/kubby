@@ -321,33 +321,40 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
   const hostPlatform = detectPlatform();
   const native = NATIVE_PLATFORM_MAP[platform];
   const hostNative = NATIVE_PLATFORM_MAP[hostPlatform];
-
-  if (native.npm === hostNative.npm) {
-    console.log("  Native modules match host platform, no swap needed");
-    return;
-  }
-
-  console.log(`  Swapping native modules: ${hostNative.npm} → ${native.npm}`);
   const serverNodeModules = path.join(outputDir, "server", "node_modules");
 
-  // --- sharp ---
-  // Remove host platform sharp, install target platform
-  const hostSharpDir = path.join(serverNodeModules, `@img/sharp-${hostNative.npm}`);
-  const hostSharpLibvipsDir = path.join(serverNodeModules, `@img/sharp-libvips-${hostNative.npm}`);
+  const isSamePlatform = native.npm === hostNative.npm;
+
+  if (isSamePlatform) {
+    console.log("  Native modules match host platform, checking sharp completeness...");
+  } else {
+    console.log(`  Swapping native modules: ${hostNative.npm} → ${native.npm}`);
+
+    // --- sharp: remove host platform packages ---
+    const hostSharpDir = path.join(serverNodeModules, `@img/sharp-${hostNative.npm}`);
+    const hostSharpLibvipsDir = path.join(serverNodeModules, `@img/sharp-libvips-${hostNative.npm}`);
+
+    if (fs.existsSync(hostSharpDir)) {
+      fs.rmSync(hostSharpDir, { recursive: true });
+      console.log(`  Removed @img/sharp-${hostNative.npm}`);
+    }
+    if (fs.existsSync(hostSharpLibvipsDir)) {
+      fs.rmSync(hostSharpLibvipsDir, { recursive: true });
+      console.log(`  Removed @img/sharp-libvips-${hostNative.npm}`);
+    }
+  }
+
+  // --- sharp: ensure target packages exist (handles both cross-platform and same-platform) ---
   const targetSharpPkg = `@img/sharp-${native.npm}`;
   const targetLibvipsPkg = `@img/sharp-libvips-${native.npm}`;
 
-  if (fs.existsSync(hostSharpDir)) {
-    fs.rmSync(hostSharpDir, { recursive: true });
-    console.log(`  Removed @img/sharp-${hostNative.npm}`);
-  }
-  if (fs.existsSync(hostSharpLibvipsDir)) {
-    fs.rmSync(hostSharpLibvipsDir, { recursive: true });
-    console.log(`  Removed @img/sharp-libvips-${hostNative.npm}`);
-  }
-
-  // Download target sharp packages from npm registry
   for (const pkg of [targetSharpPkg, targetLibvipsPkg]) {
+    const pkgDir = path.join(serverNodeModules, pkg);
+    if (fs.existsSync(pkgDir)) {
+      console.log(`  ${pkg} already present, skipping`);
+      continue;
+    }
+
     const tarballUrl = await getNpmTarballUrl(pkg);
     if (!tarballUrl) {
       console.warn(`  WARNING: Could not find ${pkg} on npm`);
@@ -362,17 +369,17 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
       if (fs.existsSync(extractDir)) fs.rmSync(extractDir, { recursive: true });
       ensureDir(extractDir);
       execSync(`tar xzf "${cachePath}" -C "${extractDir}"`, { stdio: "ignore" });
-      // npm tarballs extract to a "package/" directory
-      const pkgDir = path.join(extractDir, "package");
-      const targetDir = path.join(serverNodeModules, pkg);
-      ensureDir(path.dirname(targetDir));
-      if (fs.existsSync(pkgDir)) {
-        copyDirRecursive(pkgDir, targetDir);
+      const extractedPkgDir = path.join(extractDir, "package");
+      ensureDir(path.dirname(pkgDir));
+      if (fs.existsSync(extractedPkgDir)) {
+        copyDirRecursive(extractedPkgDir, pkgDir);
         console.log(`  Installed ${pkg}`);
       }
       fs.rmSync(extractDir, { recursive: true });
     }
   }
+
+  if (isSamePlatform) return;
 
   // --- better-sqlite3 ---
   // Download prebuilt .node binary for target platform
