@@ -317,6 +317,20 @@ const NATIVE_PLATFORM_MAP: Record<Platform, { npm: string; prebuildOs: string; p
   "linux-x64": { npm: "linux-x64", prebuildOs: "linux", prebuildArch: "x64" },
 };
 
+function isSharpPkgComplete(pkgDir: string, npmPlatform: string): boolean {
+  const libDir = path.join(pkgDir, "lib");
+  if (!fs.existsSync(libDir)) return false;
+  const files = fs.readdirSync(libDir);
+  if (npmPlatform.startsWith("win32")) {
+    // Windows: need .node + .dll files in the same lib/ directory
+    const hasNode = files.some(f => f.endsWith(".node"));
+    const hasDll = files.some(f => f.endsWith(".dll"));
+    return hasNode && hasDll;
+  }
+  // Mac/Linux: .node file is enough in sharp pkg; dylib lives in separate libvips pkg
+  return files.some(f => f.endsWith(".node") || f.endsWith(".dylib") || f.endsWith(".so"));
+}
+
 async function swapNativeModules(platform: Platform, outputDir: string, skipDownload: boolean) {
   const hostPlatform = detectPlatform();
   const native = NATIVE_PLATFORM_MAP[platform];
@@ -344,15 +358,23 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
     }
   }
 
-  // --- sharp: ensure target packages exist (handles both cross-platform and same-platform) ---
+  // --- sharp: ensure target packages are COMPLETE (DLLs/dylibs included) ---
+  // Next.js standalone (@vercel/nft) only traces .node files, missing .dll/.dylib files.
+  // We re-download the full package from npm if it's missing or incomplete.
   const targetSharpPkg = `@img/sharp-${native.npm}`;
   const targetLibvipsPkg = `@img/sharp-libvips-${native.npm}`;
 
   for (const pkg of [targetSharpPkg, targetLibvipsPkg]) {
     const pkgDir = path.join(serverNodeModules, pkg);
-    if (fs.existsSync(pkgDir)) {
-      console.log(`  ${pkg} already present, skipping`);
+
+    if (fs.existsSync(pkgDir) && isSharpPkgComplete(pkgDir, native.npm)) {
+      console.log(`  ${pkg} already present and complete, skipping`);
       continue;
+    }
+
+    if (fs.existsSync(pkgDir)) {
+      console.log(`  ${pkg} incomplete, re-downloading...`);
+      fs.rmSync(pkgDir, { recursive: true });
     }
 
     const tarballUrl = await getNpmTarballUrl(pkg);
