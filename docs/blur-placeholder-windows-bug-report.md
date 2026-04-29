@@ -8,47 +8,59 @@
 
 ## 根因
 
-### 直接原因：`@img/sharp-libvips-win32-x64` 包缺失
+### 直接原因：`@img/sharp-win32-x64/lib/` 中缺少 DLL 文件
 
-Windows 安装目录中 sharp 相关文件：
+`npm install` 后，`@img/sharp-win32-x64/lib/` 目录包含 3 个文件：
 
 ```
-C:\Program Files\Kubby\server\node_modules\
-├── sharp/                          ✅ 存在
-├── @img/sharp-win32-x64/           ✅ 存在（含 sharp-win32-x64.node, 433KB）
-└── @img/sharp-libvips-win32-x64/   ❌ 缺失！
+node_modules/@img/sharp-win32-x64/lib/
+├── sharp-win32-x64.node    (433 KB)  ← Node.js native addon
+├── libvips-42.dll           (19 MB)   ← libvips 核心库
+└── libvips-cpp-8.17.3.dll   (327 KB)  ← libvips C++ 绑定
 ```
 
-`sharp-win32-x64.node` 是 Node.js native addon，它在运行时需要动态链接 libvips 的 DLL。没有 `@img/sharp-libvips-win32-x64` 包（包含 `libvips-cpp.dll` 等），加载时报错：
+但 Next.js standalone 输出（`@vercel/nft` 文件追踪）只复制了 `.node` 文件：
+
+```
+打包后 @img/sharp-win32-x64/lib/
+├── sharp-win32-x64.node    (433 KB)  ✅
+├── libvips-42.dll                     ❌ 缺失！
+└── libvips-cpp-8.17.3.dll             ❌ 缺失！
+```
+
+`sharp-win32-x64.node` 在运行时通过 Windows `LoadLibrary` 加载同目录下的 `libvips-42.dll`。DLL 缺失导致：
 
 ```
 ERR_DLOPEN_FAILED: The specified module could not be found.
 \\?\C:\Program Files\Kubby\server\node_modules\@img\sharp-win32-x64\lib\sharp-win32-x64.node
 ```
 
-### 根本原因：打包脚本的 native module 处理逻辑有盲区
+> **注意**：`@img/sharp-libvips-win32-x64` 是一个独立的 npm 包，也包含 `libvips-42.dll`，但 sharp 实际上是从 `@img/sharp-win32-x64/lib/` 同目录加载 DLL 的。仅安装 `@img/sharp-libvips-win32-x64` 到 `node_modules/@img/` 下**不能**解决问题 — DLL 必须在 `.node` 文件的同目录。
 
-`scripts/package.ts` 中 `swapNativeModules()` 函数：
+### 根本原因：Next.js standalone + 打包脚本的双重盲区
+
+**盲区 1：`@vercel/nft` 不追踪 `.dll` 文件**
+
+Next.js standalone 模式使用 `@vercel/nft` 做文件追踪，它只追踪 Node.js 的 `require()` / `import()` 依赖图。`.dll` 文件是操作系统级的动态链接依赖，不在 Node.js 模块图中，所以被遗漏。
+
+**盲区 2：`swapNativeModules` 在 same-platform 时跳过**
+
+`scripts/package.ts` 中：
 
 ```typescript
 if (native.npm === hostNative.npm) {
   console.log("  Native modules match host platform, no swap needed");
-  return;  // ← 当 CI 在 Windows 上构建 Windows 包时，直接跳过
+  return;  // ← CI 在 Windows 上构建 Windows 包时，直接跳过
 }
 ```
 
-CI workflow（`.github/workflows/release.yml`）中 Windows 构建运行在 `windows-latest`，目标也是 `win-x64`，所以 `swapNativeModules` 认为"平台一致，不需要替换"直接返回。
-
-此时完全依赖 Next.js standalone 输出中的 `node_modules`。但 **Next.js standalone 的文件追踪（`@vercel/nft`）没有包含 `@img/sharp-libvips-win32-x64`**。
-
-原因是：
-1. sharp 在 `next.config.ts` 中被列为 `serverExternalPackages`
-2. 代码中使用 `dynamic import`（`await import("sharp")`），不是静态 import
-3. `@vercel/nft` 追踪到了 `sharp` 主包和 `@img/sharp-win32-x64`（.node 文件），但 **没有追踪到 libvips 的 DLL 包**，因为 DLL 依赖是通过操作系统的动态链接器在运行时解析的，不在 Node.js 的 require graph 中
+CI workflow 中 Windows 构建运行在 `windows-latest`，目标也是 `win-x64`，所以 `swapNativeModules` 认为"平台一致，不需要替换"直接返回。没有机会补全缺失的 DLL。
 
 ### 为什么 Mac 上没问题？
 
-Mac 上 sharp 的 native addon（`sharp-darwin-arm64.node`）是**静态链接** libvips 的，不需要额外的 `.dylib` 文件。而 Windows 上是**动态链接**的，需要 `@img/sharp-libvips-win32-x64` 包中的 DLL 文件。
+Mac 上 `@img/sharp-darwin-arm64/lib/` 只有一个文件 `sharp-darwin-arm64.node`，libvips 是**静态链接**进去的。不需要额外的 `.dylib` 文件，所以 `@vercel/nft` 只追踪 `.node` 文件就够了。
+
+Windows 上 sharp 使用**动态链接**，`.node` 文件 + `.dll` 文件必须共存于同一目录。
 
 ## 影响范围
 
@@ -61,11 +73,9 @@ sharp 不可用导致两个功能降级：
 
 ## 修复方案
 
-### 方案：在 `swapNativeModules` 中增加 libvips 完整性检查
+修改 `scripts/package.ts` 中的 `swapNativeModules` 函数，在 same-platform 场景下也检查并补全 DLL 文件。
 
-即使 host 和 target 平台一致，也需要检查 libvips 包是否存在。如果缺失，从 npm registry 下载补全。
-
-修改 `scripts/package.ts` 中的 `swapNativeModules` 函数：
+核心逻辑：检查 `@img/sharp-{platform}/lib/` 目录下是否有 `.dll` 文件（Windows）。如果缺失，从 `@img/sharp-libvips-{platform}/lib/` 复制过来，或从 npm registry 下载 `@img/sharp-{platform}` 完整包覆盖。
 
 ```typescript
 async function swapNativeModules(platform: Platform, outputDir: string, skipDownload: boolean) {
@@ -73,94 +83,72 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
   const native = NATIVE_PLATFORM_MAP[platform];
   const hostNative = NATIVE_PLATFORM_MAP[hostPlatform];
   const serverNodeModules = path.join(outputDir, "server", "node_modules");
-
   const isSamePlatform = native.npm === hostNative.npm;
 
-  if (isSamePlatform) {
-    console.log("  Native modules match host platform, checking completeness...");
-  } else {
-    console.log(`  Swapping native modules: ${hostNative.npm} → ${native.npm}`);
-
-    // Remove host platform sharp packages
-    const hostSharpDir = path.join(serverNodeModules, `@img/sharp-${hostNative.npm}`);
-    const hostSharpLibvipsDir = path.join(serverNodeModules, `@img/sharp-libvips-${hostNative.npm}`);
-    if (fs.existsSync(hostSharpDir)) {
-      fs.rmSync(hostSharpDir, { recursive: true });
-      console.log(`  Removed @img/sharp-${hostNative.npm}`);
-    }
-    if (fs.existsSync(hostSharpLibvipsDir)) {
-      fs.rmSync(hostSharpLibvipsDir, { recursive: true });
-      console.log(`  Removed @img/sharp-libvips-${hostNative.npm}`);
-    }
+  if (!isSamePlatform) {
+    // ... existing cross-platform swap logic (remove host, download target) ...
   }
 
-  // Ensure target sharp + libvips packages exist (handles both cross-platform and same-platform)
-  const targetSharpPkg = `@img/sharp-${native.npm}`;
-  const targetLibvipsPkg = `@img/sharp-libvips-${native.npm}`;
+  // ── Ensure sharp native package is COMPLETE (DLLs included) ──
+  // Next.js standalone (@vercel/nft) only traces .node files, missing .dll on Windows.
+  // Fix: re-download the full @img/sharp-{platform} package from npm to get all files.
+  const sharpNativePkg = `@img/sharp-${native.npm}`;
+  const sharpNativeDir = path.join(serverNodeModules, sharpNativePkg);
+  const sharpLibDir = path.join(sharpNativeDir, "lib");
 
-  for (const pkg of [targetSharpPkg, targetLibvipsPkg]) {
-    const pkgDir = path.join(serverNodeModules, pkg);
-    if (fs.existsSync(pkgDir)) {
-      console.log(`  ${pkg} already present, skipping`);
-      continue;
-    }
+  if (fs.existsSync(sharpLibDir)) {
+    const dllFiles = fs.readdirSync(sharpLibDir).filter(f => f.endsWith(".dll"));
+    const nodeFiles = fs.readdirSync(sharpLibDir).filter(f => f.endsWith(".node"));
 
-    // Download from npm registry
-    const tarballUrl = await getNpmTarballUrl(pkg);
-    if (!tarballUrl) {
-      console.warn(`  WARNING: Could not find ${pkg} on npm`);
-      continue;
-    }
-    const cachePath = path.join(DOWNLOAD_CACHE, `${pkg.replace("/", "-")}.tgz`);
-    if (!skipDownload) {
-      await downloadFile(tarballUrl, cachePath);
-    }
-    if (fs.existsSync(cachePath)) {
-      const extractDir = path.join(DOWNLOAD_CACHE, "npm-extract");
-      if (fs.existsSync(extractDir)) fs.rmSync(extractDir, { recursive: true });
-      ensureDir(extractDir);
-      execSync(`tar xzf "${cachePath}" -C "${extractDir}"`, { stdio: "ignore" });
-      const pkgExtracted = path.join(extractDir, "package");
-      ensureDir(path.dirname(pkgDir));
-      if (fs.existsSync(pkgExtracted)) {
-        copyDirRecursive(pkgExtracted, pkgDir);
-        console.log(`  Installed ${pkg}`);
+    if (nodeFiles.length > 0 && dllFiles.length === 0 && native.npm.startsWith("win32")) {
+      console.log(`  sharp native package missing DLLs, re-downloading ${sharpNativePkg}...`);
+      const tarballUrl = await getNpmTarballUrl(sharpNativePkg);
+      if (tarballUrl) {
+        const cachePath = path.join(DOWNLOAD_CACHE, `${sharpNativePkg.replace("/", "-")}.tgz`);
+        if (!skipDownload) await downloadFile(tarballUrl, cachePath);
+        if (fs.existsSync(cachePath)) {
+          const extractDir = path.join(DOWNLOAD_CACHE, "npm-extract");
+          if (fs.existsSync(extractDir)) fs.rmSync(extractDir, { recursive: true });
+          ensureDir(extractDir);
+          execSync(`tar xzf "${cachePath}" -C "${extractDir}"`, { stdio: "ignore" });
+          const pkgExtracted = path.join(extractDir, "package");
+          if (fs.existsSync(pkgExtracted)) {
+            // Overwrite with complete package (includes .node + .dll)
+            fs.rmSync(sharpNativeDir, { recursive: true });
+            copyDirRecursive(pkgExtracted, sharpNativeDir);
+            console.log(`  Reinstalled ${sharpNativePkg} with DLLs`);
+          }
+          fs.rmSync(extractDir, { recursive: true });
+        }
       }
-      fs.rmSync(extractDir, { recursive: true });
     }
   }
 
-  // --- better-sqlite3 --- (only for cross-platform)
+  // ── better-sqlite3 (cross-platform only) ──
   if (!isSamePlatform) {
     // ... existing better-sqlite3 swap logic unchanged ...
   }
 }
 ```
 
-核心改动：
-1. 去掉 same-platform 时的 `return`
-2. 对 sharp + libvips 两个包都做存在性检查
-3. 缺失时从 npm registry 下载补全
-4. better-sqlite3 的 swap 逻辑仍然只在跨平台时执行（same-platform 时 standalone 自带的是正确的）
-
 ### 修复后的验证
 
-修复打包脚本后，需要：
-
 1. 重新打包 Windows 版本
-2. 检查安装目录中 `@img/sharp-libvips-win32-x64` 是否存在
-3. 重新扫描媒体库（或写 backfill 脚本）以生成 `posterBlur` 数据
-4. 验证 `/api/images/?w=360` 返回 `image/webp`
+2. 检查 `@img/sharp-win32-x64/lib/` 是否包含 `libvips-42.dll` + `libvips-cpp-*.dll`
+3. 重新扫描媒体库以生成 `posterBlur` 数据
+4. 验证 `/api/images/?w=360` 返回 `Content-Type: image/webp`
 
 ### 已有数据的 Backfill
 
-现有 Windows 用户升级后，DB 中的 `posterBlur` 仍为 null。需要在扫描逻辑中增加 backfill：当发现 `posterPath` 存在但 `posterBlur` 为 null 时，重新生成 blur data。或者提供一个"重新扫描"按钮触发全量更新。
+现有 Windows 用户升级后，DB 中的 `posterBlur` 仍为 null。重新扫描 library 即可 — 扫描器对已存在的电影会做全量 `UPDATE`，包含 `posterBlur` 字段。
 
 ## 诊断过程
 
 1. Chrome DevTools 检查页面上的 `<img>` 元素 → 没有 `background-image`（blur placeholder）和 `filter: blur()` 样式
 2. 调用 `/api/movies` API → 所有 movie 的 `posterBlur` 字段为 `null`
 3. 检查图片响应 → `Content-Type: image/jpeg`（应为 `image/webp`），确认 sharp 不可用
-4. 检查安装目录 → `@img/sharp-win32-x64` 存在但 `@img/sharp-libvips-win32-x64` 缺失
-5. 直接用打包的 Node.js 加载 sharp → `ERR_DLOPEN_FAILED`
-6. 分析打包脚本 → `swapNativeModules` 在 same-platform 时跳过，Next.js standalone 未追踪到 libvips 包
+4. 检查安装目录 → `@img/sharp-win32-x64/lib/` 只有 `.node` 文件，缺少 `.dll`
+5. 对比开发环境 `npm install` 后的目录 → 有 `.node` + 2 个 `.dll`，sharp 正常工作
+6. 直接用打包的 Node.js 加载 sharp → `ERR_DLOPEN_FAILED`
+7. 分析打包脚本 → `swapNativeModules` 在 same-platform 时跳过，Next.js standalone 的 `@vercel/nft` 不追踪 `.dll` 文件
+8. 确认 Mac 不受影响 — macOS 的 sharp native addon 是静态链接 libvips 的
