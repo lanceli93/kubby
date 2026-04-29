@@ -28,6 +28,8 @@ The UI was designed with [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev)
 
 Watch 360° / VR videos directly in the browser with full panoramic control. Toggle 360° mode from the player controls — the video renders onto a Three.js sphere with mouse/touch drag to look around, scroll wheel or pinch-to-zoom for FOV control, and `R` key to reset the view. The Three.js chunk (~500KB) is code-split and only loaded when 360° mode is active, so normal playback is unaffected. Works on desktop and mobile.
 
+![360° VR on mobile](docs/screenshots/mobile-vr-360.gif)
+
 ### VR video bookmarks with view state
 
 Bookmarks in 360° mode capture both the timestamp and the exact camera angle (longitude, latitude, FOV). The thumbnail shows what you were actually looking at, not the raw equirectangular frame. Clicking a 360° bookmark from the movie detail page or the seek bar automatically enables 360° mode and restores the saved view angle — so you can bookmark and revisit specific moments from specific perspectives.
