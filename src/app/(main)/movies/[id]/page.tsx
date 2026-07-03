@@ -305,7 +305,8 @@ export default function MovieDetailPage() {
       fetch(`/api/movies/${movieId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
-      router.push("/movies");
+      // Preserve source library filter so we return to the same library view
+      router.push(movie?.mediaLibraryId ? `/movies?libraryId=${movie.mediaLibraryId}` : "/movies");
     },
   });
 

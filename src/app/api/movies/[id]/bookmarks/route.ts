@@ -29,7 +29,7 @@ export async function GET(
           eq(movieBookmarks.movieId, movieId)
         )
       )
-      .orderBy(asc(movieBookmarks.timestampSeconds))
+      .orderBy(asc(movieBookmarks.discNumber), asc(movieBookmarks.timestampSeconds))
       .all();
 
     const result = rows.map((row) => ({

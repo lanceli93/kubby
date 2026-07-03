@@ -1,5 +1,19 @@
 # Completed Features
 
+## 2026-07-03: Bug fixes — bookmark ordering, delete redirect, rmvb scanning
+
+Fixed three bugs surfaced during test-environment setup (see `docs/feature-request.md` for the remaining open bugs).
+
+### BUG-3: Bookmark ordering now disc-first
+- `src/app/api/movies/[id]/bookmarks/route.ts`: list query ordered by `timestampSeconds` only, so multi-disc bookmarks interleaved across discs. Changed to `.orderBy(asc(discNumber), asc(timestampSeconds))` — disc-first, then timeline. Verified with cross-disc bookmarks on PSD-467 (disc1@10 → disc1@30 → disc2@5 → disc2@10).
+
+### BUG-2: Delete redirect preserves library filter
+- `src/app/(main)/movies/[id]/page.tsx`: `deleteMovie` onSuccess hard-coded `router.push("/movies")`, dropping the library filter and showing all libraries. Now `router.push(movie?.mediaLibraryId ? \`/movies?libraryId=${movie.mediaLibraryId}\` : "/movies")`. Verified in browser: after delete, URL retains `?libraryId=…` and stays in the source library view.
+
+### BUG-4: RMVB / RM videos now scanned
+- `src/lib/scanner/index.ts:16`: `VIDEO_EXTENSIONS` lacked `.rmvb`/`.rm`, so RealMedia files were silently ignored by `findVideoFiles()`. Added both extensions. Verified: NADE-131.rmvb (rv40/cook) now ingests, playback-decider correctly routes it to `transcode` (h264_nvenc).
+- Side fix: `tsconfig.json` `exclude` now includes `test-media` — MPEG-TS test clips (`.ts`) were being type-checked as TypeScript and breaking `tsc --noEmit`.
+
 ## 2026-03-22: Rating Dimension Management Enhancement
 
 Upgraded rating dimension management from simple tag chips to a full managed list with rename, reorder, weighted average, and delete confirmation.

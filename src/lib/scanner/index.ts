@@ -13,7 +13,7 @@ import { parseFolderPaths } from "@/lib/folder-paths";
 import { generateBlurDataURL, getFileMtime } from "@/lib/blur-utils";
 import { getPeopleMetadataDir, toRelativeDataPath } from "@/lib/paths";
 
-const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v", ".ts"];
+const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v", ".ts", ".rmvb", ".rm"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
 
 function findFile(dir: string, baseName: string, extensions: string[]): string | null {
