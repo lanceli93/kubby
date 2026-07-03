@@ -15,15 +15,21 @@ import {
   MathUtils,
 } from "three";
 
+// Stereo frame packing of the source video:
+// mono = single equirectangular image, ou = over-under (left eye on top),
+// sbs = side-by-side (left eye on the left). We render the left eye only.
+export type VrLayout = "mono" | "ou" | "sbs";
+
 interface Panorama360PlayerProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   isPlaying: boolean;
+  layout?: VrLayout;
   onResetRef?: (resetFn: () => void) => void;
   onCaptureRef?: (captureFn: () => Promise<Blob | null>) => void;
   onViewRef?: (fns: { getView: () => { lon: number; lat: number; fov: number }; setView: (v: { lon: number; lat: number; fov: number }) => void }) => void;
 }
 
-export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRef, onViewRef }: Panorama360PlayerProps) {
+export function Panorama360Player({ videoRef, isPlaying, layout = "mono", onResetRef, onCaptureRef, onViewRef }: Panorama360PlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -81,6 +87,20 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
 
     // Inverted sphere
     const geometry = new SphereGeometry(500, 60, 40);
+    // Stereo packing: sample only the left eye's half of the frame.
+    // VideoTexture flips Y, so v=1 is the top of the video — over-under
+    // sources put the left eye on top (v ∈ [0.5, 1]).
+    if (layout !== "mono") {
+      const uv = geometry.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        if (layout === "ou") {
+          uv.setY(i, uv.getY(i) * 0.5 + 0.5);
+        } else {
+          uv.setX(i, uv.getX(i) * 0.5);
+        }
+      }
+      uv.needsUpdate = true;
+    }
     const texture = new VideoTexture(video);
     texture.minFilter = LinearFilter;
     texture.magFilter = LinearFilter;
@@ -174,7 +194,7 @@ export function Panorama360Player({ videoRef, isPlaying, onResetRef, onCaptureRe
       rendererRef.current = null;
       cameraRef.current = null;
     };
-  }, [videoRef, updateCamera]);
+  }, [videoRef, updateCamera, layout]);
 
   const renderOnce = useCallback(() => {
     const r = rendererRef.current as unknown as Record<string, unknown> | null;

@@ -109,6 +109,22 @@ export function usePlaybackSession({
         return;
       }
 
+      // Fast path: target is inside the already-generated range of the current
+      // HLS session (EVENT playlist keeps every segment since session start).
+      // A local currentTime seek is near-instant vs. killing + restarting FFmpeg.
+      // Skipped while a server-side seek is in flight — the video element still
+      // holds the dying session's MediaSource, so its seekable range is stale.
+      const video = videoRef.current;
+      if (!seekInFlightRef.current && !hlsSeekingRef.current) {
+        const localTarget = clamped - hlsTimeOffsetRef.current;
+        const seekableEnd = video.seekable.length > 0 ? video.seekable.end(video.seekable.length - 1) : 0;
+        if (localTarget >= 0 && localTarget <= seekableEnd) {
+          video.currentTime = localTarget;
+          setCurrentTime(Math.floor(clamped));
+          return;
+        }
+      }
+
       // Native HLS (session exists but no hls.js instance) — server-side seek
       // needed because the playlist may not have generated segments up to the
       // target position yet, so video.currentTime alone would clamp to the
@@ -202,7 +218,7 @@ export function usePlaybackSession({
               seekTo(next);
             }
           });
-      }, 500);
+      }, 200);
     },
     [showOsd, getRealTime],
   );

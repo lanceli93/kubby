@@ -190,7 +190,7 @@ class TranscodeManager {
       if (fs.existsSync(playlistPath) && (fs.existsSync(firstSegTs) || fs.existsSync(firstSegM4s))) {
         return true;
       }
-      await new Promise((r) => setTimeout(r, 250));
+      await new Promise((r) => setTimeout(r, 100));
     }
     return false;
   }
@@ -347,7 +347,7 @@ class TranscodeManager {
 // Version key ensures stale singletons from prior code are replaced.
 const GLOBAL_KEY = "__kubby_transcode_manager__";
 const GLOBAL_VERSION_KEY = "__kubby_transcode_manager_v__";
-const MANAGER_VERSION = 3; // bump when class shape changes
+const MANAGER_VERSION = 5; // bump when class shape changes
 
 export function getTranscodeManager(): TranscodeManager {
   const g = globalThis as Record<string, unknown>;

@@ -92,6 +92,8 @@ export async function PUT(
         updateData.personalRating = body.personalRating;
       if (body.dimensionRatings !== undefined)
         updateData.dimensionRatings = body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null;
+      if (body.vrLayout !== undefined)
+        updateData.vrLayout = body.vrLayout;
       // Update lastPlayedAt on any playback-related save (progress or completion)
       if (body.playbackPositionSeconds !== undefined || body.isPlayed !== undefined)
         updateData.lastPlayedAt = new Date().toISOString();
@@ -113,6 +115,7 @@ export async function PUT(
           isFavorite: body.isFavorite || false,
           personalRating: body.personalRating ?? null,
           dimensionRatings: body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null,
+          vrLayout: body.vrLayout ?? null,
           lastPlayedAt: (body.playbackPositionSeconds !== undefined || body.isPlayed) ? new Date().toISOString() : null,
         })
         .run();

@@ -29,6 +29,7 @@ interface MovieData {
   userData?: {
     playbackPositionSeconds?: number;
     currentDisc?: number;
+    vrLayout?: "mono" | "ou" | "sbs" | null;
   };
 }
 
@@ -102,6 +103,7 @@ export default function PlayerPage() {
   const disabledIconIds = useMemo(() => new Set(userPrefs?.disabledBookmarkIcons ?? []), [userPrefs?.disabledBookmarkIcons]);
   const subtleMarkers = userPrefs?.subtleBookmarkMarkers ?? false;
   const [is360Mode, setIs360Mode] = useState(false);
+  const [vrLayout, setVrLayout] = useState<"mono" | "ou" | "sbs">("mono");
   const resetViewRef = useRef<(() => void) | null>(null);
   const capture360Ref = useRef<(() => Promise<Blob | null>) | null>(null);
   const view360Ref = useRef<{ getView: () => { lon: number; lat: number; fov: number }; setView: (v: { lon: number; lat: number; fov: number }) => void } | null>(null);
@@ -206,7 +208,20 @@ export default function PlayerPage() {
     } else if (movie.userData?.currentDisc && movie.userData.currentDisc > 1) {
       setCurrentDisc(movie.userData.currentDisc);
     }
+    if (movie.userData?.vrLayout) {
+      setVrLayout(movie.userData.vrLayout);
+    }
   }, [movie, searchParams]);
+
+  // Persist VR layout choice per movie
+  const changeVrLayout = useCallback((layout: "mono" | "ou" | "sbs") => {
+    setVrLayout(layout);
+    fetch(`/api/movies/${movieId}/user-data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vrLayout: layout }),
+    }).catch(() => {});
+  }, [movieId]);
 
   // Controls visibility
   const resetControlsTimer = useCallback(() => {
@@ -562,6 +577,7 @@ export default function PlayerPage() {
         <Panorama360Player
           videoRef={session.videoRef}
           isPlaying={session.isPlaying}
+          layout={vrLayout}
           onResetRef={(fn) => { resetViewRef.current = fn; }}
           onCaptureRef={(fn) => { capture360Ref.current = fn; }}
           onViewRef={(fns) => {
@@ -646,6 +662,8 @@ export default function PlayerPage() {
         onToggleMute={toggleMute}
         onToggleFullscreen={toggleFullscreen}
         is360Mode={is360Mode}
+        vrLayout={vrLayout}
+        onVrLayoutChange={changeVrLayout}
         isLocked={isLocked}
         onToggleLock={() => setIsLocked((v) => !v)}
         onResetView={() => resetViewRef.current?.()}

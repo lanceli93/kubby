@@ -293,6 +293,8 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     // 0031: dimension weights for weighted average ratings
     "ALTER TABLE `user_preferences` ADD `movie_dimension_weights` text",
     "ALTER TABLE `user_preferences` ADD `person_dimension_weights` text",
+    // 0032: per-movie VR stereo layout for 360° playback
+    "ALTER TABLE `user_movie_data` ADD `vr_layout` text",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

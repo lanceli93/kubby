@@ -1,5 +1,39 @@
 # Completed Features
 
+## 2026-07-03 (2): Playback performance & VR fixes — seek latency, black screen, over-under 360°, multi-disc media info
+
+Fixed the remaining bugs from `docs/feature-request.md` (BUG-1, BUG-5, BUG-6, BUG-7, BUG-8) plus rmvb seek from BUG-4. All verified in-browser against the real-source test clips.
+
+### Root causes (measured, not guessed)
+- **MPEG-TS muxdelay**: FFmpeg's TS muxer offsets all timestamps by 1.4s by default. hls.js expects streams to start at 0 → decode misalignment after seek (black screen, BUG-7) and the `bufferAppendError` at playback start (BUG-5's second symptom). Fixed with `-muxdelay 0` (measured: segment start_time 1.433s → 0.033s).
+- **Seek = full FFmpeg restart**: every seek killed the FFmpeg process, started a new session, and re-waited for playlist+segment with coarse polling (250ms server, 500ms client debounce, 500ms segment retry). Fixed by (a) client-side fast path — seek within the already-generated EVENT playlist range just sets `video.currentTime`, no server round-trip; (b) debounce 500→200ms, playlist poll 250→100ms, segment retry 500→200ms.
+- **Encoder default GOP**: NVENC defaults to ~250-frame GOPs (8.3s @ 30fps) making segments oversized and seeks coarse. `-force_key_frames "expr:gte(t,n_forced*2)"` pins keyframes every 2s (transcode only; remux GOP is source-determined).
+- **Over-under VR rendered as mono** (BUG-5): the 360° player mapped the full frame (both stereo eyes) onto the sphere. Added UV remapping to sample only the left eye for `ou` (top half) and `sbs` (left half) layouts.
+- **WMV "slow" (BUG-8)**: transcode itself measured 17× realtime (fps≈510 NVENC) — the perceived slowness was entirely the seek-restart overhead above. No encoder change needed.
+- **8K VR seek (BUG-6)**: Jibaro direct-plays (HEVC MP4); measured seek 0.9–2.5s is browser HEVC decode + range-fetch on a 60Mbps 8K stream, not Kubby pipeline. HLS-path improvements above apply when it's transcoded (e.g. resolution-capped playback); further gains would need pre-generated keyframe indexes (not pursued).
+- **RMVB seek caveat (BUG-4)**: the rm demuxer cannot seek the test clip at all (input-side or output-side `-ss` both yield 0 frames; the 6MB clip's index points beyond its data). Playback from 0 works; seek restarts land on corrupt data. Full-file rmvb sources may behave better, but rmvb seeking is best-effort.
+
+### Changes
+- `src/lib/transcode/ffmpeg-command.ts` — `-muxdelay 0`; 2s forced keyframe cadence (was t=0 only)
+- `src/lib/transcode/transcode-manager.ts` — playlist poll 250→100ms; MANAGER_VERSION bump
+- `src/app/api/stream/[sessionId]/segment/[name]/route.ts` — segment wait 20×500ms → 50×200ms (same 10s budget, 2.5× finer)
+- `src/hooks/use-playback-session.ts` — client fast-path seek within generated range (guarded against in-flight server seeks); server-seek debounce 500→200ms
+- `src/components/player/panorama-360-player.tsx` — `layout` prop (`mono`/`ou`/`sbs`) with sphere UV remapping
+- `src/components/player/player-controls.tsx` — VR layout picker (desktop chip menu + mobile overlay), shown only in 360° mode
+- `src/app/(main)/movies/[id]/play/page.tsx` — vrLayout state, initialized from `userData.vrLayout`, persisted per movie on change
+- `src/app/api/movies/[id]/user-data/route.ts` + `src/app/api/movies/[id]/route.ts` — read/write `vrLayout`
+- `src/lib/db/schema.ts` + `src/lib/db/index.ts` — `user_movie_data.vr_layout` column (migration #0032)
+- `src/components/movie/media-info-dialog.tsx` (BUG-1) — `discs` field in `MediaInfoData`; renders one file-info block per disc (file/container/format/size/bitrate/duration/codec/resolution) for multi-disc movies
+- i18n: `player.vrLayout*` keys (en/zh)
+
+### Measured results (browser, real seek-bar drags)
+| Case | Before | After |
+|---|---|---|
+| ABP-181 mkv remux seek (BUG-7) | black screen | 147–305ms, correct frame |
+| PSD-467 wmv2 transcode seek (BUG-8) | multi-second | 190–235ms |
+| ETVCO-016 over-under 360° (BUG-5) | split/broken projection | correct with layout=上下 |
+| Backward seek to pre-session range | full restart always | instant if in range, ~1.5s restart otherwise |
+
 ## 2026-07-03: Bug fixes — bookmark ordering, delete redirect, rmvb scanning
 
 Fixed three bugs surfaced during test-environment setup (see `docs/feature-request.md` for the remaining open bugs).

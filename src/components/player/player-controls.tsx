@@ -33,6 +33,12 @@ const RESOLUTION_OPTIONS = [
   { maxWidth: 854, labelKey: "res480p" as const },
 ];
 
+const VR_LAYOUT_OPTIONS = [
+  { value: "mono" as const, labelKey: "vrLayoutMono" as const },
+  { value: "ou" as const, labelKey: "vrLayoutOU" as const },
+  { value: "sbs" as const, labelKey: "vrLayoutSBS" as const },
+];
+
 export interface BookmarkData {
   id: string;
   timestampSeconds: number;
@@ -73,6 +79,8 @@ export interface PlayerControlsProps {
   disabledIconIds: Set<string>;
   skipSeconds: number;
   is360Mode: boolean;
+  vrLayout: "mono" | "ou" | "sbs";
+  onVrLayoutChange: (layout: "mono" | "ou" | "sbs") => void;
   isLocked: boolean;
   onToggleLock: () => void;
   onResetView?: () => void;
@@ -132,6 +140,8 @@ export function PlayerControls({
   onToggleMute,
   onToggleFullscreen,
   is360Mode,
+  vrLayout,
+  onVrLayoutChange,
   isLocked,
   onToggleLock,
   onResetView,
@@ -150,6 +160,7 @@ export function PlayerControls({
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showResMenu, setShowResMenu] = useState(false);
   const [showSkipMenu, setShowSkipMenu] = useState(false);
+  const [showVrLayoutMenu, setShowVrLayoutMenu] = useState(false);
   const [showEncoderInfo, setShowEncoderInfo] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -245,6 +256,17 @@ export function PlayerControls({
             <RotateCcw className="h-5 w-5" />
           </button>
         )}
+        {is360Mode && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowVrLayoutMenu((v) => !v); }}
+            className={`flex items-center justify-center min-w-[44px] h-11 px-2 rounded-full backdrop-blur-sm text-[11px] font-semibold active:scale-95 transition-all ${
+              vrLayout !== "mono" ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
+            }`}
+            aria-label={tPlayer("vrLayoutLabel")}
+          >
+            {tPlayer(VR_LAYOUT_OPTIONS.find((o) => o.value === vrLayout)!.labelKey)}
+          </button>
+        )}
         {playbackMode === "transcode" && (
           <button
             onClick={(e) => { e.stopPropagation(); setShowResMenu((v) => !v); }}
@@ -296,6 +318,34 @@ export function PlayerControls({
               >
                 <span>{rate}x{rate === 1 ? " (Normal)" : ""}</span>
                 {rate === playbackRate && <span className="text-primary">&#10003;</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile: centered VR layout picker overlay */}
+      {showVrLayoutMenu && (
+        <div
+          className="md:hidden fixed inset-0 z-50 flex items-center justify-center"
+          onClick={() => setShowVrLayoutMenu(false)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[200px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-2 text-xs text-white/40 font-medium">{tPlayer("vrLayoutLabel")}</div>
+            {VR_LAYOUT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { onVrLayoutChange(opt.value); setShowVrLayoutMenu(false); }}
+                className={`flex w-full items-center justify-between px-4 py-3 text-sm ${
+                  opt.value === vrLayout ? "text-primary" : "text-white/80"
+                }`}
+              >
+                <span>{tPlayer(opt.labelKey)}</span>
+                {opt.value === vrLayout && <span className="text-primary">&#10003;</span>}
               </button>
             ))}
           </div>
@@ -575,6 +625,44 @@ export function PlayerControls({
             >
               {tPlayer("mode360")}
             </button>
+            {is360Mode && (
+              <div className="relative flex items-center">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowVrLayoutMenu((v) => !v); }}
+                  className={`text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
+                    vrLayout !== "mono"
+                      ? "bg-primary/25 text-primary"
+                      : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
+                  }`}
+                  title={tPlayer("vrLayoutLabel")}
+                >
+                  {tPlayer(VR_LAYOUT_OPTIONS.find((o) => o.value === vrLayout)!.labelKey)}
+                </button>
+                {showVrLayoutMenu && (
+                  <div
+                    className="absolute bottom-full right-0 mb-2 z-20 rounded-lg bg-zinc-900/95 py-1 shadow-xl backdrop-blur"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {VR_LAYOUT_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          setShowVrLayoutMenu(false);
+                          onVrLayoutChange(opt.value);
+                        }}
+                        className={`block w-full whitespace-nowrap px-4 py-1.5 text-left text-sm ${
+                          opt.value === vrLayout
+                            ? "bg-white/10 text-white"
+                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        {tPlayer(opt.labelKey)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {is360Mode && onResetView && (
               <button
                 onClick={onResetView}

@@ -382,6 +382,7 @@ export async function GET(
             playCount: userData.playCount,
             personalRating: userData.personalRating,
             dimensionRatings: userData.dimensionRatings ? JSON.parse(userData.dimensionRatings) : null,
+            vrLayout: userData.vrLayout ?? null,
           }
         : null,
     });

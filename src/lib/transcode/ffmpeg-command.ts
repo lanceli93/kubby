@@ -80,9 +80,11 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
     // Encoder + quality args
     args.push("-c:v", enc?.name ?? "libx264", ...(enc?.qualityArgs ?? ["-preset", "ultrafast", "-crf", "23"]));
 
-    // Force an IDR keyframe at the very start so HLS playback begins immediately
-    // without black/corrupt frames (critical after seeking in AVI/MPEG4)
-    args.push("-force_key_frames", "expr:eq(t,0)");
+    // Force IDR keyframes every 2s (first at t=0) so HLS playback begins
+    // immediately without black/corrupt frames, and segments stay short.
+    // Without this, hardware encoders default to ~250-frame GOPs (8.3s @30fps),
+    // which makes segments oversized and seeking coarse.
+    args.push("-force_key_frames", "expr:gte(t,n_forced*2)");
 
     // Dynamic bitrate based on effective output resolution
     const effectiveWidth = (maxWidth && maxWidth > 0) ? maxWidth : (sourceVideoWidth ?? 1920);
@@ -98,6 +100,11 @@ export function buildFfmpegArgs({ inputPath, outputDir, decision, seekToSeconds,
   } else {
     args.push("-c:a", "aac", "-b:a", "192k");
   }
+
+  // MPEG-TS muxer adds a 1.4s delay to all timestamps by default (muxdelay).
+  // hls.js expects the stream to start at 0; the offset causes decode misalignment
+  // after seeking (black screen) and bufferAppendError on some streams.
+  args.push("-muxdelay", "0");
 
   // HLS output — short first segment for faster playback start
   // Apple HLS spec requires HEVC in fMP4 segments (not MPEG-TS)

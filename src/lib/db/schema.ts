@@ -130,6 +130,7 @@ export const userMovieData = sqliteTable("user_movie_data", {
   personalRating: real("personal_rating"),
   dimensionRatings: text("dimension_ratings"), // JSON object, e.g. {"剧情": 9.5, "特效": 8.0}
   lastPlayedAt: text("last_played_at"),
+  vrLayout: text("vr_layout"), // "mono" | "ou" | "sbs" — VR stereo packing for 360° playback
 }, (table) => [
   uniqueIndex("idx_umd_user_movie").on(table.userId, table.movieId),
 ]);

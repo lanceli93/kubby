@@ -61,55 +61,8 @@
 
 ## 二、待修复 Bug
 
-### BUG-1 :分碟的 Media Info 只显示 cd1 的文件大小
-- **现象**:多碟电影(如 The Godfather)的 Media Info 弹窗只显示 cd1 的 media size,应分别显示每个碟片的信息。
-- **根因**:后端 API **已经**返回了完整的 `discs[]` 数组(每碟含 `fileSize`/`container`/`videoCodec`/`runtimeSeconds` 等),但前端弹窗组件的 TypeScript 接口 `MediaInfoData` 根本没有 `discs` 字段,也没有渲染它 —— 只显示了顶层 `data.fileSize`(= 主视频/cd1)。
-- **位置**:
-  - API(已正确):`src/app/api/movies/[id]/media-info/route.ts:31-66`(返回 `discs[]`)
-  - 前端(缺失):`src/components/movie/media-info-dialog.tsx:41-50`(`MediaInfoData` 接口无 `discs`),`:213-222`(文件信息头只渲染单个 fileSize)
-- **修复方向**:在 `MediaInfoData` 接口加 `discs` 字段;当 `discs.length > 0` 时,为每个碟片渲染一组文件信息(fileName/container/fileSize/runtime/codec),而不是只显示顶层 fileSize。可参考 API 已返回的字段结构。
-
-> **BUG-2(删除跳转丢 libraryId)、BUG-3(书签碟片排序)已修复** — 见 `docs/feature-completed.md`(2026-07-03)。
-
----
-
-## 三、真实源片段暴露的 Bug(用户提供的实际问题视频)
-
-> 这些用**流拷贝**(`-c copy`,保留原始编码/分辨率/VR 布局)从用户真实媒体截取,生成脚本见 `test-media/generate-real.sh`。
-> 每个片段都已入库(除 rmvb 外),可直接在测试库中打开复现。番号在 TMDB 搜不到,故均补了最小 `movie.nfo` 以便扫描器收录。
-
-### BUG-4 :RMVB 视频不被扫描器收录 — ✅ 扫描已修复,播放待验证
-- **扫描部分已修复**(见 `docs/feature-completed.md` 2026-07-03):`VIDEO_EXTENSIONS` 加入 `.rmvb`/`.rm`,NADE-131 现已入库,播放决策判为 `transcode`(h264_nvenc)。
-- **遗留待验证**:rv40/cook 的**实际转码播放**尚未端到端测试。FFmpeg 对 rm 容器 demux 支持较弱,需实际播放 NADE-131 确认转码链路能出流;若失败,应在 UI 提示"不支持的格式"而非黑屏。
-- **测试片段**:`test-media/NADE-131/NADE-131.rmvb`(rv40 640×480 / cook,rm 容器)。
-
-### BUG-5 :VR「上下排布」(over-under)视频 360 模式无法播放 + 开头 HLS bufferAppendError
-- **现象**:该 VR 视频是上下(over-under)立体排布,进入 360 模式无法正常播放;且每次播放开头都报 `HLS: mediaError bufferAppendError`。
-- **根因(待定位)**:
-  - 360 播放器(`src/components/player/panorama-360-player.tsx`,Three.js sphere + VideoTexture)可能只处理了 equirectangular 单画面 / 左右(side-by-side)排布,未处理 over-under 立体格式。
-  - `bufferAppendError` 通常是 HLS.js 追加分片时 codec/init-segment 不匹配 —— 需查转码/remux 生成的 HLS 分片(2160×2160 h264 的 fMP4 init segment 可能有兼容问题)。
-- **位置(排查起点)**:`src/components/player/panorama-360-player.tsx`(投影/布局处理)、转码 HLS 分片生成逻辑(`src/lib/transcode/`)。
-- **测试片段**:`test-media/ETVCO-016/ETVCO-016.mkv`(h264 **2160×2160**,over-under VR)。
-
-### BUG-6 :高分辨率(8K)VR 视频拖动进度条延时 3s+(PotPlayer 仅 100-200ms)
-- **现象**:8K VR 视频在本地播放,每次拖动进度条延时都 >3s;同一文件用 PotPlayer 本地播放延时仅 100-200ms,性能差距巨大。
-- **根因(待定位)**:Kubby 走 HLS 转码/remux 管线,seek 时需要重新定位关键帧 + 生成新分片 + HLS.js 缓冲;8192×4096 hevc 的转码/解码开销极大。而 PotPlayer 是原生解码器直接 seek。可能的优化点:seek 时的分片预生成、关键帧索引、是否对超高分辨率强制走 remux 而非 full transcode、GPU 硬解(源机器 FFmpeg 有 NVENC/cuvid)。
-- **位置(排查起点)**:`src/lib/transcode/transcode-manager.ts`、`playback-decider.ts`、HLS seek 处理、`src/app/api/movies/[id]/stream/`。
-- **测试片段**:`test-media/Love, Death + Robots - Jibaro (2025)/`(hevc **8192×4096** 8K)。
-
-### BUG-7 :普通视频拖动进度条黑屏
-- **现象**:普通 h264 720p mkv,一拖动进度条就黑屏。
-- **根因(待定位)**:mkv 走 remux→HLS 管线;seek 到非关键帧位置、或 HLS.js 分片切换时视频解码失败导致黑屏。可能与 BUG-5 的 bufferAppendError 同源(HLS 分片/init segment 处理),但这是普通 h264、无 VR 干扰,是更干净的复现样本。
-- **位置(排查起点)**:HLS remux 分片生成、seek 处理、播放页 `src/app/(main)/movies/[id]/play/page.tsx`。
-- **测试片段**:`test-media/ABP-181/ABP-181.mkv`(h264 1280×720,mkv)。
-
-### BUG-8 :WMV 播放性能差
-- **现象**:wmv 视频播放性能很差。
-- **根因(待定位)**:wmv2/wmapro 浏览器无法直连,`playback-decider.ts` 判为 full `transcode`;wmv2 是老编码,FFmpeg 解码 + 转 H.264 + HLS 分片开销大。可能优化:GPU 加速、预转码、分片缓存。
-- **位置(排查起点)**:`playback-decider.ts`(确认 wmv2→transcode)、`transcode-manager.ts`。
-- **测试片段**:`test-media/PSD-467/`(wmv2 720×400,asf,**同时是 2 碟 CD1/CD2** —— 也是 BUG-1 分碟 Media Info 的测试对象)。
-
-> **备注**:BUG-5/6/7/8 的性能与播放问题很可能有共同的底层根因(HLS 转码/remux 管线的 seek 与分片处理、缺少 GPU 硬解)。建议后续模型先统一排查转码管线,再逐个验证。
+> **BUG-1~8 已全部修复** — 见 `docs/feature-completed.md`(2026-07-03 两批)。
+> 遗留已知限制:rm/rmvb 容器 demuxer seek 不可靠(测试片段 seek 会落到损坏数据,0 帧输出),从头播放正常;rmvb seek 属 best-effort。
 
 ---
 

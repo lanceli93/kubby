@@ -38,6 +38,23 @@ interface MediaStream {
   sampleRate: number | null;
 }
 
+interface MediaInfoDisc {
+  discNumber: number;
+  label: string | null;
+  fileName: string;
+  filePath: string;
+  container: string | null;
+  fileSize: number | null;
+  totalBitrate: number | null;
+  formatName: string | null;
+  runtimeSeconds: number | null;
+  videoCodec: string | null;
+  audioCodec: string | null;
+  videoWidth: number | null;
+  videoHeight: number | null;
+  audioChannels: number | null;
+}
+
 interface MediaInfoData {
   fileName: string;
   filePath: string;
@@ -47,6 +64,7 @@ interface MediaInfoData {
   formatName: string | null;
   durationSeconds: number | null;
   streams: MediaStream[];
+  discs?: MediaInfoDisc[];
 }
 
 function formatFileSize(bytes: number | null): string {
@@ -209,17 +227,37 @@ export function MediaInfoDialog({ movieId, open, onOpenChange }: MediaInfoDialog
           </div>
         ) : (
           <div className="flex flex-col gap-4 overflow-y-auto pr-1">
-            {/* File info header */}
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
-              <div className="flex flex-col">
-                <InfoRow label={t("file")} value={data.fileName} />
-                <InfoRow label={t("container")} value={data.container?.toUpperCase()} />
-                <InfoRow label={t("format")} value={data.formatName} />
-                <InfoRow label={t("fileSize")} value={formatFileSize(data.fileSize)} />
-                <InfoRow label={t("totalBitrate")} value={formatBitrate(data.totalBitrate)} />
-                <InfoRow label={t("duration")} value={formatDuration(data.durationSeconds)} />
+            {/* File info header — one block per disc for multi-disc movies */}
+            {data.discs && data.discs.length > 0 ? (
+              data.discs.map((disc) => (
+                <div key={disc.discNumber} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                  <h4 className="text-sm font-medium text-white/70 mb-2">
+                    {disc.label || `CD${disc.discNumber}`}
+                  </h4>
+                  <div className="flex flex-col">
+                    <InfoRow label={t("file")} value={disc.fileName} />
+                    <InfoRow label={t("container")} value={disc.container?.toUpperCase()} />
+                    <InfoRow label={t("format")} value={disc.formatName} />
+                    <InfoRow label={t("fileSize")} value={formatFileSize(disc.fileSize)} />
+                    <InfoRow label={t("totalBitrate")} value={formatBitrate(disc.totalBitrate)} />
+                    <InfoRow label={t("duration")} value={formatDuration(disc.runtimeSeconds)} />
+                    <InfoRow label={t("codec")} value={[disc.videoCodec, disc.audioCodec].filter(Boolean).join(" / ") || null} />
+                    <InfoRow label={t("resolution")} value={disc.videoWidth && disc.videoHeight ? `${disc.videoWidth} × ${disc.videoHeight}` : null} />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="flex flex-col">
+                  <InfoRow label={t("file")} value={data.fileName} />
+                  <InfoRow label={t("container")} value={data.container?.toUpperCase()} />
+                  <InfoRow label={t("format")} value={data.formatName} />
+                  <InfoRow label={t("fileSize")} value={formatFileSize(data.fileSize)} />
+                  <InfoRow label={t("totalBitrate")} value={formatBitrate(data.totalBitrate)} />
+                  <InfoRow label={t("duration")} value={formatDuration(data.durationSeconds)} />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Stream tabs */}
             {hasStreams ? (

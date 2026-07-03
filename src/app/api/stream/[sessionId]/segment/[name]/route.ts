@@ -30,8 +30,8 @@ export async function GET(
 
   // Brief wait+retry if segment not yet generated
   let attempts = 0;
-  while (!fs.existsSync(segmentPath) && attempts < 20) {
-    await new Promise((r) => setTimeout(r, 500));
+  while (!fs.existsSync(segmentPath) && attempts < 50) {
+    await new Promise((r) => setTimeout(r, 200));
     attempts++;
   }
 
