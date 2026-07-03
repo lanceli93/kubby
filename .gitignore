@@ -40,6 +40,9 @@ yarn-error.log*
 /data/*
 !/data/.gitkeep
 
+# test media (local only — generated clips + personal source paths)
+/test-media/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
