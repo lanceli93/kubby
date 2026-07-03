@@ -1,10 +1,10 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-// Lightweight config for middleware (no DB imports)
+// Lightweight config for proxy (no DB imports)
 export const authConfig: NextAuthConfig = {
   providers: [
-    // Stub provider for middleware - actual authorize logic is in auth.ts
+    // Stub provider for proxy - actual authorize logic is in auth.ts
     Credentials({
       credentials: {
         username: {},

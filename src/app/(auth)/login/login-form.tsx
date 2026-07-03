@@ -19,7 +19,7 @@ export function LoginForm() {
 function LoginFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Sanitize callbackUrl to pathname only — middleware may set absolute URL with 0.0.0.0 host
+  // Sanitize callbackUrl to pathname only — proxy may set absolute URL with 0.0.0.0 host
   const rawCallbackUrl = searchParams.get("callbackUrl") || "/";
   const callbackUrl = (() => {
     try {
