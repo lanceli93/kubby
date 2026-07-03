@@ -742,6 +742,8 @@ Player (page.tsx)
 - Transcode (libx264 兜底): `-threads 0 -vf scale='min({maxWidth},iw)':-2 -c:v libx264 -preset ultrafast -crf 23 -maxrate {动态} -bufsize {动态}`
 - `maxWidth` 可配置, 通过 decide API 的 `maxWidth` 查询参数传入, 支持 3840/2560/1920/1280/854 (4K/2.5K/1080p/720p/480p)
 - 快速输入 seek: `-ss {seconds}` 在 `-i` 之前
+- **`-muxdelay 0`** (所有 HLS 输出): MPEG-TS muxer 默认给所有时间戳加 1.4s 偏移, hls.js 期望流从 0 开始 → seek 后解码错位黑屏 + 开头 `bufferAppendError`。实测加此参数后段 start_time 从 1.433s 降至 0.033s
+- **转码强制 2s 关键帧**: `-force_key_frames "expr:gte(t,n_forced*2)"` — NVENC 默认 GOP ~250 帧 (30fps 下 8.3s), 段超长且 seek 粒度粗。仅转码路径; remux 的 GOP 由源决定
 
 **TranscodeManager** (`src/lib/transcode/transcode-manager.ts`):
 - globalThis 单例 (Next.js dev hot reload 安全)
@@ -778,7 +780,7 @@ Player (page.tsx)
 - HLS (HEVC): 强制使用 iOS 原生 HLS 播放器 (hls.js/MSE 不支持 HEVC 解码, `bufferAddCodecError`)
 - OSD 提示 "Remuxing..." / "Transcoding..."
 - HLS 时间偏移跟踪: `hlsTimeOffsetRef` 追踪 FFmpeg `-ss` 起点, `getRealTime()` 返回原始视频中的真实位置
-- HLS 感知 seek: `seekTo()` 函数通过 POST seek API 重启 FFmpeg, 500ms 防抖 + AbortController 取消进行中的 fetch, 防止快速点击产生多个孤儿 FFmpeg 进程
+- HLS 感知 seek: `seekTo()` 优先走**客户端快速路径** — 目标在当前 session 已生成范围内 (EVENT playlist 保留所有段) 时直接设 `video.currentTime`, 零服务端往返 (实测 147–305ms); 超出范围才 POST seek API 重启 FFmpeg (200ms 防抖)。快速路径在服务端 seek 进行中 (`seekInFlightRef`/`hlsSeekingRef`) 时跳过, 因为 video 元素还挂着旧 session 的 MediaSource, seekable 范围是陈旧的
 - HLS 心跳: 每 30 秒 PATCH 保持 session 活跃 (服务端 90 秒空闲超时)
 - HLS 初始位置: `startAt` 参数传给 decide API, FFmpeg 直接从该位置启动 (支持 `?t=` 参数和续播恢复)
 - HLS 网络错误自动 seek 恢复
@@ -805,6 +807,8 @@ Player (page.tsx)
 - **多碟 media_streams 字段遗漏**: scanner 有两处 `media_streams` 插入 (disc 1 和 disc 2+), 新增字段 `pixFmt`/`level`/`hasBFrames` 只加到了 disc 1 的插入。CD2 的 `hasBFrames` 为 null → B-frame 检查不触发 → 错误走 remux。教训: schema 加字段时必须检查所有 insert 点, 不仅是 `replace_all` 匹配到的
 - **fetch 缺 r.ok 检查**: API 返回 `{ error: "..." }` (401/500) 时, React Query 的 `queryFn` 直接 `.json()` 不检查 status, 将 error 对象当作 data 存储。后续 `.filter()` 在非数组上调用崩溃 (`eP?.filter is not a function`)。`?.` 不帮忙因为值不是 undefined 而是对象。修复: 所有 queryFn 加 `if (!r.ok) throw new Error()`
 - **hls.js seek 404**: seek 时旧 hls.js 实例在 fetch 返回前仍在轮询已销毁 session 的 playlist → 404。修复: fetch 前调 `oldHls.stopLoad()` 停止轮询
+- **MPEG-TS muxdelay 1.4s 偏移**: FFmpeg TS muxer 默认 muxdelay 0.7 实际产生 1.4s 时间戳偏移, remux/转码段 start_time=1.433s 而 hls.js 按 0 对齐 → seek 后黑屏 (BUG-7) + 开头 bufferAppendError (BUG-5)。修复: 所有 HLS 输出加 `-muxdelay 0`
+- **rm/rmvb demuxer seek 不可靠**: RealMedia 容器 input-side 或 output-side `-ss` 都可能落到损坏数据, rv40 解码器无法恢复 (`Error submitting packet to decoder` → 0 帧输出)。从头播放正常; rmvb seek 属 best-effort, 无代码层修复
 - **DB schema 迁移二步**: 改 schema 必须同时改 `src/lib/db/schema.ts` 和 `src/lib/db/index.ts` 的 migration 数组 (`ALTER TABLE ... ADD`), 否则已有数据库报 `no such column`
 - DB 路径可移植性: `people.photoPath` 存相对路径 (`metadata/people/...`), 运行时用 `resolveDataPath()` 拼绝对路径, 迁移数据目录后无需重新刮削
 - 书签系统: B 键快速书签 (使用模板预设), Shift+B 详细书签 (选图标/标签/备注)
@@ -825,6 +829,8 @@ Player (page.tsx)
 ```
 
 **组件**: `panorama-360-player.tsx` — Three.js 动态导入 (`ssr: false`), 代码分离为独立 chunk (~500KB), 仅 360 模式激活时加载。
+
+**VR 立体布局** (`layout` prop): `mono` (单画面 equirect) / `ou` (over-under 上下排布, 左眼在上) / `sbs` (side-by-side 左右排布, 左眼在左)。通过球体 UV 重映射只采样左眼半幅 (VideoTexture Y 翻转, ou 取 v∈[0.5,1])。控制栏 360° 开启时显示布局选择器 (桌面 chip 菜单 / 移动端中央弹层), 选择按电影持久化到 `user_movie_data.vr_layout` (migration #0032), 播放页从 `userData.vrLayout` 初始化。
 
 **交互**:
 - 鼠标/触摸拖拽旋转视角 (Pointer Events, lon/lat 球面坐标)
