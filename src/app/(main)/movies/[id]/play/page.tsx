@@ -524,7 +524,7 @@ export default function PlayerPage() {
         disableRemotePlayback
         onPlay={() => session.setIsPlaying(true)}
         onPause={() => session.setIsPlaying(false)}
-        onTimeUpdate={() => { if (!session.hlsSeekingRef.current) session.setCurrentTime(session.getRealTime()); }}
+        onTimeUpdate={session.reportTimeUpdate}
         onLoadedMetadata={() => {
           if (session.hlsDurationRef.current) {
             session.setDuration(session.hlsDurationRef.current);

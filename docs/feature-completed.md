@@ -15,6 +15,9 @@ Direct play seeks used precise `video.currentTime = target`, forcing the browser
 
 Measured on Jibaro 8K (browser seek-bar drags): first frame at target in **100–136ms** (was 900–2500ms), landing on the keyframe nearest the requested position (max drift ~1.6s with this file's ~6s GOPs).
 
+### 3. Keyframe snap re-introduced the backward flick on Jibaro (follow-up to 1+2)
+When the snap landed *before* the requested position (up to half a GOP), `timeupdate` immediately moved the bar back to the snapped time — same visual glitch as fix 1, different cause. Added a post-seek display hold (`displayHoldRef` + `reportTimeUpdate` in `use-playback-session.ts`): after an early-landing snap, the bar stays at the requested position until playback catches up (8s safety expiry), then resumes normally. `getRealTime()` (bookmarks, progress saves) still reports the true position. `skip()` on direct play now also routes through `seekTo` when a keyframe index is loaded, so double-tap skips snap too. Verified: Jibaro release at 66.65% → bar holds ~2s → advances monotonically, zero backward movement; ABP-181 HLS path regression-checked smooth.
+
 ## 2026-07-03 (2): Playback performance & VR fixes — seek latency, black screen, over-under 360°, multi-disc media info
 
 Fixed the remaining bugs from `docs/feature-request.md` (BUG-1, BUG-5, BUG-6, BUG-7, BUG-8) plus rmvb seek from BUG-4. All verified in-browser against the real-source test clips.

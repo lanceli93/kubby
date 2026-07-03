@@ -25,6 +25,7 @@ export interface UsePlaybackSessionReturn {
   isPlaying: boolean;
   setIsPlaying: (v: boolean) => void;
   getRealTime: () => number;
+  reportTimeUpdate: () => void;
   seekTo: (seconds: number) => void;
   skip: (seconds: number) => void;
   togglePlay: () => void;
@@ -62,6 +63,10 @@ export function usePlaybackSession({
   const queuedSeekRef = useRef<number | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const keyframesRef = useRef<number[] | null>(null);
+  // After a keyframe-snapped seek lands BEFORE the requested position, the
+  // progress bar keeps showing the requested position until playback catches
+  // up — moving it backwards to the snapped keyframe reads as a glitch.
+  const displayHoldRef = useRef<{ time: number; expiresAt: number } | null>(null);
 
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
   const [encoderName, setEncoderName] = useState<string | null>(null);
@@ -73,6 +78,20 @@ export function usePlaybackSession({
   const getRealTime = useCallback(() => {
     return (videoRef.current?.currentTime || 0) + hlsTimeOffsetRef.current;
   }, []);
+
+  // timeupdate → UI. Respects a post-seek display hold: while playback is
+  // still behind the requested seek position (keyframe snap lands early),
+  // the bar stays at the requested position instead of jumping backwards.
+  const reportTimeUpdate = useCallback(() => {
+    if (hlsSeekingRef.current) return;
+    const real = getRealTime();
+    const hold = displayHoldRef.current;
+    if (hold) {
+      if (real < hold.time && performance.now() < hold.expiresAt) return;
+      displayHoldRef.current = null;
+    }
+    setCurrentTime(real);
+  }, [getRealTime]);
 
   // A <canvas> rendered on top of the <video> by the page component.
   // We draw the current frame to it *synchronously* before destroying old
@@ -103,6 +122,7 @@ export function usePlaybackSession({
     (targetSeconds: number) => {
       if (!videoRef.current) return;
       const clamped = Math.max(0, targetSeconds);
+      displayHoldRef.current = null;
 
       // Direct play (no HLS session) — snap the target to the nearest source
       // keyframe when the index is loaded. A precise (non-keyframe) seek forces
@@ -122,7 +142,15 @@ export function usePlaybackSession({
           target = next !== null && next - clamped < clamped - prev ? next : prev;
         }
         videoRef.current.currentTime = target;
-        setCurrentTime(target);
+        if (target < clamped) {
+          // Snapped to a keyframe before the release point — keep the bar at
+          // the release point until playback catches up, instead of jerking
+          // it backwards by up to half a GOP.
+          displayHoldRef.current = { time: clamped, expiresAt: performance.now() + 8000 };
+          setCurrentTime(clamped);
+        } else {
+          setCurrentTime(target);
+        }
         return;
       }
 
@@ -252,6 +280,9 @@ export function usePlaybackSession({
       if (isNativeHls) {
         seekTo(Math.max(0, realTarget));
       } else if (hlsTimeOffsetRef.current > 0 && realTarget < hlsTimeOffsetRef.current && sessionIdRef.current && hlsRef.current) {
+        seekTo(Math.max(0, realTarget));
+      } else if (!sessionIdRef.current && keyframesRef.current) {
+        // Direct play with a keyframe index — go through seekTo for snapping
         seekTo(Math.max(0, realTarget));
       } else {
         videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime + seconds);
@@ -562,6 +593,7 @@ export function usePlaybackSession({
     isPlaying,
     setIsPlaying,
     getRealTime,
+    reportTimeUpdate,
     seekTo,
     skip,
     togglePlay,
