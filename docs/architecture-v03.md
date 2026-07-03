@@ -781,6 +781,8 @@ Player (page.tsx)
 - OSD 提示 "Remuxing..." / "Transcoding..."
 - HLS 时间偏移跟踪: `hlsTimeOffsetRef` 追踪 FFmpeg `-ss` 起点, `getRealTime()` 返回原始视频中的真实位置
 - HLS 感知 seek: `seekTo()` 优先走**客户端快速路径** — 目标在当前 session 已生成范围内 (EVENT playlist 保留所有段) 时直接设 `video.currentTime`, 零服务端往返 (实测 147–305ms); 超出范围才 POST seek API 重启 FFmpeg (200ms 防抖)。快速路径在服务端 seek 进行中 (`seekInFlightRef`/`hlsSeekingRef`) 时跳过, 因为 video 元素还挂着旧 session 的 MediaSource, seekable 范围是陈旧的
+- seek 目标保留小数秒: offset/UI state/发给服务端的 `seekToSeconds` 全程不取整 (FFmpeg `-ss` 接受小数)。曾经 `Math.floor` 导致松手瞬间进度条从拖拽位置向后闪跳到整秒位置
+- **Direct play 关键帧对齐 seek**: ≥4K 宽度的 direct play 源在播放开始时后台加载关键帧索引 (`GET /api/movies/[id]/keyframes`, 服务端 `keyframe-index.ts` 用 ffprobe 仅解复用扫描, ~1.7s/900MB, globalThis 缓存), `seekTo()` 二分查找把目标吸附到最近关键帧 — 避免浏览器从前一关键帧逐帧解码 (8K HEVC 6s GOP 卡 2–3s)。实测 Jibaro 8K seek 100–136ms (原 900–2500ms), 代价是落点偏差最多半个 GOP。4K 以下源保持精确 seek
 - HLS 心跳: 每 30 秒 PATCH 保持 session 活跃 (服务端 90 秒空闲超时)
 - HLS 初始位置: `startAt` 参数传给 decide API, FFmpeg 直接从该位置启动 (支持 `?t=` 参数和续播恢复)
 - HLS 网络错误自动 seek 恢复

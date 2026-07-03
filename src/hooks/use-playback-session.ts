@@ -61,6 +61,7 @@ export function usePlaybackSession({
   const seekInFlightRef = useRef(false);
   const queuedSeekRef = useRef<number | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const keyframesRef = useRef<number[] | null>(null);
 
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
   const [encoderName, setEncoderName] = useState<string | null>(null);
@@ -103,9 +104,25 @@ export function usePlaybackSession({
       if (!videoRef.current) return;
       const clamped = Math.max(0, targetSeconds);
 
-      // Direct play (no HLS session) — just set currentTime
+      // Direct play (no HLS session) — snap the target to the nearest source
+      // keyframe when the index is loaded. A precise (non-keyframe) seek forces
+      // the browser to decode every frame from the previous keyframe; on 8K
+      // HEVC with 6s GOPs that stalls playback for seconds per seek.
       if (!sessionIdRef.current) {
-        videoRef.current.currentTime = clamped;
+        let target = clamped;
+        const kfs = keyframesRef.current;
+        if (kfs && kfs.length > 0) {
+          let lo = 0, hi = kfs.length - 1;
+          while (lo < hi) {
+            const mid = (lo + hi + 1) >> 1;
+            if (kfs[mid] <= clamped) lo = mid; else hi = mid - 1;
+          }
+          const prev = kfs[lo];
+          const next = lo + 1 < kfs.length ? kfs[lo + 1] : null;
+          target = next !== null && next - clamped < clamped - prev ? next : prev;
+        }
+        videoRef.current.currentTime = target;
+        setCurrentTime(target);
         return;
       }
 
@@ -120,7 +137,7 @@ export function usePlaybackSession({
         const seekableEnd = video.seekable.length > 0 ? video.seekable.end(video.seekable.length - 1) : 0;
         if (localTarget >= 0 && localTarget <= seekableEnd) {
           video.currentTime = localTarget;
-          setCurrentTime(Math.floor(clamped));
+          setCurrentTime(clamped);
           return;
         }
       }
@@ -132,8 +149,10 @@ export function usePlaybackSession({
       const isNativeHls = !hlsRef.current;
 
       hlsSeekingRef.current = true;
-      hlsTimeOffsetRef.current = Math.floor(clamped);
-      setCurrentTime(Math.floor(clamped));
+      // Keep fractional seconds — flooring here makes the progress bar flick
+      // backwards on release (drag position → floored position → real position)
+      hlsTimeOffsetRef.current = clamped;
+      setCurrentTime(clamped);
       showOsd("Seeking...");
 
       // If a seek is already in flight, queue this one instead of aborting.
@@ -160,7 +179,7 @@ export function usePlaybackSession({
         fetch(`/api/stream/${sessionIdRef.current}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "seek", seekToSeconds: Math.floor(clamped) }),
+          body: JSON.stringify({ action: "seek", seekToSeconds: clamped }),
         })
           .then((r) => {
             if (!r.ok) return null;
@@ -169,8 +188,8 @@ export function usePlaybackSession({
           .then((data) => {
             if (data?.sessionId && videoRef.current) {
               sessionIdRef.current = data.sessionId;
-              hlsTimeOffsetRef.current = Math.floor(clamped);
-              setCurrentTime(Math.floor(clamped));
+              hlsTimeOffsetRef.current = clamped;
+              setCurrentTime(clamped);
 
               // Native HLS (HEVC on iOS) — set src directly
               if (isNativeHls) {
@@ -403,6 +422,22 @@ export function usePlaybackSession({
           video.src = data.directUrl;
           if (startAt > 0) {
             pendingSeekRef.current = startAt;
+          }
+          // Load the source keyframe index in the background so seeks can
+          // snap to keyframes (near-instant) instead of precise-seeking.
+          // Only for 4K+ sources — precise seeking is fast enough below that,
+          // and snapping costs up to half a GOP of accuracy.
+          keyframesRef.current = null;
+          if ((data.videoWidth ?? 0) >= 3840) {
+            const discQs = isMultiDisc ? `?disc=${currentDisc}` : "";
+            fetch(`/api/movies/${movieId}/keyframes${discQs}`)
+              .then((r) => (r.ok ? r.json() : null))
+              .then((kf) => {
+                if (!cancelled && kf?.keyframes?.length) {
+                  keyframesRef.current = kf.keyframes;
+                }
+              })
+              .catch(() => {});
           }
         } else {
           sessionIdRef.current = data.sessionId;

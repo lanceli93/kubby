@@ -1,5 +1,20 @@
 # Completed Features
 
+## 2026-07-04: Seek polish — progress-bar backward flick, 8K direct-play keyframe snapping
+
+Follow-up fixes to the 2026-07-03 (2) batch, from user testing feedback.
+
+### 1. Progress bar flicked backwards after drag release (ABP-181, all HLS playback)
+`seekTo` floored the seek target (`Math.floor(clamped)`) for the offset and UI state, so releasing the drag at e.g. 51.17% snapped the bar back to 51.00% for one frame before the video caught up — visible as a backward flick. Now the fractional seconds are kept end-to-end (fast path, server-seek offset, and the `seekToSeconds` sent to the server — FFmpeg accepts fractional `-ss`). Measured: bar goes 25.7% → 51.17% monotonically, zero backward movement, in both the fast path and the full server-restart path.
+
+### 2. 8K VR direct-play seek stalled 2–3s (Jibaro)
+Direct play seeks used precise `video.currentTime = target`, forcing the browser to decode every frame from the previous keyframe — 8192×4096 HEVC with ~6s GOPs stalls 2–3s per seek. PotPlayer feels instant because it snaps to keyframes. Now Kubby does the same for large sources:
+- `src/lib/transcode/keyframe-index.ts` (new) — ffprobe demux-only keyframe scan (~1.7s for a 900MB file), cached in a globalThis map, keyed by file path; failed scans are evicted so transient errors don't poison the cache.
+- `GET /api/movies/[id]/keyframes?disc=n` (new) — returns the source's keyframe timestamps.
+- `use-playback-session.ts` — on direct-play start of a ≥3840px-wide source, the keyframe index loads in the background; `seekTo` snaps the target to the nearest keyframe (binary search). Sources below 4K keep precise seeking (fast enough, and snapping costs up to half a GOP of accuracy). Until the index arrives, seeks fall back to precise.
+
+Measured on Jibaro 8K (browser seek-bar drags): first frame at target in **100–136ms** (was 900–2500ms), landing on the keyframe nearest the requested position (max drift ~1.6s with this file's ~6s GOPs).
+
 ## 2026-07-03 (2): Playback performance & VR fixes — seek latency, black screen, over-under 360°, multi-disc media info
 
 Fixed the remaining bugs from `docs/feature-request.md` (BUG-1, BUG-5, BUG-6, BUG-7, BUG-8) plus rmvb seek from BUG-4. All verified in-browser against the real-source test clips.
