@@ -66,7 +66,10 @@ export function usePlaybackSession({
   // After a keyframe-snapped seek lands BEFORE the requested position, the
   // progress bar keeps showing the requested position until playback catches
   // up — moving it backwards to the snapped keyframe reads as a glitch.
-  const displayHoldRef = useRef<{ time: number; expiresAt: number } | null>(null);
+  // No time-based expiry: while paused the video never catches up, and an
+  // expiring hold would slide the bar backwards. `floor` (just below the
+  // snapped keyframe) detects external seeks that invalidate the hold.
+  const displayHoldRef = useRef<{ time: number; floor: number } | null>(null);
 
   const [playbackMode, setPlaybackMode] = useState<"direct" | "remux" | "transcode" | null>(null);
   const [encoderName, setEncoderName] = useState<string | null>(null);
@@ -87,7 +90,9 @@ export function usePlaybackSession({
     const real = getRealTime();
     const hold = displayHoldRef.current;
     if (hold) {
-      if (real < hold.time && performance.now() < hold.expiresAt) return;
+      // Hold until playback reaches the requested time. Release early only if
+      // the position moved below the snapped keyframe (external seek happened).
+      if (real < hold.time && real >= hold.floor) return;
       displayHoldRef.current = null;
     }
     setCurrentTime(real);
@@ -146,7 +151,7 @@ export function usePlaybackSession({
           // Snapped to a keyframe before the release point — keep the bar at
           // the release point until playback catches up, instead of jerking
           // it backwards by up to half a GOP.
-          displayHoldRef.current = { time: clamped, expiresAt: performance.now() + 8000 };
+          displayHoldRef.current = { time: clamped, floor: target - 0.5 };
           setCurrentTime(clamped);
         } else {
           setCurrentTime(target);
