@@ -88,7 +88,9 @@ Version priority: `KUBBY_VERSION` env (CI from git tag) > `package.json` `"versi
 
 > **Pitfall: Tag push builds ALL platforms.** For testing a single platform, use `gh workflow run release.yml --field platform=win-x64` (or `darwin-arm64`/`darwin-x64`). Only push a `v*` tag when doing a full release.
 
-> **Release checklist (ALL steps mandatory when user says "发布/release"):** (1) bump `package.json` version + commit, (2) push main + push `v*` tag, (3) wait for CI success (`gh run list`), (4) write release notes via `gh release edit`, (5) publish draft via `gh api PATCH ...draft=false` with title + notes. Never stop after pushing the tag — the release is not done until step 5 is complete. See `references/release-workflow.md` for full details.
+> **Release checklist (ALL steps mandatory when user says "发布/release"):** (1) bump `package.json` version + commit, (2) push main + push `v*` tag, (3) wait for CI success (`gh run list`), (4) write release notes via `gh release edit`, (5) publish draft via `gh api PATCH ...draft=false,make_latest=true` with title + notes. Never stop after pushing the tag — the release is not done until step 5 is complete. See `references/release-workflow.md` for full details.
+
+> **Pitfall: publishing without `make_latest=true` leaves the OLD version marked "Latest".** A bare `-F draft=false` PATCH publishes the release but does not update GitHub's "Latest" badge — the repo homepage keeps showing the previous release, making the new one invisible to users browsing the repo. `gh release create` sets this automatically; the raw PATCH used in step 5 does not. Always add `-F make_latest=true` to the publish call. See `references/release-workflow.md` step 6 for the fix-after-the-fact command.
 
 ## Common Commands
 

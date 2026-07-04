@@ -107,6 +107,7 @@ Edit the draft to add title, notes, and publish in one step:
 gh api -X PATCH repos/lanceli93/kubby/releases/<RELEASE_ID> \
   -f name="v{x.y.z} — Title" \
   -F draft=false \
+  -F make_latest=true \
   -f body="$(cat <<'EOF'
 ## What's New
 ...release notes...
@@ -119,6 +120,12 @@ To find the draft release ID:
 ```bash
 gh api repos/lanceli93/kubby/releases --jq '.[] | select(.tag_name=="v{x.y.z}" and .draft) | .id'
 ```
+
+> **Pitfall: publishing via raw PATCH does NOT mark the release "Latest".** `gh release create` defaults `make_latest=true` automatically, but a bare `-F draft=false` PATCH (no `make_latest` field) leaves GitHub's "Latest" flag on whatever the previous newest release was — the new version publishes successfully but stays invisible on the repo homepage. Always include `-F make_latest=true` explicitly in the PATCH call. If this was missed, fix after the fact with:
+> ```bash
+> gh api -X PATCH repos/lanceli93/kubby/releases/<RELEASE_ID> -f make_latest=true
+> ```
+> Verify with `gh release list --limit 3` (should show `Latest` next to the new tag) or `gh api repos/lanceli93/kubby/releases/latest --jq .tag_name`.
 
 ### 7. Verify Docker image
 
