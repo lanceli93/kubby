@@ -24,6 +24,14 @@ The UI was designed with [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev)
 
 ## What Kubby adds
 
+### Cover Flow poster wall
+
+A fullscreen "record crate" browsing mode for your library — posters stack like vinyl records with mirror reflections, and you scrub through them with scroll/drag/keyboard. Sort by any of 8 dimensions (rating, year, resolution, size, runtime...) and the wall reorders itself with an animated flying transition; group dividers (decades, resolution tiers, rating bands) appear automatically based on the active sort. A minimal caption fades in under the focused poster with its title and metadata — no boxes, no clutter.
+
+### Spatial depth UI
+
+Movie, actor, and library cards tilt toward your cursor in 3D with an ambient glow behind them, and clicking a poster morphs it into the detail page hero via the View Transitions API instead of a hard cut. The detail page itself has scroll- and pointer-driven parallax on its hero art. Everything degrades cleanly to flat/static on touch devices and when reduced-motion is on.
+
 ### 360° VR video playback
 
 Watch 360° / VR videos directly in the browser with full panoramic control. Toggle 360° mode from the player controls — the video renders onto a Three.js sphere with mouse/touch drag to look around, scroll wheel or pinch-to-zoom for FOV control, and `R` key to reset the view. The Three.js chunk (~500KB) is code-split and only loaded when 360° mode is active, so normal playback is unaffected. Works on desktop and mobile.

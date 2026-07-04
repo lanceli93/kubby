@@ -41,7 +41,7 @@ kubby/
 │   │   │       └── setup-wizard.tsx                # 4 步欢迎向导 (Client Component)
 │   │   ├── (main)/                                 # 主应用路由组 (有 header)
 │   │   │   ├── layout.tsx                          # SessionProvider + QueryProvider + AppHeader + BottomTabs (移动端)
-│   │   │   ├── page.tsx                            # 首页 (Tabs: Home=媒体库/继续观看/最近添加/收藏, Favorites=收藏网格)
+│   │   │   ├── page.tsx                            # 首页 (Now Showing Hero + Ambilight 光场 + 悬浮药丸 Tabs: Home=媒体库/继续观看/最近添加/收藏, Favorites=收藏网格)
 │   │   │   ├── movies/
 │   │   │   │   ├── page.tsx                        # 媒体库浏览 (Tabs: Movies=网格+排序, Favorites=收藏网格, Genres=按类型ScrollRow)
 │   │   │   │   └── [id]/
@@ -911,7 +911,7 @@ Player (page.tsx)
 | `/setup` | 欢迎向导 | 4 步: 语言选择 → 创建管理员 → 添加媒体库 → 完成, 首次运行自动跳转 |
 | `/login` | 登录 | Server Component 检查首次运行, i18n, 登录后恢复 locale |
 | `/register` | 注册 | 同登录风格, 4 字段 + 管理员提示, i18n |
-| `/` | 首页 | Jellyfin 风格 Tab 导航: Home Tab (媒体库卡片(未扫描显示overlay)+继续观看+最近添加+收藏ScrollRow) / Favorites Tab (全局收藏网格) |
+| `/` | 首页 | 「Now Showing」全幅 Hero(继续观看第一部, 无则最新添加有剧照者; Ken Burns 推移 + 字幕式标题/元信息 + 继续播放(内嵌进度线)/详情按钮; 底部渐隐溶入页面, 顶栏透明悬浮) + Ambilight 环境光场(`home/ambient-field.tsx` + `lib/ambient-color.ts`: posterBlur 取色, 悬停海报光场指数平滑变色 τ≈600ms, 9s 呼吸, reduced-motion 静态) + 悬浮玻璃药丸 Tab: Home (媒体库卡片(未扫描显示overlay)+继续观看+最近添加+收藏ScrollRow) / Favorites (全局收藏网格) |
 | `/movies?libraryId=X` | 媒体库浏览 | 需 libraryId, 3 Tab: Movies (排序下拉+网格) / Favorites (库内收藏网格) / Genres (按类型分组ScrollRow) |
 | `/movies/[id]` | 电影详情 | Jellyfin 风格: fanart 充分可见(仅底部渐变) + 左侧海报(300×450) + 右侧 text-shadow 信息面板(标题/元数据行/小型按钮行/Overview/Metadata 纵向列表) + 帧浏览书签模式(BookmarkPlus按钮, FrameScrubber两栏面板: 帧预览+进度条覆盖层/书签表单+截图到演员相册) + 书签 ScrollRow + 演员卡片 + 推荐 |
 | `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 书签 (B/Shift+B) + 倍速 + 进度条图标标记 + 自动隐藏控制栏 (可 toggle) + 360° 全景模式 |

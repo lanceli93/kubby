@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PersonCard } from "@/components/people/person-card";
@@ -10,6 +10,14 @@ import { LibraryCard } from "@/components/library/library-card";
 import { AddLibraryCard } from "@/components/library/add-library-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { HomeHero } from "@/components/home/home-hero";
+import {
+  AmbientProvider,
+  AmbientField,
+  AmbientHoverZone,
+  useAmbient,
+} from "@/components/home/ambient-field";
+import { extractAmbientColor } from "@/lib/ambient-color";
 import { useTranslations } from "next-intl";
 
 interface Movie {
@@ -29,6 +37,8 @@ interface Movie {
   discLabel?: string | null;
   currentDisc?: number;
   discCount?: number;
+  runtimeSeconds?: number | null;
+  runtimeMinutes?: number | null;
 }
 
 interface Library {
@@ -69,8 +79,12 @@ function MovieRow({
             ? `${movie.discLabel} · ${movie.title}`
             : movie.title;
           return (
-          <MovieCard
+          <AmbientHoverZone
             key={movie.discLabel ? `${movie.id}-disc${movie.currentDisc}` : movie.id}
+            posterBlur={movie.posterBlur}
+            className="flex-shrink-0"
+          >
+          <MovieCard
             id={movie.id}
             title={displayTitle}
             year={movie.year}
@@ -92,10 +106,27 @@ function MovieRow({
             }
             onDelete={() => onDelete(movie.id)}
           />
+          </AmbientHoverZone>
           );
         })}
       </ScrollRow>
   );
+}
+
+/** Renders nothing; eases the ambient field's resting color to the hero's tint. */
+function AmbientBaseFromHero({ posterBlur }: { posterBlur?: string | null }) {
+  const { setBase } = useAmbient();
+  useEffect(() => {
+    if (!posterBlur) return;
+    let cancelled = false;
+    extractAmbientColor(posterBlur).then((rgb) => {
+      if (rgb && !cancelled) setBase(rgb);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [posterBlur, setBase]);
+  return null;
 }
 
 export default function HomePage() {
@@ -247,8 +278,20 @@ export default function HomePage() {
     deleteMovie.mutate(id);
   };
 
+  // Hero item: first continue-watching, else first recently-added with fanart.
+  const heroMovie = continueWatching[0]
+    ? continueWatching[0]
+    : recentlyAdded.find((m) => m.fanartPath) ?? null;
+  const heroIsContinueWatching = !!continueWatching[0];
+
   return (
-    <div className="flex h-full flex-col">
+    <AmbientProvider>
+    <div className="relative flex h-full flex-col">
+      {/* Ambilight: soft color field behind all home content. Root-level (the
+          root div doesn't scroll — the inner div does), so the glow stays put
+          while rows scroll through it. */}
+      <AmbientField />
+      <AmbientBaseFromHero posterBlur={heroMovie?.posterBlur} />
       <input
         ref={fileInputRef}
         type="file"
@@ -256,17 +299,38 @@ export default function HomePage() {
         className="hidden"
         onChange={handleFileChange}
       />
-      <Tabs defaultValue="home" className="flex h-full flex-col">
-        <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
-          <TabsList variant="line">
-            <TabsTrigger value="home" className="transition-fluid cursor-pointer">{t("homeTab")}</TabsTrigger>
-            <TabsTrigger value="favorites" className="transition-fluid cursor-pointer">{t("favoritesTab")}</TabsTrigger>
+      <Tabs defaultValue="home" className="relative flex h-full flex-col">
+        {/* Floating glass pills (top-center) — poster-wall pill language */}
+        <div className="absolute left-1/2 top-2 z-20 -translate-x-1/2">
+          <TabsList className="flex h-auto gap-1.5 rounded-full border-0 bg-transparent p-1">
+            <TabsTrigger
+              value="home"
+              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
+            >
+              {t("homeTab")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="favorites"
+              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
+            >
+              {t("favoritesTab")}
+            </TabsTrigger>
           </TabsList>
         </div>
 
         <div className="flex-1 overflow-y-scroll">
         <TabsContent value="home">
-          <div className="stagger-children flex flex-col gap-6 md:gap-10 px-4 md:px-12 py-4 md:py-8">
+          {heroMovie && (
+            <HomeHero
+              movie={heroMovie}
+              isContinueWatching={heroIsContinueWatching}
+            />
+          )}
+          <div
+            className={`stagger-children flex flex-col gap-6 px-4 pb-8 md:gap-10 md:px-12 ${
+              heroMovie ? "relative z-10 -mt-8 md:-mt-14" : "pt-16"
+            }`}
+          >
             {/* Media Libraries */}
             {libraries.length > 0 ? (
               <ScrollRow title={t("mediaLibraries")}>
@@ -344,7 +408,7 @@ export default function HomePage() {
         </TabsContent>
 
         <TabsContent value="favorites">
-          <div className="px-4 md:px-12 py-4 md:py-8">
+          <div className="px-4 md:px-12 pb-8 pt-16">
             {favorites.length === 0 && favoritePeople.length === 0 ? (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 {t("noFavorites")}
@@ -363,8 +427,12 @@ export default function HomePage() {
                     }
                   >
                     {favorites.slice(0, 20).map((movie) => (
-                      <MovieCard
+                      <AmbientHoverZone
                         key={movie.id}
+                        posterBlur={movie.posterBlur}
+                        className="flex-shrink-0"
+                      >
+                      <MovieCard
                         id={movie.id}
                         title={movie.title}
                         year={movie.year}
@@ -384,6 +452,7 @@ export default function HomePage() {
                         }
                         onDelete={() => handleDeleteMovie(movie.id)}
                       />
+                      </AmbientHoverZone>
                     ))}
                   </ScrollRow>
                 )}
@@ -423,5 +492,6 @@ export default function HomePage() {
         </div>
       </Tabs>
     </div>
+    </AmbientProvider>
   );
 }

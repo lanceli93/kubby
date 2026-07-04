@@ -271,6 +271,26 @@
   animation: captionRise 0.28s ease-out both;
 }
 
+/* Ken Burns drift — slow zoom/pan for the home hero backdrop image only */
+@keyframes kenBurns {
+  from { transform: scale(1.04); }
+  to { transform: scale(1.12); }
+}
+.animate-ken-burns {
+  animation: kenBurns 36s ease-in-out infinite alternate;
+}
+
+/* Ambilight breathing — very slow opacity pulse for the home ambient glow layer
+   (see components/home/ambient-field.tsx). Pure CSS so it costs nothing while
+   the color-easing rAF loop is idle; disabled under reduced motion. */
+@keyframes ambientBreathe {
+  from { opacity: 0.85; }
+  to { opacity: 1; }
+}
+.animate-ambient-breathe {
+  animation: ambientBreathe 9s ease-in-out infinite alternate;
+}
+
 /* Cinema iris reveal — circle expands from center, classic film opening */
 @keyframes irisOpen {
   0% { clip-path: circle(0% at 50% 40%); }

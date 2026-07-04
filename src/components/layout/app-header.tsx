@@ -80,17 +80,17 @@ export function AppHeader() {
 
   if (isPlayerPage) return null;
 
-  const isTransparent = isMovieDetail || isPersonDetail;
+  const isTransparent = isMovieDetail || isPersonDetail || pathname === "/";
 
   return (
     <header
       className={`flex h-12 w-full items-center justify-between px-3 md:px-8 ${
         isTransparent
-          ? "absolute top-0 left-0 z-30 bg-transparent"
+          ? "pointer-events-none absolute top-0 left-0 z-30 bg-transparent"
           : "bg-[var(--header)]"
       }`}
     >
-      <div className="flex items-center gap-4">
+      <div className="pointer-events-auto flex items-center gap-4">
         <button
           onClick={() => setSidebarOpen(true)}
           className={`transition-colors ${
@@ -151,7 +151,7 @@ export function AppHeader() {
           </Link>
         )}
       </div>
-      <div className="flex items-center gap-4">
+      <div className="pointer-events-auto flex items-center gap-4">
         <Link
           href="/search"
           onClick={(e) => {
@@ -180,7 +180,13 @@ export function AppHeader() {
           <User className="h-5 w-5" />
         </Link>
       </div>
-      <NavSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* NavSidebar renders fixed overlays; wrap so they still receive pointer
+          events when the header itself is pointer-events-none (transparent `/`).
+          `absolute` keeps the zero-size wrapper out of the flex flow — as a
+          third flex item it would push the icon group into the center. */}
+      <div className="pointer-events-auto absolute">
+        <NavSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </div>
     </header>
   );
 }

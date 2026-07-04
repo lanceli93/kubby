@@ -1,5 +1,21 @@
 # Completed Features
 
+## 2026-07-04 (9): 首页视觉升级 — Now Showing Hero + Ambilight 环境光场
+
+User request: "主页面现在略显朴素" after the 3D poster wall work. Direction chosen (A+B from proposal): full-bleed hero + ambient light field. Verified live in Chrome (hover retarget, tab pills, sidebar, favorites tab, scrolled state; zero console errors).
+
+### 1. Now Showing Hero (`src/components/home/home-hero.tsx`, new)
+Full-bleed cinematic hero at the top of the home page: first continue-watching item, else the first recently-added movie with fanart, else no hero. `h-[46vh] md:h-[58vh]` backdrop with a slow Ken Burns drift (`animate-ken-burns`, 36s alternate, `motion-reduce:animate-none`); three gradient scrims (bottom dissolve `from-[#0a0a0f]` melts the image into the page — content rows rise into it with `-mt-8 md:-mt-14`; left text scrim; top scrim for the transparent header). Typography mirrors the poster wall's boxless caption language: `NOW SHOWING · 继续观看` eyebrow (tracking-[0.3em]), text-shadow display title, middot-separated meta row (year / bordered resolution chip / runtime / purple community ★ / gold personal ★). Actions: primary rounded-full Resume/Play button with an embedded progress line when partially watched (`inset-x-4 bottom-1.5 h-[2px]`), glass Details button. Whole hero links to the detail page; buttons stopPropagation.
+
+### 2. Ambilight 环境光场 (`src/lib/ambient-color.ts` + `src/components/home/ambient-field.tsx`, new)
+Ambient color field behind all home content: three large blurred radial blobs (`blur(80px)`, opacity 0.10–0.16) whose color eases toward whichever poster you hover. Color source: each movie's existing `posterBlur` data URL, averaged on a tiny canvas then HSL-clamped for the dark background (S∈[0.25,0.55], L∈[0.16,0.30]; grayscale → indigo fallback), promise-cached. Animation follows the TiltCard idiom: imperative target + self-terminating rAF loop with exponential smoothing (τ=600ms), writing `--ambient` via ref — zero React re-renders while animating. 120ms hover dwell so skimming a row doesn't strobe; 9s CSS breathing pulse; reduced-motion snaps instantly and kills the breathe. Hero sets the resting base color from its own posterBlur (`AmbientBaseFromHero`). Cards are wrapped in `AmbientHoverZone` (a real div — `display:contents` can't take pointer events); `MovieCard` itself untouched.
+
+### 3. 首页重构 + 顶栏 (`page.tsx`, `app-header.tsx`)
+Tabs bar (bordered, opaque) replaced by floating glass pills top-center, in the poster wall's sort-pill language (`glass-btn rounded-full`, active `bg-primary/25 border-primary/50`), default-variant styles overridden with `!`. Header on `/` becomes absolute + transparent like detail pages; the header itself is `pointer-events-none` with `pointer-events-auto` restored on its two icon groups so the empty center doesn't block the pills; NavSidebar wrapped in a zero-size `pointer-events-auto absolute` div (absolute keeps it out of the flex flow — as a third flex item it pushed the icon group toward center; caught in live verify). Favorites tab and hero-less home get `pt-16`.
+
+### 4. i18n
+New `home` keys (EN/ZH): heroResume (Resume/继续播放), heroPlay (Play/播放), heroDetails (Details/详情).
+
 ## 2026-07-04 (8): 卡片光晕截断/缺失修复 + 海报墙字幕式信息框
 
 Third polish round; all verified live in Chrome.
