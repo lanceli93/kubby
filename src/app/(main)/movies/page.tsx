@@ -386,6 +386,10 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const posterWallAvailable = usePosterWallAvailable();
   const [showPosterWall, setShowPosterWall] = useState(false);
   const [wallMovies, setWallMovies] = useState<PosterWallMovie[] | null>(null);
+  const [wallLoadingMore, setWallLoadingMore] = useState(false);
+  // Bumped on every open/close so an in-flight progressive loop can detect it
+  // has been superseded (wall closed or reopened) and abort silently.
+  const wallLoadToken = useRef(0);
 
   // Project a full Movie row down to the metadata the wall renders / sorts on.
   const toWallMovie = useCallback((m: Movie): PosterWallMovie => ({
@@ -404,28 +408,46 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
     dateAdded: m.dateAdded,
   }), []);
 
+  // The wall fetches its OWN data independently of the grid's scroll state:
+  // progressively page by page (200/page) with the current filters, streaming
+  // tiles in as pages arrive and with no artificial cap.
   const openPosterWall = useCallback(async () => {
     setShowPosterWall(true);
-    // If everything is already loaded in the grid, reuse it; otherwise fetch
-    // up to 500 with the current filters via the existing /api/movies endpoint.
-    if (!hasNextPage && movies.length > 0) {
-      setWallMovies(movies.map(toWallMovie));
-      return;
-    }
-    const params = buildMovieParams();
-    params.set("limit", "500");
+    setWallMovies(null);
+    setWallLoadingMore(true);
+    const token = ++wallLoadToken.current;
+
+    const acc: PosterWallMovie[] = [];
+    let o = 0;
     try {
-      const data: PaginatedResponse<Movie> = await fetch(`/api/movies?${params}`).then((r) => r.json());
-      setWallMovies(data.items.map(toWallMovie));
+      for (;;) {
+        const params = buildMovieParams();
+        params.set("offset", String(o));
+        params.set("limit", "200");
+        const data: PaginatedResponse<Movie> = await fetch(
+          `/api/movies?${params}`,
+        ).then((r) => r.json());
+        // Wall was closed or reopened while this page was in flight — abort.
+        if (wallLoadToken.current !== token) return;
+        for (const m of data.items) acc.push(toWallMovie(m));
+        setWallMovies([...acc]);
+        o += data.limit;
+        if (!data.hasMore) break;
+      }
     } catch {
-      // Fall back to whatever the grid already has
-      setWallMovies(movies.map(toWallMovie));
+      if (wallLoadToken.current !== token) return;
+      // Nothing loaded yet → show the empty state; otherwise keep what we have.
+      if (acc.length === 0) setWallMovies([]);
+    } finally {
+      if (wallLoadToken.current === token) setWallLoadingMore(false);
     }
-  }, [buildMovieParams, hasNextPage, movies, toWallMovie]);
+  }, [buildMovieParams, toWallMovie]);
 
   const closePosterWall = useCallback(() => {
+    wallLoadToken.current++; // cancel any in-flight progressive loop
     setShowPosterWall(false);
     setWallMovies(null);
+    setWallLoadingMore(false);
   }, []);
 
   const activeFilterCount = selectedGenres.length + selectedTags.length + selectedYears.length;
@@ -795,6 +817,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
         <PosterWall
           movies={wallMovies}
           onClose={closePosterWall}
+          loadingMore={wallLoadingMore}
           initialSort={{ key: sort === "releaseDate" ? "year" : sort, order: sortOrder }}
         />
       )}

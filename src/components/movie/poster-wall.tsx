@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   Scene,
@@ -59,6 +59,9 @@ interface PosterWallProps {
   movies: PosterWallMovie[];
   onClose: () => void;
   initialSort?: { key: string; order: "asc" | "desc" };
+  // True while the parent's progressive fetch is still pulling pages; drives a
+  // subtle "loading more" indicator without gating the wall's interactivity.
+  loadingMore?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,6 +87,7 @@ const SEP_PLACEHOLDER_COLOR = 0x101018;
 const TEXTURE_CONCURRENCY = 6;
 const RESIDENT_WINDOW = 60; // keep textures within ±60 of focus
 const RESIDENT_CAP = 140; // hard cap on resident textures
+const RAYCAST_WINDOW = 40; // only raycast tiles within ±40 of focus (rest off-screen)
 
 // Framerate-independent easing time constant (ms) — matches tilt-card idiom.
 const EASE_TAU = 120;
@@ -429,7 +433,7 @@ const SORT_ICON: Record<SortKey, string> = {
   fileSize: "fileSize",
 };
 
-export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
+export function PosterWall({ movies, onClose, initialSort, loadingMore }: PosterWallProps) {
   const t = useTranslations("movies");
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -450,9 +454,19 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
   // HUD state — updated only when integer focus changes.
   const [hud, setHud] = useState<HudData | null>(null);
 
-  // Imperative bridge the WebGL effect installs so pill clicks can retarget
-  // the scene without tearing down the renderer.
-  const applySortRef = useRef<((key: SortKey, order: "asc" | "desc") => void) | null>(null);
+  // Refs mirroring the latest React values so the WebGL closures (which never
+  // re-run on prop changes) can always read the current movies + sort without
+  // being re-created. The rebuild effect reads these on every append.
+  const moviesRef = useRef(movies);
+  moviesRef.current = movies;
+  const sortKeyRef = useRef<SortKey>(sortKey);
+  sortKeyRef.current = sortKey;
+  const sortOrderRef = useRef<"asc" | "desc">(sortOrder);
+  sortOrderRef.current = sortOrder;
+
+  // Imperative bridge the WebGL effect installs so pill clicks + progressive
+  // appends can reconcile the scene without tearing down the renderer.
+  const rebuildRef = useRef<((key: SortKey, order: "asc" | "desc") => void) | null>(null);
 
   const isEmpty = movies.length === 0;
 
@@ -544,6 +558,7 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       sepTexture: CanvasTexture | null; // separator texture
       loading: boolean;
       hoverLift: number; // 0 or HOVER_LIFT eased in
+      isNew: boolean; // freshly created this reconcile pass (seed grow-in cur)
     }
 
     const tiles: Tile[] = [];
@@ -551,75 +566,123 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
     const pickMeshes: Mesh[] = [];
 
     let sepCounter = 0;
-    const buildTiles = (flow: FlowItem[]) => {
-      // Dispose any previous tiles
-      for (const tile of tiles) {
-        scene.remove(tile.mesh);
-        scene.remove(tile.reflMesh);
-        tile.material.dispose();
-        tile.reflMaterial.dispose();
-        if (tile.texture) tile.texture.dispose();
-        if (tile.sepTexture) tile.sepTexture.dispose();
+
+    // Fully dispose a tile's GPU resources and detach it from the scene. Used
+    // for tiles that disappear from the new flow and for separators (which are
+    // cheap and always recreated) — NEVER for a reused movie tile.
+    const disposeTile = (tile: Tile) => {
+      scene.remove(tile.mesh);
+      scene.remove(tile.reflMesh);
+      tile.material.dispose();
+      tile.reflMaterial.dispose();
+      if (tile.texture) tile.texture.dispose();
+      if (tile.sepTexture) tile.sepTexture.dispose();
+    };
+
+    // Create a brand-new tile (mesh + reflection + materials) for a flow item.
+    // Movie tiles start with a placeholder; separators bake their canvas map.
+    const createTile = (item: FlowItem): Tile => {
+      const isSep = item.kind === "separator";
+      const geo = isSep ? sepGeo : posterGeo;
+      const halfH = (isSep ? SEP_H : POSTER_H) / 2;
+
+      const material = new MeshBasicMaterial({
+        color: isSep ? SEP_PLACEHOLDER_COLOR : PLACEHOLDER_COLOR,
+        transparent: false,
+      });
+      const mesh = new Mesh(geo, material);
+
+      const reflMaterial = new MeshBasicMaterial({
+        color: isSep ? SEP_PLACEHOLDER_COLOR : PLACEHOLDER_COLOR,
+        transparent: true,
+        opacity: isSep ? 0.14 : 0.28,
+        depthWrite: false,
+        alphaMap: reflectionAlpha,
+      });
+      const reflMesh = new Mesh(geo, reflMaterial);
+      reflMesh.scale.y = -1;
+
+      let sepTexture: CanvasTexture | null = null;
+      if (isSep) {
+        sepTexture = makeSeparatorTexture(item.label, item.count);
+        sepTexture.anisotropy = maxAniso;
+        material.map = sepTexture;
+        material.color.set(0xffffff);
+        material.needsUpdate = true;
+        reflMaterial.map = sepTexture;
+        reflMaterial.color.set(0xffffff);
+        reflMaterial.needsUpdate = true;
       }
+
+      const key = isSep ? `__sep_${sepCounter++}` : item.movie.id;
+      return {
+        key,
+        item,
+        mesh,
+        material,
+        reflMesh,
+        reflMaterial,
+        halfH,
+        cur: { x: 0, y: 0, z: 0, rotY: 0, scale: 1 },
+        target: { x: 0, y: 0, z: 0, rotY: 0, scale: 1 },
+        texture: null,
+        sepTexture,
+        loading: false,
+        hoverLift: 0,
+        isNew: true,
+      };
+    };
+
+    // Reconcile the tile set against a new flow, reusing movie tiles by
+    // movie.id so their mesh/material/texture/cur-transform survive untouched.
+    // Returns nothing; mutates `tiles`/`tileByMesh`/`pickMeshes` in place.
+    //   * Reused movie tile: keep everything, only refresh its `item` ref and
+    //     mark it not-new (no texture reload, no pop).
+    //   * Separator: dispose the old one and recreate (keys are synthetic).
+    //   * Vanished tile (key absent from new flow): removed + fully disposed.
+    //   * Brand-new movie tile: created fresh, flagged `isNew` so rebuild()
+    //     seeds its `cur` from the grow-in pose.
+    const buildTiles = (flow: FlowItem[]) => {
+      const prevByKey = new Map<string, Tile>();
+      for (const tile of tiles) prevByKey.set(tile.key, tile);
+
+      const next: Tile[] = [];
+      const reusedKeys = new Set<string>();
+
+      for (const item of flow) {
+        if (item.kind === "movie") {
+          const existing = prevByKey.get(item.movie.id);
+          if (existing) {
+            existing.item = item; // refresh reference (metadata is stable)
+            existing.isNew = false;
+            reusedKeys.add(existing.key);
+            next.push(existing);
+            continue;
+          }
+        }
+        // Separators (synthetic keys) and new movies are created fresh.
+        next.push(createTile(item));
+      }
+
+      // Dispose every previous tile the new flow no longer references. Reused
+      // movie tiles are in `reusedKeys`; separators are always recreated so
+      // their old instances get disposed here.
+      for (const tile of tiles) {
+        if (!reusedKeys.has(tile.key)) disposeTile(tile);
+      }
+
+      // Ensure freshly-created tiles are in the scene (reused ones already are).
       tiles.length = 0;
       tileByMesh.clear();
       pickMeshes.length = 0;
-
-      for (const item of flow) {
-        const isSep = item.kind === "separator";
-        const geo = isSep ? sepGeo : posterGeo;
-        const halfH = (isSep ? SEP_H : POSTER_H) / 2;
-
-        const material = new MeshBasicMaterial({
-          color: isSep ? SEP_PLACEHOLDER_COLOR : PLACEHOLDER_COLOR,
-          transparent: false,
-        });
-        const mesh = new Mesh(geo, material);
-
-        const reflMaterial = new MeshBasicMaterial({
-          color: isSep ? SEP_PLACEHOLDER_COLOR : PLACEHOLDER_COLOR,
-          transparent: true,
-          opacity: isSep ? 0.14 : 0.28,
-          depthWrite: false,
-          alphaMap: reflectionAlpha,
-        });
-        const reflMesh = new Mesh(geo, reflMaterial);
-        reflMesh.scale.y = -1;
-
-        let sepTexture: CanvasTexture | null = null;
-        if (isSep) {
-          sepTexture = makeSeparatorTexture(item.label, item.count);
-          sepTexture.anisotropy = maxAniso;
-          material.map = sepTexture;
-          material.color.set(0xffffff);
-          material.needsUpdate = true;
-          reflMaterial.map = sepTexture;
-          reflMaterial.color.set(0xffffff);
-          reflMaterial.needsUpdate = true;
+      for (const tile of next) {
+        if (tile.isNew) {
+          scene.add(tile.mesh);
+          scene.add(tile.reflMesh);
         }
-
-        scene.add(mesh);
-        scene.add(reflMesh);
-
-        const key = isSep ? `__sep_${sepCounter++}` : item.movie.id;
-        const tile: Tile = {
-          key,
-          item,
-          mesh,
-          material,
-          reflMesh,
-          reflMaterial,
-          halfH,
-          cur: { x: 0, y: 0, z: 0, rotY: 0, scale: 1 },
-          target: { x: 0, y: 0, z: 0, rotY: 0, scale: 1 },
-          texture: null,
-          sepTexture,
-          loading: false,
-          hoverLift: 0,
-        };
         tiles.push(tile);
-        tileByMesh.set(mesh, tile);
-        if (!isSep) pickMeshes.push(mesh);
+        tileByMesh.set(tile.mesh, tile);
+        if (tile.item.kind !== "separator") pickMeshes.push(tile.mesh);
       }
     };
 
@@ -760,11 +823,13 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       if (disposed) return;
       // Evict textures outside the resident window (or over the cap).
       const focusI = focusFloat;
-      // Distance-sorted list of tiles that currently hold textures.
+      // Distance-sorted list of tiles that currently hold textures. Iterate by
+      // index so the distance calc is O(1) per tile (no tiles.indexOf → O(n²)).
       const resident: { tile: Tile; dist: number }[] = [];
-      for (const tile of tiles) {
+      for (let i = 0; i < tiles.length; i++) {
+        const tile = tiles[i];
         if (tile.texture) {
-          const dist = Math.abs(tiles.indexOf(tile) - focusI);
+          const dist = Math.abs(i - focusI);
           if (dist > RESIDENT_WINDOW) {
             disposeTileTexture(tile);
           } else {
@@ -878,15 +943,18 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       startLoop();
     };
 
-    // ---- Sort application (flying reorder) -----------------------------
-    // Rebuild the flow, remembering which movie was focused so we re-center on
-    // it. Textures for the new window stream in; the meshes fly to new targets.
-    const applySort = (key: SortKey, order: "asc" | "desc") => {
+    // ---- Rebuild (initial build + sort reorder + progressive append) ----
+    // Reconcile the tile set for the given sort against the CURRENT movies
+    // (read from the ref, so appends flow in without re-running the effect).
+    // Reused tiles keep their pose + texture; only brand-new tiles get their
+    // `cur` seeded so they gently grow in. Remembers the focused movie so the
+    // focus stays anchored across reorders and appends.
+    const rebuild = (key: SortKey, order: "asc" | "desc") => {
       const prevTile = tiles[clampFocusInt(focusFloat)];
       const prevMovieId =
         prevTile && prevTile.item.kind === "movie" ? prevTile.item.movie.id : null;
 
-      const flow = buildFlow(movies, key, order);
+      const flow = buildFlow(moviesRef.current, key, order);
       buildTiles(flow);
 
       // Re-center on the previously focused movie if it still exists.
@@ -902,15 +970,19 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
         if (tiles[newFocus + 1]) newFocus += 1;
       }
 
-      // Seed current transforms from targets at the new focus so the reorder
-      // animates from a sensible pose rather than all-at-origin.
       focusFloat = newFocus;
       targetFocus = newFocus;
       for (let i = 0; i < tiles.length; i++) {
-        computeTarget(i, focusFloat, tiles[i]);
-        // start slightly off so the ease has something to animate
-        const tg = tiles[i].target;
-        tiles[i].cur = { ...tg, scale: reducedMotion ? tg.scale : tg.scale * 0.96 };
+        const tile = tiles[i];
+        computeTarget(i, focusFloat, tile);
+        // Seed `cur` ONLY for brand-new tiles (grow in gently from a slightly
+        // smaller pose). Reused tiles keep their existing `cur` so appends /
+        // reorders don't pop already-visible posters.
+        if (tile.isNew) {
+          const tg = tile.target;
+          tile.cur = { ...tg, scale: reducedMotion ? tg.scale : tg.scale * 0.9 };
+          tile.isNew = false;
+        }
       }
       lastHudIndex = -1;
       updateHud(clampFocusInt(focusFloat));
@@ -922,10 +994,7 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
         startLoop();
       }
     };
-    applySortRef.current = applySort;
-
-    // Initial build
-    applySort(sortKey, sortOrder);
+    rebuildRef.current = rebuild;
 
     // ---- Interaction: wheel --------------------------------------------
     let wheelAccum = 0;
@@ -1013,10 +1082,15 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
     let hoveredTile: Tile | null = null;
     const updateHover = () => {
       raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects(
-        tiles.map((tl) => tl.mesh),
-        false,
-      );
+      // Only raycast the small band of tiles around the focus that can actually
+      // be under the pointer; off-window tiles are off-screen and would make
+      // the raycast O(n) over the whole (potentially huge) library.
+      const center = clampFocusInt(focusFloat);
+      const lo = Math.max(0, center - RAYCAST_WINDOW);
+      const hi = Math.min(tiles.length - 1, center + RAYCAST_WINDOW);
+      const candidates: Mesh[] = [];
+      for (let i = lo; i <= hi; i++) candidates.push(tiles[i].mesh);
+      const hits = raycaster.intersectObjects(candidates, false);
       const nextMesh = (hits[0]?.object as Mesh) ?? null;
       const next = nextMesh ? tileByMesh.get(nextMesh) ?? null : null;
       if (next === hoveredTile) return;
@@ -1131,7 +1205,7 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
     return () => {
       disposed = true;
       loopRunning = false;
-      applySortRef.current = null;
+      rebuildRef.current = null;
       cancelAnimationFrame(rafId);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("keydown", onKeyDown);
@@ -1158,11 +1232,21 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
         container.removeChild(renderer.domElement);
       }
     };
-    // movies is a stable snapshot passed once when the wall opens; the effect
-    // owns its own sort state via applySortRef, so it must not re-run on
-    // sort changes (that would tear down + rebuild the whole renderer).
+    // Renderer/scene/closures are set up ONCE per (non-empty) mount and own
+    // their own state via rebuildRef. This effect must NOT re-run when `movies`
+    // grows (progressive appends) — that would tear down + rebuild the whole
+    // renderer and re-download every texture. Progressive appends and sort
+    // changes are handled by the separate [movies] effect + rebuildRef below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movies, isEmpty]);
+  }, [isEmpty]);
+
+  // Run the first build on mount and reconcile the scene on every progressive
+  // append (movies reference changes as pages arrive). rebuildRef reads the
+  // latest sort from its refs so it stays in sync with the pills.
+  useEffect(() => {
+    if (!isEmpty) rebuildRef.current?.(sortKeyRef.current, sortOrderRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movies]);
 
   // Pill click → retarget the live scene without re-mounting WebGL.
   const handleSort = (key: SortKey) => {
@@ -1176,7 +1260,7 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       setSortKey(key);
       setSortOrder(nextOrder);
     }
-    applySortRef.current?.(key, nextOrder);
+    rebuildRef.current?.(key, nextOrder);
   };
 
   // Portal to <body>: the wall is rendered inside the movie grid, whose
@@ -1204,6 +1288,15 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       >
         <X className="h-5 w-5" />
       </button>
+
+      {/* "Loading more" indicator — subtle glass chip beside the close button
+          while the parent's progressive fetch is still pulling pages. */}
+      {loadingMore && (
+        <div className="glass-btn pointer-events-none absolute right-16 top-4 z-10 flex h-10 items-center gap-2 rounded-full px-3 text-[13px] text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>{t("loadingMore")}</span>
+        </div>
+      )}
 
       {/* Sort pills (top-center, horizontally scrollable) */}
       {!isEmpty && (
