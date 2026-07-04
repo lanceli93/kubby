@@ -1,5 +1,18 @@
 # Completed Features
 
+## 2026-07-04 (4): UI 现代化 Phase 2+3 — 详情页深度舞台、放映机光锥、WebGL 海报墙
+
+All verified live in Chrome (parallax transform values, VT poster intact, glass blur intact, poster-wall hover/click/exit, three.js chunk isolation).
+
+### 1. 详情页深度舞台 (`src/hooks/use-hero-parallax.ts` + detail page)
+Scroll parallax (fanart sinks at 0.35× scrollTop) + pointer parallax (fanart drifts ±10px opposite the cursor, poster ±5px with it), rAF-throttled ref mutation, zero re-renders. The 350×525 poster is wrapped in TiltCard (maxTilt 4) with an always-lit ambient glow. Desktop-only (`pointer: fine` + md+ + no reduced-motion); suspended in fanartMode. Two constraints held: no transformed ancestor above the `backdrop-blur-[20px]` glass panel (transform would break its backdrop-filter), and the `data-vt-poster` element unchanged so the View Transition morph still fires. Orchestrator fix during verification: the page early-returns a loading state before `movie` arrives, so the hook's listener effects bound to null refs on first mount — added a `ready` flag (re-binds once the hero DOM exists) and moved the hook call below the `movie` query.
+
+### 2. 放映机光锥 (`src/components/movie/projector-beam.tsx`)
+Transparent WebGL overlay on the detail hero (`pointer-events-none absolute inset-0 z-0`): additive ShaderMaterial beam entering top-right angled down-left (warm white core, indigo #6366f1 edge, ~3% lamp flicker, 0.16 intensity), 160 dust motes drifting inside the beam volume, animated film grain at 0.04. Dynamically imported (`ssr:false`), mounted only when fanart exists and not in fanartMode; gated off on reduced-motion / no WebGL2 / below md; pixelRatio capped at 1.5; rAF pauses via IntersectionObserver + visibilitychange; full disposal on unmount. Known limitation: with only ~700px of scroll range the hero never fully leaves the viewport on short pages, so the IO pause rarely triggers there — it matters on long pages (many cast rows/bookmarks) where it does trigger.
+
+### 3. WebGL 海报墙 (`src/components/movie/poster-wall.tsx` + movies page)
+Optional fullscreen browse mode on /movies (glass pill "海报墙"/"Poster Wall" toggle next to Sort/Filter, only when WebGL2 + md+ + no reduced-motion): 2:3 poster planes on a curved arc (2 rows if >40 movies), dark placeholder materials with textures streamed nearest-first (concurrency 6, SRGBColorSpace), inertial wheel/drag pan clamped to wall ends, raycaster hover (8% scale + glass title badge + pointer cursor), click navigates to the movie detail, ESC/X exits. rAF loop stops when settled and on document.hidden; full disposal on unmount. Reuses the grid's current filter params; fetches up to 500 when the infinite query hasn't loaded everything. Three.js (~506KB) stays in its own chunk via `dynamic()` — the movies page initial bundle is unchanged. Verified live: hover title badge correct (The Dark Knight), click navigated to its detail page and closed the wall.
+
 ## 2026-07-04 (3): UI 现代化 Phase 1 — 3D 深度卡片 + View Transitions 海报飞入
 
 Apple-TV-style spatial depth without moving the DOM into WebGL. Verified live in Chrome (tilt transform values, glare opacity, transition started→ready→finished, no unhandled rejections).

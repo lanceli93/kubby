@@ -1015,6 +1015,31 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
   `hidden md:block` 无目标）都直接普通导航。动画曲线/时长在 globals.css 的
   `::view-transition-*(movie-poster)` 规则中（420ms fluid 曲线）。
 
+### 详情页深度舞台 (Phase 2)
+
+- **视差**: `hooks/use-hero-parallax.ts` — 滚动时 fanart 以 0.35× scrollTop 下沉,
+  指针在 hero 上移动时 fanart 反向漂移 ±10px、海报同向 ±5px(rAF 节流、ref 直写,
+  零重渲染)。仅桌面(fine pointer + md+ + 非减动效);fanartMode 时挂起。
+  `ready` 参数在 `movie` 数据到达、hero DOM 真实挂载后重绑监听(页面有 loading
+  early-return,首次 mount 时 ref 全空)。**约束**: 视差 transform 只写在 fanart
+  图层与海报包裹层上——玻璃信息面板的祖先链上不能有 transform(见上方 Pitfall)。
+- **海报**: 大海报接入 TiltCard(maxTilt 4)+ 常亮环境光晕;`data-vt-poster`
+  元素保持不变,View Transition 飞入不受影响。
+- **放映机光锥**: `components/movie/projector-beam.tsx` — 透明 WebGL 覆盖层
+  (`pointer-events-none absolute inset-0 z-0`):加色混合光束(右上入射、暖白核心
+  + 靛紫边缘、~3% 灯闪)、160 颗光束内尘埃粒子、0.04 强度胶片颗粒。dynamic import
+  (`ssr:false`),仅在有 fanart 且非 fanartMode 时挂载;减动效/无 WebGL2/移动端
+  不渲染;IntersectionObserver + visibilitychange 暂停 rAF;卸载时完整 dispose。
+
+### WebGL 海报墙 (Phase 3)
+
+`components/movie/poster-wall.tsx` — movies 页「海报墙」按钮(仅 WebGL2 + md+ +
+非减动效时显示)进入全屏 3D 浏览模式:2:3 海报平面弧形排布(>40 部分两行),
+占位材质先建、纹理近处优先流式加载(并发 6,SRGBColorSpace),滚轮/拖拽惯性漫游,
+raycaster hover 放大 8% + 底部玻璃标题徽章,点击进详情页,ESC/X 退出。rAF 稳定后
+自动停帧、document.hidden 暂停、卸载完整 dispose。Three.js(~506KB)独立 chunk
+(dynamic import),movies 页初始包体不变;平面网格仍为默认视图。
+
 **圆角层级**: 输入框 `rounded-md` (6px) → 按钮 `rounded-lg` (8px) → 卡片容器 `rounded-xl` (12px)
 
 > **Pitfall: `backdrop-filter` 与 CSS class 优先级冲突**

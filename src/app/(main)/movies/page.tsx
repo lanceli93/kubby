@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
@@ -28,8 +29,42 @@ import {
   Monitor,
   HardDrive,
   ArrowLeft,
+  Boxes,
 } from "lucide-react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+
+// Three.js lives entirely inside PosterWall; dynamic() keeps it out of the
+// initial page bundle and only fetches the chunk when the wall is opened.
+const PosterWall = dynamic(
+  () => import("@/components/movie/poster-wall").then((m) => m.PosterWall),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0f]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
+
+// True only in the browser when WebGL2 is available, viewport is ≥ md, and the
+// user hasn't requested reduced motion — the poster wall is opt-in and desktop-first.
+function usePosterWallAvailable(): boolean {
+  const [available, setAvailable] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const hasWebGL = !!document.createElement("canvas").getContext("webgl2");
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const wideEnough = window.matchMedia("(min-width: 768px)").matches;
+      setAvailable(hasWebGL && !reduced && wideEnough);
+    };
+    check();
+    const mq = window.matchMedia("(min-width: 768px)");
+    mq.addEventListener("change", check);
+    return () => mq.removeEventListener("change", check);
+  }, []);
+  return available;
+}
 
 interface Movie {
   id: string;
@@ -54,6 +89,12 @@ interface PaginatedResponse<T> {
   offset: number;
   limit: number;
   hasMore: boolean;
+}
+
+interface PosterWallMovie {
+  id: string;
+  title: string;
+  posterPath?: string | null;
 }
 
 interface FiltersData {
@@ -285,6 +326,21 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
     },
   });
 
+  // Shared query-param builder so the poster wall fetches the same filtered set
+  const buildMovieParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (libraryId) params.set("libraryId", libraryId);
+    params.set("sort", sort);
+    params.set("sortOrder", sortOrder);
+    if (sortDimension) params.set("sortDimension", sortDimension);
+    if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
+    if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+    if (selectedYears.length > 0) params.set("years", selectedYears.join(","));
+    if (urlTag && selectedTags.length === 0) params.set("tag", urlTag);
+    if (urlStudio) params.set("studio", urlStudio);
+    return params;
+  }, [libraryId, sort, sortOrder, sortDimension, selectedGenres, selectedTags, selectedYears, urlTag, urlStudio]);
+
   const {
     data: moviesData,
     fetchNextPage,
@@ -294,17 +350,8 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   } = useInfiniteQuery<PaginatedResponse<Movie>>({
     queryKey: ["movies", { libraryId, sort, sortOrder, sortDimension, selectedGenres, selectedTags, selectedYears, urlTag, urlStudio }],
     queryFn: ({ pageParam }) => {
-      const params = new URLSearchParams();
-      if (libraryId) params.set("libraryId", libraryId);
-      params.set("sort", sort);
-      params.set("sortOrder", sortOrder);
+      const params = buildMovieParams();
       params.set("offset", String(pageParam));
-      if (sortDimension) params.set("sortDimension", sortDimension);
-      if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
-      if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
-      if (selectedYears.length > 0) params.set("years", selectedYears.join(","));
-      if (urlTag && selectedTags.length === 0) params.set("tag", urlTag);
-      if (urlStudio) params.set("studio", urlStudio);
       return fetch(`/api/movies?${params}`).then((r) => r.json());
     },
     initialPageParam: 0,
@@ -319,6 +366,35 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
     isFetchingNextPage,
     fetchNextPage,
   });
+
+  // Poster wall (WebGL) browse mode — opt-in, per session, desktop only
+  const posterWallAvailable = usePosterWallAvailable();
+  const [showPosterWall, setShowPosterWall] = useState(false);
+  const [wallMovies, setWallMovies] = useState<PosterWallMovie[] | null>(null);
+
+  const openPosterWall = useCallback(async () => {
+    setShowPosterWall(true);
+    // If everything is already loaded in the grid, reuse it; otherwise fetch
+    // up to 500 with the current filters via the existing /api/movies endpoint.
+    if (!hasNextPage && movies.length > 0) {
+      setWallMovies(movies.map((m) => ({ id: m.id, title: m.title, posterPath: m.posterPath })));
+      return;
+    }
+    const params = buildMovieParams();
+    params.set("limit", "500");
+    try {
+      const data: PaginatedResponse<Movie> = await fetch(`/api/movies?${params}`).then((r) => r.json());
+      setWallMovies(data.items.map((m) => ({ id: m.id, title: m.title, posterPath: m.posterPath })));
+    } catch {
+      // Fall back to whatever the grid already has
+      setWallMovies(movies.map((m) => ({ id: m.id, title: m.title, posterPath: m.posterPath })));
+    }
+  }, [buildMovieParams, hasNextPage, movies]);
+
+  const closePosterWall = useCallback(() => {
+    setShowPosterWall(false);
+    setWallMovies(null);
+  }, []);
 
   const activeFilterCount = selectedGenres.length + selectedTags.length + selectedYears.length;
 
@@ -669,8 +745,28 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             </div>
           )}
         </div>
+
+        {/* Poster wall (WebGL) toggle — desktop + WebGL only */}
+        {posterWallAvailable && (
+          <button
+            onClick={openPosterWall}
+            className="glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
+          >
+            <Boxes className="h-4 w-4" />
+            {t("posterWall")}
+          </button>
+        )}
         </div>
       </div>
+
+      {showPosterWall && wallMovies && (
+        <PosterWall movies={wallMovies} onClose={closePosterWall} />
+      )}
+      {showPosterWall && !wallMovies && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0f]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
 
       {/* Movie cards */}
         {movies.map((movie) => (

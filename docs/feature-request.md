@@ -73,12 +73,5 @@
 
 ---
 
-## 五、UI 现代化 — 长期 Backlog(用户已确认要做)
-
-> Phase 1(3D 深度卡片 + View Transitions 海报飞入)已完成 —
-> 见 `docs/feature-completed.md` 2026-07-04 (3)。
-
-- **Phase 2 — 详情页深度舞台**:fanart 多层视差滚动、大海报倾斜+环境光、
-  hero 区 WebGL 放映机光锥(胶片颗粒+尘埃粒子,复用 Three.js chunk,视口外暂停)。
-- **Phase 3 — 3D 海报墙浏览模式**:library 页可切换的 WebGL 全屏海报墙
-  (instanced mesh + 纹理流式加载),平面网格仍为默认。
+> UI 现代化 Phase 1/2/3 已全部完成 — 见 `docs/feature-completed.md`
+> 2026-07-04 (3) 与 (4)。

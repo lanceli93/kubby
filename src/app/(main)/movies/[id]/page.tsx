@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
@@ -13,6 +14,8 @@ import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { POSTER_VT_ATTR } from "@/lib/view-transition";
+import { TiltCard } from "@/components/ui/tilt-card";
+import { useHeroParallax } from "@/hooks/use-hero-parallax";
 import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
@@ -35,6 +38,14 @@ import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { FrameScrubber } from "@/components/movie/frame-scrubber";
+
+// Cinema "projection booth" ambience over the hero fanart. WebGL/Three.js is
+// heavy, so it's dynamically imported and kept out of the initial bundle; no
+// loading placeholder — it's ambience, it should just appear when ready.
+const ProjectorBeam = dynamic(
+  () => import("@/components/movie/projector-beam").then((m) => m.ProjectorBeam),
+  { ssr: false },
+);
 
 interface DiscInfo {
   id: string;
@@ -230,6 +241,11 @@ export default function MovieDetailPage() {
     queryFn: () => fetch(`/api/movies/${movieId}`).then((r) => r.json()),
   });
 
+  // Multi-layer hero depth: fanart sinks/drifts, poster drifts (desktop only,
+  // suspended while fanart-fullscreen mode is on). `ready` re-binds listeners
+  // after the loading early-return is replaced by the real hero DOM.
+  const { scrollRef, heroRef, fanartRef, posterRef } = useHeroParallax({ disabled: fanartMode, ready: !!movie });
+
   const { data: recommended = [] } = useQuery<RecommendedMovie[]>({
     queryKey: ["movies", "recommended", movieId],
     queryFn: () =>
@@ -346,13 +362,19 @@ export default function MovieDetailPage() {
       : movie.tags || [];
 
   return (
-    <div className="h-full overflow-y-scroll scrollbar-hide">
+    <div ref={scrollRef} className="h-full overflow-y-scroll scrollbar-hide">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — Jellyfin style */}
-      <div className="relative md:min-h-[750px] w-full overflow-hidden">
-        {/* Fanart Background */}
+      <div ref={heroRef} className="relative md:min-h-[750px] w-full overflow-hidden">
+        {/* Fanart Background — parallax layer. Slightly overscaled so scroll/
+            pointer drift never reveals empty edges. Ref'd for depth transforms
+            (this wrapper holds ONLY the fanart image — never the glass panel —
+            so its transform can't break the panel's backdrop-filter). */}
         {movie.fanartPath && !imgErrors.has(movie.fanartPath) && (
-          <div className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto">
+          <div
+            ref={fanartRef}
+            className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform"
+          >
             <Image
               src={resolveImageSrc(movie.fanartPath)}
               alt=""
@@ -362,6 +384,15 @@ export default function MovieDetailPage() {
               onError={() => onImgError(movie.fanartPath!)}
             />
           </div>
+        )}
+
+        {/* Projector light-cone ambience — WebGL beam + dust + grain over the
+            fanart. Sibling right after the fanart block: z-0 keeps it above the
+            fanart but below the gradients/content row (and the z-20 fanart-mode
+            overlay). Only over real fanart, and never while fanart is
+            fullscreen (unmounts so no WebGL churn behind the overlay). */}
+        {movie.fanartPath && !imgErrors.has(movie.fanartPath) && !fanartMode && (
+          <ProjectorBeam />
         )}
 
         {/* Fanart fullscreen click-to-dismiss overlay */}
@@ -380,28 +411,45 @@ export default function MovieDetailPage() {
 
         {/* Content row: poster + movie info */}
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
-          {/* Poster — 350×525 (2:3). `view-transition-name` is the static target
-              of the card→detail poster morph (see lib/view-transition.ts). Only
-              one element carries this name per document, so no collision. */}
-          <div
-            {...{ [POSTER_VT_ATTR]: "" }}
-            className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10"
-            style={{ viewTransitionName: "movie-poster" }}
-          >
-            {movie.posterPath && !imgErrors.has(movie.posterPath) ? (
-              <Image
-                src={resolveImageSrc(movie.posterPath)}
-                alt={movie.title}
-                fill
-                className="object-cover"
-                sizes="350px"
-                onError={() => onImgError(movie.posterPath!)}
+          {/* Poster — 350×525 (2:3). Parallax drift lives on this outer wrapper
+              (a sibling of the glass panel, never its ancestor, so its transform
+              can't break the panel's backdrop-filter); the inner TiltCard adds a
+              mild 3D pointer-tilt. The `data-vt-poster` box below stays the exact
+              same element — it is the static target of the card→detail poster
+              morph (see lib/view-transition.ts), so TiltCard wrappers around it
+              are fine. */}
+          <div ref={posterRef} className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 will-change-transform">
+            {/* Ambient glow — blurred poster bleeding behind, always lit (this is
+                a hero). Sits behind the poster; skipped when there is no poster. */}
+            {movie.posterPath && !imgErrors.has(movie.posterPath) && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-lg bg-cover bg-center opacity-45 blur-[28px] saturate-[1.4]"
+                style={{ backgroundImage: `url(${resolveImageSrc(movie.posterPath, 200)})` }}
               />
-            ) : (
-              <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
-                No Poster
-              </div>
             )}
+            <TiltCard maxTilt={4} className="h-full w-full">
+              <div
+                {...{ [POSTER_VT_ATTR]: "" }}
+                className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10"
+                style={{ viewTransitionName: "movie-poster" }}
+              >
+                {movie.posterPath && !imgErrors.has(movie.posterPath) ? (
+                  <Image
+                    src={resolveImageSrc(movie.posterPath)}
+                    alt={movie.title}
+                    fill
+                    className="object-cover"
+                    sizes="350px"
+                    onError={() => onImgError(movie.posterPath!)}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
+                    No Poster
+                  </div>
+                )}
+              </div>
+            </TiltCard>
           </div>
 
           {/* Movie Info — glass panel over fanart */}
