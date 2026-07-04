@@ -8,6 +8,7 @@ import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useTranslations } from "next-intl";
+import { TiltCard } from "@/components/ui/tilt-card";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -79,49 +80,63 @@ export function PersonCard({
     <Link
       href={`/people/${id}`}
     >
-      {/* Photo */}
-      <div
-        className="relative overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]"
-        style={{ width, height }}
-      >
-        {photoPath && !imgError ? (
-          <Image
-            src={resolveImageSrc(photoPath, width * 2)}
-            alt={name}
-            fill
-            className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
-            sizes={`${width}px`}
-            onError={() => setImgError(true)}
-            {...(photoBlur ? { placeholder: "blur" as const, blurDataURL: photoBlur } : {})}
+      {/* Photo shell — NOT overflow-hidden so tilt + ambient glow can bleed.
+          The tilting subtree (image + badges) is wrapped in TiltCard; the
+          backdrop-blur hover bar stays OUTSIDE it (preserve-3d breaks
+          backdrop-filter on descendants in Chromium). */}
+      <div className="relative" style={{ width, height }}>
+        {/* Ambient glow (ambilight) — blurred photo bleeding behind, hover-only */}
+        {photoBlur && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55"
+            style={{ backgroundImage: `url(${photoBlur})` }}
           />
-        ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-3xl">
-            {name[0]?.toUpperCase()}
-          </div>
         )}
 
-        {/* Tier badge — top-left */}
-        {showTierBadge && personalRating != null && personalRating > 0 && (() => {
-          const tier = getTier(personalRating);
-          return (
-            <div className={`absolute left-1.5 top-1.5 glass-badge rounded-md px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierGlow(tier)}`}>
-              {tier}
-            </div>
-          );
-        })()}
+        <TiltCard disabled={menuOpen} className="h-full w-full">
+          <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
+            {photoPath && !imgError ? (
+              <Image
+                src={resolveImageSrc(photoPath, width * 2)}
+                alt={name}
+                fill
+                className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
+                sizes={`${width}px`}
+                onError={() => setImgError(true)}
+                {...(photoBlur ? { placeholder: "blur" as const, blurDataURL: photoBlur } : {})}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground text-3xl">
+                {name[0]?.toUpperCase()}
+              </div>
+            )}
 
-        {/* Personal rating badge — top-right */}
-        {showRatingBadge && personalRating != null && personalRating > 0 && (
-          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5">
-            <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
-            <span className="text-[11px] font-medium text-[var(--gold)]">
-              {personalRating.toFixed(1)}
-            </span>
+            {/* Tier badge — top-left, lifts on tilt */}
+            {showTierBadge && personalRating != null && personalRating > 0 && (() => {
+              const tier = getTier(personalRating);
+              return (
+                <div className={`tilt-lift absolute left-1.5 top-1.5 z-[4] glass-badge rounded-md px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierGlow(tier)}`} style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                  {tier}
+                </div>
+              );
+            })()}
+
+            {/* Personal rating badge — top-right, lifts on tilt */}
+            {showRatingBadge && personalRating != null && personalRating > 0 && (
+              <div className="tilt-lift absolute right-1.5 top-1.5 z-[4] flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
+                <span className="text-[11px] font-medium text-[var(--gold)]">
+                  {personalRating.toFixed(1)}
+                </span>
+              </div>
+            )}
           </div>
-        )}
+        </TiltCard>
 
-        {/* Hover overlay bar — glass, fades in */}
-        <div className={`absolute -inset-x-1 -bottom-1 flex items-center ${onToggleFavorite ? "justify-between" : "justify-end"} px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+        {/* Hover overlay bar — glass, fades in. Kept OUTSIDE TiltCard so
+            backdrop-blur renders correctly (preserve-3d breaks it in Chromium). */}
+        <div className={`absolute -inset-x-1 -bottom-1 flex items-center ${onToggleFavorite ? "justify-between" : "justify-end"} px-3 pt-1.5 pb-2.5 rounded-b-md backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
           {onToggleFavorite && (
             <button
               onClick={(e) => {

@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, ImageIcon, Info, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { startPosterViewTransition } from "@/lib/view-transition";
 import { useTranslations } from "next-intl";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { TiltCard } from "@/components/ui/tilt-card";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -89,6 +91,7 @@ export function MovieCard({
   responsive,
 }: MovieCardProps) {
   const router = useRouter();
+  const posterRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("movies");
   const tCommon = useTranslations("common");
   const tMeta = useTranslations("metadata");
@@ -107,70 +110,95 @@ export function MovieCard({
     <div className={`group flex-shrink-0 transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"} ${responsive ? "w-full" : ""}`} style={responsive ? undefined : { width: 180 }}>
     <Link
       href={`/movies/${id}`}
+      onClick={(e) => {
+        // Poster morph into the detail page (shared-element View Transition).
+        // Play button / dropdown items already preventDefault+stopPropagation,
+        // so this only fires for a plain poster/title click. Let modified clicks
+        // (new tab, etc.) fall through to Link's default behaviour.
+        if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        startPosterViewTransition(`/movies/${id}`, posterRef.current, (href) => router.push(href));
+      }}
     >
-      {/* Poster */}
-      <div className={`relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06] ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
-        {posterPath && !imgError ? (
-          <Image
-            src={resolveImageSrc(posterPath, 360)}
-            alt={title}
-            fill
-            className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
-            sizes="180px"
-            onError={() => setImgError(true)}
-            {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
+      {/* Poster shell — NOT overflow-hidden so tilt + ambient glow can bleed.
+          The tilting subtree (image + badges + play button) is wrapped in
+          TiltCard; the progress bar and backdrop-blur hover bar stay OUTSIDE
+          it (preserve-3d breaks backdrop-filter on descendants in Chromium). */}
+      <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
+        {/* Ambient glow (ambilight) — blurred poster bleeding behind, hover-only */}
+        {posterBlur && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55"
+            style={{ backgroundImage: `url(${posterBlur})` }}
           />
-        ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            No Poster
-          </div>
         )}
 
-        {/* Resolution badge — top-left */}
-        {showResBadge && (() => {
-          const res = getResolutionLabel(videoWidth, videoHeight);
-          return res ? (
-            <div className="absolute left-1.5 top-1.5 rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80 shadow-sm">
-              {res}
+        <TiltCard disabled={menuOpen} className="h-full w-full">
+          <div ref={posterRef} className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
+            {posterPath && !imgError ? (
+              <Image
+                src={resolveImageSrc(posterPath, 360)}
+                alt={title}
+                fill
+                className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
+                sizes="180px"
+                onError={() => setImgError(true)}
+                {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                No Poster
+              </div>
+            )}
+
+            {/* Resolution badge — top-left, lifts on tilt */}
+            {showResBadge && (() => {
+              const res = getResolutionLabel(videoWidth, videoHeight);
+              return res ? (
+                <div className="tilt-lift absolute left-1.5 top-1.5 z-[4] rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80 shadow-sm" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                  {res}
+                </div>
+              ) : null;
+            })()}
+
+            {/* Rating badge — prefer personal rating over community rating, lifts on tilt */}
+            {showRatingBadge && (personalRating != null && personalRating > 0 ? (
+              <div className="tilt-lift absolute right-1.5 top-1.5 z-[4] flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
+                <span className="text-[11px] font-medium text-[var(--gold)]">
+                  {personalRating.toFixed(1)}
+                </span>
+              </div>
+            ) : rating != null && rating > 0 ? (
+              <div className="tilt-lift absolute right-1.5 top-1.5 z-[4] flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                <Star className="h-3 w-3 fill-white/50 text-white/50" />
+                <span className="text-[11px] font-medium text-white/60">
+                  {rating.toFixed(1)}
+                </span>
+              </div>
+            ) : null)}
+
+            {/* Centered play button on hover — floats highest on tilt */}
+            <div className={`tilt-lift absolute inset-0 z-[5] flex items-center justify-center transition-fluid ${menuOpen ? "scale-100 opacity-100" : "scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100"}`} style={{ "--tilt-lift": "40px" } as React.CSSProperties}>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/movies/${id}/play`);
+                }}
+                aria-label={t("play")}
+                className="glass-btn flex h-12 w-12 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95"
+              >
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
+              </button>
             </div>
-          ) : null;
-        })()}
-
-        {/* Rating badge — prefer personal rating over community rating */}
-        {showRatingBadge && (personalRating != null && personalRating > 0 ? (
-          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5">
-            <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
-            <span className="text-[11px] font-medium text-[var(--gold)]">
-              {personalRating.toFixed(1)}
-            </span>
           </div>
-        ) : rating != null && rating > 0 ? (
-          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5">
-            <Star className="h-3 w-3 fill-white/50 text-white/50" />
-            <span className="text-[11px] font-medium text-white/60">
-              {rating.toFixed(1)}
-            </span>
-          </div>
-        ) : null)}
+        </TiltCard>
 
-        {/* Centered play button on hover */}
-        <div className={`absolute inset-0 z-[3] flex items-center justify-center transition-fluid ${menuOpen ? "scale-100 opacity-100" : "scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100"}`}>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              router.push(`/movies/${id}/play`);
-            }}
-            aria-label={t("play")}
-            className="glass-btn flex h-12 w-12 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95"
-          >
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
-          </button>
-        </div>
-
-        {/* Progress bar */}
+        {/* Progress bar — outside tilt subtree, rounded to match poster */}
         {showProgress && progress != null && progress > 0 && (
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 z-10">
+          <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-md bg-white/20 z-10">
             <div
               className="h-full bg-primary transition-all"
               style={{ width: `${Math.max(progress, 2)}%` }}
@@ -178,8 +206,9 @@ export function MovieCard({
           </div>
         )}
 
-        {/* Hover overlay bar — glass, fades in */}
-        <div className={`absolute -inset-x-1 -bottom-1 flex items-center justify-between px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+        {/* Hover overlay bar — glass, fades in. Kept OUTSIDE TiltCard so
+            backdrop-blur renders correctly (preserve-3d breaks it in Chromium). */}
+        <div className={`absolute -inset-x-1 -bottom-1 flex items-center justify-between px-3 pt-1.5 pb-2.5 rounded-b-md backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[8] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
           {/* Left: Watched toggle */}
           <button
             onClick={(e) => {

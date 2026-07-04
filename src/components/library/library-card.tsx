@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { useLibraryScan } from "@/providers/scan-provider";
+import { TiltCard } from "@/components/ui/tilt-card";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -111,71 +112,79 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       className={`group flex-shrink-0 cursor-pointer transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`}
       style={{ width: 360 }}
     >
-      {/* Cover image area */}
-      <div className="relative w-full overflow-hidden rounded-md ring-1 ring-white/[0.06] bg-white/[0.05]" style={{ height: 200 }}>
-        {coverImage && !imgError ? (
-          <Image
-            src={resolveImageSrc(coverImage)}
-            alt={name}
-            fill
-            className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
-            sizes="360px"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              {type === "movie" ? (
-                <Film className="h-6 w-6 text-primary" />
-              ) : (
-                <Folder className="h-6 w-6 text-primary" />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Library name overlay */}
-        <div className="absolute inset-0 z-[2] flex items-center justify-center bg-black/40 pointer-events-none">
-          <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: 40 }}>{name}</h2>
-        </div>
-
-        {/* Scanning overlay with progress */}
-        {scanning && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2.5 bg-black/60 px-8">
-            {scanProgress ? (
-              <>
-                <Progress value={(scanProgress.current / scanProgress.total) * 100} className="h-1.5 w-full" />
-                <span className="max-w-full truncate text-xs text-white/80">
-                  {scanProgress.title
-                    ? tHome("scanProgressWithTitle", { title: scanProgress.title, current: scanProgress.current, total: scanProgress.total })
-                    : tHome("scanProgress", { current: scanProgress.current, total: scanProgress.total })}
-                </span>
-              </>
+      {/* Cover image area — shell NOT overflow-hidden so tilt can bleed. The
+          tilting subtree (image + name/status overlays) is wrapped in
+          TiltCard; the backdrop-blur hover menu bar stays OUTSIDE it
+          (preserve-3d breaks backdrop-filter on descendants in Chromium). */}
+      <div className="relative w-full" style={{ height: 200 }}>
+        <TiltCard disabled={menuOpen} className="h-full w-full">
+          <div className="relative h-full w-full overflow-hidden rounded-md ring-1 ring-white/[0.06] bg-white/[0.05]">
+            {coverImage && !imgError ? (
+              <Image
+                src={resolveImageSrc(coverImage)}
+                alt={name}
+                fill
+                className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
+                sizes="360px"
+                onError={() => setImgError(true)}
+              />
             ) : (
-              <span className="text-xs text-white/80">{tHome("scanning")}</span>
+              <div className="flex h-full w-full items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  {type === "movie" ? (
+                    <Film className="h-6 w-6 text-primary" />
+                  ) : (
+                    <Folder className="h-6 w-6 text-primary" />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Library name overlay — lifts on tilt */}
+            <div className="tilt-lift absolute inset-0 z-[2] flex items-center justify-center bg-black/40 pointer-events-none" style={{ "--tilt-lift": "24px" } as React.CSSProperties}>
+              <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: 40 }}>{name}</h2>
+            </div>
+
+            {/* Scanning overlay with progress — lifts on tilt */}
+            {scanning && (
+              <div className="tilt-lift absolute inset-0 z-10 flex flex-col items-center justify-center gap-2.5 bg-black/60 px-8" style={{ "--tilt-lift": "30px" } as React.CSSProperties}>
+                {scanProgress ? (
+                  <>
+                    <Progress value={(scanProgress.current / scanProgress.total) * 100} className="h-1.5 w-full" />
+                    <span className="max-w-full truncate text-xs text-white/80">
+                      {scanProgress.title
+                        ? tHome("scanProgressWithTitle", { title: scanProgress.title, current: scanProgress.current, total: scanProgress.total })
+                        : tHome("scanProgress", { current: scanProgress.current, total: scanProgress.total })}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-white/80">{tHome("scanning")}</span>
+                )}
+              </div>
+            )}
+
+            {/* Unscanned overlay — lifts on tilt */}
+            {isUnscanned && !isDone && (
+              <div className="tilt-lift absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/50" style={{ "--tilt-lift": "30px" } as React.CSSProperties}>
+                <span className="text-xs text-white/60">{tHome("unscanned")}</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startScan();
+                  }}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  {tHome("clickToScan")}
+                </button>
+              </div>
             )}
           </div>
-        )}
+        </TiltCard>
 
-        {/* Unscanned overlay */}
-        {isUnscanned && !isDone && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/50">
-            <span className="text-xs text-white/60">{tHome("unscanned")}</span>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                startScan();
-              }}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              {tHome("clickToScan")}
-            </button>
-          </div>
-        )}
-
-        {/* Hover: ⋯ menu button */}
-        <div className={`absolute -inset-x-1 -bottom-1 flex justify-end px-3 pt-1.5 pb-2.5 backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+        {/* Hover: ⋯ menu button — kept OUTSIDE TiltCard so backdrop-blur
+            renders correctly (preserve-3d breaks it in Chromium). */}
+        <div className={`absolute -inset-x-1 -bottom-1 flex justify-end px-3 pt-1.5 pb-2.5 rounded-b-md backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
             <DropdownMenuTrigger asChild>
               <button

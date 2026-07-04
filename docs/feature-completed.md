@@ -1,5 +1,17 @@
 # Completed Features
 
+## 2026-07-04 (3): UI 现代化 Phase 1 — 3D 深度卡片 + View Transitions 海报飞入
+
+Apple-TV-style spatial depth without moving the DOM into WebGL. Verified live in Chrome (tilt transform values, glare opacity, transition started→ready→finished, no unhandled rejections).
+
+### 1. TiltCard — 指针倾斜 + 光泽 + 视差 (`src/components/ui/tilt-card.tsx`)
+Reusable primitive: perspective 900px wrapper, preserve-3d inner element tilting ≤6° toward the cursor (rAF-throttled ref mutation, zero React re-renders), radial-gradient glare following the pointer, `.tilt-lift` utility for translateZ parallax (badges 22px, play button 40px). Applied to MovieCard, PersonCard, ContinueWatchingCard, LibraryCard. MovieCard/PersonCard additionally render an ambient glow (ambilight) behind the card from the existing blur placeholder. Touch + `prefers-reduced-motion` degrade to exactly the old behavior; dropdown-open freezes flat. Key structural constraint: `preserve-3d` breaks `backdrop-filter` on descendants in Chromium, so the glass hover bars/progress bars moved outside the tilting subtree as absolutely-positioned siblings.
+
+### 2. View Transitions poster morph (`src/lib/view-transition.ts`)
+Zero-dep shared-element transition: clicking a movie card assigns `view-transition-name: movie-poster` to that poster only (avoids duplicate-name skips when the same movie appears in multiple rows), starts `document.startViewTransition`, navigates, and waits for the detail page's `data-vt-poster` element via MutationObserver before resolving. 420ms fluid curve in globals.css. Fallback to plain navigation on Firefox/no-API, reduced motion, and mobile (detail poster is `hidden md:block`). Two pitfalls fixed during live verification: (a) rendering is frozen while the update callback is pending — rAF never ticks, so waiting on it deadlocks into Chrome's ~4s abort; wait with timers/`img.decode()` instead; (b) detail→detail navigation (recommended row) leaves the old page's statically-named poster in the old snapshot — it's demoted before starting.
+
+Rejected approaches: Next 16.1.6's `experimental.viewTransition` flag is schema-only (not wired into the App Router runtime); stable React 19.2.3 doesn't export `unstable_ViewTransition`; `next-view-transitions` package unnecessary.
+
 ## 2026-07-04 (2): Keyframe cache invalidation on source file swap
 
 The keyframe index (fix 2 below) cached scan results keyed only by file path. Swapping a source file in place (same path, new content — e.g. re-encoding or replacing a bad rip) returned the old file's keyframes, so every seek snapped into roughly the first 2 minutes even though the DB duration had updated correctly from the rescan. `getKeyframeIndex()` now stats the file and stores `mtimeMs`+`size` alongside the cached promise; a mismatch triggers a fresh ffprobe scan instead of reusing the stale entry.

@@ -217,6 +217,17 @@
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ── 3D Tilt (TiltCard) ───────────────────────────────── */
+
+/* Parallax lift for children inside a `[transform-style:preserve-3d]` element
+   (see TiltCard). Floats the element above the poster plane when tilted.
+   Override the distance per-element with `style={{ "--tilt-lift": "32px" }}`.
+   NOTE: preserve-3d breaks backdrop-filter on descendants in some Chromium
+   builds — keep blur bars OUT of the tilting subtree. */
+.tilt-lift {
+  transform: translateZ(var(--tilt-lift, 28px));
+}
+
 /* ── UI Polish: Animations ────────────────────────────── */
 
 /* Stagger-fade entrance for page children */
@@ -380,4 +391,36 @@ button {
 
 button:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+/* ── View Transitions: poster morph (card → detail) ───── */
+
+/* The clicked card poster and the detail page's large poster both carry the
+   `movie-poster` view-transition-name (assigned per-element at click time — see
+   lib/view-transition.ts), so the browser interpolates one into the other. Use
+   the same fluid overshoot curve as `.transition-fluid` for an Apple-TV-style
+   spatial zoom. The rest of the page keeps the default root crossfade. */
+::view-transition-group(movie-poster) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Crossfade the poster contents across the size change so the aspect-ratio
+   difference (card vs. 2:3 detail poster) doesn't pop. */
+::view-transition-old(movie-poster),
+::view-transition-new(movie-poster) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Reduced motion / accessibility: disable the morph and fall back to an instant
+   navigation identical to today. (The JS helper already bails out before
+   starting a transition, but this covers a transition begun before the media
+   query flips, and any future static usage.) */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(movie-poster),
+  ::view-transition-old(movie-poster),
+  ::view-transition-new(movie-poster) {
+    animation: none !important;
+  }
 }

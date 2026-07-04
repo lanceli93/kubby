@@ -70,3 +70,15 @@
 
 1. **刮削代理设置项**:目前 TMDB 刮削依赖 dev server 的代理环境变量。可考虑在 Providers 设置页加一个「刮削 HTTP 代理」配置,让打包用户自行填写代理地址(通过 undici `ProxyAgent` / `setGlobalDispatcher` 注入),而非依赖启动环境变量。
 2. **播放路径实测**:用测试矩阵在浏览器实际播放 9 种格式,验证 direct / remux / transcode 三条链路(尤其 HLS 转码)真的可播。
+
+---
+
+## 五、UI 现代化 — 长期 Backlog(用户已确认要做)
+
+> Phase 1(3D 深度卡片 + View Transitions 海报飞入)已完成 —
+> 见 `docs/feature-completed.md` 2026-07-04 (3)。
+
+- **Phase 2 — 详情页深度舞台**:fanart 多层视差滚动、大海报倾斜+环境光、
+  hero 区 WebGL 放映机光锥(胶片颗粒+尘埃粒子,复用 Three.js chunk,视口外暂停)。
+- **Phase 3 — 3D 海报墙浏览模式**:library 页可切换的 WebGL 全屏海报墙
+  (instanced mesh + 纹理流式加载),平面网格仍为默认。

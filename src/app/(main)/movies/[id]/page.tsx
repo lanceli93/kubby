@@ -12,6 +12,7 @@ import { PersonCard } from "@/components/people/person-card";
 import { MovieCard } from "@/components/movie/movie-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { POSTER_VT_ATTR } from "@/lib/view-transition";
 import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
@@ -379,8 +380,14 @@ export default function MovieDetailPage() {
 
         {/* Content row: poster + movie info */}
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
-          {/* Poster — 350×525 (2:3) */}
-          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+          {/* Poster — 350×525 (2:3). `view-transition-name` is the static target
+              of the card→detail poster morph (see lib/view-transition.ts). Only
+              one element carries this name per document, so no collision. */}
+          <div
+            {...{ [POSTER_VT_ATTR]: "" }}
+            className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10"
+            style={{ viewTransitionName: "movie-poster" }}
+          >
             {movie.posterPath && !imgErrors.has(movie.posterPath) ? (
               <Image
                 src={resolveImageSrc(movie.posterPath)}

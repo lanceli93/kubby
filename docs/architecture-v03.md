@@ -979,6 +979,41 @@ Player (page.tsx)
 | `.glass-btn` | 图标按钮 | `bg rgba(255,255,255,0.06)` + `blur(12px)` + hover 发光 |
 | `.glass-card` | 内容卡片 | `bg rgba(255,255,255,0.04)` + `blur(16px)` + hover 阴影 |
 | `.transition-fluid` | 弹性动画 | `cubic-bezier(0.22,1,0.36,1)` 280ms, 含 scale/translate |
+| `.tilt-lift` | 3D 视差抬升 | `translateZ(var(--tilt-lift, 28px))`, 用于 TiltCard preserve-3d 子树内的徽章/按钮 |
+
+### 3D 深度卡片 (TiltCard) — UI 现代化 Phase 1
+
+`components/ui/tilt-card.tsx` — 可复用的 Apple-TV 式指针倾斜原语，已接入
+MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
+
+- **倾斜**: perspective 900px 容器 + preserve-3d 内层，指针跟随 rotateX/rotateY ≤6°;
+  pointermove 经 rAF 节流后直接改 ref 的 `style.transform`（零 React 重渲染）。
+- **光泽**: radial-gradient 高光层跟随光标 (`--glare-x/--glare-y`)，hover 淡入。
+- **视差**: 子元素加 `.tilt-lift` 类以 translateZ 浮起（徽章 22px、播放按钮 40px）。
+- **环境光晕**: MovieCard/PersonCard 用已有 `posterBlur`/`photoBlur` 在卡片背后渲染
+  blur(24px)+saturate 光晕，hover 淡入 (opacity 0.55)。
+- **降级**: 触屏 (`pointer: coarse`) 与 `prefers-reduced-motion: reduce` 下完全禁用，
+  行为与旧版一致；`disabled` prop 在下拉菜单打开时冻结回平面。
+- **Pitfall**: `preserve-3d` 会破坏 Chromium 下子孙元素的 `backdrop-filter` ——
+  卡片的毛玻璃 hover 操作条/进度条必须放在 TiltCard 子树**外**（作为兄弟绝对定位）。
+
+### View Transitions 海报飞入 (card → detail)
+
+`lib/view-transition.ts` — 零依赖 shared-element 过渡：点击电影卡片，海报原位
+放大变形为详情页 350×525 大海报。
+
+- **机制**: 点击时给被点海报内联 `view-transition-name: movie-poster`（避免同片
+  多行出现导致重名跳过），详情页大海报静态携带同名 + `data-vt-poster` 标记；
+  `document.startViewTransition` 的回调 `navigate + MutationObserver 等待目标挂载`
+  后 resolve，浏览器再捕获新快照。旧页面若有残留命名元素（详情页推荐行→详情页）
+  会先摘除。
+- **Pitfall**: startViewTransition 回调 pending 期间**渲染被冻结，rAF 不会 tick**——
+  在回调里等 requestAnimationFrame 会死锁到 Chrome ~4s 超时中止
+  ("Transition was aborted because of timeout in DOM update")。用 timer/微任务
+  (`img.decode()`) 等待，不要用 rAF。
+- **降级**: Firefox 等无 API 浏览器、`prefers-reduced-motion`、移动端（详情页海报
+  `hidden md:block` 无目标）都直接普通导航。动画曲线/时长在 globals.css 的
+  `::view-transition-*(movie-poster)` 规则中（420ms fluid 曲线）。
 
 **圆角层级**: 输入框 `rounded-md` (6px) → 按钮 `rounded-lg` (8px) → 卡片容器 `rounded-xl` (12px)
 
