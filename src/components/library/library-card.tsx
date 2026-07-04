@@ -118,6 +118,16 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
           a gradient scrim, not backdrop-blur (preserve-3d breaks
           backdrop-filter on descendants in Chromium). */}
       <div className="relative w-full" style={{ height: 200 }}>
+        {/* Ambient glow (ambilight) — blurred cover bleeding behind, hover-only.
+            Mirrors movie-card.tsx; uses the cover image itself (already cached
+            by the card render) since libraries have no posterBlur. */}
+        {coverImage && !imgError && (
+          <div
+            aria-hidden
+            className={`pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center blur-[24px] saturate-150 transition-fluid ${menuOpen ? "opacity-55" : "opacity-0 group-hover:opacity-55"}`}
+            style={{ backgroundImage: `url("${resolveImageSrc(coverImage)}")` }}
+          />
+        )}
         <TiltCard disabled={menuOpen} className="h-full w-full">
           <div className="relative h-full w-full overflow-hidden rounded-md ring-1 ring-white/[0.06] bg-white/[0.05]">
             {coverImage && !imgError ? (

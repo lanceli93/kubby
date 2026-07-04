@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PersonCard } from "@/components/people/person-card";
@@ -15,9 +15,7 @@ import {
   AmbientProvider,
   AmbientField,
   AmbientHoverZone,
-  useAmbient,
 } from "@/components/home/ambient-field";
-import { extractAmbientColor } from "@/lib/ambient-color";
 import { useTranslations } from "next-intl";
 
 interface Movie {
@@ -27,6 +25,7 @@ interface Movie {
   posterPath?: string | null;
   posterBlur?: string | null;
   fanartPath?: string | null;
+  overview?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
   videoWidth?: number | null;
@@ -113,22 +112,6 @@ function MovieRow({
   );
 }
 
-/** Renders nothing; eases the ambient field's resting color to the hero's tint. */
-function AmbientBaseFromHero({ posterBlur }: { posterBlur?: string | null }) {
-  const { setBase } = useAmbient();
-  useEffect(() => {
-    if (!posterBlur) return;
-    let cancelled = false;
-    extractAmbientColor(posterBlur).then((rgb) => {
-      if (rgb && !cancelled) setBase(rgb);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [posterBlur, setBase]);
-  return null;
-}
-
 export default function HomePage() {
   const t = useTranslations("home");
   const queryClient = useQueryClient();
@@ -148,6 +131,17 @@ export default function HomePage() {
     queryKey: ["movies", "recently-added"],
     queryFn: () =>
       fetch("/api/movies?sort=dateAdded&limit=12").then((r) => r.json()),
+  });
+
+  // Poster wall pool for the animated hero backdrop — a RANDOM sample across all
+  // libraries, re-drawn per page visit, so every movie gets a chance to appear
+  // on the wall and in the Now Showing spotlight (see hero-mosaic.tsx).
+  const { data: wallMovies = [] } = useQuery<Movie[]>({
+    queryKey: ["movies", "hero-wall"],
+    queryFn: () =>
+      fetch("/api/movies?sort=random&limit=60").then((r) => r.json()),
+    staleTime: Infinity, // keep the same draw while the page stays mounted
+    refetchOnWindowFocus: false,
   });
 
   const { data: favorites = [] } = useQuery<Movie[]>({
@@ -278,11 +272,21 @@ export default function HomePage() {
     deleteMovie.mutate(id);
   };
 
-  // Hero item: first continue-watching, else first recently-added with fanart.
-  const heroMovie = continueWatching[0]
-    ? continueWatching[0]
-    : recentlyAdded.find((m) => m.fanartPath) ?? null;
-  const heroIsContinueWatching = !!continueWatching[0];
+  // Hero pool: up to 5 slides, deduped by id — the first few continue-watching
+  // items, then recently-added items with fanart to fill out the carousel.
+  const heroItems: { movie: Movie; isContinueWatching: boolean }[] = [];
+  const heroIds = new Set<string>();
+  for (const m of continueWatching.slice(0, 3)) {
+    if (heroIds.has(m.id)) continue;
+    heroIds.add(m.id);
+    heroItems.push({ movie: m, isContinueWatching: true });
+  }
+  for (const m of recentlyAdded) {
+    if (heroItems.length >= 5) break;
+    if (!m.fanartPath || heroIds.has(m.id)) continue;
+    heroIds.add(m.id);
+    heroItems.push({ movie: m, isContinueWatching: false });
+  }
 
   return (
     <AmbientProvider>
@@ -291,7 +295,6 @@ export default function HomePage() {
           root div doesn't scroll — the inner div does), so the glow stays put
           while rows scroll through it. */}
       <AmbientField />
-      <AmbientBaseFromHero posterBlur={heroMovie?.posterBlur} />
       <input
         ref={fileInputRef}
         type="file"
@@ -320,15 +323,14 @@ export default function HomePage() {
 
         <div className="flex-1 overflow-y-scroll">
         <TabsContent value="home">
-          {heroMovie && (
-            <HomeHero
-              movie={heroMovie}
-              isContinueWatching={heroIsContinueWatching}
-            />
+          {(heroItems.length > 0 || wallMovies.length > 0) && (
+            <HomeHero items={heroItems} wallMovies={wallMovies} />
           )}
           <div
             className={`stagger-children flex flex-col gap-6 px-4 pb-8 md:gap-10 md:px-12 ${
-              heroMovie ? "relative z-10 -mt-8 md:-mt-14" : "pt-16"
+              heroItems.length > 0 || wallMovies.length > 0
+                ? "relative z-10 pt-6 md:pt-8"
+                : "pt-16"
             }`}
           >
             {/* Media Libraries */}
@@ -378,6 +380,7 @@ export default function HomePage() {
                     year={movie.year}
                     fanartPath={movie.fanartPath}
                     posterPath={movie.posterPath}
+                    posterBlur={movie.posterBlur}
                     progress={movie.progress}
                     discLabel={movie.discLabel}
                     currentDisc={movie.currentDisc}

@@ -280,6 +280,29 @@
   animation: kenBurns 36s ease-in-out infinite alternate;
 }
 
+/* Hero slide indicator fill — the active carousel bar fills over the 8s dwell,
+   restarted per slide (see components/home/home-hero.tsx). Disabled under
+   reduced motion (the bar just stays statically lit). */
+@keyframes heroProgress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+.animate-hero-progress {
+  animation: heroProgress 8s linear forwards;
+}
+
+/* Mosaic wall drift — each column of the home hero poster wall translates a full
+   half-height so the duplicated (back-to-back) stack loops seamlessly. Per-column
+   duration + direction set inline (see components/home/hero-mosaic.tsx). Paused
+   under reduced motion → a static tilted wall. */
+@keyframes mosaicDrift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+.animate-mosaic-drift {
+  animation: mosaicDrift var(--drift-dur, 80s) linear infinite;
+}
+
 /* Ambilight breathing — very slow opacity pulse for the home ambient glow layer
    (see components/home/ambient-field.tsx). Pure CSS so it costs nothing while
    the color-easing rAF loop is idle; disabled under reduced motion. */

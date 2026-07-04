@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
           fanartPath: movies.fanartPath,
           fanartMtime: movies.fanartMtime,
           folderPath: movies.folderPath,
+          overview: movies.overview,
           communityRating: movies.communityRating,
           personalRating: userMovieData.personalRating,
           playbackPositionSeconds: userMovieData.playbackPositionSeconds,
@@ -295,6 +296,11 @@ export async function GET(request: NextRequest) {
         rawOrderClause = sortOrder === "asc"
           ? sql`COALESCE(${moviePeople.ageAtRelease}, 999) ASC`
           : sql`COALESCE(${moviePeople.ageAtRelease}, -1) DESC`;
+        break;
+      case "random":
+        // Random sample across all libraries (home hero wall) — every movie
+        // gets a chance. SQLite RANDOM() per-row is cheap at library scale.
+        rawOrderClause = sql`RANDOM()`;
         break;
       case "dateAdded":
       default:

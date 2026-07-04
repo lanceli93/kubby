@@ -1,5 +1,26 @@
 # Completed Features
 
+## 2026-07-05: 首页 Hero 三轮迭代 — Netflix 式动态海报马赛克墙 + 聚光灯同步
+
+Round 1 的单张剧照 Hero 被用户否掉（"平庸/没有呼吸感/按钮不好看"）。三轮迭代后定稿：
+
+### Round 2: 轮播 + 白底主按钮
+8s 交叉淡入轮播（继续观看前 3 + 最新添加补足 5 部）、白底黑字圆形播放按钮（去掉误看成下划线的内嵌进度线）、两行剧情简介、可点击的底部时长指示条、逐片环境光换色。悬浮海报卡（TiltCard）后来被 Round 3 的墙取代。
+
+### Round 3: 动态海报马赛克墙 (`hero-mosaic.tsx`, new)
+用户给了 Netflix 登录页的倾斜海报墙截图，要求做成"活的"。实现：16 列海报（随机采样 60 部，`sort=random` 新增到 movies API——每部影片都有机会上墙），整面墙 `perspective(1600px) rotateX(24°) rotateZ(-16°)`（画的底边朝观者倾 + 逆时针转），每列独立速度（70–125s）无缝 translateY 循环、相邻列反向，每列第 3 张有 fanart 的换横版卡。列内容复制两份 + pb 补 gap 使 -50% 循环无缝。角度经 4 次用户实时调参定稿。
+
+### Round 4: 聚光灯同步（墙驱动 Hero）
+架构反转：**墙是节拍器**。每 8s 从"完整可见区"（中间约六列、避开左下文字块与底部渐隐）随机选一张亮牌——暗色遮罩淡出（改为逐卡遮罩，替代全局 bg-black/55）、背后 blur-2xl 光晕绽放（复用 movie-card hover 光晕语言）、ring 增亮、scale 1.05、z-10 盖过邻居——并通过 `onFeature` 回调上报影片；Now Showing 文字块、播放/详情按钮、环境光底色全部跟随这部影片。单一时钟，无二次计时器；旧轮播只在墙不足 8 部时兜底。
+
+**关键坑（已记录 memory）**: perspective 变换下 `getBoundingClientRect` 返回的是倾斜卡片的外接 AABB（远大于卡片本身），"整卡在区域内"永远不成立——必须用卡片中心点 + 放宽边距判定，否则聚光灯永远选不出候选（首次实测 eligibleCount=0，标题 8.5s 不换）。
+
+### 杂项修复
+- Hero 标题：单行 truncate + `leading-[1.25]`（text-5xl 默认行高裁掉 g/y/p 下伸部）+ 宽度放宽到 max-w-3xl。
+- 继续观看卡、媒体库卡补上 hover 光晕（媒体库无 posterBlur 用封面图本身）。
+- 指示条 z-20（内容行 z-10 上叠会挡点击）；媒体库行不再上叠 Hero，改纯下移。
+- 踩坑：JSX 注释不能插在 `{cond && (` 和元素之间（Turbopack parse error）；dev server Jest worker 崩溃需手动重启。
+
 ## 2026-07-04 (9): 首页视觉升级 — Now Showing Hero + Ambilight 环境光场
 
 User request: "主页面现在略显朴素" after the 3D poster wall work. Direction chosen (A+B from proposal): full-bleed hero + ambient light field. Verified live in Chrome (hover retarget, tab pills, sidebar, favorites tab, scrolled state; zero console errors).
