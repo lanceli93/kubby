@@ -1,5 +1,9 @@
 # Completed Features
 
+## 2026-07-04 (2): Keyframe cache invalidation on source file swap
+
+The keyframe index (fix 2 below) cached scan results keyed only by file path. Swapping a source file in place (same path, new content — e.g. re-encoding or replacing a bad rip) returned the old file's keyframes, so every seek snapped into roughly the first 2 minutes even though the DB duration had updated correctly from the rescan. `getKeyframeIndex()` now stats the file and stores `mtimeMs`+`size` alongside the cached promise; a mismatch triggers a fresh ffprobe scan instead of reusing the stale entry.
+
 ## 2026-07-04: Seek polish — progress-bar backward flick, 8K direct-play keyframe snapping
 
 Follow-up fixes to the 2026-07-03 (2) batch, from user testing feedback.
