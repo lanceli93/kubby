@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
@@ -38,14 +37,6 @@ import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { FrameScrubber } from "@/components/movie/frame-scrubber";
-
-// Cinema "projection booth" ambience over the hero fanart. WebGL/Three.js is
-// heavy, so it's dynamically imported and kept out of the initial bundle; no
-// loading placeholder — it's ambience, it should just appear when ready.
-const ProjectorBeam = dynamic(
-  () => import("@/components/movie/projector-beam").then((m) => m.ProjectorBeam),
-  { ssr: false },
-);
 
 interface DiscInfo {
   id: string;
@@ -384,15 +375,6 @@ export default function MovieDetailPage() {
               onError={() => onImgError(movie.fanartPath!)}
             />
           </div>
-        )}
-
-        {/* Projector light-cone ambience — WebGL beam + dust + grain over the
-            fanart. Sibling right after the fanart block: z-0 keeps it above the
-            fanart but below the gradients/content row (and the z-20 fanart-mode
-            overlay). Only over real fanart, and never while fanart is
-            fullscreen (unmounts so no WebGL churn behind the overlay). */}
-        {movie.fanartPath && !imgErrors.has(movie.fanartPath) && !fanartMode && (
-          <ProjectorBeam />
         )}
 
         {/* Fanart fullscreen click-to-dismiss overlay */}

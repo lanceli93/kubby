@@ -1,5 +1,21 @@
 # Completed Features
 
+## 2026-07-04 (7): 海报墙布局修复 + 移除放映机光锥
+
+Second feedback round on the Cover Flow wall; all verified live in Chrome.
+
+### 1. 墙只占屏幕中间一小块 / 遮挡排序标签 (`poster-wall.tsx`)
+Two stacked causes. (a) The wall's `fixed inset-0` overlay was rendered inside the movie grid, whose `animate-fade-in-up` entrance animation leaves a `transform` on an ancestor — a transformed ancestor turns `position: fixed` into "fixed relative to that box", shrinking the overlay to the grid's rect (measured 1601×770 at x=48 y=93 in a 1707×932 viewport). Fixed with `createPortal(..., document.body)`. (b) The camera was fixed at z=7.5 regardless of viewport, and the focused poster could overlap the pill row. Replaced with a `refit()` (init + resize): reserves 96px top (pills) + 150px bottom (HUD), solves camera distance so the focused poster exactly fills the remaining band (`camZ = FOCUS_Z + visH/(2·tan(fov/2))`), and offsets camera y so the band centers between the reserves; backdrop enlarged to 200×120 and far plane to 500 so no black edges at large camZ.
+
+### 2. 点击海报后闪过 library 网格再进详情
+`onClick`/Enter called `onClose()` before `router.push()` — the grid became visible for the frames between wall unmount and detail mount. Removed the `onClose()` in both paths; the wall stays mounted until the route change unmounts the movies page. Verified with a MutationObserver during navigation: zero frames where the grid was visible without the detail page. ESC/X still close normally.
+
+### 3. HUD 全透明与海报文字重叠
+HUD got an opaque backing (`bg-[#0b0b12]/90 backdrop-blur-md border-white/10 shadow-2xl`), and the reserved bottom band means it no longer sits on top of the focused poster at all.
+
+### 4. 放映机光锥移除 (`projector-beam.tsx` deleted)
+User verdict after seeing the visible version: adds nothing, not good-looking ("打光感觉没什么用也不好看"). Deleted the component, its dynamic import and mount in the detail page. The premultiplied-alpha compositing lesson it produced stays recorded in (5) and memory.
+
 ## 2026-07-04 (6): 海报墙 v2 — 唱片架 Cover Flow + 元数据整合(重写)
 
 User rejected the v1 flat curved grid as crude ("还不如苹果的 cover flow 好看") and asked for functional metadata interaction, not just looks. Full rewrite of `poster-wall.tsx` (~1100 lines), verified live in Chrome.

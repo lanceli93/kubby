@@ -1030,17 +1030,11 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
   图层与海报包裹层上——玻璃信息面板的祖先链上不能有 transform(见上方 Pitfall)。
 - **海报**: 大海报接入 TiltCard(maxTilt 4)+ 常亮环境光晕;`data-vt-poster`
   元素保持不变,View Transition 飞入不受影响。
-- **放映机光锥**: `components/movie/projector-beam.tsx` — 透明 WebGL 覆盖层
-  (`pointer-events-none absolute inset-0 z-0`):光束(右上入射、暖白核心
-  + 靛紫边缘、~3% 灯闪)、160 颗光束内尘埃粒子、胶片颗粒。dynamic import
-  (`ssr:false`),仅在有 fanart 且非 fanartMode 时挂载;减动效/无 WebGL2/移动端
-  不渲染;IntersectionObserver + visibilitychange 暂停 rAF;卸载时完整 dispose。
-  **合成方式(Pitfall)**: 亮 fanart 上叠加低强度加色光在感知上不可见——真实放映机
-  光束能被看见是因为周围环境暗。因此 shader 输出预乘色
-  (`rgb = color·light, a = light + dim`),canvas 以 `premultipliedAlpha: true`
-  合成:beam 外区域用 alpha 压暗 fanart(uDim 0.28),beam 内 rgb 加光,形成对比。
-  场景内材质相应用 `CustomBlending(ONE, ONE_MINUS_SRC_ALPHA)`——不能用 three 的
-  `AdditiveBlending(SRC_ALPHA, ONE)`,预乘输出会被 alpha 二次相乘、强度平方级衰减。
+- **放映机光锥(已移除)**: `projector-beam.tsx` 曾在 hero 上叠加 WebGL 光束/
+  尘埃/胶片颗粒,用户体验后否决("没什么用也不好看"),2026-07-04 删除。留下的
+  经验(透明 WebGL 覆盖层画"光"必须预乘 alpha 合成 + 压暗光外区域制造对比,
+  three 的 `AdditiveBlending` 会把预乘输出的强度平方级衰减)记录在
+  `docs/feature-completed.md` 2026-07-04 (5)。
 
 ### WebGL 海报墙 — Cover Flow (Phase 3, v2 重做)
 
@@ -1068,6 +1062,13 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
   setPointerCapture/release 需 try/catch(pointer 已消失时会抛 NotFoundError)。
 - **纹理 LRU**: 并发 6、按距焦点优先级流式加载;仅保留焦点 ±60 窗口内纹理,
   硬上限 140,驱逐时 dispose 并回退占位色 —— 500 部大库显存可控。
+- **视口适配**: 组件用 `createPortal(…, document.body)` 渲染——movies 网格的
+  入场动画会在祖先上留下 `transform`,使 `position: fixed` 退化为相对该盒子
+  定位(墙缩成网格大小,**Pitfall**)。相机由 `refit()`(初始 + resize)求解:
+  顶部预留 96px(排序 pills)、底部 150px(HUD),焦点海报恰好填满剩余带高
+  (`camZ = FOCUS_Z + visH/(2·tan(fov/2))` + y 偏移居中)。
+- **导航**: 点击/Enter 进详情时**不**先 onClose——墙保持挂载直到路由切换卸载
+  movies 页,否则网格会闪现一帧。ESC/X 才调 onClose。
 - Three.js 独立 chunk(dynamic import)不变;平面网格仍为默认视图。
 
 **圆角层级**: 输入框 `rounded-md` (6px) → 按钮 `rounded-lg` (8px) → 卡片容器 `rounded-xl` (12px)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -464,9 +465,11 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
     const scene = new Scene();
     scene.background = new Color(0x06060a);
 
-    // Big unlit gradient plane far behind everything for depth.
+    // Big unlit gradient plane far behind everything for depth. Sized generously
+    // so black never shows past its edges even at large camera distances; also
+    // recentered/rescaled from refit() so it always covers the visible field.
     const bgTexture = makeBackgroundTexture();
-    const bgGeo = new PlaneGeometry(60, 34);
+    const bgGeo = new PlaneGeometry(200, 120);
     const bgMat = new MeshBasicMaterial({ map: bgTexture, depthWrite: false });
     const bgMesh = new Mesh(bgGeo, bgMat);
     bgMesh.position.set(0, 0, -8);
@@ -476,10 +479,39 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       45,
       container.clientWidth / container.clientHeight,
       0.1,
-      200,
+      500,
     );
-    camera.position.set(0, 0.35, 7.5);
-    camera.lookAt(0, 0, 0);
+
+    // ---- Adaptive framing --------------------------------------------------
+    // Reserve pixel bands top (sort pills) and bottom (HUD) so the focused
+    // poster never collides with them; scale the camera distance so the focused
+    // poster exactly fills the usable band, and offset it into that band's
+    // center (straight-on — no downward tilt).
+    const TOP_RESERVE_PX = 96; // sort pills
+    const BOTTOM_RESERVE_PX = 150; // HUD + margin
+    const FILL = 1.0; // focused poster exactly fills the usable band
+    const fovRad = (45 * Math.PI) / 180;
+    const refit = () => {
+      const W = container.clientWidth;
+      const H = container.clientHeight;
+      camera.aspect = W / H;
+      const usable = Math.max(300, H - TOP_RESERVE_PX - BOTTOM_RESERVE_PX);
+      // Focused poster world height at plane z = FOCUS_Z.
+      const hW = POSTER_H * FOCUS_SCALE * FILL;
+      // Frustum height (world units) that must be visible at the focus plane so
+      // the poster occupies exactly `usable` px of the `H` px viewport.
+      const visH = (hW * H) / usable;
+      const camZ = FOCUS_Z + visH / (2 * Math.tan(fovRad / 2));
+      // Shift the poster into the usable band's center: that center sits
+      // (TOP_RESERVE - BOTTOM_RESERVE)/2 px below the viewport center.
+      const yW = (visH * (TOP_RESERVE_PX - BOTTOM_RESERVE_PX)) / (2 * H);
+      camera.position.set(0, yW, camZ);
+      camera.lookAt(0, yW, 0);
+      camera.updateProjectionMatrix();
+      // Keep the gradient backdrop covering the whole field behind the wall.
+      bgMesh.position.set(0, yW, -8);
+    };
+    refit();
 
     const renderer = new WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -1011,8 +1043,9 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       const isFocused = tiles[focusedIdx] === hoveredTile;
       if (isFocused) {
         // Clicking the focused poster opens it (separators are not clickable).
+        // Do NOT call onClose here: leaving the wall mounted until the route
+        // change unmounts the movies page prevents the grid from flashing.
         if (hoveredTile.item.kind === "movie") {
-          onCloseRef.current();
           routerRef.current.push(`/movies/${hoveredTile.item.movie.id}`);
         }
       } else {
@@ -1060,7 +1093,7 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
           e.preventDefault();
           const tile = tiles[clampFocusInt(focusFloat)];
           if (tile && tile.item.kind === "movie") {
-            onCloseRef.current();
+            // See onClick: keep the wall mounted so the grid never flashes.
             routerRef.current.push(`/movies/${tile.item.movie.id}`);
           }
           break;
@@ -1085,9 +1118,10 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
     document.addEventListener("visibilitychange", onVisibility);
 
     const onResize = () => {
-      camera.aspect = container.clientWidth / container.clientHeight;
-      camera.updateProjectionMatrix();
       renderer.setSize(container.clientWidth, container.clientHeight);
+      refit();
+      // Repaint even when the animation loop is settled so a window resize
+      // never leaves a stale small viewport. (renderOnce is a no-op mid-loop.)
       renderOnce();
     };
     const resizeObserver = new ResizeObserver(onResize);
@@ -1145,7 +1179,11 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
     applySortRef.current?.(key, nextOrder);
   };
 
-  return (
+  // Portal to <body>: the wall is rendered inside the movie grid, whose
+  // entrance animation leaves a `transform` on an ancestor — that turns
+  // `position: fixed` into "fixed relative to the grid box", shrinking the
+  // wall to the grid's rect instead of the viewport.
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-[#06060a]">
       <div ref={containerRef} className="absolute inset-0" style={{ touchAction: "none" }} />
 
@@ -1195,7 +1233,7 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
       {/* Metadata HUD (bottom-center) */}
       {!isEmpty && hud && (
         <div className="pointer-events-none absolute bottom-8 left-1/2 z-10 -translate-x-1/2 px-4 text-center">
-          <div className="glass-card mx-auto max-w-[90vw] rounded-2xl px-6 py-3">
+          <div className="mx-auto max-w-[90vw] rounded-xl border border-white/10 bg-[#0b0b12]/90 backdrop-blur-md px-6 py-3 shadow-2xl">
             <div className="max-w-[80vw] truncate text-lg font-semibold text-foreground">
               {hud.title}
             </div>
@@ -1229,6 +1267,7 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
