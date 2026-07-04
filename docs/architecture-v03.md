@@ -1073,8 +1073,26 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
   松手带速度甩动 ±6 张封顶)、点侧面聚焦、点焦点海报/Enter 进详情、
   ←/→/PageUp/PageDown/Home/End 键盘导航、ESC/X 退出。
   setPointerCapture/release 需 try/catch(pointer 已消失时会抛 NotFoundError)。
+- **数据加载(独立渐进式,无上限)**: 海报墙**不再复用 movies 网格已滚动加载的
+  数组**(旧逻辑:网格加载完则复用、否则单发 `limit=500`,内容取决于滚动进度且
+  封顶 500——已废弃)。改为 movies 页 `openPosterWall` 自持一个 `useRef` load
+  token,按当前筛选条件分页 `offset`/`limit=200` 循环拉取,每页到达即
+  `setWallMovies([...acc])` 增量喂给墙;`closePosterWall`/重开会 bump token 让
+  在途循环静默中止。API(`/api/movies`)标准列表路径:仅当同时带 `offset` **且**
+  显式 `limit` 时才按该 limit 分页(clamp 1..500/页),否则维持 50/页——网格不带
+  `limit` 故不受影响。整库(>500)完整加载。
+- **键控 reconciliation(增量不重下、不闪)**: 渲染器/scene/闭包只在挂载时建一次
+  (effect 依赖 `[isEmpty]`,**绝不**随 `movies` 增长重跑,否则整机重建 + 重下所有
+  纹理);`movies` 引用变化经**独立** `[movies]` effect → `rebuildRef` 触发。
+  `buildTiles(flow)` 按 `movie.id` 复用既有 tile:命中则保留其 mesh/材质/纹理/
+  `cur` 姿态仅刷新 `item`(不 dispose、不重下、不弹跳),仅 `isNew` 新 tile 入场
+  并从 `scale×0.9` 缓入;分隔卡(合成 key)与消失的电影一律 `disposeTile` 全量
+  释放(材质 + 倒影材质 + 纹理 + sepTexture,无泄漏)。焦点按 movie.id 锚定,
+  跨追加/重排保持。排序 pill 与渐进追加共用这一条 `rebuild` 路径。
 - **纹理 LRU**: 并发 6、按距焦点优先级流式加载;仅保留焦点 ±60 窗口内纹理,
-  硬上限 140,驱逐时 dispose 并回退占位色 —— 500 部大库显存可控。
+  硬上限 140,驱逐时 dispose 并回退占位色 —— 显存与库大小解耦,数千部亦可控。
+  大 N 热点已消除:`pump` 按索引迭代(去掉 `tiles.indexOf` 的 O(n²));hover
+  raycast 仅测焦点 ±40 窗口内 tile(窗外不可见/不可交互)。
 - **视口适配**: 组件用 `createPortal(…, document.body)` 渲染——movies 网格的
   入场动画会在祖先上留下 `transform`,使 `position: fixed` 退化为相对该盒子
   定位(墙缩成网格大小,**Pitfall**)。相机由 `refit()`(初始 + resize)求解:

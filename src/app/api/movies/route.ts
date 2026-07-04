@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
     const libraryId = searchParams.get("libraryId");
     const search = searchParams.get("search");
     const sort = searchParams.get("sort") || "dateAdded";
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const limitParam = searchParams.get("limit");
+    const limit = parseInt(limitParam || "100", 10);
     const exclude = searchParams.get("exclude");
     const filter = searchParams.get("filter");
     const offsetParam = searchParams.get("offset");
@@ -362,7 +363,15 @@ export async function GET(request: NextRequest) {
       baseQuery = baseQuery.where(and(...conditions));
     }
 
-    const pageLimit = offset !== null ? 50 : limit;
+    // Paginated grid requests send `offset` with NO `limit` → 50/page. The
+    // poster wall sends both `offset` AND an explicit `limit` to pull larger
+    // pages independently; honor that limit (clamped to a sane range).
+    const pageLimit =
+      offset !== null
+        ? limitParam !== null
+          ? Math.max(1, Math.min(500, limit))
+          : 50
+        : limit;
 
     let orderedQuery = rawOrderClause
       ? baseQuery.orderBy(rawOrderClause)
