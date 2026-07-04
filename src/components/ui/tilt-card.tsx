@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
  * and flat, preserving current behavior.
  *
  * CAUTION: `preserve-3d` breaks `backdrop-filter` on descendants in some Chromium
- * versions. Keep blur bars OUTSIDE the tilting subtree (place them as siblings of
- * TiltCard, or absolutely positioned relative to the outer group), not inside it.
+ * versions. Overlays placed inside the tilting subtree (hover bars, scrims) must
+ * NOT rely on `backdrop-blur` — use an opaque or gradient background instead.
  */
 interface TiltCardProps {
   children: ReactNode;

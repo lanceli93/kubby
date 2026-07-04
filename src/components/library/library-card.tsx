@@ -113,9 +113,10 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       style={{ width: 360 }}
     >
       {/* Cover image area — shell NOT overflow-hidden so tilt can bleed. The
-          tilting subtree (image + name/status overlays) is wrapped in
-          TiltCard; the backdrop-blur hover menu bar stays OUTSIDE it
-          (preserve-3d breaks backdrop-filter on descendants in Chromium). */}
+          tilting subtree (image + name/status overlays + hover menu bar) is
+          wrapped in TiltCard so it all tilts as one object; the menu bar uses
+          a gradient scrim, not backdrop-blur (preserve-3d breaks
+          backdrop-filter on descendants in Chromium). */}
       <div className="relative w-full" style={{ height: 200 }}>
         <TiltCard disabled={menuOpen} className="h-full w-full">
           <div className="relative h-full w-full overflow-hidden rounded-md ring-1 ring-white/[0.06] bg-white/[0.05]">
@@ -124,7 +125,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 src={resolveImageSrc(coverImage)}
                 alt={name}
                 fill
-                className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
+                className="object-cover transition-fluid"
                 sizes="360px"
                 onError={() => setImgError(true)}
               />
@@ -179,94 +180,95 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
                 </button>
               </div>
             )}
-          </div>
-        </TiltCard>
 
-        {/* Hover: ⋯ menu button — kept OUTSIDE TiltCard so backdrop-blur
-            renders correctly (preserve-3d breaks it in Chromium). */}
-        <div className={`absolute -inset-x-1 -bottom-1 flex justify-end px-3 pt-1.5 pb-2.5 rounded-b-md backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20 outline-none"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <DropdownMenuItem
-                disabled={scanning}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  startScan();
-                }}
-              >
-                <HardDriveDownload className="h-4 w-4" />
-                {tHome("scanLibrary")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditName(name);
-                  setEditFolderPaths(folderPaths ?? []);
-                  setNewFolderPath("");
-                  setEditScraperEnabled(scraperEnabled ?? false);
-                  setEditJellyfinCompat(jellyfinCompat ?? false);
-                  setEditMetadataLanguage(metadataLanguage || "en");
-                  setEditScraperError("");
-                  fetch("/api/settings/scraper").then((r) => r.json()).then((d) => setEditTmdbConfigured(d.configured)).catch(() => setEditTmdbConfigured(false));
-                  setEditOpen(true);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-                {tHome("editLibrary")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditImage?.();
-                }}
-              >
-                <ImageIcon className="h-4 w-4" />
-                {tHome("editImage")}
-              </DropdownMenuItem>
-              {hasCustomCover && (
-                <DropdownMenuItem
+            {/* Hover: ⋯ menu bar — gradient scrim (not backdrop-blur, which
+                doesn't render inside preserve-3d), sits on the cover plane so
+                it tilts with the card. */}
+            <div className={`absolute inset-x-0 bottom-0 flex justify-end px-3 pt-6 pb-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+              <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20 outline-none"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    onRemoveImage?.();
                   }}
                 >
-                  <ImageOff className="h-4 w-4" />
-                  {tHome("removeImage")}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteOpen(true);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-                {tHome("deleteLibrary")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                  <DropdownMenuItem
+                    disabled={scanning}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startScan();
+                    }}
+                  >
+                    <HardDriveDownload className="h-4 w-4" />
+                    {tHome("scanLibrary")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditName(name);
+                      setEditFolderPaths(folderPaths ?? []);
+                      setNewFolderPath("");
+                      setEditScraperEnabled(scraperEnabled ?? false);
+                      setEditJellyfinCompat(jellyfinCompat ?? false);
+                      setEditMetadataLanguage(metadataLanguage || "en");
+                      setEditScraperError("");
+                      fetch("/api/settings/scraper").then((r) => r.json()).then((d) => setEditTmdbConfigured(d.configured)).catch(() => setEditTmdbConfigured(false));
+                      setEditOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    {tHome("editLibrary")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditImage?.();
+                    }}
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    {tHome("editImage")}
+                  </DropdownMenuItem>
+                  {hasCustomCover && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveImage?.();
+                      }}
+                    >
+                      <ImageOff className="h-4 w-4" />
+                      {tHome("removeImage")}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {tHome("deleteLibrary")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </TiltCard>
       </div>
 
       {/* Name & count below card */}

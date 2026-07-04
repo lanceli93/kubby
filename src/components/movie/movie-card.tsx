@@ -121,9 +121,10 @@ export function MovieCard({
       }}
     >
       {/* Poster shell — NOT overflow-hidden so tilt + ambient glow can bleed.
-          The tilting subtree (image + badges + play button) is wrapped in
-          TiltCard; the progress bar and backdrop-blur hover bar stay OUTSIDE
-          it (preserve-3d breaks backdrop-filter on descendants in Chromium). */}
+          The tilting subtree (image + badges + play button + hover/progress
+          bars) is wrapped in TiltCard so it all tilts as one object; overlay
+          bars use a gradient scrim, not backdrop-blur (preserve-3d breaks
+          backdrop-filter on descendants in Chromium). */}
       <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
         {/* Ambient glow (ambilight) — blurred poster bleeding behind, hover-only */}
         {posterBlur && (
@@ -141,7 +142,7 @@ export function MovieCard({
                 src={resolveImageSrc(posterPath, 360)}
                 alt={title}
                 fill
-                className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
+                className="object-cover transition-fluid"
                 sizes="180px"
                 onError={() => setImgError(true)}
                 {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
@@ -193,125 +194,126 @@ export function MovieCard({
                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
               </button>
             </div>
-          </div>
-        </TiltCard>
 
-        {/* Progress bar — outside tilt subtree, rounded to match poster */}
-        {showProgress && progress != null && progress > 0 && (
-          <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-md bg-white/20 z-10">
-            <div
-              className="h-full bg-primary transition-all"
-              style={{ width: `${Math.max(progress, 2)}%` }}
-            />
-          </div>
-        )}
+            {/* Hover overlay bar — gradient scrim (not backdrop-blur, which
+                doesn't render inside preserve-3d), sits on the poster plane so
+                it tilts with the card. */}
+            <div className={`absolute inset-x-0 bottom-0 flex items-center justify-between px-3 pt-6 pb-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent transition-opacity duration-200 ease-out z-[8] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+              {/* Left: Watched toggle */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleWatched?.();
+                }}
+                className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/20 ${
+                  isWatched ? "text-green-400" : "text-white/70"
+                }`}
+                title={t("watched")}
+              >
+                <CheckCircle className="h-4 w-4" />
+              </button>
 
-        {/* Hover overlay bar — glass, fades in. Kept OUTSIDE TiltCard so
-            backdrop-blur renders correctly (preserve-3d breaks it in Chromium). */}
-        <div className={`absolute -inset-x-1 -bottom-1 flex items-center justify-between px-3 pt-1.5 pb-2.5 rounded-b-md backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[8] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-          {/* Left: Watched toggle */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleWatched?.();
-            }}
-            className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/20 ${
-              isWatched ? "text-green-400" : "text-white/70"
-            }`}
-            title={t("watched")}
-          >
-            <CheckCircle className="h-4 w-4" />
-          </button>
-
-          <div className="flex items-center gap-0.5">
-            {/* Favorite toggle */}
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleFavorite?.();
-              }}
-              className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/20 ${
-                isFavorite ? "text-red-400" : "text-white/70"
-              }`}
-              title={t("favorite")}
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-400" : ""}`} />
-            </button>
-
-            {/* More menu */}
-            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-              <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-0.5">
+                {/* Favorite toggle */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    onToggleFavorite?.();
                   }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20"
+                  className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/20 ${
+                    isFavorite ? "text-red-400" : "text-white/70"
+                  }`}
+                  title={t("favorite")}
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-400" : ""}`} />
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/movies/${id}/play`);
-                  }}
-                >
-                  <Play className="h-4 w-4" />
-                  {t("play")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMetadataOpen(true);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                  {t("editMetadata")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setImageEditorOpen(true);
-                  }}
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  {tMeta("editImages")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMediaInfoOpen(true);
-                  }}
-                >
-                  <Info className="h-4 w-4" />
-                  {t("mediaInfo")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteOpen(true);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t("deleteMovie")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+                {/* More menu */}
+                <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/movies/${id}/play`);
+                      }}
+                    >
+                      <Play className="h-4 w-4" />
+                      {t("play")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMetadataOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      {t("editMetadata")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImageEditorOpen(true);
+                      }}
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                      {tMeta("editImages")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMediaInfoOpen(true);
+                      }}
+                    >
+                      <Info className="h-4 w-4" />
+                      {t("mediaInfo")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {t("deleteMovie")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            {/* Progress bar — bottom of the poster, tilts with the card */}
+            {showProgress && progress != null && progress > 0 && (
+              <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-white/20 z-[9]">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${Math.max(progress, 2)}%` }}
+                />
+              </div>
+            )}
           </div>
-        </div>
+        </TiltCard>
       </div>
 
       {/* Title & year below poster */}

@@ -43,9 +43,8 @@ export function ContinueWatchingCard({
     <div className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.02]" style={{ width: 320 }}>
       <Link href={`/movies/${id}`}>
         {/* Landscape card shell — 16:9, NOT overflow-hidden so tilt can bleed.
-            The tilting subtree (image + title overlay + play button) is
-            wrapped in TiltCard; the progress bar stays OUTSIDE it (preserve-3d
-            breaks backdrop-filter on descendants in Chromium). */}
+            The tilting subtree (image + title overlay + play button + progress
+            bar) is wrapped in TiltCard so it all tilts as one object. */}
         <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
           <TiltCard className="h-full w-full">
             <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
@@ -54,7 +53,7 @@ export function ContinueWatchingCard({
                   src={resolveImageSrc(imageSrc, 640)}
                   alt={title}
                   fill
-                  className="object-cover transition-fluid group-hover:scale-105"
+                  className="object-cover transition-fluid"
                   sizes="320px"
                   onError={() => setImgError(true)}
                 />
@@ -91,18 +90,18 @@ export function ContinueWatchingCard({
                   <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
                 </button>
               </div>
+
+              {/* Progress bar — bottom of the card, tilts with it */}
+              {progress != null && progress > 0 && (
+                <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-white/20 z-10">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${Math.max(progress, 2)}%` }}
+                  />
+                </div>
+              )}
             </div>
           </TiltCard>
-
-          {/* Progress bar — outside tilt subtree, rounded to match card */}
-          {progress != null && progress > 0 && (
-            <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-md bg-white/20 z-10">
-              <div
-                className="h-full bg-primary transition-all"
-                style={{ width: `${Math.max(progress, 2)}%` }}
-              />
-            </div>
-          )}
         </div>
       </Link>
     </div>

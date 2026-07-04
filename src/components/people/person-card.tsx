@@ -81,9 +81,10 @@ export function PersonCard({
       href={`/people/${id}`}
     >
       {/* Photo shell — NOT overflow-hidden so tilt + ambient glow can bleed.
-          The tilting subtree (image + badges) is wrapped in TiltCard; the
-          backdrop-blur hover bar stays OUTSIDE it (preserve-3d breaks
-          backdrop-filter on descendants in Chromium). */}
+          The tilting subtree (image + badges + hover bar) is wrapped in
+          TiltCard so it all tilts as one object; the hover bar uses a gradient
+          scrim, not backdrop-blur (preserve-3d breaks backdrop-filter on
+          descendants in Chromium). */}
       <div className="relative" style={{ width, height }}>
         {/* Ambient glow (ambilight) — blurred photo bleeding behind, hover-only */}
         {photoBlur && (
@@ -101,7 +102,7 @@ export function PersonCard({
                 src={resolveImageSrc(photoPath, width * 2)}
                 alt={name}
                 fill
-                className={`object-cover transition-fluid ${menuOpen ? "scale-105" : "group-hover:scale-105"}`}
+                className="object-cover transition-fluid"
                 sizes={`${width}px`}
                 onError={() => setImgError(true)}
                 {...(photoBlur ? { placeholder: "blur" as const, blurDataURL: photoBlur } : {})}
@@ -131,80 +132,81 @@ export function PersonCard({
                 </span>
               </div>
             )}
-          </div>
-        </TiltCard>
 
-        {/* Hover overlay bar — glass, fades in. Kept OUTSIDE TiltCard so
-            backdrop-blur renders correctly (preserve-3d breaks it in Chromium). */}
-        <div className={`absolute -inset-x-1 -bottom-1 flex items-center ${onToggleFavorite ? "justify-between" : "justify-end"} px-3 pt-1.5 pb-2.5 rounded-b-md backdrop-blur-md bg-black/30 border-t border-white/10 transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-          {onToggleFavorite && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleFavorite();
-              }}
-              className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/20"
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
-            </button>
-          )}
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMetadataOpen(true);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-                {tMeta("editMetadata")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setImageEditorOpen(true);
-                }}
-              >
-                <ImageIcon className="h-4 w-4" />
-                {tMeta("editImages")}
-              </DropdownMenuItem>
-              {onDelete && (
-                <>
-                  <DropdownMenuSeparator />
+            {/* Hover overlay bar — gradient scrim (not backdrop-blur, which
+                doesn't render inside preserve-3d), sits on the photo plane so
+                it tilts with the card. */}
+            <div className={`absolute inset-x-0 bottom-0 flex items-center ${onToggleFavorite ? "justify-between" : "justify-end"} px-3 pt-6 pb-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+              {onToggleFavorite && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onToggleFavorite();
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
+                </button>
+              )}
+              <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
                   <DropdownMenuItem
-                    variant="destructive"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setDeleteOpen(true);
+                      setMetadataOpen(true);
                     }}
                   >
-                    <Trash2 className="h-4 w-4" />
-                    {t("deletePerson")}
+                    <Pencil className="h-4 w-4" />
+                    {tMeta("editMetadata")}
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImageEditorOpen(true);
+                    }}
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    {tMeta("editImages")}
+                  </DropdownMenuItem>
+                  {onDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        {t("deletePerson")}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </TiltCard>
       </div>
 
       {/* Name & role below poster */}

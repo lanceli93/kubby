@@ -223,7 +223,8 @@
    (see TiltCard). Floats the element above the poster plane when tilted.
    Override the distance per-element with `style={{ "--tilt-lift": "32px" }}`.
    NOTE: preserve-3d breaks backdrop-filter on descendants in some Chromium
-   builds — keep blur bars OUT of the tilting subtree. */
+   builds — overlays placed inside the tilting subtree must use opaque or
+   gradient backgrounds (not backdrop-blur) for their scrim. */
 .tilt-lift {
   transform: translateZ(var(--tilt-lift, 28px));
 }
