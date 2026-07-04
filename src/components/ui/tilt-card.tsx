@@ -11,9 +11,11 @@ import { cn } from "@/lib/utils";
  * follows the cursor. Children lift with `translateZ` by adding the `.tilt-lift`
  * utility class (or reading the exposed `--tilt-lift` distance) — see globals.css.
  *
- * Performance: pointer moves are rAF-throttled and applied via direct ref DOM
- * mutation (transform + CSS custom props), never React state, so hovering never
- * re-renders the child tree.
+ * Motion: the tilt is critically-damped — each pointer move sets a target and a
+ * self-terminating rAF loop lerps the current rotation/glare toward it (τ 90ms,
+ * framerate-independent), so a fast entry eases in instead of snapping. Applied
+ * via direct ref DOM mutation (transform + CSS custom props), never React state,
+ * so hovering never re-renders the child tree.
  *
  * Degradation: no tilt/glare on coarse pointers (touch) or when the user prefers
  * reduced motion — in those cases (and when `disabled`) children render unchanged
@@ -32,15 +34,25 @@ interface TiltCardProps {
   disabled?: boolean;
 }
 
-// Apple-like overshoot curve, matching `.transition-fluid` in globals.css.
-const RESET_TRANSITION = "transform 350ms cubic-bezier(0.22, 1, 0.36, 1)";
+// Damping time constant (ms): current eases toward target at 1 - exp(-dt/TAU).
+const TAU = 90;
+
+interface TiltState {
+  rx: number; // rotateX (deg)
+  ry: number; // rotateY (deg)
+  gx: number; // glare x (%)
+  gy: number; // glare y (%)
+}
 
 export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCardProps) {
   const tiltRef = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
-  // Latest pointer event, consumed by a single scheduled rAF.
-  const pendingRef = useRef<{ x: number; y: number } | null>(null);
+  // Where the tilt is heading vs. where it currently sits; the loop lerps one
+  // toward the other and writes `current` to the DOM.
+  const targetRef = useRef<TiltState>({ rx: 0, ry: 0, gx: 50, gy: 50 });
+  const currentRef = useRef<TiltState>({ rx: 0, ry: 0, gx: 50, gy: 50 });
   const rafRef = useRef<number | null>(null);
+  const lastTsRef = useRef<number | null>(null);
   // Whether interactive tilt is allowed (fine pointer + motion not reduced).
   const enabledRef = useRef(false);
 
@@ -60,48 +72,80 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
     };
   }, []);
 
-  const applyFrame = () => {
-    rafRef.current = null;
+  // Time-based lerp toward target; self-terminates once everything settles.
+  const tick = (ts: number) => {
     const el = tiltRef.current;
-    const pending = pendingRef.current;
-    if (!el || !pending) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    // Normalized pointer position within the card: 0..1 on each axis.
-    const px = (pending.x - rect.left) / rect.width;
-    const py = (pending.y - rect.top) / rect.height;
-    // Center → 0, edges → ±maxTilt. Positive Y (below center) tilts the top back.
-    const rotateY = (px - 0.5) * 2 * maxTilt;
-    const rotateX = -(py - 0.5) * 2 * maxTilt;
-    el.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    if (!el) {
+      rafRef.current = null;
+      lastTsRef.current = null;
+      return;
+    }
+    const last = lastTsRef.current ?? ts;
+    const dt = ts - last;
+    lastTsRef.current = ts;
+    const k = 1 - Math.exp(-dt / TAU);
+    const target = targetRef.current;
+    const cur = currentRef.current;
+    cur.rx += (target.rx - cur.rx) * k;
+    cur.ry += (target.ry - cur.ry) * k;
+    cur.gx += (target.gx - cur.gx) * k;
+    cur.gy += (target.gy - cur.gy) * k;
+    // Snap and stop once the residual is imperceptible.
+    const settled =
+      Math.abs(target.rx - cur.rx) < 0.02 &&
+      Math.abs(target.ry - cur.ry) < 0.02 &&
+      Math.abs(target.gx - cur.gx) < 0.1 &&
+      Math.abs(target.gy - cur.gy) < 0.1;
+    if (settled) {
+      cur.rx = target.rx;
+      cur.ry = target.ry;
+      cur.gx = target.gx;
+      cur.gy = target.gy;
+    }
+    el.style.transform = `rotateX(${cur.rx}deg) rotateY(${cur.ry}deg)`;
     const glare = glareRef.current;
     if (glare) {
-      glare.style.setProperty("--glare-x", `${px * 100}%`);
-      glare.style.setProperty("--glare-y", `${py * 100}%`);
+      glare.style.setProperty("--glare-x", `${cur.gx}%`);
+      glare.style.setProperty("--glare-y", `${cur.gy}%`);
+    }
+    if (settled) {
+      rafRef.current = null;
+      lastTsRef.current = null;
+      return;
+    }
+    rafRef.current = requestAnimationFrame(tick);
+  };
+
+  const startLoop = () => {
+    if (rafRef.current == null) {
+      lastTsRef.current = null;
+      rafRef.current = requestAnimationFrame(tick);
     }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (disabled || !enabledRef.current) return;
-    pendingRef.current = { x: e.clientX, y: e.clientY };
     const el = tiltRef.current;
-    if (el) el.style.transition = "none"; // track cursor without lag
-    if (rafRef.current == null) {
-      rafRef.current = requestAnimationFrame(applyFrame);
-    }
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    // Normalized pointer position within the card: 0..1 on each axis.
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    // Center → 0, edges → ±maxTilt. Positive Y (below center) tilts the top back.
+    targetRef.current = {
+      rx: -(py - 0.5) * 2 * maxTilt,
+      ry: (px - 0.5) * 2 * maxTilt,
+      gx: px * 100,
+      gy: py * 100,
+    };
+    startLoop();
   };
 
+  // Ease back to flat; glare position stays put (its opacity is CSS-driven).
   const resetTilt = () => {
-    pendingRef.current = null;
-    if (rafRef.current != null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    const el = tiltRef.current;
-    if (el) {
-      el.style.transition = RESET_TRANSITION;
-      el.style.transform = "";
-    }
+    targetRef.current = { ...targetRef.current, rx: 0, ry: 0 };
+    startLoop();
   };
 
   // Freeze flat whenever tilt is disabled (e.g. dropdown menu open).

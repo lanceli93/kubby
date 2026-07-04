@@ -987,7 +987,12 @@ Player (page.tsx)
 MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
 
 - **倾斜**: perspective 900px 容器 + preserve-3d 内层，指针跟随 rotateX/rotateY ≤6°;
-  pointermove 经 rAF 节流后直接改 ref 的 `style.transform`（零 React 重渲染）。
+  pointermove 只更新 target，自终止 rAF 循环以指数平滑趋近
+  (`k = 1 - exp(-dt/90ms)`，帧率无关) 后直接改 ref 的 `style.transform`
+  （零 React 重渲染）。快速入场从静止缓动到目标角度而非单帧跳变；
+  pointerleave 同一循环回落到 0（无 CSS transition，避免中途被杀导致跳变）。
+  `use-hero-parallax.ts` 的指针漂移同套平滑；滚动视差保持 1:1 即时（滚动
+  联动的运动不能滞后）。
 - **光泽**: radial-gradient 高光层跟随光标 (`--glare-x/--glare-y`)，hover 淡入。
 - **视差**: 子元素加 `.tilt-lift` 类以 translateZ 浮起（徽章 22px、播放按钮 40px）。
 - **环境光晕**: MovieCard/PersonCard 用已有 `posterBlur`/`photoBlur` 在卡片背后渲染
@@ -1026,10 +1031,16 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
 - **海报**: 大海报接入 TiltCard(maxTilt 4)+ 常亮环境光晕;`data-vt-poster`
   元素保持不变,View Transition 飞入不受影响。
 - **放映机光锥**: `components/movie/projector-beam.tsx` — 透明 WebGL 覆盖层
-  (`pointer-events-none absolute inset-0 z-0`):加色混合光束(右上入射、暖白核心
-  + 靛紫边缘、~3% 灯闪)、160 颗光束内尘埃粒子、0.04 强度胶片颗粒。dynamic import
+  (`pointer-events-none absolute inset-0 z-0`):光束(右上入射、暖白核心
+  + 靛紫边缘、~3% 灯闪)、160 颗光束内尘埃粒子、胶片颗粒。dynamic import
   (`ssr:false`),仅在有 fanart 且非 fanartMode 时挂载;减动效/无 WebGL2/移动端
   不渲染;IntersectionObserver + visibilitychange 暂停 rAF;卸载时完整 dispose。
+  **合成方式(Pitfall)**: 亮 fanart 上叠加低强度加色光在感知上不可见——真实放映机
+  光束能被看见是因为周围环境暗。因此 shader 输出预乘色
+  (`rgb = color·light, a = light + dim`),canvas 以 `premultipliedAlpha: true`
+  合成:beam 外区域用 alpha 压暗 fanart(uDim 0.28),beam 内 rgb 加光,形成对比。
+  场景内材质相应用 `CustomBlending(ONE, ONE_MINUS_SRC_ALPHA)`——不能用 three 的
+  `AdditiveBlending(SRC_ALPHA, ONE)`,预乘输出会被 alpha 二次相乘、强度平方级衰减。
 
 ### WebGL 海报墙 (Phase 3)
 

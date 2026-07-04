@@ -11,7 +11,9 @@ import {
   ShaderMaterial,
   Points,
   Mesh,
-  AdditiveBlending,
+  CustomBlending,
+  OneFactor,
+  OneMinusSrcAlphaFactor,
   Color,
 } from "three";
 
@@ -60,6 +62,7 @@ const BEAM_FRAG = /* glsl */ `
   varying vec2 vUv;
   uniform float uTime;
   uniform float uIntensity;
+  uniform float uDim;
   uniform vec3 uWarm;
   uniform vec3 uEdge;
 
@@ -92,7 +95,14 @@ const BEAM_FRAG = /* glsl */ `
     // Warm-white core, faint indigo toward the cone edges.
     vec3 color = mix(uEdge, uWarm, clamp(lateral, 0.0, 1.0));
 
-    gl_FragColor = vec4(color * beam * uIntensity, beam * uIntensity);
+    // A light beam over bright fanart is imperceptible without contrast — a
+    // real projector beam reads because the room around it is dark. Dim the
+    // scene outside the cone and let the beam punch through: premultiplied
+    // output means alpha attenuates the page while rgb adds light on top.
+    float dim = clamp(uDim * (1.0 - beam * 2.5), 0.0, uDim);
+
+    float light = beam * uIntensity;
+    gl_FragColor = vec4(color * light, light + dim);
   }
 `;
 
@@ -183,9 +193,13 @@ export function ProjectorBeam({ className }: ProjectorBeamProps) {
     // clip space so no projection math is needed.
     const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
+    // premultipliedAlpha: true + ONE/ONE blending below = the canvas composites
+    // over the page as `out = canvasRGB + page*(1-canvasA)` — true added light.
+    // (Straight-alpha compositing would multiply the beam by its own low alpha
+    // and render it invisible over bright fanart.)
     let renderer: WebGLRenderer;
     try {
-      renderer = new WebGLRenderer({ alpha: true, antialias: true, premultipliedAlpha: false });
+      renderer = new WebGLRenderer({ alpha: true, antialias: true, premultipliedAlpha: true });
     } catch {
       return;
     }
@@ -201,6 +215,16 @@ export function ProjectorBeam({ className }: ProjectorBeamProps) {
     canvas.style.height = "100%";
     container.appendChild(canvas);
 
+    // All three shaders output PREMULTIPLIED color (rgb = color·v, a = v), so
+    // in-scene stacking must use ONE / ONE_MINUS_SRC_ALPHA — three's built-in
+    // AdditiveBlending (SRC_ALPHA, ONE) would multiply by alpha a second time,
+    // squaring the already-low intensity into invisibility.
+    const premultipliedBlend = {
+      blending: CustomBlending,
+      blendSrc: OneFactor,
+      blendDst: OneMinusSrcAlphaFactor,
+    } as const;
+
     // ---- Beam plane ----
     const beamGeo = new PlaneGeometry(2, 2);
     const beamMat = new ShaderMaterial({
@@ -209,11 +233,14 @@ export function ProjectorBeam({ className }: ProjectorBeamProps) {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      blending: AdditiveBlending,
+      ...premultipliedBlend,
       uniforms: {
         uTime: { value: 0 },
-        // Overall brightness contribution — kept very low; this is ambience.
-        uIntensity: { value: 0.16 },
+        // Overall brightness contribution — low; this is ambience.
+        uIntensity: { value: 0.34 },
+        // Darkening applied to the fanart OUTSIDE the beam (the contrast that
+        // makes the cone legible over bright imagery).
+        uDim: { value: 0.28 },
         uWarm: { value: new Color(0xfff4e0) },
         uEdge: { value: new Color(0x6366f1) }, // theme --primary indigo
       },
@@ -247,10 +274,10 @@ export function ProjectorBeam({ className }: ProjectorBeamProps) {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      blending: AdditiveBlending,
+      ...premultipliedBlend,
       uniforms: {
         uTime: { value: 0 },
-        uIntensity: { value: 0.5 },
+        uIntensity: { value: 0.9 },
         uResolution: { value: [width, height] },
       },
     });
@@ -265,10 +292,10 @@ export function ProjectorBeam({ className }: ProjectorBeamProps) {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      blending: AdditiveBlending,
+      ...premultipliedBlend,
       uniforms: {
         uTime: { value: 0 },
-        uIntensity: { value: 0.04 },
+        uIntensity: { value: 0.05 },
       },
     });
     const grainMesh = new Mesh(grainGeo, grainMat);

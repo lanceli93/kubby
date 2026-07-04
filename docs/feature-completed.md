@@ -1,5 +1,15 @@
 # Completed Features
 
+## 2026-07-04 (5): UI 现代化用户反馈修复 — 快速入场抖动、光锥不可见
+
+User feedback on the Phase 2+3 delivery. Both verified live in Chrome.
+
+### 1. 快速移入鼠标时 3D 倾斜突兀跳变 (`tilt-card.tsx`, `use-hero-parallax.ts`)
+Both animations wrote the pointer's *target* value straight to the DOM each rAF: a fast entry lands the first pointermove near a card edge, jumping the transform 0 → ±maxTilt in one frame; re-entering mid-reset also killed the 350ms CSS transition mid-flight. Replaced with framerate-independent exponential smoothing (`current += (target−current) · (1−exp(−dt/90ms))`) in a self-terminating rAF loop; pointerleave settles back through the same loop, and all CSS transition writes were removed. Scroll parallax stays 1:1 immediate (scroll-linked motion must not lag). Measured: worst-case corner entry now eases 0 → 0.32° → 0.61° → … instead of snapping to 3.6°.
+
+### 2. 放映机光锥完全不可见 (`projector-beam.tsx`)
+Two compounding causes. (a) Shaders output premultiplied color (`rgb = color·v, a = v`) but materials used three.js `AdditiveBlending` (`SRC_ALPHA, ONE`) and the canvas was created with `premultipliedAlpha: false` — alpha multiplied the already-low intensity a second time, squaring ~0.16 into imperceptibility. (b) Even correctly composited, low-intensity additive light over *bright* fanart is physically invisible — a real projector beam reads because the room is dark. Fix: `premultipliedAlpha: true` + `CustomBlending(ONE, ONE_MINUS_SRC_ALPHA)`, and the beam shader now also *dims the fanart outside the cone* (uDim 0.28 via the alpha channel) so the beam punches through with real contrast. Intensity raised to 0.34 (beam) / 0.9 (dust). Verified: beam clearly visible over the Shawshank hero, title/glass panel unobstructed.
+
 ## 2026-07-04 (4): UI 现代化 Phase 2+3 — 详情页深度舞台、放映机光锥、WebGL 海报墙
 
 All verified live in Chrome (parallax transform values, VT poster intact, glass blur intact, poster-wall hover/click/exit, three.js chunk isolation).
