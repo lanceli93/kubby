@@ -745,7 +745,7 @@ export default function MovieDetailPage() {
           <h2 className="text-xl font-semibold text-foreground mb-4">
             {t("discs")} ({movie.discs.length})
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-2 md:-mx-10 md:-my-10 md:px-10 md:py-10">
+          <div className="flex gap-3 overflow-x-auto pb-2 md:-mx-10 md:-my-20 md:px-10 md:py-20 md:pointer-events-none md:[&>*]:pointer-events-auto md:[mask-image:linear-gradient(to_right,transparent,black_40px,black_calc(100%_-_40px),transparent)]">
             {movie.discs.map((disc) => {
               const poster = (
                 <div className="relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06] aspect-[2/3]">

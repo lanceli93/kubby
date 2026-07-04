@@ -89,9 +89,16 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
           </button>
         )}
 
+        {/* Bleed room for the hover glow: `overflow-x: auto` forces overflow-y
+            to auto, so the ambilight clips at the scrollport. Vertical padding
+            (80px, cancelled by negative margin) exceeds the blur's visible
+            falloff; horizontally the page gutter caps us at 40px, so a mask
+            fades the outer 40px to transparent — the glow dissolves instead of
+            hitting a hard clip line. pointer-events-none keeps the enlarged
+            invisible box from stealing clicks from the section above. */}
         <div
           ref={ref}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:snap-none [&>*]:snap-start md:-mx-10 md:-my-10 md:px-10 md:py-10 md:scroll-px-10"
+          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:snap-none [&>*]:snap-start md:-mx-10 md:-my-20 md:px-10 md:py-20 md:scroll-px-10 md:pointer-events-none md:[&>*]:pointer-events-auto md:[mask-image:linear-gradient(to_right,transparent,black_40px,black_calc(100%_-_40px),transparent)]"
         >
           {children}
         </div>

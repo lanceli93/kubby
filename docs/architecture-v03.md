@@ -999,10 +999,14 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
   blur(24px)+saturate 光晕，hover 淡入 (opacity 0.55)。该字段必须在每个 API select
   与卡片调用点显式传递（search API/猜你喜欢/影人作品格曾漏传 → 无光晕）。
 - **Pitfall: 横向滚动 row 截断光晕** —— CSS 规定 `overflow-x: auto` 会把计算后的
-  `overflow-y` 也强制为 auto，光晕与 hover 放大在滚动容器上下边被裁。解法是
-  padding 补偿：容器加 `md:-mx-10 md:-my-10 md:px-10 md:py-10`（ScrollRow 另加
-  `md:scroll-px-10` 保持 snap 对齐），净布局不变但裁剪盒内多出 40px 呼吸空间；
-  标题行加 `relative z-10` 防透明重叠区抢点击。见 `scroll-row.tsx` 与详情页 discs row。
+  `overflow-y` 也强制为 auto，光晕与 hover 放大在滚动容器边缘被裁。解法（净布局
+  不变，均 md+）：纵向 padding 补偿 `md:-my-20 md:py-20`（80px，超过 blur(24px)
+  的可见衰减尾巴，40px 不够会残留裁剪线）；横向受页面留白限制只有 40px
+  （`md:-mx-10 md:px-10` + `md:scroll-px-10` 保 snap），配
+  `mask-image: linear-gradient(to right, transparent, black 40px, …)` 让光晕在
+  row 两端渐隐而非硬裁。放大的透明盒要 `md:pointer-events-none` +
+  `md:[&>*]:pointer-events-auto` 防抢点击；标题行 `relative z-10`。
+  见 `scroll-row.tsx` 与详情页 discs row。缩小光晕本身被用户否决。
 - **降级**: 触屏 (`pointer: coarse`) 与 `prefers-reduced-motion: reduce` 下完全禁用，
   行为与旧版一致；`disabled` prop 在下拉菜单打开时冻结回平面。
 - **Pitfall**: `preserve-3d` 会破坏 Chromium 下子孙元素的 `backdrop-filter` ——
