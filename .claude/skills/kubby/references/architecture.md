@@ -1,5 +1,19 @@
 # Kubby Architecture Reference
 
+## Contents
+- [Project Structure](#project-structure)
+- [Database Schema (13 tables)](#database-schema-13-tables)
+- [API Endpoints](#api-endpoints)
+- [Authentication](#authentication)
+- [Library Scanner](#library-scanner)
+- [Video Playback](#video-playback)
+- [Frontend Components](#frontend-components)
+- [Theme (always dark)](#theme-always-dark)
+- [i18n](#i18n)
+- [Data Directories](#data-directories)
+- [Key Environment Variables](#key-environment-variables)
+- [Mobile Responsive Design](#mobile-responsive-design)
+
 ## Project Structure
 
 ```
@@ -80,7 +94,7 @@ kubby/
 │   └── generate-icon.ts                  # Icon generation (icns/ico/png)
 ├── installer/windows/kubby.nsi           # NSIS installer script
 ├── docs/
-│   ├── architecture-v0.1-mvp.md          # Full architecture doc (canonical, update this on big changes)
+│   ├── architecture-v03.md               # Latest architecture doc (canonical, update this on big changes)
 │   ├── packaging-guide.md                # Packaging technical deep-dive
 │   ├── feature-completed.md              # Completed features log
 │   └── feature-request.md               # Pending feature requests
@@ -343,6 +357,6 @@ Key patterns:
 ## Doc Maintenance
 
 Per CLAUDE.md instructions:
-- After big features: update `docs/architecture-v0.2.md` (latest version)
+- After big features: update the latest `docs/architecture-v0.x-mvp.md` (currently `docs/architecture-v03.md`)
 - Remove completed items from `docs/feature-request.md`, record in `docs/feature-completed.md`
 - Git commit with short message after many code changes
