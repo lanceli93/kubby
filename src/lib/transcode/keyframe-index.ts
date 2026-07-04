@@ -1,4 +1,5 @@
 import { execFile } from "child_process";
+import fs from "fs";
 
 // Keyframe timestamp index for direct-play seek snapping.
 // Precise seeks force the browser to decode every frame from the previous
@@ -6,11 +7,17 @@ import { execFile } from "child_process";
 // seek target to a keyframe makes the browser decode a single frame instead.
 // The scan is demux-only (no decoding): ~1.7s for a 900MB file, I/O bound.
 
-interface KeyframeCacheGlobal {
-  __kubbyKeyframeCache?: Map<string, Promise<number[] | null>>;
+interface KeyframeCacheEntry {
+  mtimeMs: number;
+  size: number;
+  promise: Promise<number[] | null>;
 }
 
-function getCache(): Map<string, Promise<number[] | null>> {
+interface KeyframeCacheGlobal {
+  __kubbyKeyframeCache?: Map<string, KeyframeCacheEntry>;
+}
+
+function getCache(): Map<string, KeyframeCacheEntry> {
   const g = globalThis as KeyframeCacheGlobal;
   if (!g.__kubbyKeyframeCache) {
     g.__kubbyKeyframeCache = new Map();
@@ -58,14 +65,32 @@ function scanKeyframes(filePath: string): Promise<number[] | null> {
 
 export function getKeyframeIndex(filePath: string): Promise<number[] | null> {
   const cache = getCache();
-  let promise = cache.get(filePath);
-  if (!promise) {
-    promise = scanKeyframes(filePath);
-    cache.set(filePath, promise);
-    // Drop failed scans so a transient error doesn't poison the cache
-    promise.then((result) => {
-      if (!result) cache.delete(filePath);
-    });
+
+  // Stat the file so a swapped source (same path, different content) re-probes
+  // instead of returning stale keyframes — otherwise seeks snap to the old
+  // file's keyframes and land in the wrong place.
+  let mtimeMs = 0;
+  let size = 0;
+  try {
+    const stat = fs.statSync(filePath);
+    mtimeMs = stat.mtimeMs;
+    size = stat.size;
+  } catch {
+    // File gone/unreadable — fall through to scan, which resolves to null.
   }
+
+  const cached = cache.get(filePath);
+  if (cached && cached.mtimeMs === mtimeMs && cached.size === size) {
+    return cached.promise;
+  }
+
+  const promise = scanKeyframes(filePath);
+  cache.set(filePath, { mtimeMs, size, promise });
+  // Drop failed scans so a transient error doesn't poison the cache
+  promise.then((result) => {
+    if (!result && cache.get(filePath)?.promise === promise) {
+      cache.delete(filePath);
+    }
+  });
   return promise;
 }
