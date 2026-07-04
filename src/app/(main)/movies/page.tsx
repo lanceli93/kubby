@@ -76,6 +76,11 @@ interface Movie {
   personalRating?: number | null;
   videoWidth?: number | null;
   videoHeight?: number | null;
+  videoCodec?: string | null;
+  fileSize?: number | null;
+  runtimeSeconds?: number | null;
+  runtimeMinutes?: number | null;
+  dateAdded?: string | null;
   isFavorite?: boolean;
   isWatched?: boolean;
   genres?: string[];
@@ -95,6 +100,16 @@ interface PosterWallMovie {
   id: string;
   title: string;
   posterPath?: string | null;
+  year?: number | null;
+  videoWidth?: number | null;
+  videoHeight?: number | null;
+  videoCodec?: string | null;
+  fileSize?: number | null;
+  runtimeSeconds?: number | null;
+  runtimeMinutes?: number | null;
+  communityRating?: number | null;
+  personalRating?: number | null;
+  dateAdded?: string | null;
 }
 
 interface FiltersData {
@@ -372,24 +387,41 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   const [showPosterWall, setShowPosterWall] = useState(false);
   const [wallMovies, setWallMovies] = useState<PosterWallMovie[] | null>(null);
 
+  // Project a full Movie row down to the metadata the wall renders / sorts on.
+  const toWallMovie = useCallback((m: Movie): PosterWallMovie => ({
+    id: m.id,
+    title: m.title,
+    posterPath: m.posterPath,
+    year: m.year,
+    videoWidth: m.videoWidth,
+    videoHeight: m.videoHeight,
+    videoCodec: m.videoCodec,
+    fileSize: m.fileSize,
+    runtimeSeconds: m.runtimeSeconds,
+    runtimeMinutes: m.runtimeMinutes,
+    communityRating: m.communityRating,
+    personalRating: m.personalRating,
+    dateAdded: m.dateAdded,
+  }), []);
+
   const openPosterWall = useCallback(async () => {
     setShowPosterWall(true);
     // If everything is already loaded in the grid, reuse it; otherwise fetch
     // up to 500 with the current filters via the existing /api/movies endpoint.
     if (!hasNextPage && movies.length > 0) {
-      setWallMovies(movies.map((m) => ({ id: m.id, title: m.title, posterPath: m.posterPath })));
+      setWallMovies(movies.map(toWallMovie));
       return;
     }
     const params = buildMovieParams();
     params.set("limit", "500");
     try {
       const data: PaginatedResponse<Movie> = await fetch(`/api/movies?${params}`).then((r) => r.json());
-      setWallMovies(data.items.map((m) => ({ id: m.id, title: m.title, posterPath: m.posterPath })));
+      setWallMovies(data.items.map(toWallMovie));
     } catch {
       // Fall back to whatever the grid already has
-      setWallMovies(movies.map((m) => ({ id: m.id, title: m.title, posterPath: m.posterPath })));
+      setWallMovies(movies.map(toWallMovie));
     }
-  }, [buildMovieParams, hasNextPage, movies]);
+  }, [buildMovieParams, hasNextPage, movies, toWallMovie]);
 
   const closePosterWall = useCallback(() => {
     setShowPosterWall(false);
@@ -760,7 +792,11 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
       </div>
 
       {showPosterWall && wallMovies && (
-        <PosterWall movies={wallMovies} onClose={closePosterWall} />
+        <PosterWall
+          movies={wallMovies}
+          onClose={closePosterWall}
+          initialSort={{ key: sort === "releaseDate" ? "year" : sort, order: sortOrder }}
+        />
       )}
       {showPosterWall && !wallMovies && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0f]">

@@ -1042,14 +1042,33 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
   场景内材质相应用 `CustomBlending(ONE, ONE_MINUS_SRC_ALPHA)`——不能用 three 的
   `AdditiveBlending(SRC_ALPHA, ONE)`,预乘输出会被 alpha 二次相乘、强度平方级衰减。
 
-### WebGL 海报墙 (Phase 3)
+### WebGL 海报墙 — Cover Flow (Phase 3, v2 重做)
 
 `components/movie/poster-wall.tsx` — movies 页「海报墙」按钮(仅 WebGL2 + md+ +
-非减动效时显示)进入全屏 3D 浏览模式:2:3 海报平面弧形排布(>40 部分两行),
-占位材质先建、纹理近处优先流式加载(并发 6,SRGBColorSpace),滚轮/拖拽惯性漫游,
-raycaster hover 放大 8% + 底部玻璃标题徽章,点击进详情页,ESC/X 退出。rAF 稳定后
-自动停帧、document.hidden 暂停、卸载完整 dispose。Three.js(~506KB)独立 chunk
-(dynamic import),movies 页初始包体不变;平面网格仍为默认视图。
+非减动效时显示)进入全屏「唱片架」Cover Flow(v1 平面弧形网格被用户否决,已重写):
+
+- **布局**: 焦点海报正面朝屏、放大 1.35×、前凸 z=2.2;两侧海报如唱片竖插堆叠
+  (rotY ∓1.05rad,x = 2.1 + (|d|−1)·0.62)。所有 transform 纯由
+  `d = index − focusFloat` 连续推导,0<|d|<1 区间两种姿态 lerp,滑动全程连续。
+- **动效**: 每帧向目标姿态指数平滑 (`k = 1−exp(−dt/120ms)`,同 TiltCard 套路),
+  循环稳定后自停。排序切换 = 改每项 index → 目标位移 → 全场海报飞行重排(免费)。
+  reduced-motion 时 k=1 直接落位。
+- **元数据整合**: 顶部玻璃排序 pills(标题/社区评分/个人评分/添加时间/年份/时长/
+  分辨率/文件大小,同 movies 页,点激活 pill 翻转升降序);排序在墙内客户端完成。
+  按维度自动插入 3D 分组分隔卡(年代/分辨率档 4K~SD/评分带/体积带,canvas 纹理,
+  可聚焦不可点进);缺元数据的归入尾部「—」组,null 恒排最后。底部 HUD(HTML,
+  仅整数焦点变化时 setState)显示标题 + `年份·分辨率徽章·编码·体积·时长·★评分`。
+- **观感**: 每张海报有镜面倒影(scale.y=−1 共享纹理,共享渐变 alphaMap 下淡出,
+  电影 0.28/分隔卡 0.14),渐变背景板;纹理 480w + mipmap +
+  各向异性过滤(min(8, maxAniso))——v1 的 LinearFilter 无 mipmap 在侧视角闪烁,
+  是"简陋感"主因之一。
+- **交互**: 滚轮一格一张(累积阈值,触控板友好)、拖拽连续搓动(120px/张,
+  松手带速度甩动 ±6 张封顶)、点侧面聚焦、点焦点海报/Enter 进详情、
+  ←/→/PageUp/PageDown/Home/End 键盘导航、ESC/X 退出。
+  setPointerCapture/release 需 try/catch(pointer 已消失时会抛 NotFoundError)。
+- **纹理 LRU**: 并发 6、按距焦点优先级流式加载;仅保留焦点 ±60 窗口内纹理,
+  硬上限 140,驱逐时 dispose 并回退占位色 —— 500 部大库显存可控。
+- Three.js 独立 chunk(dynamic import)不变;平面网格仍为默认视图。
 
 **圆角层级**: 输入框 `rounded-md` (6px) → 按钮 `rounded-lg` (8px) → 卡片容器 `rounded-xl` (12px)
 

@@ -1,5 +1,11 @@
 # Completed Features
 
+## 2026-07-04 (6): 海报墙 v2 — 唱片架 Cover Flow + 元数据整合(重写)
+
+User rejected the v1 flat curved grid as crude ("还不如苹果的 cover flow 好看") and asked for functional metadata interaction, not just looks. Full rewrite of `poster-wall.tsx` (~1100 lines), verified live in Chrome.
+
+**Layout/motion**: focused poster front-facing (1.35×, z+2.2), side posters stacked like records in a crate (rotY ∓1.05rad); all transforms derive continuously from `index − focusFloat` so scrubbing is seamless; per-frame exponential smoothing (`1−exp(−dt/120ms)`) with a self-terminating loop. **Metadata**: top sort pills (same 8 dimensions as the movies page, client-side, active pill toggles asc/desc) → sort change animates as a full flying reorder; 3D group divider cards auto-derived from the sort dimension (decades / 4K-2K-FHD-HD-SD tiers / rating bands / size bands, canvas-textured, focusable not navigable); bottom HTML HUD (updates only on integer focus change) shows title + year·resolution badge·codec·size·runtime·ratings. **Polish that killed the crude look**: per-poster mirror reflections with shared gradient alphaMap, gradient backdrop, mipmaps + anisotropic filtering (v1's LinearFilter-no-mipmap shimmered at crate angles). **Scale**: texture LRU — concurrency 6 nearest-focus-first, ±60 resident window, 140 cap with dispose-on-evict. **Interaction**: wheel one-per-tick (accumulated, trackpad-friendly), continuous drag scrub (120px/item + velocity flick ±6), click-side-to-focus, click-focused/Enter navigates, full keyboard nav, ESC/X exit. Orchestrator fix during verification: `setPointerCapture`/`releasePointerCapture` throw NotFoundError if the pointer is already gone — wrapped in try/catch. API: added `runtimeSeconds`/`videoCodec`/`fileSize` to the movies list select (additive). Data flows from the existing grid query; `initialSort` maps the page's releaseDate→year.
+
 ## 2026-07-04 (5): UI 现代化用户反馈修复 — 快速入场抖动、光锥不可见
 
 User feedback on the Phase 2+3 delivery. Both verified live in Chrome.
