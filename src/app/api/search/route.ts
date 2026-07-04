@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
       title: string;
       year: number | null;
       poster_path: string | null;
+      poster_blur: string | null;
       folder_path: string;
       poster_mtime: number | null;
       community_rating: number | null;
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
       video_width: number | null;
       video_height: number | null;
     }>(sql`
-      SELECT m.id, m.title, m.year, m.poster_path, m.folder_path, m.poster_mtime,
+      SELECT m.id, m.title, m.year, m.poster_path, m.poster_blur, m.folder_path, m.poster_mtime,
              m.community_rating, umd.personal_rating, m.video_width, m.video_height
       FROM movies m
       ${userJoin}
@@ -100,6 +101,7 @@ export async function GET(request: NextRequest) {
         r.poster_path ? path.join(r.folder_path, r.poster_path) : null,
         r.poster_mtime
       ),
+      posterBlur: r.poster_blur,
       communityRating: r.community_rating,
       personalRating: r.personal_rating,
       videoWidth: r.video_width,
@@ -156,6 +158,7 @@ export async function GET(request: NextRequest) {
         id: string;
         title: string;
         poster_path: string | null;
+        poster_blur: string | null;
         folder_path: string;
         poster_mtime: number | null;
         year: number | null;
@@ -164,7 +167,7 @@ export async function GET(request: NextRequest) {
         video_width: number | null;
         video_height: number | null;
       }>(sql`
-        SELECT m.id, m.title, m.poster_path, m.folder_path, m.poster_mtime, m.year,
+        SELECT m.id, m.title, m.poster_path, m.poster_blur, m.folder_path, m.poster_mtime, m.year,
                m.community_rating, umd.personal_rating, m.video_width, m.video_height
         FROM movies m
         JOIN json_each(m.genres) je ON je.value = ${g.name}
@@ -185,6 +188,7 @@ export async function GET(request: NextRequest) {
             m.poster_path ? path.join(m.folder_path, m.poster_path) : null,
             m.poster_mtime
           ),
+          posterBlur: m.poster_blur,
           year: m.year,
           communityRating: m.community_rating,
           personalRating: m.personal_rating,
@@ -245,6 +249,7 @@ export async function GET(request: NextRequest) {
         id: string;
         title: string;
         poster_path: string | null;
+        poster_blur: string | null;
         folder_path: string;
         poster_mtime: number | null;
         year: number | null;
@@ -253,7 +258,7 @@ export async function GET(request: NextRequest) {
         video_width: number | null;
         video_height: number | null;
       }>(sql`
-        SELECT m.id, m.title, m.poster_path, m.folder_path, m.poster_mtime, m.year,
+        SELECT m.id, m.title, m.poster_path, m.poster_blur, m.folder_path, m.poster_mtime, m.year,
                m.community_rating, umd.personal_rating, m.video_width, m.video_height
         FROM movies m
         JOIN json_each(m.tags) je ON je.value = ${t.name}
@@ -274,6 +279,7 @@ export async function GET(request: NextRequest) {
             m.poster_path ? path.join(m.folder_path, m.poster_path) : null,
             m.poster_mtime
           ),
+          posterBlur: m.poster_blur,
           year: m.year,
           communityRating: m.community_rating,
           personalRating: m.personal_rating,
@@ -313,11 +319,12 @@ export async function GET(request: NextRequest) {
       name: string;
       type: string;
       photo_path: string | null;
+      photo_blur: string | null;
       photo_mtime: number | null;
       personal_rating: number | null;
       movie_count: number;
     }>(sql`
-      SELECT p.id, p.name, p.type, p.photo_path, p.photo_mtime,
+      SELECT p.id, p.name, p.type, p.photo_path, p.photo_blur, p.photo_mtime,
              upd.personal_rating,
              COUNT(DISTINCT mp.movie_id) as movie_count
       FROM people p
@@ -335,6 +342,7 @@ export async function GET(request: NextRequest) {
       name: r.name,
       type: r.type,
       photoPath: stampPath(r.photo_path ? resolveDataPath(r.photo_path) : null, r.photo_mtime),
+      photoBlur: r.photo_blur,
       personalRating: r.personal_rating,
       movieCount: r.movie_count,
     }));

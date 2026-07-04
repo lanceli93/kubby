@@ -996,7 +996,13 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
 - **光泽**: radial-gradient 高光层跟随光标 (`--glare-x/--glare-y`)，hover 淡入。
 - **视差**: 子元素加 `.tilt-lift` 类以 translateZ 浮起（徽章 22px、播放按钮 40px）。
 - **环境光晕**: MovieCard/PersonCard 用已有 `posterBlur`/`photoBlur` 在卡片背后渲染
-  blur(24px)+saturate 光晕，hover 淡入 (opacity 0.55)。
+  blur(24px)+saturate 光晕，hover 淡入 (opacity 0.55)。该字段必须在每个 API select
+  与卡片调用点显式传递（search API/猜你喜欢/影人作品格曾漏传 → 无光晕）。
+- **Pitfall: 横向滚动 row 截断光晕** —— CSS 规定 `overflow-x: auto` 会把计算后的
+  `overflow-y` 也强制为 auto，光晕与 hover 放大在滚动容器上下边被裁。解法是
+  padding 补偿：容器加 `md:-mx-10 md:-my-10 md:px-10 md:py-10`（ScrollRow 另加
+  `md:scroll-px-10` 保持 snap 对齐），净布局不变但裁剪盒内多出 40px 呼吸空间；
+  标题行加 `relative z-10` 防透明重叠区抢点击。见 `scroll-row.tsx` 与详情页 discs row。
 - **降级**: 触屏 (`pointer: coarse`) 与 `prefers-reduced-motion: reduce` 下完全禁用，
   行为与旧版一致；`disabled` prop 在下拉菜单打开时冻结回平面。
 - **Pitfall**: `preserve-3d` 会破坏 Chromium 下子孙元素的 `backdrop-filter` ——
@@ -1050,8 +1056,11 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
 - **元数据整合**: 顶部玻璃排序 pills(标题/社区评分/个人评分/添加时间/年份/时长/
   分辨率/文件大小,同 movies 页,点激活 pill 翻转升降序);排序在墙内客户端完成。
   按维度自动插入 3D 分组分隔卡(年代/分辨率档 4K~SD/评分带/体积带,canvas 纹理,
-  可聚焦不可点进);缺元数据的归入尾部「—」组,null 恒排最后。底部 HUD(HTML,
-  仅整数焦点变化时 setState)显示标题 + `年份·分辨率徽章·编码·体积·时长·★评分`。
+  可聚焦不可点进);缺元数据的归入尾部「—」组,null 恒排最后。底部字幕式 caption
+  (HTML,仅整数焦点变化时 setState):无盒,全宽底部渐变(`from-[#06060a]` 与
+  背景板同色,顺带压住倒影)上浮标题 + 间隔点分隔的
+  `年份·分辨率chip·编码·体积·时长·★评分`;焦点切换用 `key` 重挂载触发
+  280ms 淡入上浮(`animate-caption-rise`)。曾用不透明黑盒被用户否决("不优雅")。
 - **观感**: 每张海报有镜面倒影(scale.y=−1 共享纹理,共享渐变 alphaMap 下淡出,
   电影 0.28/分隔卡 0.14),渐变背景板;纹理 480w + mipmap +
   各向异性过滤(min(8, maxAniso))——v1 的 LinearFilter 无 mipmap 在侧视角闪烁,

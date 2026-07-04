@@ -1003,6 +1003,7 @@ function FavoritesMoviesGrid({ libraryId }: { libraryId: string }) {
               title={movie.title}
               year={movie.year}
               posterPath={movie.posterPath}
+              posterBlur={movie.posterBlur}
               rating={movie.communityRating}
               personalRating={movie.personalRating}
               videoWidth={movie.videoWidth}

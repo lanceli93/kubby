@@ -46,7 +46,7 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
     <div className="flex flex-col gap-3">
       {/* Title row with nav buttons */}
       {title && (
-        <div className="flex items-center justify-between">
+        <div className="relative z-10 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-foreground">{title}</h2>
           {showNav && (
             <div className="hidden md:flex items-center gap-1">
@@ -91,7 +91,7 @@ export function ScrollRow({ children, title }: ScrollRowProps) {
 
         <div
           ref={ref}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:snap-none [&>*]:snap-start"
+          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:snap-none [&>*]:snap-start md:-mx-10 md:-my-10 md:px-10 md:py-10 md:scroll-px-10"
         >
           {children}
         </div>

@@ -1,5 +1,18 @@
 # Completed Features
 
+## 2026-07-04 (8): 卡片光晕截断/缺失修复 + 海报墙字幕式信息框
+
+Third polish round; all verified live in Chrome.
+
+### 1. 横向滚动 row 里 hover 光晕/放大被上下截断 (`scroll-row.tsx`, detail 页 discs row)
+Root cause: per CSS spec, `overflow-x: auto` forces computed `overflow-y` to `auto` as well, so the ambilight glow (`scale-110 blur-[24px]`) and the `hover:scale-[1.03]` card bleed were clipped at the scrollport's vertical edges. Fixed with padding compensation: the scroll container gets `md:-mx-10 md:-my-10 md:px-10 md:py-10` (+`md:scroll-px-10` in ScrollRow to keep snap alignment) — 40px of breathing room inside the clip box, cancelled by equal negative margins so layout is unchanged. Title row got `relative z-10` so the transparent overlap doesn't steal its link/chevron clicks. Applied to `ScrollRow` (cast/bookmarks/home/favorites rows) and the detail page's discs row. Measured: hovered glow extends ~14px above/below the card and stays fully inside the clip box.
+
+### 2. 部分场景 hover 卡片没有光晕 — blur 字段没传到卡片
+The glow only renders when `posterBlur`/`photoBlur` is passed. Gaps fixed: detail page 猜你喜欢 row (interface + prop), people detail filmography, movies page FavoritesMoviesGrid, and the entire search page — `/api/search` never selected `poster_blur`/`photo_blur` at all (added to searchMovies/searchGenres/searchTags previews/searchPeople + interfaces + all 6 card call sites).
+
+### 3. 海报墙信息框去黑盒 → 字幕式 cinema caption (`poster-wall.tsx`)
+User verdict on the opaque box: "一个黑框太难看了不优雅". Replaced with a boxless caption: full-width bottom gradient (`from-[#06060a]` exactly matching the wall backdrop, so no visible edge — it also grounds the poster reflections), title in `text-xl tracking-wide` with a soft text-shadow, metadata as a middot-separated line (items built as a filtered array then interleaved — no dangling dots when fields are missing), minimal bordered resolution chip. Focus change re-mounts the caption via `key` to re-run a 280ms fade+6px-rise entrance (`animate-caption-rise` in globals.css, `motion-reduce:animate-none`).
+
 ## 2026-07-04 (7): 海报墙布局修复 + 移除放映机光锥
 
 Second feedback round on the Cover Flow wall; all verified live in Chrome.

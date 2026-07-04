@@ -109,6 +109,7 @@ interface RecommendedMovie {
   title: string;
   year?: number;
   posterPath?: string | null;
+  posterBlur?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
   videoWidth?: number | null;
@@ -744,7 +745,7 @@ export default function MovieDetailPage() {
           <h2 className="text-xl font-semibold text-foreground mb-4">
             {t("discs")} ({movie.discs.length})
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-2 md:-mx-10 md:-my-10 md:px-10 md:py-10">
             {movie.discs.map((disc) => {
               const poster = (
                 <div className="relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06] aspect-[2/3]">
@@ -908,6 +909,7 @@ export default function MovieDetailPage() {
                 title={m.title}
                 year={m.year}
                 posterPath={m.posterPath}
+                posterBlur={m.posterBlur}
                 rating={m.communityRating}
                 personalRating={m.personalRating}
                 videoWidth={m.videoWidth}

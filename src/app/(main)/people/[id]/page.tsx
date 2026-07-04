@@ -60,6 +60,7 @@ interface PersonDetail {
     title: string;
     year?: number;
     posterPath?: string | null;
+    posterBlur?: string | null;
     communityRating?: number | null;
     personalRating?: number | null;
     videoWidth?: number | null;
@@ -414,6 +415,7 @@ export default function PersonDetailPage() {
                 title={movie.title}
                 year={movie.year}
                 posterPath={movie.posterPath}
+                posterBlur={movie.posterBlur}
                 rating={movie.communityRating}
                 personalRating={movie.personalRating}
                 videoWidth={movie.videoWidth}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
@@ -1230,38 +1230,64 @@ export function PosterWall({ movies, onClose, initialSort }: PosterWallProps) {
         </div>
       )}
 
-      {/* Metadata HUD (bottom-center) */}
+      {/* Cinema caption (bottom, full-width gradient — no box) */}
       {!isEmpty && hud && (
-        <div className="pointer-events-none absolute bottom-8 left-1/2 z-10 -translate-x-1/2 px-4 text-center">
-          <div className="mx-auto max-w-[90vw] rounded-xl border border-white/10 bg-[#0b0b12]/90 backdrop-blur-md px-6 py-3 shadow-2xl">
-            <div className="max-w-[80vw] truncate text-lg font-semibold text-foreground">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-center pb-8 pt-24 text-center bg-gradient-to-t from-[#06060a] via-[#06060a]/55 to-transparent">
+          <div
+            key={hud.title + hud.kind}
+            className="animate-caption-rise motion-reduce:animate-none flex flex-col items-center"
+          >
+            <div className="max-w-[70vw] truncate text-xl font-semibold tracking-wide text-white/95 [text-shadow:0_2px_16px_rgba(0,0,0,0.9)]">
               {hud.title}
             </div>
             {hud.kind === "separator" ? (
-              <div className="mt-1 text-sm text-muted-foreground">{hud.sublabel}</div>
+              <div className="mt-1 text-sm text-white/55">{hud.sublabel}</div>
             ) : hud.meta ? (
-              <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-white/70">
-                {hud.meta.year ? <span>{hud.meta.year}</span> : null}
-                {hud.meta.resolution ? (
-                  <span className="rounded-sm border border-white/30 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white/90">
-                    {hud.meta.resolution}
-                  </span>
-                ) : null}
-                {hud.meta.codec ? (
-                  <span className="uppercase">{hud.meta.codec}</span>
-                ) : null}
-                {hud.meta.fileSize ? <span>{hud.meta.fileSize}</span> : null}
-                {hud.meta.runtime ? <span>{hud.meta.runtime}</span> : null}
-                {hud.meta.communityRating != null && hud.meta.communityRating > 0 ? (
-                  <span className="font-semibold text-purple-400">
-                    ★ {hud.meta.communityRating.toFixed(1)}
-                  </span>
-                ) : null}
-                {hud.meta.personalRating != null && hud.meta.personalRating > 0 ? (
-                  <span className="font-semibold text-[var(--gold)]">
-                    ★ {hud.meta.personalRating.toFixed(1)}
-                  </span>
-                ) : null}
+              <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[13px] text-white/65">
+                {(() => {
+                  const meta = hud.meta;
+                  const items: ReactNode[] = [];
+                  if (meta.year) items.push(<span key="year">{meta.year}</span>);
+                  if (meta.resolution)
+                    items.push(
+                      <span
+                        key="resolution"
+                        className="rounded border border-white/20 px-1.5 py-px text-[10.5px] font-semibold uppercase tracking-wider text-white/85"
+                      >
+                        {meta.resolution}
+                      </span>,
+                    );
+                  if (meta.codec)
+                    items.push(
+                      <span key="codec" className="uppercase">
+                        {meta.codec}
+                      </span>,
+                    );
+                  if (meta.fileSize) items.push(<span key="fileSize">{meta.fileSize}</span>);
+                  if (meta.runtime) items.push(<span key="runtime">{meta.runtime}</span>);
+                  if (meta.communityRating != null && meta.communityRating > 0)
+                    items.push(
+                      <span key="communityRating" className="font-semibold text-purple-400">
+                        ★ {meta.communityRating.toFixed(1)}
+                      </span>,
+                    );
+                  if (meta.personalRating != null && meta.personalRating > 0)
+                    items.push(
+                      <span key="personalRating" className="font-semibold text-[var(--gold)]">
+                        ★ {meta.personalRating.toFixed(1)}
+                      </span>,
+                    );
+                  return items.flatMap((node, i) =>
+                    i === 0
+                      ? [node]
+                      : [
+                          <span key={`dot-${i}`} className="text-white/25">
+                            ·
+                          </span>,
+                          node,
+                        ],
+                  );
+                })()}
               </div>
             ) : null}
           </div>

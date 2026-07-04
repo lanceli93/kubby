@@ -27,6 +27,7 @@ interface Movie {
   title: string;
   year?: number;
   posterPath?: string | null;
+  posterBlur?: string | null;
   communityRating?: number | null;
   personalRating?: number | null;
   videoWidth?: number | null;
@@ -38,6 +39,7 @@ interface Person {
   name: string;
   type: string;
   photoPath?: string | null;
+  photoBlur?: string | null;
   personalRating?: number | null;
   movieCount?: number;
 }
@@ -45,7 +47,7 @@ interface Person {
 interface GenreResult {
   name: string;
   movieCount: number;
-  previewMovies: { id: string; title: string; posterPath?: string | null; year?: number | null; communityRating?: number | null; personalRating?: number | null; videoWidth?: number | null; videoHeight?: number | null }[];
+  previewMovies: { id: string; title: string; posterPath?: string | null; posterBlur?: string | null; year?: number | null; communityRating?: number | null; personalRating?: number | null; videoWidth?: number | null; videoHeight?: number | null }[];
 }
 
 interface SearchResults {
@@ -439,6 +441,7 @@ function SearchContent() {
                         title={movie.title}
                         year={movie.year}
                         posterPath={movie.posterPath}
+                        posterBlur={movie.posterBlur}
                         rating={movie.communityRating}
                         personalRating={movie.personalRating}
                         videoWidth={movie.videoWidth}
@@ -459,6 +462,7 @@ function SearchContent() {
                           title={movie.title}
                           year={movie.year}
                           posterPath={movie.posterPath}
+                          posterBlur={movie.posterBlur}
                           rating={movie.communityRating}
                           personalRating={movie.personalRating}
                           videoWidth={movie.videoWidth}
@@ -552,6 +556,7 @@ function SearchContent() {
                                 title={movie.title}
                                 year={movie.year ?? undefined}
                                 posterPath={movie.posterPath}
+                                posterBlur={movie.posterBlur}
                                 rating={movie.communityRating}
                                 personalRating={movie.personalRating}
                                 videoWidth={movie.videoWidth}
@@ -647,6 +652,7 @@ function SearchContent() {
                                 title={movie.title}
                                 year={movie.year ?? undefined}
                                 posterPath={movie.posterPath}
+                                posterBlur={movie.posterBlur}
                                 rating={movie.communityRating}
                                 personalRating={movie.personalRating}
                                 videoWidth={movie.videoWidth}
@@ -689,6 +695,7 @@ function SearchContent() {
                         name={person.name}
                         role={person.type}
                         photoPath={person.photoPath}
+                        photoBlur={person.photoBlur}
                         personalRating={person.personalRating}
                         size="md"
                       />
@@ -707,6 +714,7 @@ function SearchContent() {
                           name={person.name}
                           role={person.type}
                           photoPath={person.photoPath}
+                          photoBlur={person.photoBlur}
                           personalRating={person.personalRating}
                           size="md"
                         />
