@@ -187,6 +187,40 @@ test: **JAV** (`425e1a46-…`, 2094 movies across 4 libraries).
 
 ---
 
+## 六、勘误 + 修复记录（2026-07-05，实现后补记）
+
+**P0-B 撤回 —— 8665 一直就是生产构建。** 报告写作时进程检查抓到的 `next dev` 是
+**:3000 的开发实例**，误当成了 8665 的服务进程。实测 8665 返回内容哈希命名的
+turbopack chunk（minified、无 HMR 端点），且其进程父级是安装版 `kubby.exe`
+（`C:\Program Files\Kubby`）→ 确认为打包 standalone。因此本文所有 trace 数字
+**就是生产数字**，标注 `[DEV-ONLY]` 的 load delay 实际是 P4（LCP 懒加载、发现晚）
+的表现，而非按需编译。
+
+**P0-A 根因确认：`@img/sharp-win32-x64` 版本错配。** 安装版带 `sharp@0.34.5`
+（JS 层）但 `@img/sharp-win32-x64@0.35.3`（native 层）。0.35.x 的 native `format()`
+返回结构与 0.34.5 JS 包装层不匹配 → require 时 `TypeError: Cannot read properties
+of undefined (reading 'output')` → 被 `getSharp()` 的静默 catch 吞掉 → 全站原图直发。
+错配来源：`scripts/package.ts` 的 `getNpmTarballUrl()` 永远拉 npm `latest` 而非
+sharp `optionalDependencies` 里钉死的版本，且完整性检查不查版本，装错后永不纠正。
+
+**已落地修复**（`docs/tasks/perf-v0.5-fixes.md`，全部保持像素级视觉不变）：
+- **A** `scripts/package.ts`：@img 包按 sharp optionalDependencies 钉版本下载；
+  版本不符即替换；win32 不再下发 sharp 未引用的 libvips 包。
+- **B** `/api/images`：sharp 加载失败记录真实错误（一次）；缩放产物落盘
+  `KUBBY_DATA_DIR/cache/images/`（sha1(path|version)-w-q.webp，temp+rename 防并发写）。
+  实测 standalone：77KB JPEG → 29KB WebP，缓存命中 ~30ms。
+- **C** 详情页 fanart/poster/disc 传 width（1920/600/300）。
+- **D** TiltCard `will-change` 改为 pointerenter 设置、settle 后清除。
+- **E** 库网格/首页 Recently Added 前 10 张卡 `priority`（eager + fetchpriority=high）。
+
+**未做（按计划推迟）**：P3 强制回流（先重测）、P5 规模化项。
+
+**存量安装版热修**：已安装的 0.5.1 需以管理员替换
+`C:\Program Files\Kubby\server\node_modules\@img\sharp-win32-x64` 为 0.34.5
+并删除 stray `sharp-libvips-win32-x64`，或等下个安装包。
+
+---
+
 ## 附：关键代码位置索引
 
 | 主题 | 位置 |

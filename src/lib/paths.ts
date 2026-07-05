@@ -43,6 +43,10 @@ export function getTranscodeCacheDir(): string {
   return path.join(os.tmpdir(), "kubby-transcode");
 }
 
+export function getImageCacheDir(): string {
+  return path.join(getDataDir(), "cache", "images");
+}
+
 /**
  * Convert an absolute path under KUBBY_DATA_DIR to a relative path for DB storage.
  * e.g. "D:\KubbyData\metadata\people\A\Actor\photo.jpg" → "metadata/people/A/Actor/photo.jpg"

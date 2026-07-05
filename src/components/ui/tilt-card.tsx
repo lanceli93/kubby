@@ -80,6 +80,10 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
       lastTsRef.current = null;
       return;
     }
+    // Promote to its own compositor layer only while the loop is live; cleared
+    // below the instant it settles (see the `settled` branch), so idle cards
+    // never hold a GPU layer.
+    el.style.willChange = "transform";
     const last = lastTsRef.current ?? ts;
     const dt = ts - last;
     lastTsRef.current = ts;
@@ -109,6 +113,9 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
       glare.style.setProperty("--glare-y", `${cur.gy}%`);
     }
     if (settled) {
+      // Settle-back is done (this also fires after pointerleave, once the
+      // ease-to-flat finishes) — release the compositor layer.
+      el.style.willChange = "";
       rafRef.current = null;
       lastTsRef.current = null;
       return;
@@ -156,18 +163,30 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
   useEffect(() => {
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      // If we unmount mid-animation the node is torn down anyway, but clear the
+      // hint defensively so no layer is ever left dangling.
+      if (tiltRef.current) tiltRef.current.style.willChange = "";
     };
   }, []);
+
+  // Promote the layer up front on entry so the very first tilt frame composites
+  // cleanly; the rAF loop clears it again once motion settles.
+  const handlePointerEnter = () => {
+    if (disabled || !enabledRef.current) return;
+    const el = tiltRef.current;
+    if (el) el.style.willChange = "transform";
+  };
 
   return (
     <div
       className={cn("group/tilt relative [perspective:900px]", className)}
+      onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetTilt}
     >
       <div
         ref={tiltRef}
-        className="relative h-full w-full [transform-style:preserve-3d] will-change-transform"
+        className="relative h-full w-full [transform-style:preserve-3d]"
       >
         {children}
         {/* Glare — rides above the poster, ignores pointer, fades in on hover. */}

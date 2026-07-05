@@ -368,7 +368,7 @@ export default function MovieDetailPage() {
             className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform"
           >
             <Image
-              src={resolveImageSrc(movie.fanartPath)}
+              src={resolveImageSrc(movie.fanartPath, 1920)}
               alt=""
               fill
               className="object-cover"
@@ -419,7 +419,7 @@ export default function MovieDetailPage() {
               >
                 {movie.posterPath && !imgErrors.has(movie.posterPath) ? (
                   <Image
-                    src={resolveImageSrc(movie.posterPath)}
+                    src={resolveImageSrc(movie.posterPath, 600)}
                     alt={movie.title}
                     fill
                     className="object-cover"
@@ -751,7 +751,7 @@ export default function MovieDetailPage() {
                 <div className="relative w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06] aspect-[2/3]">
                   {disc.posterPath && !imgErrors.has(disc.posterPath) ? (
                     <Image
-                      src={resolveImageSrc(disc.posterPath)}
+                      src={resolveImageSrc(disc.posterPath, 300)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
                       className="object-cover transition-fluid group-hover:scale-105"
@@ -760,7 +760,7 @@ export default function MovieDetailPage() {
                     />
                   ) : movie.posterPath && !imgErrors.has(movie.posterPath) ? (
                     <Image
-                      src={resolveImageSrc(movie.posterPath)}
+                      src={resolveImageSrc(movie.posterPath, 300)}
                       alt={disc.label || `Disc ${disc.discNumber}`}
                       fill
                       className="object-cover transition-fluid group-hover:scale-105"

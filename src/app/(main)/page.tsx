@@ -58,6 +58,7 @@ function MovieRow({
   title,
   movies,
   showProgress,
+  prioritizeFirst,
   onToggleFavorite,
   onToggleWatched,
   onDelete,
@@ -65,6 +66,9 @@ function MovieRow({
   title: string;
   movies: Movie[];
   showProgress?: boolean;
+  // LCP hint — only the row rendered immediately below the hero (above the
+  // fold) should opt in; rows further down the page (e.g. Favorites) stay lazy.
+  prioritizeFirst?: boolean;
   onToggleFavorite: (id: string, current: boolean) => void;
   onToggleWatched: (id: string, current: boolean) => void;
   onDelete: (id: string) => void;
@@ -73,7 +77,7 @@ function MovieRow({
 
   return (
     <ScrollRow title={title}>
-      {movies.map((movie) => {
+      {movies.map((movie, index) => {
           const displayTitle = movie.discLabel
             ? `${movie.discLabel} · ${movie.title}`
             : movie.title;
@@ -97,6 +101,7 @@ function MovieRow({
             isWatched={movie.isWatched}
             progress={movie.progress}
             showProgress={showProgress}
+            priority={prioritizeFirst && index < 10}
             onToggleFavorite={() =>
               onToggleFavorite(movie.id, !!movie.isFavorite)
             }
@@ -389,16 +394,18 @@ export default function HomePage() {
               </ScrollRow>
             )}
 
-            {/* Recently Added */}
+            {/* Recently Added — first MovieCard row below the hero/library/continue-watching
+                rows, so it's the closest thing to an above-the-fold poster grid on this page. */}
             <MovieRow
               title={t("recentlyAdded")}
               movies={recentlyAdded}
+              prioritizeFirst
               onToggleFavorite={handleToggleFavorite}
               onToggleWatched={handleToggleWatched}
               onDelete={handleDeleteMovie}
             />
 
-            {/* Favorites */}
+            {/* Favorites — below the fold, stays lazy */}
             <MovieRow
               title={t("favorites")}
               movies={favorites}

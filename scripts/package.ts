@@ -331,6 +331,29 @@ function isSharpPkgComplete(pkgDir: string, npmPlatform: string): boolean {
   return files.some(f => f.endsWith(".node") || f.endsWith(".dylib") || f.endsWith(".so"));
 }
 
+// Read the exact @img/* versions that the packaged app's sharp pins in its
+// optionalDependencies. Native @img packages are version-locked to the sharp
+// JS wrapper (the native format() shape must match), so we must install the
+// EXACT pinned version — never npm "latest", which drifts and breaks require().
+// Prefer the standalone copy shipped in the package; fall back to the workspace.
+function readSharpOptionalDeps(outputDir: string): Record<string, string> {
+  const candidates = [
+    path.join(outputDir, "server", "node_modules", "sharp", "package.json"),
+    path.join(PROJECT_ROOT, "node_modules", "sharp", "package.json"),
+  ];
+  for (const pkgJson of candidates) {
+    if (fs.existsSync(pkgJson)) {
+      const parsed = JSON.parse(fs.readFileSync(pkgJson, "utf-8")) as {
+        optionalDependencies?: Record<string, string>;
+      };
+      console.log(`  Reading sharp optionalDependencies from ${pkgJson}`);
+      return parsed.optionalDependencies || {};
+    }
+  }
+  console.warn("  WARNING: could not locate sharp package.json to read @img versions");
+  return {};
+}
+
 async function swapNativeModules(platform: Platform, outputDir: string, skipDownload: boolean) {
   const hostPlatform = detectPlatform();
   const native = NATIVE_PLATFORM_MAP[platform];
@@ -360,29 +383,55 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
 
   // --- sharp: ensure target packages are COMPLETE (DLLs/dylibs included) ---
   // Next.js standalone (@vercel/nft) only traces .node files, missing .dll/.dylib files.
-  // We re-download the full package from npm if it's missing or incomplete.
+  // We re-download the full package from npm if it's missing, incomplete, or the
+  // wrong version. Versions come from sharp's own optionalDependencies (exact,
+  // e.g. "0.34.5") so the native binary matches the JS wrapper.
+  const sharpOptionalDeps = readSharpOptionalDeps(outputDir);
   const targetSharpPkg = `@img/sharp-${native.npm}`;
   const targetLibvipsPkg = `@img/sharp-libvips-${native.npm}`;
 
   for (const pkg of [targetSharpPkg, targetLibvipsPkg]) {
     const pkgDir = path.join(serverNodeModules, pkg);
+    const pinnedVersion = sharpOptionalDeps[pkg];
 
-    if (fs.existsSync(pkgDir) && isSharpPkgComplete(pkgDir, native.npm)) {
-      console.log(`  ${pkg} already present and complete, skipping`);
+    // Only install @img packages that sharp actually references. On win32 the
+    // libvips DLLs ship inside @img/sharp-win32-x64/lib/, so sharp does NOT list
+    // a separate @img/sharp-libvips-win32-* package — installing latest here
+    // leaves a stray package sharp never loads. On mac/linux the libvips package
+    // IS listed and IS required, so it gets installed below.
+    if (!pinnedVersion) {
+      if (fs.existsSync(pkgDir)) {
+        // Requirement 5: remove a stray package sharp doesn't list.
+        fs.rmSync(pkgDir, { recursive: true });
+        console.log(`  Removed stray ${pkg} (not in sharp optionalDependencies)`);
+      } else {
+        console.log(`  Skipping ${pkg} (not in sharp optionalDependencies)`);
+      }
       continue;
     }
 
     if (fs.existsSync(pkgDir)) {
-      console.log(`  ${pkg} incomplete, re-downloading...`);
+      const installedVersion = fs.existsSync(path.join(pkgDir, "package.json"))
+        ? (JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf-8")).version as string)
+        : undefined;
+      if (installedVersion === pinnedVersion && isSharpPkgComplete(pkgDir, native.npm)) {
+        console.log(`  ${pkg}@${pinnedVersion} already present and complete, skipping`);
+        continue;
+      }
+      const reason = installedVersion !== pinnedVersion
+        ? `version ${installedVersion ?? "unknown"} ≠ pinned ${pinnedVersion}`
+        : "incomplete";
+      console.log(`  ${pkg} ${reason}, re-downloading...`);
       fs.rmSync(pkgDir, { recursive: true });
     }
 
-    const tarballUrl = await getNpmTarballUrl(pkg);
+    const tarballUrl = await getNpmTarballUrl(pkg, pinnedVersion);
     if (!tarballUrl) {
-      console.warn(`  WARNING: Could not find ${pkg} on npm`);
+      console.warn(`  WARNING: Could not find ${pkg}@${pinnedVersion} on npm`);
       continue;
     }
-    const cachePath = path.join(DOWNLOAD_CACHE, `${pkg.replace("/", "-")}.tgz`);
+    // Version-suffix the cache filename so a stale "latest" tarball can't be reused.
+    const cachePath = path.join(DOWNLOAD_CACHE, `${pkg.replace("/", "-")}-${pinnedVersion}.tgz`);
     if (!skipDownload) {
       await downloadFile(tarballUrl, cachePath);
     }
@@ -395,7 +444,7 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
       ensureDir(path.dirname(pkgDir));
       if (fs.existsSync(extractedPkgDir)) {
         copyDirRecursive(extractedPkgDir, pkgDir);
-        console.log(`  Installed ${pkg}`);
+        console.log(`  Installed ${pkg}@${pinnedVersion}`);
       }
       fs.rmSync(extractDir, { recursive: true });
     }
@@ -459,9 +508,13 @@ async function swapNativeModules(platform: Platform, outputDir: string, skipDown
   }
 }
 
-async function getNpmTarballUrl(pkg: string): Promise<string | null> {
+// Resolve the tarball URL for an EXACT version (never "latest"). @img native
+// packages are version-locked to the sharp JS wrapper, so `version` must be the
+// exact string sharp pins in optionalDependencies (e.g. "0.34.5"). The
+// version-specific endpoint returns the same { dist: { tarball } } shape.
+async function getNpmTarballUrl(pkg: string, version: string): Promise<string | null> {
   try {
-    const res = await fetch(`https://registry.npmjs.org/${pkg}/latest`);
+    const res = await fetch(`https://registry.npmjs.org/${pkg}/${version}`);
     if (!res.ok) return null;
     const data = await res.json() as { dist?: { tarball?: string } };
     return data.dist?.tarball || null;

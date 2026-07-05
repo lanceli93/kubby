@@ -828,7 +828,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
       )}
 
       {/* Movie cards */}
-        {movies.map((movie) => (
+        {movies.map((movie, index) => (
           <MovieCard
             key={movie.id}
             id={movie.id}
@@ -843,6 +843,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             isFavorite={movie.isFavorite}
             isWatched={movie.isWatched}
             responsive
+            priority={index < 10}
             onToggleFavorite={() =>
               handleToggleFavorite(movie.id, !!movie.isFavorite)
             }

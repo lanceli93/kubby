@@ -68,6 +68,9 @@ interface MovieCardProps {
   onToggleWatched?: () => void;
   onDelete?: (deleteFiles: boolean) => void;
   responsive?: boolean;
+  /** LCP hint — pass for the first ~10 above-the-fold cards in a grid so the
+   *  poster loads eagerly with fetchpriority=high instead of lazy. */
+  priority?: boolean;
 }
 
 export function MovieCard({
@@ -89,6 +92,7 @@ export function MovieCard({
   onToggleWatched,
   onDelete,
   responsive,
+  priority,
 }: MovieCardProps) {
   const router = useRouter();
   const posterRef = useRef<HTMLDivElement>(null);
@@ -144,6 +148,7 @@ export function MovieCard({
                 fill
                 className="object-cover transition-fluid"
                 sizes="180px"
+                priority={priority}
                 onError={() => setImgError(true)}
                 {...(posterBlur ? { placeholder: "blur" as const, blurDataURL: posterBlur } : {})}
               />
