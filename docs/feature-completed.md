@@ -1,5 +1,17 @@
 # Completed Features
 
+## 2026-07-05 (4): 首页 hero 首屏闪现单张 fanart 修复 + 详情页跳转幽灵框修复
+
+用户反馈两点视觉毛刺, 均已真机 (Chrome) 复现并验证修复。
+
+### 首页刷新先闪单张 fanart 再变海报墙 (`page.tsx` + `home-hero.tsx`)
+根因: hero 区有两个数据源 —— 轮播 items(continue-watching/recently-added, 响应快)和海报墙池 (`/api/movies/hero-wall`, 需等偏好加载 + 加权抽样, 慢几百 ms)。首帧 wallMovies 还没到, `wallMode=false` 走单张 fanart 兜底分支, 池子一到又切成墙, 于是"先一张大图、再闪成马赛克"。修复两处:
+- 墙查询加 `enabled: !!prefs` —— 顺带消灭另一个隐患: 原来偏好未到时会先按占位 key 抽一次, 偏好到了 key 变化再抽一次, 冷加载必然重排一遍墙。
+- `HomeHero` 新增 `wallPending` prop: 池子在途时兜底分支渲染纯深色底 (`bg-[#0a0a0f]`) 占位, 不再放单张 fanart。池子到位后墙直接淡入。真机验证: 强刷后 MutationObserver 全程未见 `img[sizes="100vw"]` 单张背景, 墙 (256 tiles) 一步到位。
+
+### 详情页点"猜你喜欢"跳转时磨砂框里闪过横线框 (`movies/[id]/page.tsx`)
+根因: 海报 morph 的 View Transition 中, 新旧两页都有磨砂信息面板, 但面板没有自己的 `view-transition-name`, 于是它们都被卷进 root 交叉淡化 —— 旧页面板半透明地叠印在新页面板上, 边框/高光横线以"幽灵框"形式透出 ~0.4s(用 6s 慢放动画冻结在 50% 复现成功, 与用户截图一致)。修复: 给面板加 `view-transition-name: movie-info`, 让浏览器把新旧面板作为独立组几何插值(老面板平滑变形到新面板), 不再叠印。文档内永远只有一个该面板, 满足唯一性约束。慢放复验: `::view-transition-group(movie-info)` 出现, 幽灵框消失。
+
 ## 2026-07-05 (3): 收藏页改为子标签 + 完整网格 + 修复卡片收藏按钮无法点击
 
 用户反馈两点:(1) 收藏页只显示单行 ScrollRow, 想要和"媒体库点进去"一样的完整浏览体验;(2) 卡片上的收藏(红心)按钮点不动。真机 (Chrome) 复验: 收藏影片计数 2→1→2, 点心成功增删收藏且不再误跳详情页。

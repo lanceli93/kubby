@@ -76,6 +76,11 @@ interface HeroItem {
 interface HomeHeroProps {
   items: HeroItem[];
   wallMovies: MosaicMovie[];
+  /** True while the hero-wall pool is still loading. The single-backdrop
+   *  fallback must NOT render during this window — hero items usually arrive
+   *  first, and flashing one movie's fanart before the wall pops in reads as
+   *  a glitch. A plain dark surface holds the space instead. */
+  wallPending?: boolean;
   /** Poster-wall config (columns/style/angle). Defaults to today's classic wall. */
   mosaicConfig?: HeroMosaicConfig;
 }
@@ -111,6 +116,7 @@ function HeroBackdrop({ movie }: { movie: HeroMovie }) {
 export function HomeHero({
   items,
   wallMovies,
+  wallPending = false,
   mosaicConfig = DEFAULT_HERO_MOSAIC_CONFIG,
 }: HomeHeroProps) {
   const t = useTranslations("home");
@@ -315,6 +321,11 @@ export function HomeHero({
             config={mosaicConfig}
           />
         </div>
+      ) : wallPending ? (
+        // Wall pool still loading — hold a plain dark surface. Rendering the
+        // fallback fanart here would flash one movie full-bleed for an instant
+        // before the wall replaces it (hero items resolve before the wall).
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[#0a0a0f]" />
       ) : (
         <div key={id} className="pointer-events-none absolute inset-0 z-0">
           <HeroBackdrop movie={movie} />

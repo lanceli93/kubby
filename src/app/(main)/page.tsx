@@ -148,7 +148,7 @@ export default function HomePage() {
   // chance to appear on the wall and in the Now Showing spotlight (see
   // hero-mosaic.tsx). The data-affecting config fields ride in the queryKey so
   // saving new preferences refetches the pool despite staleTime: Infinity.
-  const { data: wallMovies = [] } = useQuery<Movie[]>({
+  const { data: wallMovies = [], isPending: wallPending } = useQuery<Movie[]>({
     queryKey: [
       "movies",
       "hero-wall",
@@ -162,6 +162,9 @@ export default function HomePage() {
     ],
     queryFn: () =>
       fetch("/api/movies/hero-wall?limit=60").then((r) => r.json()),
+    // Wait for prefs — fetching earlier would draw under the placeholder key,
+    // then redraw when the config-bearing key arrives (visible reshuffle).
+    enabled: !!prefs,
     staleTime: Infinity, // keep the same draw while the page stays mounted
     refetchOnWindowFocus: false,
   });
@@ -324,6 +327,7 @@ export default function HomePage() {
             <HomeHero
               items={heroItems}
               wallMovies={wallMovies}
+              wallPending={wallPending}
               mosaicConfig={mosaicConfig ?? DEFAULT_HERO_MOSAIC_CONFIG}
             />
           )}
