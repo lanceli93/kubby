@@ -314,6 +314,24 @@
   animation: mosaicDriftX var(--drift-dur, 80s) linear infinite;
 }
 
+/* Wall entrance — the pool arrives a beat after first paint (hero-wall fetch),
+   so the whole wall eases in from black instead of popping over the dark
+   placeholder the hero holds while loading. Slight scale settle sells it as
+   the projector "warming up" rather than a cut. */
+@keyframes mosaicEnter {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-mosaic-enter {
+  animation: mosaicEnter 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Ambilight breathing — very slow opacity pulse for the home ambient glow layer
    (see components/home/ambient-field.tsx). Pure CSS so it costs nothing while
    the color-easing rAF loop is idle; disabled under reduced motion. */
@@ -483,6 +501,29 @@ button:active:not(:disabled) {
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* The glass info panel is its own group (named inline on the detail page):
+   without it, both pages' panels ride the root crossfade and double-expose —
+   the other panel's border ghosts through as a faint frame. Same curve as the
+   poster so they travel together. */
+::view-transition-group(movie-info),
+::view-transition-old(movie-info),
+::view-transition-new(movie-info) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Unmatched-snapshot fallback: if the destination page hasn't mounted its
+   named element when the NEW snapshot is captured (data still loading — see
+   waitForDetailPoster's timeout), the group has only an OLD image, which by
+   default plays a lingering fade-out IN PLACE over the loading page: the old
+   panel's border floats over the new content as a "ghost frame". Drop such
+   one-sided snapshots instantly instead. */
+::view-transition-old(movie-info):only-child,
+::view-transition-old(movie-poster):only-child {
+  animation: none;
+  opacity: 0;
+}
+
 /* Reduced motion / accessibility: disable the morph and fall back to an instant
    navigation identical to today. (The JS helper already bails out before
    starting a transition, but this covers a transition begun before the media
@@ -490,7 +531,10 @@ button:active:not(:disabled) {
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(movie-poster),
   ::view-transition-old(movie-poster),
-  ::view-transition-new(movie-poster) {
+  ::view-transition-new(movie-poster),
+  ::view-transition-group(movie-info),
+  ::view-transition-old(movie-info),
+  ::view-transition-new(movie-info) {
     animation: none !important;
   }
 }

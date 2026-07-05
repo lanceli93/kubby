@@ -434,7 +434,7 @@ export function HeroMosaic({
     <div
       ref={rootRef}
       aria-hidden
-      className="pointer-events-none absolute inset-0 overflow-hidden"
+      className="animate-mosaic-enter pointer-events-none absolute inset-0 overflow-hidden motion-reduce:animate-none"
     >
       {/* Oversized tilted plane — the -inset guarantees no empty corners after
           the perspective rotation. */}

@@ -143,28 +143,16 @@ export default function HomePage() {
   });
 
   // Poster wall pool for the animated hero backdrop — the hero-wall endpoint
-  // applies the saved mosaic config (per-library weights, year/resolution/style
-  // filters) and returns a weighted random draw, so every eligible movie gets a
-  // chance to appear on the wall and in the Now Showing spotlight (see
-  // hero-mosaic.tsx). The data-affecting config fields ride in the queryKey so
-  // saving new preferences refetches the pool despite staleTime: Infinity.
+  // reads the SAVED mosaic config from the DB (per-library weights, year/
+  // resolution/style filters) and returns a weighted random draw, so this can
+  // fire immediately, in parallel with the prefs fetch — no config needed
+  // client-side, which keeps the pre-wall dark gap to a single request.
+  // Config changes don't ride the queryKey: the preferences page explicitly
+  // invalidates ["movies","hero-wall"] on save, which busts staleTime:Infinity.
   const { data: wallMovies = [], isPending: wallPending } = useQuery<Movie[]>({
-    queryKey: [
-      "movies",
-      "hero-wall",
-      JSON.stringify([
-        mosaicConfig?.style,
-        mosaicConfig?.yearFrom,
-        mosaicConfig?.yearTo,
-        mosaicConfig?.minWidth,
-        mosaicConfig?.libraryWeights,
-      ]),
-    ],
+    queryKey: ["movies", "hero-wall"],
     queryFn: () =>
       fetch("/api/movies/hero-wall?limit=60").then((r) => r.json()),
-    // Wait for prefs — fetching earlier would draw under the placeholder key,
-    // then redraw when the config-bearing key arrives (visible reshuffle).
-    enabled: !!prefs,
     staleTime: Infinity, // keep the same draw while the page stays mounted
     refetchOnWindowFocus: false,
   });
@@ -323,17 +311,20 @@ export default function HomePage() {
 
         <div className="flex-1 overflow-y-scroll">
         <TabsContent value="home">
-          {(heroItems.length > 0 || wallMovies.length > 0) && (
+          {/* Render from the first frame while the wall pool loads (wallPending)
+              so the hero's space is reserved — otherwise the whole page jumps
+              down when the hero pops in after the fetch. */}
+          {(wallPending || !prefs || heroItems.length > 0 || wallMovies.length > 0) && (
             <HomeHero
               items={heroItems}
               wallMovies={wallMovies}
-              wallPending={wallPending}
+              wallPending={wallPending || !prefs}
               mosaicConfig={mosaicConfig ?? DEFAULT_HERO_MOSAIC_CONFIG}
             />
           )}
           <div
             className={`stagger-children flex flex-col gap-6 px-4 pb-8 md:gap-10 md:px-12 ${
-              heroItems.length > 0 || wallMovies.length > 0
+              wallPending || !prefs || heroItems.length > 0 || wallMovies.length > 0
                 ? "relative z-10 pt-6 md:pt-8"
                 : "pt-16"
             }`}

@@ -1,5 +1,21 @@
 # Completed Features
 
+## 2026-07-05 (5): 上一轮两个修复的补完 — 黑屏空窗 + 墙淡入; 幽灵框真根因(快照单边)
+
+用户反馈第一轮修复不彻底: (1) 首页 fanart 闪现没了, 但换成一段黑屏后马赛克墙"突然出现"; (2) 幽灵框仍可复现。本轮用"逐帧截图 + ffmpeg 合成 GIF"的流程做修复前后对比(`vt-ghost-before.gif` / `vt-ghost-after.gif` / `home-hero-enter.gif`, 仓库根目录)。
+
+### 首页: 缩短黑屏 + 墙淡入场 (`page.tsx`, `home-hero.tsx`, `hero-mosaic.tsx`, `globals.css`)
+- 墙查询不再等偏好 (`enabled: !!prefs` 移除): hero-wall 端点读的是数据库里已保存的配置, 客户端根本不需要先拿到 prefs 才能发请求 —— 两个请求并行, 黑屏窗口缩短到单个请求的时长。配置变更改由偏好页保存时显式 invalidate 触发重取(原本就有), queryKey 里的配置字段全部移除。
+- hero 占位从首帧就渲染(`wallPending || !prefs` 时也渲染 HomeHero 的深色壳), 避免下方内容行先顶上来再被推下去的布局跳动。
+- 新增 `mosaicEnter` keyframe (1.1s, opacity 0→1 + scale 1.02→1, `motion-reduce` 关闭): 墙从深色占位上淡入, 不再是硬切。慢放 10s 逐帧截图确认渐显过程平滑。
+
+### 幽灵框真根因: NEW 快照缺席 → 单边 old 快照原地淡出 (`view-transition.ts`, `globals.css`)
+上一轮给面板命名 `movie-info` 只解决了"双页面板叠印"路径, 但用户仍能复现。真根因: `waitForDetailPoster` 超时仅 600ms, 目标页数据(React Query)没到、命名元素还没挂载时 NEW 快照就被捕获 —— `movie-poster`/`movie-info` 组只有 OLD 图像("单边快照"), 浏览器默认让它原地淡出叠在半加载的新页上, 旧面板的边框/高光线就是那个"横线幽灵框"。两层修复:
+- `waitForDetailPoster` 超时 600ms → 1800ms, 覆盖冷取数, 仍远低于 Chrome ~4s 的 DOM 更新中止线。
+- CSS 兜底: `::view-transition-old(movie-info):only-child` / `(movie-poster):only-child` 直接 `animation: none; opacity: 0` —— 即使真超时(慢盘/请求失败), 单边旧快照立即消失, 不再残留。
+- 顺带给 `movie-info` 组补了与海报一致的 420ms 缓动与 reduced-motion 关闭。
+验证: 正常网速 + Slow 3G(缓存命中)+ Slow 3G(硬刷清缓存)三种路径下逐帧采样 VT 伪元素树, 均为双边快照(old+new 同在), 无单边残留; 慢放逐帧截图无幽灵框。
+
 ## 2026-07-05 (4): 首页 hero 首屏闪现单张 fanart 修复 + 详情页跳转幽灵框修复
 
 用户反馈两点视觉毛刺, 均已真机 (Chrome) 复现并验证修复。

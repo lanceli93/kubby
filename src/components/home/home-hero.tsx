@@ -133,7 +133,7 @@ export function HomeHero({
   // enough (≥8 usable posters/fanart for the chosen style); otherwise fall back
   // to the single-backdrop carousel. In wall mode the wall drives everything —
   // the carousel timer and slide indicators stand down.
-  const wallMode = usableWallCount(wallMovies, mosaicConfig.style) >= 8;
+  const wallMode = !wallPending && usableWallCount(wallMovies, mosaicConfig.style) >= 8;
 
   // Clamp active index if the pool shrinks (query refetch with fewer items).
   const safeIdx = activeIdx < items.length ? activeIdx : 0;
@@ -254,6 +254,17 @@ export function HomeHero({
     },
     [scheduleAdvance]
   );
+
+  // Wall pool still loading and no carousel item ready either — hold the
+  // hero's box with the plain dark shell so the rows below don't jump up and
+  // then get pushed down when the wall arrives.
+  if (!displayEntry && wallPending) {
+    return (
+      <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden bg-[#0a0a0f] md:h-[64vh] md:min-h-[480px]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[55%] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/55 to-transparent" />
+      </div>
+    );
+  }
 
   if (!displayEntry) return null;
 
