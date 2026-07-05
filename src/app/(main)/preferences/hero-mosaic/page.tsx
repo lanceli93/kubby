@@ -9,6 +9,7 @@ import {
   type HeroMosaicConfig,
   type MosaicStyle,
   type MosaicAngle,
+  type MosaicFlow,
   DEFAULT_HERO_MOSAIC_CONFIG,
   MOSAIC_ANGLES,
 } from "@/lib/hero-mosaic-config";
@@ -22,6 +23,7 @@ interface Library {
 
 const STYLE_OPTIONS: MosaicStyle[] = ["poster", "fanart", "both"];
 const ANGLE_OPTIONS: MosaicAngle[] = ["flat", "gentle", "classic", "steep", "reverse"];
+const FLOW_OPTIONS: MosaicFlow[] = ["vertical", "horizontal"];
 // Minimum-resolution presets — null (Any) plus the widths the endpoint filters on.
 const RESOLUTION_OPTIONS: { value: number | null; key: string }[] = [
   { value: null, key: "resAny" },
@@ -193,9 +195,26 @@ export default function HeroMosaicPage() {
           </div>
         </div>
 
-        {/* Layout: columns + style + angle */}
+        {/* Layout: flow + columns + style + angle */}
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-foreground">{t("layout")}</h2>
+
+          {/* Flow (scroll direction) — client-only re-render, so it stays OUT of
+              the preview queryKey (same as columnCount/angle). */}
+          <div>
+            <p className="mb-2 text-sm font-medium text-foreground">{t("flow")}</p>
+            <div className="flex flex-wrap gap-2">
+              {FLOW_OPTIONS.map((f) => (
+                <SegButton
+                  key={f}
+                  active={draft.flow === f}
+                  onClick={() => patch({ flow: f })}
+                >
+                  {t(f === "vertical" ? "flowVertical" : "flowHorizontal")}
+                </SegButton>
+              ))}
+            </div>
+          </div>
 
           {/* Column count */}
           <div>

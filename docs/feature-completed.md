@@ -23,6 +23,14 @@
 - executor 生成的预览请求对 weights 做了 `encodeURIComponent` + `URLSearchParams`(双重编码, 服务端 JSON.parse 会拿到仍带 %22 的串), 编排者审查时改为直接 `params.set`。
 - 旧 dev server Jest worker 崩溃残留在 3000 端口 (返回 500), 需 kill 后重启才能真机验证。
 
+### Round 2 (同日用户反馈修复)
+1. **聚光灯与影片名不匹配**: 根因是选取 effect 的闭包持有旧 render 的 `tileMovies`/`tilePairs` map——主页上偏好 (columnCount) 通常晚于墙数据到达, 重排后所有 tile 地址变了, 闭包还按 16 列地址解析。修复: map 每次 render 写入 `tileMapsRef`, `pick()` 只经 ref 读取; effect deps 加 `config.columnCount/style/flow`, 重挂时清掉旧点亮地址。
+2. **横向滚动风格**: `flow: "vertical"|"horizontal"` (纯 JSON 字段, 无需迁移)。横向 = 行内 `translateX(-50%)` 无缝循环 (`mosaicDriftX` keyframe), 相邻行反向, 海报→自身剧照配对保持相邻; 列数滑块统一映射行数 (`round(cols*0.45)` clamp 4–12); Card 转置为 h-full + aspect 推宽度。内部 `columns/col` 泛化为 `lanes/lane`。
+3. **偏好设置默认落卡片标记**: `/preferences` redirect 改为 `/preferences/hero-mosaic` (侧边栏第一项)。
+4. **可被选中影片上限太少**: 旧可选区仅右中窄带 (X 38–80%), 很多影片永远进不了聚光灯。修复: 扩大到近全墙 (X/Y 8–92%/8–72%, 保留文字块与底部渐隐排除), 并加 session 级 `featuredHistoryRef`——优先选没亮过的影片, 全部轮完后重置, 保证每部上墙影片都有机会被 featured。
+
+真机复验: 3 个连续聚光灯周期 lit tile 的 movieId 经 API 反查标题与 caption 全部一致; 保存 10 列后主页跟随且配对点亮正常; 横向模式 7 行 translateX 条带; `/preferences` 落海报墙页; flow 三次往返读写无损。
+
 ## 2026-07-05: 首页 Hero 三轮迭代 — Netflix 式动态海报马赛克墙 + 聚光灯同步
 
 Round 1 的单张剧照 Hero 被用户否掉（"平庸/没有呼吸感/按钮不好看"）。三轮迭代后定稿：

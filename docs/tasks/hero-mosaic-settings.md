@@ -37,3 +37,23 @@ Config shape (shared): `src/lib/hero-mosaic-config.ts`
       messages.
       Accept: `npx tsc --noEmit` + `npm run build` pass; preview reacts to all
       draft changes without saving; save persists and home reflects it.
+
+## Round 2 — user feedback fixes
+
+- [x] **R1 — Spotlight correctness + full-pool coverage.**
+      Resolve the featured movie from the live DOM (`data-movie-id` + fresh
+      ref maps) instead of a stale closure map; effect re-arms on config
+      change. Widen the eligible zone to nearly the whole wall (keep text
+      block + extreme edge exclusions). Prefer movies not yet featured this
+      session (reset when exhausted).
+      Accept: `npx tsc --noEmit` passes; lit tile always matches the caption
+      after a saved column-count change; distinct featured movies over time
+      approach the whole pool.
+- [x] **R2 — Horizontal flow mode.**
+      `flow: "vertical"|"horizontal"` in HeroMosaicConfig (JSON only, no
+      migration). Horizontal = rows drifting via translateX(-50%) seamless
+      loop, alternating directions, pair kept adjacent; new keyframe in
+      globals.css. Preferences UI segmented control + i18n; flow NOT in
+      preview/home queryKeys (client-only re-render).
+      Accept: `npx tsc --noEmit` + `npm run build` pass; default vertical
+      renders as today; horizontal drifts sideways with seamless loop.

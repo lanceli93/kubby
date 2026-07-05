@@ -303,6 +303,17 @@
   animation: mosaicDrift var(--drift-dur, 80s) linear infinite;
 }
 
+/* Horizontal twin of mosaicDrift — each ROW of the wall translates a full
+   half-width so the duplicated (side-by-side) strip loops seamlessly. Used by
+   the horizontal flow mode; same per-row duration/direction convention. */
+@keyframes mosaicDriftX {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-mosaic-drift-x {
+  animation: mosaicDriftX var(--drift-dur, 80s) linear infinite;
+}
+
 /* Ambilight breathing — very slow opacity pulse for the home ambient glow layer
    (see components/home/ambient-field.tsx). Pure CSS so it costs nothing while
    the color-easing rAF loop is idle; disabled under reduced motion. */

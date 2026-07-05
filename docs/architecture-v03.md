@@ -374,7 +374,7 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | player_360_mode | integer (bool) | 360° 全景播放模式开关, 默认 false |
 | movie_dimension_weights | text | JSON 对象, 电影维度权重 (如 `{"剧情":2,"特效":1}`), 默认全 1 |
 | person_dimension_weights | text | JSON 对象, 人物维度权重, 默认全 1 |
-| hero_mosaic_config | text | JSON `HeroMosaicConfig`, 首页海报墙配置 (列数/风格/角度/媒体库占比/年份/分辨率筛选), NULL = 默认 |
+| hero_mosaic_config | text | JSON `HeroMosaicConfig`, 首页海报墙配置 (列数/风格/角度/滚动方向/媒体库占比/年份/分辨率筛选), NULL = 默认 |
 
 #### movie_discs (多碟电影)
 | 列 | 类型 | 说明 |
@@ -920,7 +920,7 @@ Player (page.tsx)
 | `/people/[id]` | 演员详情 | fanart 渐变 + 大卡片 + 参演作品网格 + 照片墙(Justified 行布局+Lightbox+上传/删除) |
 | `/search` | 搜索 | 搜索框 + 电影结果 + 演员结果 + 书签剪辑 (按宽高比分横屏/竖屏行) |
 | `/profile` | 个人资料 | 头像/用户名/密码/账户类型 |
-| `/preferences/hero-mosaic` | 首页海报墙 | 列数(8–24)/风格(仅海报/仅剧照/海报+剧照)/角度(5 档 transform 预设)/媒体库占比(默认按库大小比例, 可自定义加权, 0=排除)/年份范围/最低分辨率; 顶部实时预览(真实 HeroMosaic 组件, 数据项变化才重新抽样, 列数/角度纯重渲染) |
+| `/preferences/hero-mosaic` | 首页海报墙 | 滚动方向(纵向列/横向行)/列数(8–24, 横向映射为 4–12 行)/风格(仅海报/仅剧照/海报+剧照)/角度(5 档 transform 预设)/媒体库占比(默认按库大小比例, 可自定义加权, 0=排除)/年份范围/最低分辨率; 顶部实时预览(真实 HeroMosaic 组件, 数据项变化才重新抽样, 方向/列数/角度纯重渲染); `/preferences` 默认落此页 |
 | `/preferences/card-badges` | 卡片标记 | 电影卡片(分辨率/评分)和演员卡片(段位)徽章开关, 预览卡片, 可展开规则说明 |
 | `/preferences/ratings-bookmarks` | 评分与书签 | 多维度评分维度管理(重命名/排序/权重/删除确认), 书签图标管理(内置9个+自定义上传), 快速书签模板 |
 | `/preferences/playback` | 播放设置 | 外部播放器选择 (IINA/PotPlayer/Web Player), 本地/串流模式 |

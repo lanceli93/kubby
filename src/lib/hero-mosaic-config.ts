@@ -4,11 +4,13 @@
 
 export type MosaicStyle = "poster" | "fanart" | "both";
 export type MosaicAngle = "flat" | "gentle" | "classic" | "steep" | "reverse";
+export type MosaicFlow = "vertical" | "horizontal";
 
 export interface HeroMosaicConfig {
   columnCount: number;                    // 8–24
   style: MosaicStyle;
   angle: MosaicAngle;
+  flow: MosaicFlow;                       // "vertical" = columns drift up/down; "horizontal" = rows drift left/right
   libraryWeights: Record<string, number>; // libraryId → 0–100; {} = proportional random across all libraries; 0 = exclude
   yearFrom: number | null;
   yearTo: number | null;
@@ -19,6 +21,7 @@ export const DEFAULT_HERO_MOSAIC_CONFIG: HeroMosaicConfig = {
   columnCount: 16,
   style: "both",
   angle: "classic",
+  flow: "vertical",
   libraryWeights: {},
   yearFrom: null,
   yearTo: null,
@@ -38,6 +41,7 @@ export const MOSAIC_ANGLES: Record<MosaicAngle, string> = {
 
 const MOSAIC_STYLES: MosaicStyle[] = ["poster", "fanart", "both"];
 const MOSAIC_ANGLE_KEYS: MosaicAngle[] = ["flat", "gentle", "classic", "steep", "reverse"];
+const MOSAIC_FLOWS: MosaicFlow[] = ["vertical", "horizontal"];
 
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {
   const n = Math.round(Number(value));
@@ -81,6 +85,9 @@ export function normalizeHeroMosaicConfig(raw: unknown): HeroMosaicConfig {
     angle: MOSAIC_ANGLE_KEYS.includes(input.angle as MosaicAngle)
       ? (input.angle as MosaicAngle)
       : DEFAULT_HERO_MOSAIC_CONFIG.angle,
+    flow: MOSAIC_FLOWS.includes(input.flow as MosaicFlow)
+      ? (input.flow as MosaicFlow)
+      : DEFAULT_HERO_MOSAIC_CONFIG.flow,
     libraryWeights: normalizeLibraryWeights(input.libraryWeights),
     yearFrom: normalizeYear(input.yearFrom),
     yearTo: normalizeYear(input.yearTo),
