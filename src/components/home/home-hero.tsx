@@ -13,6 +13,10 @@ import {
   usableWallCount,
   type MosaicMovie,
 } from "@/components/home/hero-mosaic";
+import {
+  type HeroMosaicConfig,
+  DEFAULT_HERO_MOSAIC_CONFIG,
+} from "@/lib/hero-mosaic-config";
 
 // Duplicated from movie-card.tsx — the repo idiom is to inline this small helper
 // at each card site rather than share it.
@@ -72,6 +76,8 @@ interface HeroItem {
 interface HomeHeroProps {
   items: HeroItem[];
   wallMovies: MosaicMovie[];
+  /** Poster-wall config (columns/style/angle). Defaults to today's classic wall. */
+  mosaicConfig?: HeroMosaicConfig;
 }
 
 // Auto-advance dwell — must match the heroProgress keyframe duration in globals.css.
@@ -102,7 +108,11 @@ function HeroBackdrop({ movie }: { movie: HeroMovie }) {
   );
 }
 
-export function HomeHero({ items, wallMovies }: HomeHeroProps) {
+export function HomeHero({
+  items,
+  wallMovies,
+  mosaicConfig = DEFAULT_HERO_MOSAIC_CONFIG,
+}: HomeHeroProps) {
   const t = useTranslations("home");
   const router = useRouter();
   const { setBase } = useAmbient();
@@ -114,10 +124,10 @@ export function HomeHero({ items, wallMovies }: HomeHeroProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // The animated poster wall replaces the backdrop when the library is rich
-  // enough (≥8 usable posters/fanart); otherwise fall back to the single-backdrop
-  // carousel. In wall mode the wall drives everything — the carousel timer and
-  // slide indicators stand down.
-  const wallMode = usableWallCount(wallMovies) >= 8;
+  // enough (≥8 usable posters/fanart for the chosen style); otherwise fall back
+  // to the single-backdrop carousel. In wall mode the wall drives everything —
+  // the carousel timer and slide indicators stand down.
+  const wallMode = usableWallCount(wallMovies, mosaicConfig.style) >= 8;
 
   // Clamp active index if the pool shrinks (query refetch with fewer items).
   const safeIdx = activeIdx < items.length ? activeIdx : 0;
@@ -299,7 +309,11 @@ export function HomeHero({ items, wallMovies }: HomeHeroProps) {
           the featured movie, or a single fallback backdrop of the active slide. */}
       {wallMode ? (
         <div className="absolute inset-0 z-0">
-          <HeroMosaic movies={wallMovies} onFeature={handleFeature} />
+          <HeroMosaic
+            movies={wallMovies}
+            onFeature={handleFeature}
+            config={mosaicConfig}
+          />
         </div>
       ) : (
         <div key={id} className="pointer-events-none absolute inset-0 z-0">

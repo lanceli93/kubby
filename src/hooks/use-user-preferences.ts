@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { HeroMosaicConfig } from "@/lib/hero-mosaic-config";
 
 export interface UserPreferences {
   movieRatingDimensions: string[];
@@ -17,6 +18,7 @@ export interface UserPreferences {
   player360Mode: boolean;
   movieDimensionWeights: Record<string, number>;
   personDimensionWeights: Record<string, number>;
+  heroMosaicConfig: HeroMosaicConfig;
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 

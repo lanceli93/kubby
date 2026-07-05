@@ -295,6 +295,8 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `user_preferences` ADD `person_dimension_weights` text",
     // 0032: per-movie VR stereo layout for 360° playback
     "ALTER TABLE `user_movie_data` ADD `vr_layout` text",
+    // 0033: home hero poster wall settings
+    "ALTER TABLE `user_preferences` ADD `hero_mosaic_config` text",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

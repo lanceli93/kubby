@@ -1,5 +1,28 @@
 # Completed Features
 
+## 2026-07-05 (2): 首页海报墙配置页 — 列数/风格/角度/媒体库占比/筛选 + 实时预览
+
+用户要求把 hero 马赛克墙做成可配置的, 菜单放偏好设置新条目。四个任务并行/串行派发给 executor 子代理 (T1 sonnet, T2–T4 opus), 全部真机验证通过 (Chrome 实测: 风格切换 384 块全横版、角度 transform 实时切换、列数 10 列生效、年份筛选池子缩到 13 部、保存后主页跟随、恢复默认)。
+
+### 配置模型 (`src/lib/hero-mosaic-config.ts`, new)
+`HeroMosaicConfig`: 列数 8–24 (默认 16) / 风格 poster|fanart|both (默认 both) / 角度 flat|gentle|classic|steep|reverse (5 档 CSS transform 预设, classic = 原硬编码值) / `libraryWeights` (空对象 = 按库随机, 非空 = 加权采样, 0 或缺失 = 排除) / yearFrom/yearTo/minWidth 筛选。`normalizeHeroMosaicConfig` 把任意残缺/非法输入合并到默认值上, 永不抛错——DB 存的 JSON 损坏也只会退回默认。
+
+### 持久化
+`user_preferences.hero_mosaic_config` TEXT 列 (schema.ts + db/index.ts `pending` 迁移数组 0033 双更新), personal-metadata GET/PUT 透传 (读取时 normalize, 写入时 normalize 后 stringify)。
+
+### `/api/movies/hero-wall` (new)
+主页墙的影片池端点, 取代 `sort=random`: 读已存配置 → query 参数覆盖 (偏好页预览用; 空串/"null" = 显式清除筛选, 缺失 = 用已存值) → 风格/年份/分辨率过滤。加权采样: 按权重比例分配配额 (修正舍入漂移), 每库单独 `ORDER BY RANDOM()`, 不足时从其余加权库补齐, 最后 Fisher–Yates 打散避免同库扎堆。
+
+### HeroMosaic 组件改造
+`config` prop (默认值 = 旧行为): 列数驱动列数组, `DRIFT_DURATIONS` 取模复用; 风格决定列填充 (both 保持海报→自身剧照成对, 单风格每部一块); perColumn 公式按列数和瓦片纵横比推导 (保持无缝循环不变量: 单组瓦片高度 ≥ 可见平面); 角度经内联 style 应用 (Tailwind 看不见运行时值)。主页 queryKey 带上数据相关字段, 保存偏好后墙自动重抽。
+
+### 偏好页 `/preferences/hero-mosaic` (new, 侧边栏第一项)
+复用 card-badges 的玻璃卡结构: 顶部实时预览 (真实 HeroMosaic 组件, `featuredEnabled=false`; 数据字段变化才重新请求预览池, 列数/角度纯客户端重渲染, `placeholderData` 防闪烁; <8 部显示提示), 列数滑块, 风格分段按钮, 5 个角度缩略图 (真实 transform 缩小版), 媒体库占比 (自定义开关 + 0–100 滑块 + 百分比读数), 年份范围 + 最低分辨率 (不限/HD/FHD/2K/4K), 保存后同时失效 userPreferences 和 hero-wall 查询。i18n en/zh 全覆盖。
+
+### 踩坑
+- executor 生成的预览请求对 weights 做了 `encodeURIComponent` + `URLSearchParams`(双重编码, 服务端 JSON.parse 会拿到仍带 %22 的串), 编排者审查时改为直接 `params.set`。
+- 旧 dev server Jest worker 崩溃残留在 3000 端口 (返回 500), 需 kill 后重启才能真机验证。
+
 ## 2026-07-05: 首页 Hero 三轮迭代 — Netflix 式动态海报马赛克墙 + 聚光灯同步
 
 Round 1 的单张剧照 Hero 被用户否掉（"平庸/没有呼吸感/按钮不好看"）。三轮迭代后定稿：

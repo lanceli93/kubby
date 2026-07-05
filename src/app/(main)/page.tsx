@@ -16,6 +16,8 @@ import {
   AmbientField,
   AmbientHoverZone,
 } from "@/components/home/ambient-field";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { DEFAULT_HERO_MOSAIC_CONFIG } from "@/lib/hero-mosaic-config";
 import { useTranslations } from "next-intl";
 
 interface Movie {
@@ -120,6 +122,8 @@ function MovieRow({
 export default function HomePage() {
   const t = useTranslations("home");
   const queryClient = useQueryClient();
+  const { data: prefs } = useUserPreferences();
+  const mosaicConfig = prefs?.heroMosaicConfig;
 
   const { data: libraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
@@ -138,13 +142,26 @@ export default function HomePage() {
       fetch("/api/movies?sort=dateAdded&limit=12").then((r) => r.json()),
   });
 
-  // Poster wall pool for the animated hero backdrop — a RANDOM sample across all
-  // libraries, re-drawn per page visit, so every movie gets a chance to appear
-  // on the wall and in the Now Showing spotlight (see hero-mosaic.tsx).
+  // Poster wall pool for the animated hero backdrop — the hero-wall endpoint
+  // applies the saved mosaic config (per-library weights, year/resolution/style
+  // filters) and returns a weighted random draw, so every eligible movie gets a
+  // chance to appear on the wall and in the Now Showing spotlight (see
+  // hero-mosaic.tsx). The data-affecting config fields ride in the queryKey so
+  // saving new preferences refetches the pool despite staleTime: Infinity.
   const { data: wallMovies = [] } = useQuery<Movie[]>({
-    queryKey: ["movies", "hero-wall"],
+    queryKey: [
+      "movies",
+      "hero-wall",
+      JSON.stringify([
+        mosaicConfig?.style,
+        mosaicConfig?.yearFrom,
+        mosaicConfig?.yearTo,
+        mosaicConfig?.minWidth,
+        mosaicConfig?.libraryWeights,
+      ]),
+    ],
     queryFn: () =>
-      fetch("/api/movies?sort=random&limit=60").then((r) => r.json()),
+      fetch("/api/movies/hero-wall?limit=60").then((r) => r.json()),
     staleTime: Infinity, // keep the same draw while the page stays mounted
     refetchOnWindowFocus: false,
   });
@@ -329,7 +346,11 @@ export default function HomePage() {
         <div className="flex-1 overflow-y-scroll">
         <TabsContent value="home">
           {(heroItems.length > 0 || wallMovies.length > 0) && (
-            <HomeHero items={heroItems} wallMovies={wallMovies} />
+            <HomeHero
+              items={heroItems}
+              wallMovies={wallMovies}
+              mosaicConfig={mosaicConfig ?? DEFAULT_HERO_MOSAIC_CONFIG}
+            />
           )}
           <div
             className={`stagger-children flex flex-col gap-6 px-4 pb-8 md:gap-10 md:px-12 ${

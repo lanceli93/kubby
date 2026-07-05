@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { resolveImageSrc } from "@/lib/image-utils";
+import {
+  type HeroMosaicConfig,
+  type MosaicStyle,
+  DEFAULT_HERO_MOSAIC_CONFIG,
+  MOSAIC_ANGLES,
+} from "@/lib/hero-mosaic-config";
 
 export interface MosaicMovie {
   id: string;
@@ -12,17 +18,30 @@ export interface MosaicMovie {
   posterBlur?: string | null;
 }
 
-/** Usable poster/fanart count — the same filter HeroMosaic applies internally.
- *  Exported so callers (HomeHero) can decide wall-vs-fallback without duplicating
- *  the predicate. Below 8 the wall returns null and the page uses a plain backdrop. */
-export function usableWallCount(movies: MosaicMovie[]): number {
-  return movies.filter((m) => m.posterPath || m.fanartPath).length;
+/** Whether a movie can supply a tile for a given mosaic style — the single
+ *  predicate both usableWallCount and the internal fill loop apply, so the
+ *  wall-vs-fallback decision never drifts from what actually renders.
+ *  "poster"/"fanart" require that one image; "both" accepts either. */
+function isUsable(m: MosaicMovie, style: MosaicStyle): boolean {
+  if (style === "poster") return !!m.posterPath;
+  if (style === "fanart") return !!m.fanartPath;
+  return !!(m.posterPath || m.fanartPath);
 }
 
-// Fixed 16-column wall (dense — ~7-8 columns visible after the tilt/scale).
-// Each column drifts at its own pace; neighbors alternate direction so the
-// wall never reads as a single scrolling sheet.
-const COLUMN_COUNT = 16;
+/** Usable poster/fanart count — the same filter HeroMosaic applies internally.
+ *  Exported so callers (HomeHero) can decide wall-vs-fallback without duplicating
+ *  the predicate. Below 8 the wall returns null and the page uses a plain backdrop.
+ *  `style` (default "both") must match the config the wall will render with. */
+export function usableWallCount(
+  movies: MosaicMovie[],
+  style: MosaicStyle = "both"
+): number {
+  return movies.filter((m) => isUsable(m, style)).length;
+}
+
+// Per-column drift durations — neighbors alternate direction so the wall never
+// reads as a single scrolling sheet. Fixed 16 entries: with configurable column
+// counts we index `col % DRIFT_DURATIONS.length` so any width reuses the cadence.
 const DRIFT_DURATIONS = [
   95, 70, 110, 80, 125, 75, 100, 88, 115, 78, 105, 92, 120, 82, 98, 108,
 ];
@@ -107,6 +126,9 @@ interface HeroMosaicProps {
   onFeature?: (movie: MosaicMovie) => void;
   /** Rotate the spotlight (default true when onFeature is provided). */
   featuredEnabled?: boolean;
+  /** Column count / tile style / wall angle. Defaults to today's classic wall
+   *  (16 columns, poster+fanart pairing, the classic transform). */
+  config?: HeroMosaicConfig;
 }
 
 /** Slowly drifting tilted wall of the library's own posters. One tile is
@@ -117,7 +139,9 @@ export function HeroMosaic({
   movies,
   onFeature,
   featuredEnabled = onFeature != null,
+  config = DEFAULT_HERO_MOSAIC_CONFIG,
 }: HeroMosaicProps) {
+  const { columnCount, style } = config;
   const rootRef = useRef<HTMLDivElement>(null);
   // Lit tile addresses — a movie's poster and its matching fanart light together,
   // so this holds the whole pair (1-2 adjacent "col:i" tiles), not a single tile.
@@ -131,20 +155,35 @@ export function HeroMosaic({
     onFeatureRef.current = onFeature;
   }, [onFeature]);
 
-  // Only usable posters/fanart; below 8 the page falls back to a plain backdrop.
-  const usable = movies.filter((m) => m.posterPath || m.fanartPath);
+  // Only movies usable for the chosen style; below 8 the page falls back to a
+  // plain backdrop.
+  const usable = movies.filter((m) => isUsable(m, style));
 
-  // Fill the columns so each movie contributes its poster immediately followed by
-  // that SAME movie's fanart — during the drift a poster is always trailed by its
-  // own landscape still, instead of a random poster-A / fanart-B pairing. A movie
-  // with only one image contributes a single tile. The poster+fanart pair is kept
-  // intact within a column (never split across the column gap), so the pairing
-  // stays visually adjacent. Small pools wrap around; we skip a candidate that
-  // would repeat the previous movie at a column boundary.
-  const perColumn = usable.length >= 48 ? 6 : 5;
-  const columns: MosaicCard[][] = Array.from({ length: COLUMN_COUNT }, () => []);
+  // How tall a single set of tiles must be to cover the visible plane for the
+  // seamless loop (one set, with its gap, ≥ the plane). Wider walls make each
+  // column narrower, so more tiles fit vertically; taller tiles (posters) need
+  // fewer, wider tiles (fanart) need more. `aspect` is tile height/width:
+  // poster 1.5, fanart 0.5625, "both" ≈ 1.03 (the avg of a poster+fanart pair).
+  // 0.36 ≈ the hero's height/width ratio the wall must span. With 16 columns and
+  // "both" this yields 7 (a touch more than the old 5–6) — always safe, since
+  // extra tiles only make the loop set taller.
+  const aspect = style === "poster" ? 1.5 : style === "fanart" ? 0.5625 : 1.03;
+  const perColumn = Math.min(
+    14,
+    Math.max(3, Math.ceil((columnCount * 0.36) / aspect) + 1)
+  );
+
+  // Fill the columns. For "both", each movie contributes its poster immediately
+  // followed by that SAME movie's fanart — during the drift a poster is always
+  // trailed by its own landscape still, instead of a random poster-A / fanart-B
+  // pairing (a movie with only one image contributes a single tile). For a
+  // single-style wall each movie contributes exactly one tile of that style. The
+  // poster+fanart pair is kept intact within a column (never split across the
+  // column gap), so the pairing stays visually adjacent. Small pools wrap around;
+  // we skip a candidate that would repeat the previous movie at a column boundary.
+  const columns: MosaicCard[][] = Array.from({ length: columnCount }, () => []);
   let cursor = 0;
-  for (let col = 0; col < COLUMN_COUNT; col++) {
+  for (let col = 0; col < columnCount; col++) {
     const stack = columns[col];
     while (stack.length < perColumn) {
       const movie = usable[cursor % usable.length];
@@ -157,8 +196,14 @@ export function HeroMosaic({
       ) {
         continue;
       }
-      if (movie.posterPath) stack.push({ movie, landscape: false });
-      if (movie.fanartPath) stack.push({ movie, landscape: true });
+      if (style === "poster") {
+        if (movie.posterPath) stack.push({ movie, landscape: false });
+      } else if (style === "fanart") {
+        if (movie.fanartPath) stack.push({ movie, landscape: true });
+      } else {
+        if (movie.posterPath) stack.push({ movie, landscape: false });
+        if (movie.fanartPath) stack.push({ movie, landscape: true });
+      }
     }
   }
 
@@ -172,10 +217,12 @@ export function HeroMosaic({
   // *together* — a movie's poster tile and its adjacent fanart tile form one
   // pair, so lighting either lights both. A movie with a single image maps to a
   // one-element group. Walking with a step of 2 over an adjacent poster+fanart
-  // keeps each group to exactly that instance (never merging a loop twin).
+  // keeps each group to exactly that instance (never merging a loop twin). A
+  // single-style wall never forms poster+fanart adjacencies, so every tile falls
+  // into the else branch below and maps to its own one-element group.
   const tileMovies = new Map<string, MosaicMovie>();
   const tilePairs = new Map<string, string[]>();
-  for (let col = 0; col < COLUMN_COUNT; col++) {
+  for (let col = 0; col < columnCount; col++) {
     const doubled = [...columns[col], ...columns[col]];
     doubled.forEach((card, i) => {
       tileMovies.set(`${col}:${i}`, card.movie);
@@ -323,9 +370,12 @@ export function HeroMosaic({
           the perspective rotation. */}
       {/* rotateX leans the wall like a painting with its bottom edge toward
           the viewer; rotateZ turns the whole painting counterclockwise for the
-          Netflix-style diagonal. */}
+          Netflix-style diagonal. The transform is chosen by config.angle — an
+          inline style because Tailwind can't see the runtime MOSAIC_ANGLES value
+          (the "classic" preset equals the old hardcoded transform). */}
       <div
-        className="absolute -inset-[30%] flex justify-center gap-2.5 [transform:perspective(1600px)_rotateX(24deg)_rotateZ(-16deg)_scale(1.34)] [transform-origin:center] md:gap-3"
+        className="absolute -inset-[30%] flex justify-center gap-2.5 [transform-origin:center] md:gap-3"
+        style={{ transform: MOSAIC_ANGLES[config.angle] }}
       >
         {columns.map((cards, col) => (
           <div key={col} className="flex min-w-0 flex-1 flex-col gap-3 md:gap-4">
@@ -335,7 +385,7 @@ export function HeroMosaic({
             <div
               className="animate-mosaic-drift flex flex-col gap-3 pb-3 [will-change:transform] motion-reduce:[animation-play-state:paused] md:gap-4 md:pb-4"
               style={{
-                "--drift-dur": `${DRIFT_DURATIONS[col]}s`,
+                "--drift-dur": `${DRIFT_DURATIONS[col % DRIFT_DURATIONS.length]}s`,
                 animationDirection: col % 2 === 1 ? "reverse" : "normal",
               } as React.CSSProperties}
             >

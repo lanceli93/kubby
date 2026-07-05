@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BadgeCheck, SlidersHorizontal, Play, Languages } from "lucide-react";
+import { LayoutGrid, BadgeCheck, SlidersHorizontal, Play, Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export function PreferencesSidebar() {
@@ -10,6 +10,7 @@ export function PreferencesSidebar() {
   const t = useTranslations("preferences");
 
   const sidebarItems = [
+    { label: t("heroMosaic"), href: "/preferences/hero-mosaic", icon: LayoutGrid },
     { label: t("cardBadges"), href: "/preferences/card-badges", icon: BadgeCheck },
     { label: t("ratingsBookmarks"), href: "/preferences/ratings-bookmarks", icon: SlidersHorizontal },
     { label: t("playback"), href: "/preferences/playback", icon: Play },
