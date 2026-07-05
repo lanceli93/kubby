@@ -1,5 +1,19 @@
 # Completed Features
 
+## 2026-07-05 (3): 收藏页改为子标签 + 完整网格 + 修复卡片收藏按钮无法点击
+
+用户反馈两点:(1) 收藏页只显示单行 ScrollRow, 想要和"媒体库点进去"一样的完整浏览体验;(2) 卡片上的收藏(红心)按钮点不动。真机 (Chrome) 复验: 收藏影片计数 2→1→2, 点心成功增删收藏且不再误跳详情页。
+
+### 新组件 `src/components/movie/favorites-browser.tsx`
+`FavoritesBrowser`(可选 `libraryId`)—— 收藏影片 / 收藏演员两个子标签, 各自是完整响应式网格 (`grid-cols-2 md:grid-cols-[repeat(auto-fill,180px)]`) + 无限滚动, 标签上带总数徽标。影片查询复用 `filter=favorites` 分页端点, 演员查询用 `people?filter=favorites` 分页, 取消收藏/删除后失效对应 query。空态按子标签分别提示。
+
+### 两个入口都接入
+- 影片页 `/movies?tab=favorites`(`src/app/(main)/movies/page.tsx`): `<FavoritesBrowser libraryId={libraryId} />` 取代旧的 `FavoritesTabContent` + `FavoritesOverview`(单行 ScrollRow)+ `FavoritesMoviesGrid` / `FavoritesActorsGrid`(靠点击行标题 `?view=` 钻入的完整网格)。删掉这四个组件和随之孤立的 `ArrowLeft` 导入;`?view=movies|actors` 钻入路由不再需要。
+- 首页顶部收藏 pill tab (`src/app/(main)/page.tsx`): 两个 ScrollRow 换成 `<FavoritesBrowser />`;删掉孤立的 `favoritePeople` 查询、`togglePersonFavorite` mutation 和 `PersonCard` 导入。
+
+### 卡片收藏按钮无法点击 (`src/components/movie/movie-card.tsx`)
+根因是 3D 命中测试, 不是 z-index。居中播放按钮的覆盖层 `absolute inset-0` 且带 `tilt-lift`(`translateZ(40px)`), 在 `preserve-3d` 的 TiltCard 内被抬到最靠近视口的平面, 整片吞掉指针事件 —— 悬浮条里的红心/已观看/更多按钮 z-index 虽更高但 Z 深度更低, 点击遂冒泡到外层 `Link` 变成跳转详情页。修复: 覆盖层加 `pointer-events-none`, 只给真正的播放按钮 `pointer-events-auto`。(印证记忆里"transform 祖先劫持指针"一条。)
+
 ## 2026-07-05 (2): 首页海报墙配置页 — 列数/风格/角度/媒体库占比/筛选 + 实时预览
 
 用户要求把 hero 马赛克墙做成可配置的, 菜单放偏好设置新条目。四个任务并行/串行派发给 executor 子代理 (T1 sonnet, T2–T4 opus), 全部真机验证通过 (Chrome 实测: 风格切换 384 块全横版、角度 transform 实时切换、列数 10 列生效、年份筛选池子缩到 13 部、保存后主页跟随、恢复默认)。

@@ -185,8 +185,14 @@ export function MovieCard({
               </div>
             ) : null)}
 
-            {/* Centered play button on hover — floats highest on tilt */}
-            <div className={`tilt-lift absolute inset-0 z-[5] flex items-center justify-center transition-fluid ${menuOpen ? "scale-100 opacity-100" : "scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100"}`} style={{ "--tilt-lift": "40px" } as React.CSSProperties}>
+            {/* Centered play button on hover — floats highest on tilt.
+                The overlay spans the whole card (inset-0) and, being lifted
+                toward the viewer via translateZ, sits in front of the hover
+                bar in preserve-3d space — where 3D geometry, not z-index,
+                drives hit-testing. Keep it pointer-transparent so the
+                favorite/watched/more buttons below stay clickable; only the
+                play button itself captures pointer events. */}
+            <div className={`tilt-lift pointer-events-none absolute inset-0 z-[5] flex items-center justify-center transition-fluid ${menuOpen ? "scale-100 opacity-100" : "scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100"}`} style={{ "--tilt-lift": "40px" } as React.CSSProperties}>
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -194,7 +200,7 @@ export function MovieCard({
                   router.push(`/movies/${id}/play`);
                 }}
                 aria-label={t("play")}
-                className="glass-btn flex h-12 w-12 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95"
+                className="glass-btn pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95"
               >
                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
               </button>
