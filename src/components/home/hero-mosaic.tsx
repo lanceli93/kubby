@@ -119,7 +119,9 @@ export function HeroMosaic({
   featuredEnabled = onFeature != null,
 }: HeroMosaicProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [litTile, setLitTile] = useState<string | null>(null);
+  // Lit tile addresses — a movie's poster and its matching fanart light together,
+  // so this holds the whole pair (1-2 adjacent "col:i" tiles), not a single tile.
+  const [litTiles, setLitTiles] = useState<Set<string>>(() => new Set());
   // Currently featured movie id — excluded from the next pick so we don't relight
   // the same movie back-to-back (a duplicated copy elsewhere may still be chosen).
   const featuredIdRef = useRef<string | null>(null);
@@ -132,29 +134,31 @@ export function HeroMosaic({
   // Only usable posters/fanart; below 8 the page falls back to a plain backdrop.
   const usable = movies.filter((m) => m.posterPath || m.fanartPath);
 
-  // Round-robin the pool into columns so each holds ~5-6 cards. When the pool is
-  // small we cycle from the start (a movie may repeat across columns), but skip a
-  // pick that would sit adjacent to the same movie within a column.
+  // Fill the columns so each movie contributes its poster immediately followed by
+  // that SAME movie's fanart — during the drift a poster is always trailed by its
+  // own landscape still, instead of a random poster-A / fanart-B pairing. A movie
+  // with only one image contributes a single tile. The poster+fanart pair is kept
+  // intact within a column (never split across the column gap), so the pairing
+  // stays visually adjacent. Small pools wrap around; we skip a candidate that
+  // would repeat the previous movie at a column boundary.
   const perColumn = usable.length >= 48 ? 6 : 5;
   const columns: MosaicCard[][] = Array.from({ length: COLUMN_COUNT }, () => []);
   let cursor = 0;
   for (let col = 0; col < COLUMN_COUNT; col++) {
-    for (let n = 0; n < perColumn; n++) {
-      const stack = columns[col];
-      let movie = usable[cursor % usable.length];
-      // Avoid two identical neighbors in the same column when we can.
+    const stack = columns[col];
+    while (stack.length < perColumn) {
+      const movie = usable[cursor % usable.length];
+      cursor++;
+      // Avoid two identical neighbors when the pool wraps within a column.
       if (
         stack.length > 0 &&
         stack[stack.length - 1].movie.id === movie.id &&
         usable.length > 1
       ) {
-        cursor++;
-        movie = usable[cursor % usable.length];
+        continue;
       }
-      // Every 3rd card that has fanart becomes a landscape tile for variety.
-      const landscape = n % 3 === 2 && !!movie.fanartPath;
-      stack.push({ movie, landscape });
-      cursor++;
+      if (movie.posterPath) stack.push({ movie, landscape: false });
+      if (movie.fanartPath) stack.push({ movie, landscape: true });
     }
   }
 
@@ -163,12 +167,38 @@ export function HeroMosaic({
   // 0..2*perColumn-1. The address "col:i" is unique per visible tile, letting a
   // single instance light while its loop twin stays dark. The selection loop
   // resolves a lit tile back to its movie through this map.
+  //
+  // tilePairs maps each tile address to the group of addresses that light
+  // *together* — a movie's poster tile and its adjacent fanart tile form one
+  // pair, so lighting either lights both. A movie with a single image maps to a
+  // one-element group. Walking with a step of 2 over an adjacent poster+fanart
+  // keeps each group to exactly that instance (never merging a loop twin).
   const tileMovies = new Map<string, MosaicMovie>();
+  const tilePairs = new Map<string, string[]>();
   for (let col = 0; col < COLUMN_COUNT; col++) {
     const doubled = [...columns[col], ...columns[col]];
     doubled.forEach((card, i) => {
       tileMovies.set(`${col}:${i}`, card.movie);
     });
+    for (let i = 0; i < doubled.length; ) {
+      const cur = doubled[i];
+      const next = doubled[i + 1];
+      if (
+        !cur.landscape &&
+        next &&
+        next.landscape &&
+        next.movie.id === cur.movie.id
+      ) {
+        const group = [`${col}:${i}`, `${col}:${i + 1}`];
+        tilePairs.set(group[0], group);
+        tilePairs.set(group[1], group);
+        i += 2;
+      } else {
+        const addr = `${col}:${i}`;
+        tilePairs.set(addr, [addr]);
+        i += 1;
+      }
+    }
   }
 
   // Spotlight selection loop. A self-rescheduling timer picks a tile that is
@@ -189,15 +219,19 @@ export function HeroMosaic({
     const pick = () => {
       const rect = root.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
-      // Eligible zone: roughly the middle six columns. NOTE: the wall is under a
-      // perspective transform, so getBoundingClientRect returns an INFLATED
-      // axis-aligned box (a tilted card's AABB is far larger than the card).
-      // "Whole rect inside" is therefore never satisfiable — judge by the card's
-      // CENTER with margins generous enough that a center-qualified card is in
-      // practice fully visible: clear of the side edges, above the bottom
-      // dissolve, and not behind the text block (bottom-left region).
-      const minX = rect.left + rect.width * 0.14;
-      const maxX = rect.right - rect.width * 0.14;
+      // Eligible zone: the ~5 right-of-center columns. The 2 leftmost and 2
+      // rightmost visible columns read poorly (steep foreshortening at the tilted
+      // wall's edges), so we exclude both edge strips and lean the band right —
+      // the text block sits on the left, so the right side is the natural focus.
+      // NOTE: the wall is under a perspective transform, so getBoundingClientRect
+      // returns an INFLATED axis-aligned box (a tilted card's AABB is far larger
+      // than the card). "Whole rect inside" is therefore never satisfiable — judge
+      // by the card's CENTER with margins generous enough that a center-qualified
+      // card is in practice fully visible: clear of the side edges, above the
+      // bottom dissolve. (These X fractions are the knob for the lit spread —
+      // widen the window to light more columns, shift it to move the focus.)
+      const minX = rect.left + rect.width * 0.38;
+      const maxX = rect.right - rect.width * 0.2;
       const minY = rect.top + rect.height * 0.14;
       const maxY = rect.top + rect.height * 0.66;
       const textRight = rect.left + rect.width * 0.42;
@@ -232,7 +266,9 @@ export function HeroMosaic({
       const chosen = pool[Math.floor(Math.random() * pool.length)];
       const movie = tileMovies.get(chosen.tile);
       if (!movie) return;
-      setLitTile(chosen.tile);
+      // Light the whole poster+fanart pair for this instance, not just the tile
+      // the spotlight landed on.
+      setLitTiles(new Set(tilePairs.get(chosen.tile) ?? [chosen.tile]));
       featuredIdRef.current = movie.id;
       onFeatureRef.current?.(movie);
     };
@@ -314,7 +350,7 @@ export function HeroMosaic({
                     movie={card.movie}
                     landscape={card.landscape}
                     tile={tile}
-                    lit={litTile === tile}
+                    lit={litTiles.has(tile)}
                   />
                 );
               })}
