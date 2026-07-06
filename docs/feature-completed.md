@@ -1,32 +1,23 @@
 # Completed Features
 
-## 2026-07-05 (5): 上一轮两个修复的补完 — 黑屏空窗 + 墙淡入; 幽灵框真根因(快照单边)
+## 2026-07-06: 幽灵横线真根因(root 交叉淡化)+ 首页黑屏底部误显轮播指示条
 
-用户反馈第一轮修复不彻底: (1) 首页 fanart 闪现没了, 但换成一段黑屏后马赛克墙"突然出现"; (2) 幽灵框仍可复现。本轮用"逐帧截图 + ffmpeg 合成 GIF"的流程做修复前后对比(`vt-ghost-before.gif` / `vt-ghost-after.gif` / `home-hero-enter.gif`, 仓库根目录)。
+前两轮(记为 07-05 (4)/(5), 已合并进本条)对这两个问题的根因判断都错了 —— 07-05 (4) 以为是"双页面板叠印", 给面板加 `movie-info` 命名; 07-05 (5) 又以为是"单边快照原地淡出", 加了超时和 `:only-child` 兜底。用户均能复现, 且 GIF 对比法被证明不可靠(慢放截图掩盖了真实时序)。本轮改用**程序化测量**(hook `startViewTransition`, `ready` 后 `getAnimations()` 一次性冻结在指定进度; `performance.getEntriesByType("resource")` 读真实请求时序)定位。
 
-### 首页: 缩短黑屏 + 墙淡入场 (`page.tsx`, `home-hero.tsx`, `hero-mosaic.tsx`, `globals.css`)
-- 墙查询不再等偏好 (`enabled: !!prefs` 移除): hero-wall 端点读的是数据库里已保存的配置, 客户端根本不需要先拿到 prefs 才能发请求 —— 两个请求并行, 黑屏窗口缩短到单个请求的时长。配置变更改由偏好页保存时显式 invalidate 触发重取(原本就有), queryKey 里的配置字段全部移除。
-- hero 占位从首帧就渲染(`wallPending || !prefs` 时也渲染 HomeHero 的深色壳), 避免下方内容行先顶上来再被推下去的布局跳动。
-- 新增 `mosaicEnter` keyframe (1.1s, opacity 0→1 + scale 1.02→1, `motion-reduce` 关闭): 墙从深色占位上淡入, 不再是硬切。慢放 10s 逐帧截图确认渐显过程平滑。
+### 幽灵横线真根因: root 交叉淡化叠了两张错位整页快照 (`view-transition.ts`, `globals.css`, `movies/[id]/page.tsx`)
+关键线索来自用户: 在详情页向下滚到"猜你喜欢"点卡片 → 新页面在 `scrollTop=0` 渲染。测得点击时旧页 `scrollTop=710`。View Transition 的 root 快照是**整页视口截图**: 旧页(下滚状态, 磨砂面板已滚到偏上)与新页(顶部, 面板在正常位置)在垂直方向错位, 默认的 root 交叉淡化把这两张错位整页图叠在一起 —— 旧面板那条硬朗的顶边就在新页 fanart 上扫出一条**横线幽灵框**。07-05 (4) 给面板命名 `movie-info` 反而更糟: 让浏览器把旧面板 morph 到新面板, 因两页滚动位置/高度不同, 变成一个可见的滑动框(即用户新截图 #4)。真修复:
+- **撤掉** `movie-info` 命名(面板不再单独成组、不再 morph)。
+- **关掉 root 交叉淡化**: `::view-transition-old(root){animation:none;opacity:0}` + `::view-transition-new(root){animation:none}` —— 新页整页瞬间到位, 只有共享的海报在其上 morph, 两张错位整页图再也不会相叠。这才是标准 Apple-TV 共享元素做法。
+- 保留 07-05 (5) 的 `waitForDetailPoster` 600→1800ms 与 `::view-transition-old(movie-poster):only-child` 兜底(数据未挂载时的单边海报快照)。
+验证: hook 冻结在 35% 与 60% 两点(后者点击前先滚到页面最底, 错位最大), 冻结帧内 `getAnimations()` 只剩 `movie-poster` 与 `root` 的 group, **无 `old/new(root)` 淡化动画**, 面板无横线。
 
-### 幽灵框真根因: NEW 快照缺席 → 单边 old 快照原地淡出 (`view-transition.ts`, `globals.css`)
-上一轮给面板命名 `movie-info` 只解决了"双页面板叠印"路径, 但用户仍能复现。真根因: `waitForDetailPoster` 超时仅 600ms, 目标页数据(React Query)没到、命名元素还没挂载时 NEW 快照就被捕获 —— `movie-poster`/`movie-info` 组只有 OLD 图像("单边快照"), 浏览器默认让它原地淡出叠在半加载的新页上, 旧面板的边框/高光线就是那个"横线幽灵框"。两层修复:
-- `waitForDetailPoster` 超时 600ms → 1800ms, 覆盖冷取数, 仍远低于 Chrome ~4s 的 DOM 更新中止线。
-- CSS 兜底: `::view-transition-old(movie-info):only-child` / `(movie-poster):only-child` 直接 `animation: none; opacity: 0` —— 即使真超时(慢盘/请求失败), 单边旧快照立即消失, 不再残留。
-- 顺带给 `movie-info` 组补了与海报一致的 420ms 缓动与 reduced-motion 关闭。
-验证: 正常网速 + Slow 3G(缓存命中)+ Slow 3G(硬刷清缓存)三种路径下逐帧采样 VT 伪元素树, 均为双边快照(old+new 同在), 无单边残留; 慢放逐帧截图无幽灵框。
+### 首页黑屏底部误显一排短线 (`home-hero.tsx`)
+用户截图 #2: 墙刷出来前的黑屏底部中间有一排短横线。根因: `wallPending` 期间 `wallMode=false`, 而轮播 hero items(继续观看/最近添加)响应快、已到位, `items.length>1` 成立, 于是渲染了**轮播模式的 slide 指示条**; 墙一到又 `wallMode=true` 使其消失 —— 闪现一下。修复: 指示条渲染条件加 `!wallPending`, 加载期间不显示。MutationObserver 全程监控确认 `button[aria-label^="Slide "]` 在整个加载窗口内再未出现。
 
-## 2026-07-05 (4): 首页 hero 首屏闪现单张 fanart 修复 + 详情页跳转幽灵框修复
+### 首页黑屏时长 (沿用 07-05 (5) 的并行取数, 本轮实测确认)
+`performance` 实测暖刷: `personal-metadata` 于 2416ms 起、`hero-wall` 于 2494ms 起 —— 相差 78ms, 确为**并行**(`enabled: !!prefs` 已移除); hero-wall 本身仅 331ms。首测的 ~6.6s 是 dev 首次编译 API 路由的一次性开销, 生产无此。黑屏窗口由深色占位 + `mosaicEnter` 淡入(1.1s)覆盖。
 
-用户反馈两点视觉毛刺, 均已真机 (Chrome) 复现并验证修复。
-
-### 首页刷新先闪单张 fanart 再变海报墙 (`page.tsx` + `home-hero.tsx`)
-根因: hero 区有两个数据源 —— 轮播 items(continue-watching/recently-added, 响应快)和海报墙池 (`/api/movies/hero-wall`, 需等偏好加载 + 加权抽样, 慢几百 ms)。首帧 wallMovies 还没到, `wallMode=false` 走单张 fanart 兜底分支, 池子一到又切成墙, 于是"先一张大图、再闪成马赛克"。修复两处:
-- 墙查询加 `enabled: !!prefs` —— 顺带消灭另一个隐患: 原来偏好未到时会先按占位 key 抽一次, 偏好到了 key 变化再抽一次, 冷加载必然重排一遍墙。
-- `HomeHero` 新增 `wallPending` prop: 池子在途时兜底分支渲染纯深色底 (`bg-[#0a0a0f]`) 占位, 不再放单张 fanart。池子到位后墙直接淡入。真机验证: 强刷后 MutationObserver 全程未见 `img[sizes="100vw"]` 单张背景, 墙 (256 tiles) 一步到位。
-
-### 详情页点"猜你喜欢"跳转时磨砂框里闪过横线框 (`movies/[id]/page.tsx`)
-根因: 海报 morph 的 View Transition 中, 新旧两页都有磨砂信息面板, 但面板没有自己的 `view-transition-name`, 于是它们都被卷进 root 交叉淡化 —— 旧页面板半透明地叠印在新页面板上, 边框/高光横线以"幽灵框"形式透出 ~0.4s(用 6s 慢放动画冻结在 50% 复现成功, 与用户截图一致)。修复: 给面板加 `view-transition-name: movie-info`, 让浏览器把新旧面板作为独立组几何插值(老面板平滑变形到新面板), 不再叠印。文档内永远只有一个该面板, 满足唯一性约束。慢放复验: `::view-transition-group(movie-info)` 出现, 幽灵框消失。
+(删除了上一轮生成的 `vt-ghost-*.gif` / `home-hero-enter.gif`: GIF 是放慢动画后截的, 不能反映真实时序, 已证明误导。)
 
 ## 2026-07-05 (3): 收藏页改为子标签 + 完整网格 + 修复卡片收藏按钮无法点击
 

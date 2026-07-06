@@ -418,10 +418,13 @@ export function HomeHero({
       </div>
 
       {/* Slide indicators — fallback (carousel) mode only. In wall mode the
-          wall's 8s spotlight is the rhythm, so no indicator strip. z-20: the
-          content rows overlap the hero bottom (negative margin, z-10) — the
-          strip must stay above them to stay clickable. */}
-      {!wallMode && items.length > 1 && (
+          wall's 8s spotlight is the rhythm, so no indicator strip. Also hidden
+          while the wall pool loads (wallPending): the carousel items resolve
+          first, so the strip would flash on the dark placeholder for a beat and
+          then vanish the instant the wall arrives. z-20: the content rows
+          overlap the hero bottom (negative margin, z-10) — the strip must stay
+          above them to stay clickable. */}
+      {!wallMode && !wallPending && items.length > 1 && (
         <div className="pointer-events-auto absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-1.5">
           {items.map((_, i) =>
             i === safeIdx ? (
