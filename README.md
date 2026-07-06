@@ -10,7 +10,7 @@ The UI was designed with [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev)
 
 > **Important:** If you share a media library with Jellyfin, enable **Jellyfin Compatibility Mode** when adding the library (available in the setup wizard and library settings). Without it, Kubby will write and modify NFO files in your library folders, which can overwrite Jellyfin's metadata. With compatibility mode on, Kubby treats the library as read-only (no NFO writes) and copies actor photos to its own metadata directory instead of referencing Jellyfin's local paths.
 
-![Kubby screenshot](docs/screenshots/hero.png)
+![Kubby screenshot](docs/screenshots/hero.webp)
 
 ## Basics
 
@@ -28,6 +28,14 @@ The UI was designed with [Kiro](https://kiro.dev) + [Pencil](https://pencil.dev)
 
 A fullscreen "record crate" browsing mode for your library — posters stack like vinyl records with mirror reflections, and you scrub through them with scroll/drag/keyboard. Sort by any of 8 dimensions (rating, year, resolution, size, runtime...) and the wall reorders itself with an animated flying transition; group dividers (decades, resolution tiers, rating bands) appear automatically based on the active sort. A minimal caption fades in under the focused poster with its title and metadata — no boxes, no clutter.
 
+![Cover Flow poster wall](docs/screenshots/coverflow.webp)
+
+### Dynamic poster mosaic wall
+
+The home page opens onto a living mosaic of your library — posters drift in 3D, and a spotlight rotates through recently-added titles, each one rising out of the wall with its synopsis and metadata. It's a screensaver and a launcher in one.
+
+![Dynamic poster mosaic wall](docs/screenshots/mosaic-wall.webp)
+
 ### Spatial depth UI
 
 Movie, actor, and library cards tilt toward your cursor in 3D with an ambient glow behind them, and clicking a poster morphs it into the detail page hero via the View Transitions API instead of a hard cut. The detail page itself has scroll- and pointer-driven parallax on its hero art. Everything degrades cleanly to flat/static on touch devices and when reduced-motion is on.
@@ -36,7 +44,7 @@ Movie, actor, and library cards tilt toward your cursor in 3D with an ambient gl
 
 Watch 360° / VR videos directly in the browser with full panoramic control. Toggle 360° mode from the player controls — the video renders onto a Three.js sphere with mouse/touch drag to look around, scroll wheel or pinch-to-zoom for FOV control, and `R` key to reset the view. The Three.js chunk (~500KB) is code-split and only loaded when 360° mode is active, so normal playback is unaffected. Works on desktop and mobile.
 
-![360° VR on mobile](docs/screenshots/mobile-vr-360.gif)
+![360° VR on mobile](docs/screenshots/mobile-vr-360.webp)
 
 ### VR video bookmarks with view state
 
@@ -46,57 +54,55 @@ Bookmarks in 360° mode capture both the timestamp and the exact camera angle (l
 
 Define your own rating dimensions for movies (plot, cinematography, soundtrack, ...) and actors (looks, acting skill, ...). Scores average into an overall rating that maps to a tier (SSS/S/A/B/...) on cards. You can sort your entire library by any single dimension, so finding "best cinematography" or "best acting skill" is one click.
 
-![Multi-dimension ratings](docs/screenshots/dimension-ratings.png)
+![Multi-dimension ratings](docs/screenshots/dimension-ratings.webp)
 
-![movie ratings](docs/screenshots/movie-rating.gif)
+![person ratings](docs/screenshots/person-rating.webp)
 
-![person ratings](docs/screenshots/person-rating.gif)
-
-![Sort library by any dimension](docs/screenshots/personal-rating-sort.png)
+![Sort library by any dimension](docs/screenshots/personal-rating-sort.webp)
 
 ### Poster and actor badges
 
 Personal rating, resolution (4K/1080p/etc.), and actor tier show directly on cards. Turn off the ones you don't care about in settings.
 
-![Badge settings](docs/screenshots/badge-settings.gif)
+![Badge settings](docs/screenshots/badge-settings.webp)
 
 ### Actor photo gallery
 
 Upload photos for actors. Justified row layout (like Google Photos) with a lightbox viewer.
 
-![Actor gallery](docs/screenshots/actor-gallery.gif)
+![Actor gallery](docs/screenshots/actor-gallery.webp)
 
 ### Filmography sorted by age
 
 Actor detail pages show how old they were in each film. Sort by age to trace their career chronologically, or just to see what they looked like at 25 vs 45.
 
-![Filmography by age](docs/screenshots/filmography-age.png)
+![Filmography by age](docs/screenshots/filmography-age.webp)
 
 ### External player
 
 For HEVC, DTS, or anything else the browser won't play — one click opens IINA (macOS) or PotPlayer (Windows). Supports both local file mode and streaming from server.
 
-![External player](docs/screenshots/external-player.png)
+![External player](docs/screenshots/external-player.webp)
 
 ### Video bookmarks
 
 Press B during playback for a quick bookmark, or Shift+B to pick an icon, add tags, and write a note. Bookmarks appear as colored dots on the progress bar. 9 built-in icons, and you can upload your own. All bookmarks are browsable from the movie detail page.
 
-![Custom bookmarks](docs/screenshots/custom-bookmark.gif)
+![Custom bookmarks](docs/screenshots/custom-bookmark.webp)
 
-![Bookmark settings](docs/screenshots/bookmark-settings.png)
+![Bookmark settings](docs/screenshots/bookmark-settings.webp)
 
 ### Bookmark mode (frame scrubber)
 
 VR and high-bitrate videos are too heavy for real-time browser transcoding. Bookmark mode lets you browse any movie frame-by-frame without playback — drag a progress bar, the server extracts a single frame via FFmpeg in 1-2 seconds. Create bookmarks with icons, tags, and notes right from the movie detail page. You can also screenshot any frame directly into an actor's photo gallery.
 
-![Bookmark mode](docs/screenshots/bookmark-mode.png)
+![Bookmark mode](docs/screenshots/bookmark-mode.webp)
 
 ### Search with categories
 
 One search box for movies, actors, and bookmarks. Filter by category if you're looking for something specific.
 
-![Enhanced search](docs/screenshots/search.gif)
+![Enhanced search](docs/screenshots/search.webp)
 
 ### Lazy loading
 

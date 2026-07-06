@@ -10,7 +10,7 @@
 
 > **注意：** 如果你的媒体库和 Jellyfin 共用，添加媒体库时务必开启 **Jellyfin 兼容模式**（设置向导和媒体库设置中均可开启）。不开的话，Kubby 会往媒体库文件夹写入和修改 NFO 文件，可能覆盖 Jellyfin 的元数据。开启兼容模式后，Kubby 对媒体库只读（不写 NFO），演员照片会复制到 Kubby 自己的元数据目录，不影响 Jellyfin。
 
-![Kubby 截图](docs/screenshots/hero.png)
+![Kubby 截图](docs/screenshots/hero.webp)
 
 ## 基础功能
 
@@ -28,6 +28,14 @@
 
 全屏浏览模式,海报像唱片一样斜插排列,带镜面反射,滚轮/拖拽/键盘都能翻阅。支持按 8 个维度排序(评分、年份、分辨率、大小、时长等),切换排序时海报会飞行重排;分组分隔卡(年代、分辨率档、评分段)会根据当前排序自动生成。聚焦的海报下方会淡入一行简洁的字幕式信息,没有黑框,不遮挡画面。
 
+![Cover Flow 海报墙](docs/screenshots/coverflow.webp)
+
+### 动态海报马赛克墙
+
+首页打开就是一整面流动的海报马赛克——海报在 3D 空间里缓缓漂移,一束聚光灯轮流点亮最近添加的影片,每部都从墙面浮起,带上简介和元数据。既是屏保,也是入口。
+
+![动态海报马赛克墙](docs/screenshots/mosaic-wall.webp)
+
 ### 空间感 3D 界面
 
 电影、演员、媒体库卡片会跟随鼠标做 3D 倾斜,背后带一层氛围光晕;点击海报会通过 View Transitions API 平滑变形进入详情页大图,而不是硬切换。详情页本身的头图也带滚动和指针驱动的视差效果。触屏设备和开启"减少动态效果"时会自动降级为静态展示。
@@ -36,7 +44,7 @@
 
 在浏览器中直接观看 360° / VR 全景视频。播放器控制栏上有 360° 模式开关，开启后视频渲染到 Three.js 球体上，鼠标/触摸拖拽环顾四周，滚轮或双指缩放控制视野范围，按 `R` 重置视角。Three.js chunk (~500KB) 做了代码分离，只在 360° 模式激活时加载，不影响普通播放。桌面端和移动端都支持。
 
-![移动端 360° VR 播放](docs/screenshots/mobile-vr-360.gif)
+![移动端 360° VR 播放](docs/screenshots/mobile-vr-360.webp)
 
 ### VR 视频书签（保存视角）
 
@@ -46,57 +54,55 @@
 
 自己定义评分维度，例如电影可以按剧情、摄影、配乐打分，演员可以按颜值、演技打分。综合分会自动算出一个等级（SSS/S/A/B/...）显示在卡片上。整个片库可以按任意单个维度排序，找"摄影最好的电影"或"演技最强的演员"都是一键的事。
 
-![多维度评分](docs/screenshots/dimension-ratings.png)
+![多维度评分](docs/screenshots/dimension-ratings.webp)
 
-![电影评分](docs/screenshots/movie-rating.gif)
+![演员评分](docs/screenshots/person-rating.webp)
 
-![演员评分](docs/screenshots/person-rating.gif)
-
-![按维度排序片库](docs/screenshots/personal-rating-sort.png)
+![按维度排序片库](docs/screenshots/personal-rating-sort.webp)
 
 ### 海报和演员徽章
 
 卡片上直接显示个人评分、分辨率（4K/1080p 等）、演员等级。不想看的在设置里关掉就好。
 
-![徽章设置](docs/screenshots/badge-settings.gif)
+![徽章设置](docs/screenshots/badge-settings.webp)
 
 ### 演员照片墙
 
 给演员上传照片，瀑布流布局（类似 Google Photos），点开有灯箱查看器。
 
-![演员照片墙](docs/screenshots/actor-gallery.gif)
+![演员照片墙](docs/screenshots/actor-gallery.webp)
 
 ### 按出演年龄排序影片
 
 演员详情页会显示每部电影出演时的年龄。按年龄排序可以追溯生涯轨迹，或者看看他们 25 岁和 45 岁时分别演了什么。
 
-![按年龄排序](docs/screenshots/filmography-age.png)
+![按年龄排序](docs/screenshots/filmography-age.webp)
 
 ### 外部播放器
 
 HEVC、DTS 这些浏览器放不了的格式，一键打开 IINA（macOS）或 PotPlayer（Windows）。支持本地文件播放和串流两种模式。
 
-![外部播放器](docs/screenshots/external-player.png)
+![外部播放器](docs/screenshots/external-player.webp)
 
 ### 视频书签
 
 播放时按 B 快速书签，Shift+B 可以选图标、加标签、写备注。进度条上会显示彩色圆点标记。内置 9 个图标，也可以自己上传。所有书签都能在电影详情页回看。
 
-![自定义书签](docs/screenshots/custom-bookmark.gif)
+![自定义书签](docs/screenshots/custom-bookmark.webp)
 
-![书签设置](docs/screenshots/bookmark-settings.png)
+![书签设置](docs/screenshots/bookmark-settings.webp)
 
 ### 书签模式（帧浏览器）
 
 VR 和高码率视频在浏览器里实时转码太卡。书签模式可以不播放视频，直接拖进度条逐帧浏览——服务端用 FFmpeg 提取单帧，1-2 秒出图。在电影详情页就能创建带图标、标签和备注的书签。还可以把任意一帧截图直接存到演员的照片墙里。
 
-![书签模式](docs/screenshots/bookmark-mode.png)
+![书签模式](docs/screenshots/bookmark-mode.webp)
 
 ### 分类搜索
 
 一个搜索框搜电影、演员和书签。想缩小范围的话按分类过滤。
 
-![搜索增强](docs/screenshots/search.gif)
+![搜索增强](docs/screenshots/search.webp)
 
 ### Lazy loading
 
