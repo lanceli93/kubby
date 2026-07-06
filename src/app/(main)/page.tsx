@@ -309,7 +309,7 @@ export default function HomePage() {
           </TabsList>
         </div>
 
-        <div className="flex-1 overflow-y-scroll">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
         <TabsContent value="home">
           {/* Render from the first frame while the wall pool loads (wallPending)
               so the hero's space is reserved — otherwise the whole page jumps
