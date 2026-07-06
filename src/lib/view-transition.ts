@@ -98,18 +98,8 @@ export function startPosterViewTransition(
 }
 
 /**
- * Resolve once the detail page's large poster has mounted, or after a
+ * Resolve once the detail page's large poster has mounted, or after a short
  * timeout so the transition never hangs (e.g. the target never appears).
- *
- * The timeout must outlast the target page's data fetch: the poster (and the
- * glass info panel) mount only after React Query resolves. If we time out
- * earlier, the NEW snapshot is taken of the "Loading..." page — the named
- * elements (movie-poster / movie-info) exist only in the OLD snapshot, and the
- * browser plays them as unmatched exit animations: the old panel lingers,
- * fading out in place over the half-loaded page (the "ghost frame"). 1800ms
- * covers a cold same-host fetch comfortably while staying well under Chrome's
- * ~4s DOM-update abort. The unmatched case can still happen (slow disk, fetch
- * error) — globals.css drops single-sided snapshots instantly as a fallback.
  *
  * CAUTION: rendering is SUPPRESSED while the update callback's promise is
  * pending — `requestAnimationFrame` does not tick until it settles, so waiting
@@ -118,7 +108,7 @@ export function startPosterViewTransition(
  * resolve directly: the browser computes style+layout for the new snapshot
  * after resolution, so no paint-wait is needed.
  */
-function waitForDetailPoster(timeoutMs = 1800): Promise<void> {
+function waitForDetailPoster(timeoutMs = 600): Promise<void> {
   return new Promise((resolve) => {
     let done = false;
     const finish = () => {

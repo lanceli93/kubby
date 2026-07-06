@@ -1,23 +1,21 @@
 # Completed Features
 
-## 2026-07-06: 幽灵横线真根因(root 交叉淡化)+ 首页黑屏底部误显轮播指示条
+## 2026-07-06: 首页黑屏底部误显轮播指示条(已修)+ 详情页跳转幽灵横线(判定为 Chrome 合成瑕疵, 相关改动已回退)
 
-前两轮(记为 07-05 (4)/(5), 已合并进本条)对这两个问题的根因判断都错了 —— 07-05 (4) 以为是"双页面板叠印", 给面板加 `movie-info` 命名; 07-05 (5) 又以为是"单边快照原地淡出", 加了超时和 `:only-child` 兜底。用户均能复现, 且 GIF 对比法被证明不可靠(慢放截图掩盖了真实时序)。本轮改用**程序化测量**(hook `startViewTransition`, `ready` 后 `getAnimations()` 一次性冻结在指定进度; `performance.getEntriesByType("resource")` 读真实请求时序)定位。
+### 首页黑屏底部误显一排短线 (`home-hero.tsx`) —— 已修复
+用户截图: 墙刷出来前的黑屏底部中间有一排短横线。根因: `wallPending` 期间 `wallMode=false`, 而轮播 hero items(继续观看/最近添加)响应快、已到位, `items.length>1` 成立, 于是渲染了**轮播模式的 slide 指示条**; 墙一到又 `wallMode=true` 使其消失 —— 闪现一下。修复: 指示条渲染条件加 `!wallPending`, 加载期间不显示。MutationObserver 全程监控确认 `button[aria-label^="Slide "]` 在整个加载窗口内再未出现。
 
-### 幽灵横线真根因: root 交叉淡化叠了两张错位整页快照 (`view-transition.ts`, `globals.css`, `movies/[id]/page.tsx`)
-关键线索来自用户: 在详情页向下滚到"猜你喜欢"点卡片 → 新页面在 `scrollTop=0` 渲染。测得点击时旧页 `scrollTop=710`。View Transition 的 root 快照是**整页视口截图**: 旧页(下滚状态, 磨砂面板已滚到偏上)与新页(顶部, 面板在正常位置)在垂直方向错位, 默认的 root 交叉淡化把这两张错位整页图叠在一起 —— 旧面板那条硬朗的顶边就在新页 fanart 上扫出一条**横线幽灵框**。07-05 (4) 给面板命名 `movie-info` 反而更糟: 让浏览器把旧面板 morph 到新面板, 因两页滚动位置/高度不同, 变成一个可见的滑动框(即用户新截图 #4)。真修复:
-- **撤掉** `movie-info` 命名(面板不再单独成组、不再 morph)。
-- **关掉 root 交叉淡化**: `::view-transition-old(root){animation:none;opacity:0}` + `::view-transition-new(root){animation:none}` —— 新页整页瞬间到位, 只有共享的海报在其上 morph, 两张错位整页图再也不会相叠。这才是标准 Apple-TV 共享元素做法。
-- 保留 07-05 (5) 的 `waitForDetailPoster` 600→1800ms 与 `::view-transition-old(movie-poster):only-child` 兜底(数据未挂载时的单边海报快照)。
-验证: hook 冻结在 35% 与 60% 两点(后者点击前先滚到页面最底, 错位最大), 冻结帧内 `getAnimations()` 只剩 `movie-poster` 与 `root` 的 group, **无 `old/new(root)` 淡化动画**, 面板无横线。
+### 首页黑屏 → 墙淡入 (`page.tsx`, `home-hero.tsx`, `hero-mosaic.tsx`, `globals.css`) —— 已保留
+- 墙查询不再等偏好(`enabled: !!prefs` 移除): hero-wall 端点读数据库里已存的配置, 客户端无需先拿 prefs。`performance` 实测暖刷两请求相差仅 78ms, 确为并行; hero-wall 本身 331ms。配置变更靠偏好页保存时显式 invalidate 触发重取。
+- hero 占位从首帧渲染(`wallPending || !prefs` 时渲染深色壳), 避免下方内容行跳动; 新增 `mosaicEnter` keyframe(1.1s, opacity+scale, `motion-reduce` 关闭)让墙从深色占位淡入, 不再硬切。
 
-### 首页黑屏底部误显一排短线 (`home-hero.tsx`)
-用户截图 #2: 墙刷出来前的黑屏底部中间有一排短横线。根因: `wallPending` 期间 `wallMode=false`, 而轮播 hero items(继续观看/最近添加)响应快、已到位, `items.length>1` 成立, 于是渲染了**轮播模式的 slide 指示条**; 墙一到又 `wallMode=true` 使其消失 —— 闪现一下。修复: 指示条渲染条件加 `!wallPending`, 加载期间不显示。MutationObserver 全程监控确认 `button[aria-label^="Slide "]` 在整个加载窗口内再未出现。
-
-### 首页黑屏时长 (沿用 07-05 (5) 的并行取数, 本轮实测确认)
-`performance` 实测暖刷: `personal-metadata` 于 2416ms 起、`hero-wall` 于 2494ms 起 —— 相差 78ms, 确为**并行**(`enabled: !!prefs` 已移除); hero-wall 本身仅 331ms。首测的 ~6.6s 是 dev 首次编译 API 路由的一次性开销, 生产无此。黑屏窗口由深色占位 + `mosaicEnter` 淡入(1.1s)覆盖。
-
-(删除了上一轮生成的 `vt-ghost-*.gif` / `home-hero-enter.gif`: GIF 是放慢动画后截的, 不能反映真实时序, 已证明误导。)
+### 详情页跳转磨砂框内闪过横线 —— 判定为 Chrome 合成瑕疵, 本轮改动已全部回退
+连续三次尝试均未真正解决(07-05 (4) 面板命名 `movie-info`; 07-05 (5) `waitForDetailPoster` 600→1800ms + `:only-child` 兜底; 07-06 关闭 root 交叉淡化)。用户报告: 用 F12 debugger 一 pause, 横线即消失 —— 典型的浏览器合成层刷新瑕疵, 非本项目 DOM/CSS 逻辑可控。
+**决定不再纠结此问题**, 且因上述改动带 tradeoff(尤以"关闭 root 交叉淡化"会影响每一次卡片→详情跳转的默认淡入观感, `waitForDetailPoster` 延长会让慢速取数时旧页冻结更久), **将三处改动全部回退到 07-05 (3) 的原始状态**:
+- `src/app/globals.css` VT 块: 移除 `::view-transition-old/new(root)` 与 `:only-child` 规则, 恢复"其余走默认 root 交叉淡化"。
+- `src/app/(main)/movies/[id]/page.tsx`: 面板去掉 `view-transition-name`, 注释还原。
+- `src/lib/view-transition.ts`: `waitForDetailPoster` 超时 1800→600ms。
+经比对, 这三文件已与 07-05 (3)(`0261fe1`)逐字节一致(仅 globals.css 多出与本问题无关的 `mosaicEnter` keyframe)。GIF 对比法(放慢动画截图)也已证明不可靠, 相关 `vt-ghost-*.gif` / `home-hero-enter.gif` 已删除。
 
 ## 2026-07-05 (3): 收藏页改为子标签 + 完整网格 + 修复卡片收藏按钮无法点击
 

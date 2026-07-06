@@ -435,14 +435,7 @@ export default function MovieDetailPage() {
             </TiltCard>
           </div>
 
-          {/* Movie Info — glass panel over fanart. Deliberately NOT given a
-              view-transition-name: naming it makes the browser morph the old
-              page's panel into this one, and because a detail→detail navigation
-              resets scroll to 0 (the old page was scrolled down to the
-              recommended row), the two panels sit at different viewport Y's and
-              the morph slides a visible box across — the "ghost frame". The
-              root-crossfade suppression in globals.css handles the panel edge
-              instead (see the ::view-transition-*(root) rules). */}
+          {/* Movie Info — glass panel over fanart */}
           <div className="backdrop-blur-[20px] bg-[rgba(10,10,15,0.45)] border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_0.5px_0_rgba(255,255,255,0.1)] flex min-w-0 flex-1 flex-col gap-3 rounded-lg p-4 md:p-6">
             <h1 className="text-2xl md:text-3xl font-bold text-white truncate">
               {movie.title}

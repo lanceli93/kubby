@@ -487,7 +487,7 @@ button:active:not(:disabled) {
    `movie-poster` view-transition-name (assigned per-element at click time — see
    lib/view-transition.ts), so the browser interpolates one into the other. Use
    the same fluid overshoot curve as `.transition-fluid` for an Apple-TV-style
-   spatial zoom. */
+   spatial zoom. The rest of the page keeps the default root crossfade. */
 ::view-transition-group(movie-poster) {
   animation-duration: 420ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
@@ -499,32 +499,6 @@ button:active:not(:disabled) {
 ::view-transition-new(movie-poster) {
   animation-duration: 420ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Kill the root crossfade — THE ghost-frame source. The default root animation
-   blends a full-page snapshot of the OLD page against the NEW one. On a
-   detail→detail navigation the old page is scrolled down (to the recommended
-   row the user clicked) while the new page renders at scrollTop 0, so the two
-   snapshots are vertically misaligned: the old glass panel's hard top edge
-   blends over the new page's fanart as a sweeping horizontal line. Snapping the
-   new root in instantly (no fade) means only the shared poster animates on top
-   of an already-correct background — no two mismatched page images ever mix.
-   The old snapshot is hidden immediately so it can't linger. */
-::view-transition-old(root) {
-  animation: none;
-  opacity: 0;
-}
-::view-transition-new(root) {
-  animation: none;
-}
-
-/* Unmatched-snapshot fallback: if the destination poster hasn't mounted when
-   the NEW snapshot is captured (data still loading — see waitForDetailPoster's
-   timeout), the movie-poster group has only an OLD image, which by default
-   fades out IN PLACE over the loading page. Drop it instantly instead. */
-::view-transition-old(movie-poster):only-child {
-  animation: none;
-  opacity: 0;
 }
 
 /* Reduced motion / accessibility: disable the morph and fall back to an instant
