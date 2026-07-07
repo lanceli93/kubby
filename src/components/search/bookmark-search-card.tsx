@@ -98,6 +98,16 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
 
   const card = (
     <>
+      {/* Ambient glow (ambilight) — blurred thumbnail/poster bleeding behind
+          the card, hover-only. Sits at -z-10 behind the overflow-hidden image
+          box so the scaled blur can spill past its edges (matches MovieCard). */}
+      {imageSrc && (
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 top-0 ${aspectClass} -z-10 scale-110 rounded-lg bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55`}
+          style={{ backgroundImage: `url(${imageSrc})` }}
+        />
+      )}
       <div className={`relative ${cardWidth} ${aspectClass} overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900`}>
         {/* Image */}
         {imageSrc ? (
@@ -157,7 +167,7 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
     return (
       <div
         onClick={() => onExternalLaunch(bookmark.movieId, bookmark.discNumber ?? undefined, bookmark.timestampSeconds)}
-        className="group flex-shrink-0 cursor-pointer text-left"
+        className="group relative flex-shrink-0 cursor-pointer text-left"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -173,7 +183,7 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
   }
 
   return (
-    <Link href={href} className="group flex-shrink-0">
+    <Link href={href} className="group relative flex-shrink-0">
       {card}
     </Link>
   );

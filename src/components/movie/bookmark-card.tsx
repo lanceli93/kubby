@@ -127,6 +127,16 @@ export function BookmarkCard({
 
   const card = (
     <div className={`group relative flex-shrink-0 ${cardWidth}`}>
+      {/* Ambient glow (ambilight) — blurred thumbnail bleeding behind the
+          card, hover-only. Sits at -z-10 behind the overflow-hidden image box
+          so the scaled blur can spill past its edges (matches MovieCard). */}
+      {bookmark.thumbnailPath && (
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 top-0 ${aspectClass} -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55`}
+          style={{ backgroundImage: `url(${resolveImageSrc(bookmark.thumbnailPath, 640)})` }}
+        />
+      )}
       <div className={`relative ${cardWidth} ${aspectClass} overflow-hidden rounded-md bg-gradient-to-br from-zinc-800 to-zinc-900`}>
         {bookmark.thumbnailPath ? (
           /* eslint-disable-next-line @next/next/no-img-element */
