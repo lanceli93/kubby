@@ -28,16 +28,21 @@ kubby/
 │   │   ├── (setup)/                      # First-time setup (no header, public)
 │   │   │   └── setup/setup-wizard.tsx    # 4-step wizard (language → admin → library → done)
 │   │   ├── (main)/                       # Main app (SessionProvider + QueryProvider + AppHeader)
-│   │   │   ├── page.tsx                  # Home (Tabs: Home/Favorites, ScrollRows for libraries/movies)
+│   │   │   ├── page.tsx                  # Home (Tabs: Home/Favorites/People; Home = hero mosaic wall + ScrollRows, Favorites = FavoritesBrowser, People = actor mosaic wall)
 │   │   │   ├── movies/
-│   │   │   │   ├── page.tsx              # Library browse (Tabs: Movies/Favorites/Genres)
+│   │   │   │   ├── page.tsx              # Library browse (Tabs: Movies/Favorites/Genres/Actors)
 │   │   │   │   └── [id]/
 │   │   │   │       ├── page.tsx          # Movie detail (fanart + poster + metadata + bookmark mode/FrameScrubber + cast)
 │   │   │   │       └── play/page.tsx     # Video player (HLS.js, bookmarks, progress save)
 │   │   │   ├── people/[id]/page.tsx      # Person detail (filmography + photo gallery)
 │   │   │   ├── search/page.tsx           # Search (movies + people + bookmarks)
-│   │   │   ├── settings/page.tsx         # User settings (profile/password/language/external player)
-│   │   │   ├── personal-metadata/page.tsx # Rating dimensions / bookmark icons
+│   │   │   ├── profile/page.tsx          # Profile (displayName/password/account type)
+│   │   │   ├── preferences/              # User preferences (PreferencesSidebar)
+│   │   │   │   ├── card-badges/page.tsx        # Card badge toggles
+│   │   │   │   ├── ratings-bookmarks/page.tsx  # Rating dimensions / bookmark icons
+│   │   │   │   ├── hero-mosaic/page.tsx        # Home hero mosaic + people mosaic config, live preview
+│   │   │   │   ├── playback/page.tsx           # External player settings
+│   │   │   │   └── language/page.tsx           # Locale switch
 │   │   │   └── dashboard/               # Admin area
 │   │   │       ├── page.tsx              # Overview (stats + quick actions)
 │   │   │       ├── libraries/page.tsx    # Library CRUD + scan + folder picker
@@ -48,8 +53,10 @@ kubby/
 │   │   ├── layout/                       # AppHeader, BottomTabs, AdminSidebar, NavSidebar, GlobalScanBar
 │   │   ├── movie/
 │   │   │   ├── movie-card.tsx            # Poster card (180x270, responsive prop for mobile grid)
-│   │   │   ├── bookmark-card.tsx         # Bookmark thumbnail card (320px)
+│   │   │   ├── bookmark-card.tsx         # Bookmark thumbnail card (320px, hover ambilight glow)
+│   │   │   ├── favorites-browser.tsx     # Favorites tab (Movies/Actors sub-tabs, full responsive grid + infinite scroll)
 │   │   │   └── frame-scrubber.tsx        # Frame browser panel (two-column: preview+overlay/form, screenshot to gallery)
+│   │   ├── home/                         # home-hero.tsx, hero-mosaic.tsx (movie wall), people-hero.tsx (actor wall)
 │   │   ├── people/person-card.tsx        # Person card (sm/md/lg sizes)
 │   │   ├── library/
 │   │   │   ├── library-card.tsx          # Library card (360x200)
@@ -76,6 +83,8 @@ kubby/
 │   │   │   ├── index.ts                  # TMDB scraper (search + details + images + NFO gen)
 │   │   │   └── folder-parser.ts          # "Inception (2010)" → {title, year}
 │   │   ├── tmdb.ts                       # TMDB API client
+│   │   ├── hero-mosaic-config.ts         # Home hero movie-wall config (columns/style/angle/library mix/filters), normalize()
+│   │   ├── people-mosaic-config.ts       # Home People-tab actor-wall config (tiers/favoritesOnly/gallery), normalize()
 │   │   └── image-utils.ts                # Image path resolution
 │   ├── i18n/
 │   │   ├── config.ts                     # locales: ["en", "zh"]
@@ -128,7 +137,7 @@ kubby/
 
 **user_person_data**: id, user_id (FK), person_id (FK), personal_rating, dimension_ratings (JSON)
 
-**user_preferences**: id, user_id (FK UNIQUE), movie_rating_dimensions (JSON array), person_rating_dimensions (JSON array), show_movie_rating_badge, show_person_tier_badge, show_person_rating_badge, show_resolution_badge, external_player_enabled, external_player_name, external_player_path, external_player_mode, disabled_bookmark_icons (JSON), quick_bookmark_template (JSON), subtle_bookmark_markers
+**user_preferences**: id, user_id (FK UNIQUE), movie_rating_dimensions (JSON array), person_rating_dimensions (JSON array), show_movie_rating_badge, show_person_tier_badge, show_person_rating_badge, show_resolution_badge, external_player_enabled, external_player_name, external_player_path, external_player_mode, disabled_bookmark_icons (JSON), quick_bookmark_template (JSON), subtle_bookmark_markers, player_360_mode, movie_dimension_weights (JSON), person_dimension_weights (JSON), hero_mosaic_config (JSON — home movie wall), people_mosaic_config (JSON — home actor wall)
 
 ### Media info tables
 
@@ -166,6 +175,8 @@ media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1�
 ### Authenticated
 - `GET /api/movies` — List (params: libraryId, search, sort, limit, exclude, filter, genre, includeGenres, ratingDimension, offset)
 - `GET /api/movies/genres` — Genre list by library
+- `GET /api/movies/hero-wall` — Home hero mosaic pool (reads/overrides `hero_mosaic_config`)
+- `GET /api/people/hero-wall` — Home People-tab mosaic pool (reads/overrides `people_mosaic_config`; flattens photo+fanart+gallery entries)
 - `GET/DELETE /api/movies/[id]` — Detail (with cast/directors/userData) / Delete
 - `GET /api/movies/[id]/stream` — Video stream (HTTP 206 Range)
 - `GET /api/movies/[id]/stream/decide` — Playback decision (direct/remux/transcode)
@@ -174,6 +185,7 @@ media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1�
 - `PUT/DELETE /api/movies/[id]/bookmarks/[bookmarkId]` — Update/delete bookmark
 - `GET /api/movies/[id]/frame` — Single frame extraction (FFmpeg -ss, JPEG, params: t, disc, maxWidth)
 - `POST /api/movies/[id]/play-external` — Launch external player
+- `GET /api/people` — List (params: search, sort, limit, offset, filter=favorites, type)
 - `GET/PUT /api/people/[id]` — Person detail + filmography
 - `GET/PUT /api/people/[id]/user-data` — Person ratings
 - `GET/POST/DELETE /api/people/[id]/gallery` — Photo gallery

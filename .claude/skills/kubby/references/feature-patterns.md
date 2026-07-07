@@ -14,6 +14,8 @@ every task.
 - [People body metadata](#people-body-metadata)
 - [ageAtRelease auto-calculation](#ageatrelease-auto-calculation)
 - [Dimension management](#dimension-management)
+- [Home hero mosaic wall (movies + people)](#home-hero-mosaic-wall-movies--people)
+- [Favorites browser](#favorites-browser)
 - [UI Design System](#ui-design-system)
 
 ## 360° panorama player
@@ -108,6 +110,44 @@ key for usage count. Weights stored in `user_preferences.movie_dimension_weights
 `star-rating-dialog.tsx` uses `sum(rating×weight)/sum(weight)`. Saving preferences
 batch-recalculates all `personalRating` values. Rename uses application-level
 read-modify-write (not SQLite JSON functions) for reliability.
+
+## Home hero mosaic wall (movies + people)
+
+Home page (`src/app/(main)/page.tsx`) has 3 tabs: Home (hero mosaic wall of
+movies + ScrollRows for libraries/continue-watching/favorites), Favorites
+(`FavoritesBrowser`), People (full-page actor mosaic wall, no other content rows).
+
+- **Movie wall**: `src/components/home/hero-mosaic.tsx` (shared renderer) +
+  `home-hero.tsx` (movie-tab wrapper). Config in `src/lib/hero-mosaic-config.ts`
+  (columns 8–24, style both/poster/fanart, angle, scroll direction, library mix,
+  filters), stored as `user_preferences.hero_mosaic_config` JSON. Pool from
+  `GET /api/movies/hero-wall`.
+- **People wall**: `src/components/home/people-hero.tsx`, reuses `HeroMosaic` with
+  style fixed to `"both"` (photo paired with the person's own fanart). Config in
+  `src/lib/people-mosaic-config.ts` (columns/angle/scroll direction/includeFanart/
+  includeGallery/galleryCount 0–100/rating-tier filter/favoritesOnly), stored as
+  `user_preferences.people_mosaic_config`. Pool from `GET /api/people/hero-wall`
+  — flattens each qualifying person into a photo entry (paired with own fanart)
+  plus up to `galleryCount` gallery entries (`id` suffixed `:gN` to avoid spotlight
+  addressing collisions with the photo entry), Fisher-Yates shuffled.
+  **Hard rule**: a person must have a `photo_path` to enter the wall at all — no
+  poster means their fanart/gallery are excluded too, not just deprioritized.
+- Both walls: 8s random spotlight rotation + bottom-left caption (title/type/year/
+  rating/favorite), click-through to the movie/person detail page.
+- **Preferences UI**: `/preferences/hero-mosaic/page.tsx` — two sections (Movie
+  wall / Actor wall) separated by a divider, each with live preview. Single Save
+  button PUTs both configs in one request and invalidates both hero-wall queries.
+
+## Favorites browser
+
+`src/components/movie/favorites-browser.tsx` (optional `libraryId` prop) — two
+sub-tabs (Movies / Actors), each a full responsive grid
+(`grid-cols-2 md:grid-cols-[repeat(auto-fill,180px)]`) with infinite scroll and a
+count badge on the tab. Movies query reuses `GET /api/movies?filter=favorites`;
+actors query uses `GET /api/people?filter=favorites`. Mounted at both
+`/movies?tab=favorites` and the home page Favorites tab. Replaced the older
+single-row `FavoritesTabContent`/`FavoritesOverview` + drill-in
+`FavoritesMoviesGrid`/`FavoritesActorsGrid` components (deleted).
 
 ## UI Design System
 
