@@ -99,6 +99,7 @@
     "addLibrary": "Add Media Library",
     "homeTab": "Home",
     "favoritesTab": "Favorites",
+    "peopleTab": "People",
     "heroResume": "Resume",
     "heroPlay": "Play",
     "heroDetails": "Details",
@@ -509,7 +510,28 @@
     "resAny": "Any",
     "saved": "Saved",
     "failedToSave": "Failed to save",
-    "movieCount": "{count} movies"
+    "movieCount": "{count} movies",
+    "movieWallSection": "Movie Wall",
+    "peopleWallSection": "People Wall",
+    "peoplePreviewTooFew": "Not enough people match the current filters (need at least 8 with photos)",
+    "imageSources": "Image sources",
+    "includeFanart": "Include fanart",
+    "includeFanartDesc": "Pair each photo with the person's own fanart",
+    "includeGallery": "Include gallery",
+    "includeGalleryDesc": "Mix in images from each person's gallery",
+    "galleryCount": "Gallery images per person",
+    "personTypes": "Person types",
+    "personTypesDesc": "Which people appear on the wall — none selected means all",
+    "favoritesOnly": "Favorites only",
+    "peopleCount": "{count} people"
+  },
+  "peopleHero": {
+    "notEnough": "Add photos to at least 8 people to light up the people wall",
+    "moviesCount": "{count} movies",
+    "typeActor": "Actor",
+    "typeDirector": "Director",
+    "typeWriter": "Writer",
+    "typeProducer": "Producer"
   },
   "preferences": {
     "title": "Preferences",

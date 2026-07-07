@@ -99,6 +99,7 @@
     "addLibrary": "添加媒体库",
     "homeTab": "首页",
     "favoritesTab": "收藏",
+    "peopleTab": "演员",
     "heroResume": "继续播放",
     "heroPlay": "播放",
     "heroDetails": "详情",
@@ -509,7 +510,28 @@
     "resAny": "不限",
     "saved": "已保存",
     "failedToSave": "保存失败",
-    "movieCount": "{count} 部影片"
+    "movieCount": "{count} 部影片",
+    "movieWallSection": "电影海报墙",
+    "peopleWallSection": "演员海报墙",
+    "peoplePreviewTooFew": "符合条件的演员不足（至少需要 8 位有头像的演员）",
+    "imageSources": "图片来源",
+    "includeFanart": "包含背景图",
+    "includeFanartDesc": "在头像旁配对显示演员自己的背景图",
+    "includeGallery": "包含图库",
+    "includeGalleryDesc": "混入演员图库中的图片",
+    "galleryCount": "每位演员的图库图片数",
+    "personTypes": "人物类型",
+    "personTypesDesc": "哪些人物会出现在墙上——不选则全部",
+    "favoritesOnly": "仅收藏",
+    "peopleCount": "{count} 位"
+  },
+  "peopleHero": {
+    "notEnough": "至少为 8 位演员添加头像后，演员海报墙才会点亮",
+    "moviesCount": "{count} 部作品",
+    "typeActor": "演员",
+    "typeDirector": "导演",
+    "typeWriter": "编剧",
+    "typeProducer": "制片"
   },
   "preferences": {
     "title": "偏好设置",

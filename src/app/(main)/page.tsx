@@ -11,6 +11,7 @@ import { AddLibraryCard } from "@/components/library/add-library-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HomeHero } from "@/components/home/home-hero";
+import { PeopleHero, type PeopleWallEntry } from "@/components/home/people-hero";
 import {
   AmbientProvider,
   AmbientField,
@@ -18,6 +19,7 @@ import {
 } from "@/components/home/ambient-field";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { DEFAULT_HERO_MOSAIC_CONFIG } from "@/lib/hero-mosaic-config";
+import { DEFAULT_PEOPLE_MOSAIC_CONFIG } from "@/lib/people-mosaic-config";
 import { useTranslations } from "next-intl";
 
 interface Movie {
@@ -154,6 +156,20 @@ export default function HomePage() {
     queryFn: () =>
       fetch("/api/movies/hero-wall?limit=60").then((r) => r.json()),
     staleTime: Infinity, // keep the same draw while the page stays mounted
+    refetchOnWindowFocus: false,
+  });
+
+  // People wall pool for the People tab — mirrors the movie wall query. The
+  // hero-wall endpoint reads the SAVED peopleMosaicConfig server-side, so no
+  // config rides the queryKey; the preferences page invalidates
+  // ["people","hero-wall"] on save to bust staleTime:Infinity.
+  const { data: peopleWall = [], isPending: peopleWallPending } = useQuery<
+    PeopleWallEntry[]
+  >({
+    queryKey: ["people", "hero-wall"],
+    queryFn: () =>
+      fetch("/api/people/hero-wall?limit=60").then((r) => r.json()),
+    staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
 
@@ -306,6 +322,12 @@ export default function HomePage() {
             >
               {t("favoritesTab")}
             </TabsTrigger>
+            <TabsTrigger
+              value="people"
+              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
+            >
+              {t("peopleTab")}
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -412,6 +434,17 @@ export default function HomePage() {
           <div className="px-4 md:px-12 pb-8 pt-14">
             <FavoritesBrowser />
           </div>
+        </TabsContent>
+
+        {/* People — full-page animated wall, no rows below it. h-full chains the
+            height down from the flex-1 scroll wrapper so PeopleHero's h-full root
+            fills the viewport (mt-0 neutralizes any TabsContent default margin). */}
+        <TabsContent value="people" className="mt-0 h-full">
+          <PeopleHero
+            entries={peopleWall}
+            pending={peopleWallPending || !prefs}
+            config={prefs?.peopleMosaicConfig ?? DEFAULT_PEOPLE_MOSAIC_CONFIG}
+          />
         </TabsContent>
         </div>
       </Tabs>

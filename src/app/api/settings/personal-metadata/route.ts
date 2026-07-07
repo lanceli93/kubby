@@ -6,6 +6,7 @@ import { userPreferences, userMovieData, userPersonData } from "@/lib/db/schema"
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { DEFAULT_HERO_MOSAIC_CONFIG, normalizeHeroMosaicConfig } from "@/lib/hero-mosaic-config";
+import { DEFAULT_PEOPLE_MOSAIC_CONFIG, normalizePeopleMosaicConfig } from "@/lib/people-mosaic-config";
 
 // Parses a stored JSON column, degrading to null on corrupt data instead of throwing.
 function parseJsonSafe(value: string | null): unknown {
@@ -52,6 +53,7 @@ export async function GET() {
         movieDimensionWeights: {},
         personDimensionWeights: {},
         heroMosaicConfig: DEFAULT_HERO_MOSAIC_CONFIG,
+        peopleMosaicConfig: DEFAULT_PEOPLE_MOSAIC_CONFIG,
         serverPlatform,
       });
     }
@@ -86,6 +88,7 @@ export async function GET() {
         ? JSON.parse(row.personDimensionWeights)
         : {},
       heroMosaicConfig: normalizeHeroMosaicConfig(parseJsonSafe(row.heroMosaicConfig)),
+      peopleMosaicConfig: normalizePeopleMosaicConfig(parseJsonSafe(row.peopleMosaicConfig)),
       serverPlatform,
     });
   } catch (error) {
@@ -184,6 +187,9 @@ export async function PUT(request: NextRequest) {
       heroMosaicConfig: body.heroMosaicConfig !== undefined
         ? JSON.stringify(normalizeHeroMosaicConfig(body.heroMosaicConfig))
         : existing?.heroMosaicConfig ?? null,
+      peopleMosaicConfig: body.peopleMosaicConfig !== undefined
+        ? JSON.stringify(normalizePeopleMosaicConfig(body.peopleMosaicConfig))
+        : existing?.peopleMosaicConfig ?? null,
     };
 
     if (existing) {

@@ -199,6 +199,7 @@ export const userPreferences = sqliteTable("user_preferences", {
   movieDimensionWeights: text("movie_dimension_weights"), // JSON object, e.g. '{"Plot":2,"VFX":1}'
   personDimensionWeights: text("person_dimension_weights"), // JSON object, e.g. '{"Appearance":2}'
   heroMosaicConfig: text("hero_mosaic_config"), // JSON HeroMosaicConfig — home hero poster wall settings
+  peopleMosaicConfig: text("people_mosaic_config"), // JSON PeopleMosaicConfig — home People hero poster wall settings
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────

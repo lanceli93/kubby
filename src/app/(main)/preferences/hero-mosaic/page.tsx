@@ -13,6 +13,11 @@ import {
   DEFAULT_HERO_MOSAIC_CONFIG,
   MOSAIC_ANGLES,
 } from "@/lib/hero-mosaic-config";
+import {
+  type PeopleMosaicConfig,
+  type PersonMosaicType,
+  DEFAULT_PEOPLE_MOSAIC_CONFIG,
+} from "@/lib/people-mosaic-config";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
 
 interface Library {
@@ -21,9 +26,27 @@ interface Library {
   movieCount?: number;
 }
 
+// A single entry from /api/people/hero-wall — a person photo or gallery image.
+// Maps to a MosaicMovie for the preview (title = name).
+interface WallEntry {
+  id: string;
+  personId: string;
+  name: string;
+  type: string;
+  posterPath: string | null;
+  fanartPath: string | null;
+  posterBlur: string | null;
+  birthYear: number | null;
+  movieCount: number;
+  personalRating: number | null;
+  isFavorite: boolean;
+}
+
 const STYLE_OPTIONS: MosaicStyle[] = ["poster", "fanart", "both"];
 const ANGLE_OPTIONS: MosaicAngle[] = ["flat", "gentle", "classic", "steep", "reverse"];
 const FLOW_OPTIONS: MosaicFlow[] = ["vertical", "horizontal"];
+// Person types available on the people wall — [] selection means "all".
+const PERSON_TYPE_OPTIONS: PersonMosaicType[] = ["actor", "director", "writer", "producer"];
 // Minimum-resolution presets — null (Any) plus the widths the endpoint filters on.
 const RESOLUTION_OPTIONS: { value: number | null; key: string }[] = [
   { value: null, key: "resAny" },
@@ -57,9 +80,22 @@ function SegButton({
   );
 }
 
+/** A section divider heading — reads as a labelled group above a batch of cards. */
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex w-full max-w-[720px] items-center gap-3 pt-2">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        {children}
+      </h2>
+      <span className="h-px flex-1 bg-white/[0.08]" />
+    </div>
+  );
+}
+
 export default function HeroMosaicPage() {
   const t = useTranslations("heroMosaic");
   const tCommon = useTranslations("common");
+  const tPeople = useTranslations("peopleHero");
   const queryClient = useQueryClient();
 
   const { data: prefs } = useQuery<UserPreferences>({
@@ -77,6 +113,10 @@ export default function HeroMosaicPage() {
   // separate state: when OFF the sent/saved libraryWeights is {} (default mode).
   const [draft, setDraft] = useState<HeroMosaicConfig>(DEFAULT_HERO_MOSAIC_CONFIG);
   const [customWeights, setCustomWeights] = useState(false);
+  // People-wall draft — independent config, hydrated alongside the movie draft.
+  const [peopleDraft, setPeopleDraft] = useState<PeopleMosaicConfig>(
+    DEFAULT_PEOPLE_MOSAIC_CONFIG
+  );
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -94,9 +134,14 @@ export default function HeroMosaicPage() {
         Object.keys(prefs.heroMosaicConfig.libraryWeights ?? {}).length > 0
       );
     }
+    if (prefs?.peopleMosaicConfig) {
+      setPeopleDraft(prefs.peopleMosaicConfig);
+    }
   }, [prefs]);
 
   const patch = (p: Partial<HeroMosaicConfig>) => setDraft((d) => ({ ...d, ...p }));
+  const patchPeople = (p: Partial<PeopleMosaicConfig>) =>
+    setPeopleDraft((d) => ({ ...d, ...p }));
 
   const setLibWeight = (id: string, w: number) =>
     setDraft((d) => ({ ...d, libraryWeights: { ...d.libraryWeights, [id]: w } }));
@@ -141,6 +186,54 @@ export default function HeroMosaicPage() {
     staleTime: 30_000,
   });
 
+  // People preview pool — keyed on the DATA-affecting people-draft fields only
+  // (columns/angle/flow re-render the same entries, so they stay OUT of the key,
+  // mirroring the movie preview). placeholderData keeps the previous wall on
+  // screen while a new draw refetches.
+  const { data: previewPeople = [] } = useQuery<WallEntry[]>({
+    queryKey: [
+      "people",
+      "hero-wall",
+      "preview",
+      peopleDraft.includeFanart,
+      peopleDraft.includeGallery,
+      peopleDraft.galleryCount,
+      peopleDraft.personTypes.join(","),
+      peopleDraft.favoritesOnly,
+    ],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("includeFanart", String(peopleDraft.includeFanart));
+      params.set("includeGallery", String(peopleDraft.includeGallery));
+      params.set("galleryCount", String(peopleDraft.galleryCount));
+      // Send types even when empty (empty string → all), so clearing every type
+      // overrides the saved config's non-empty list.
+      params.set("types", peopleDraft.personTypes.join(","));
+      params.set("favoritesOnly", String(peopleDraft.favoritesOnly));
+      params.set("limit", "60");
+      return fetch(`/api/people/hero-wall?${params.toString()}`).then((r) => r.json());
+    },
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
+  });
+
+  // People entries fed to HeroMosaic as MosaicMovie (title = person name). The
+  // people wall is always "both" style — layout knobs come from peopleDraft.
+  const previewPeopleMovies: MosaicMovie[] = previewPeople.map((e) => ({
+    ...e,
+    title: e.name,
+  }));
+  const peopleWallConfig: HeroMosaicConfig = {
+    columnCount: peopleDraft.columnCount,
+    style: "both",
+    angle: peopleDraft.angle,
+    flow: peopleDraft.flow,
+    libraryWeights: {},
+    yearFrom: null,
+    yearTo: null,
+    minWidth: null,
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -148,15 +241,21 @@ export default function HeroMosaicPage() {
         ...draft,
         libraryWeights: effectiveWeights,
       };
+      // Persist both walls in a single request; the endpoint round-trips each
+      // config independently.
       const res = await fetch("/api/settings/personal-metadata", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ heroMosaicConfig: config }),
+        body: JSON.stringify({
+          heroMosaicConfig: config,
+          peopleMosaicConfig: peopleDraft,
+        }),
       });
       if (res.ok) {
         showToast(t("saved"), true);
         queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
         queryClient.invalidateQueries({ queryKey: ["movies", "hero-wall"] });
+        queryClient.invalidateQueries({ queryKey: ["people", "hero-wall"] });
       } else {
         showToast(t("failedToSave"), false);
       }
@@ -174,6 +273,9 @@ export default function HeroMosaicPage() {
     <div className="h-full overflow-y-scroll">
       <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
+
+        {/* ── Movie Wall section ── */}
+        <SectionHeader>{t("movieWallSection")}</SectionHeader>
 
         {/* Live preview */}
         <div className={`${cardClass} max-w-[900px]`}>
@@ -427,6 +529,248 @@ export default function HeroMosaicPage() {
                 </SegButton>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* ── People Wall section ── */}
+        <SectionHeader>{t("peopleWallSection")}</SectionHeader>
+
+        {/* People live preview */}
+        <div className={`${cardClass} max-w-[900px]`}>
+          <h2 className="text-lg font-semibold text-foreground">{t("preview")}</h2>
+          <div className="relative aspect-[21/9] overflow-hidden rounded-lg bg-[#0a0a0f]">
+            {previewPeopleMovies.length >= 8 ? (
+              <HeroMosaic
+                movies={previewPeopleMovies}
+                config={peopleWallConfig}
+                featuredEnabled={false}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                {t("peoplePreviewTooFew")}
+              </div>
+            )}
+            {/* Bottom gradient mimicking the real home hero. */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent" />
+          </div>
+        </div>
+
+        {/* People layout: flow + columns + angle (no style — always "both") */}
+        <div className={cardClass}>
+          <h2 className="text-lg font-semibold text-foreground">{t("layout")}</h2>
+
+          {/* Flow (scroll direction) — client-only re-render, so it stays OUT of
+              the preview queryKey (same as columnCount/angle). */}
+          <div>
+            <p className="mb-2 text-sm font-medium text-foreground">{t("flow")}</p>
+            <div className="flex flex-wrap gap-2">
+              {FLOW_OPTIONS.map((f) => (
+                <SegButton
+                  key={f}
+                  active={peopleDraft.flow === f}
+                  onClick={() => patchPeople({ flow: f })}
+                >
+                  {t(f === "vertical" ? "flowVertical" : "flowHorizontal")}
+                </SegButton>
+              ))}
+            </div>
+          </div>
+
+          {/* Column count */}
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">{t("columnCount")}</p>
+                <p className="text-xs text-muted-foreground">{t("columnCountDesc")}</p>
+              </div>
+              <span className="font-mono text-sm font-semibold text-foreground">
+                {peopleDraft.columnCount}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={8}
+              max={24}
+              step={1}
+              value={peopleDraft.columnCount}
+              onChange={(e) => patchPeople({ columnCount: Number(e.target.value) })}
+              className="w-full cursor-pointer accent-primary"
+              style={{ accentColor: "var(--primary)" }}
+            />
+          </div>
+
+          {/* Angle */}
+          <div>
+            <p className="mb-2 text-sm font-medium text-foreground">{t("angle")}</p>
+            <div className="flex flex-wrap gap-3">
+              {ANGLE_OPTIONS.map((a) => {
+                const active = peopleDraft.angle === a;
+                return (
+                  <button
+                    key={a}
+                    onClick={() => patchPeople({ angle: a })}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer"
+                  >
+                    <div
+                      className={`h-[40px] w-[64px] overflow-hidden rounded-md border transition-fluid ${
+                        active
+                          ? "border-primary/50 ring-2 ring-primary/50"
+                          : "border-white/10 hover:border-white/20"
+                      }`}
+                    >
+                      <div
+                        className="flex h-full w-full items-center justify-center gap-0.5 [transform-origin:center]"
+                        style={{
+                          transform: MOSAIC_ANGLES[a].replace("1600px", "300px"),
+                        }}
+                      >
+                        <div className="h-6 w-2 rounded-sm bg-white/20" />
+                        <div className="h-6 w-2 rounded-sm bg-white/20" />
+                        <div className="h-6 w-2 rounded-sm bg-white/20" />
+                      </div>
+                    </div>
+                    <span
+                      className={`text-xs ${active ? "text-foreground" : "text-muted-foreground"}`}
+                    >
+                      {t(
+                        a === "flat"
+                          ? "angleFlat"
+                          : a === "gentle"
+                            ? "angleGentle"
+                            : a === "classic"
+                              ? "angleClassic"
+                              : a === "steep"
+                                ? "angleSteep"
+                                : "angleReverse"
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Image sources: fanart / gallery toggles + gallery count */}
+        <div className={cardClass}>
+          <h2 className="text-lg font-semibold text-foreground">{t("imageSources")}</h2>
+
+          {/* Include fanart */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t("includeFanart")}</p>
+              <p className="text-xs text-muted-foreground">{t("includeFanartDesc")}</p>
+            </div>
+            <button
+              onClick={() => patchPeople({ includeFanart: !peopleDraft.includeFanart })}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-fluid cursor-pointer ${
+                peopleDraft.includeFanart ? "bg-primary" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  peopleDraft.includeFanart ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Include gallery */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t("includeGallery")}</p>
+              <p className="text-xs text-muted-foreground">{t("includeGalleryDesc")}</p>
+            </div>
+            <button
+              onClick={() => patchPeople({ includeGallery: !peopleDraft.includeGallery })}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-fluid cursor-pointer ${
+                peopleDraft.includeGallery ? "bg-primary" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  peopleDraft.includeGallery ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Gallery count — only meaningful when gallery images are included. */}
+          {peopleDraft.includeGallery && (
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">{t("galleryCount")}</p>
+                <span className="font-mono text-sm font-semibold text-foreground">
+                  {peopleDraft.galleryCount}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={10}
+                step={1}
+                value={peopleDraft.galleryCount}
+                onChange={(e) => patchPeople({ galleryCount: Number(e.target.value) })}
+                className="w-full cursor-pointer accent-primary"
+                style={{ accentColor: "var(--primary)" }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* People filters: person types + favorites */}
+        <div className={cardClass}>
+          <h2 className="text-lg font-semibold text-foreground">{t("filters")}</h2>
+
+          {/* Person types — multi-select; empty selection means all (see desc). */}
+          <div>
+            <p className="mb-1 text-sm font-medium text-foreground">{t("personTypes")}</p>
+            <p className="mb-2 text-xs text-muted-foreground">{t("personTypesDesc")}</p>
+            <div className="flex flex-wrap gap-2">
+              {PERSON_TYPE_OPTIONS.map((pt) => {
+                const active = peopleDraft.personTypes.includes(pt);
+                return (
+                  <SegButton
+                    key={pt}
+                    active={active}
+                    onClick={() =>
+                      patchPeople({
+                        personTypes: active
+                          ? peopleDraft.personTypes.filter((x) => x !== pt)
+                          : [...peopleDraft.personTypes, pt],
+                      })
+                    }
+                  >
+                    {tPeople(
+                      pt === "actor"
+                        ? "typeActor"
+                        : pt === "director"
+                          ? "typeDirector"
+                          : pt === "writer"
+                            ? "typeWriter"
+                            : "typeProducer"
+                    )}
+                  </SegButton>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Favorites only */}
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium text-foreground">{t("favoritesOnly")}</p>
+            <button
+              onClick={() => patchPeople({ favoritesOnly: !peopleDraft.favoritesOnly })}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-fluid cursor-pointer ${
+                peopleDraft.favoritesOnly ? "bg-primary" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  peopleDraft.favoritesOnly ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
           </div>
         </div>
 

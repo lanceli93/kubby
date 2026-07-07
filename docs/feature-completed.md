@@ -1,5 +1,18 @@
 # Completed Features
 
+## 2026-07-07: 首页演员海报墙 Tab — People 马赛克墙 + 偏好页分区配置
+
+首页顶部新增第三个 tab「演员/People」: 整页动态马赛克墙, 图片来源为演员 poster(photo)+ 自己的 fanart + 图库(gallery)图片; 与电影墙相同的 8s 随机聚光灯 + 左下字幕(NOW SHOWING · 类型 / 姓名 / 出生年 · 作品数 · ★ 个人评分 · ♥ 收藏), 整个 hero 点击进入 `/people/[id]`。该 tab 不再显示媒体库/继续观看等内容行, 墙覆盖整个页面。
+
+- **入选硬规则**: 演员必须有 poster(photo_path)才入墙; 无 poster 则完全排除(其 fanart/gallery 也不出现)。
+- **`GET /api/people/hero-wall`**(新): 读取已存 `peopleMosaicConfig`, 支持 query 覆盖(偏好页预览); 有照片 + ≥1 部影片(INNER JOIN movie_people)+ 类型/仅收藏筛选, RANDOM 抽样; 每人展开为扁平条目 — photo 条目(id=personId, 带自身 fanart 配对)+ 最多 galleryCount 张图库条目(id 加 `:gN` 后缀避免马赛克聚光灯寻址冲突, `personId` 供导航), Fisher-Yates 打散后截断。
+- **`src/lib/people-mosaic-config.ts`**(新): `PeopleMosaicConfig`(列数 8–24/角度/滚动方向/includeFanart/includeGallery/galleryCount 0–10/personTypes 多选([]=全部, 默认 actor)/favoritesOnly)+ normalize(永不抛错)。
+- **DB**: `user_preferences.people_mosaic_config`(schema.ts + db/index.ts 迁移数组双处更新, 编号 0034)。
+- **`src/components/home/people-hero.tsx`**(新): 复用 HeroMosaic(style 固定 "both", photo 与自身 fanart 成对点亮), 满屏高度, 无轮播回退/无播放按钮; <8 个可用条目显示居中空态提示; ambient 环境光随聚光灯 photoBlur 变化。
+- **偏好页分区**: `/preferences/hero-mosaic` 拆为「电影海报墙」/「演员海报墙」两个带分隔线的 section; 演员区含实时预览(21:9, 静态)+ 布局(方向/列数/角度)+ 图片来源(fanart 开关/图库开关 + 每人图库数滑条)+ 筛选(人物类型多选 seg 按钮 + 仅收藏开关); 单个 Save 一次 PUT 同时保存两墙配置并 invalidate 两个 hero-wall 查询。
+- **i18n**: `home.peopleTab`、新 `peopleHero` 命名空间、`heroMosaic` 分区/来源/筛选键(EN+ZH)。
+- 验证: tsc + build 通过; chrome-devtools 实测 tab 切换/聚光灯轮换/字幕跟随/点击进详情/偏好保存往返/API 筛选与图库条目均正常。
+
 ## 2026-07-06: 首页黑屏底部误显轮播指示条(已修)+ 详情页跳转幽灵横线(判定为 Chrome 合成瑕疵, 相关改动已回退)
 
 ### 首页黑屏底部误显一排短线 (`home-hero.tsx`) —— 已修复
