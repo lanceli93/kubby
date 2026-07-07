@@ -128,5 +128,6 @@ manual edits. Release flow: push `v0.x.y` tag → CI extracts version → passes
 | `references/architecture.md` | Project structure, DB schema (13 tables), API endpoints, scanner, playback internals, theme, i18n, data dirs, mobile responsive. Read when implementing features or fixing bugs that touch these. |
 | `references/feature-patterns.md` | How a specific feature is built — 360° player, player controls, navigation, GlassToast, metadata browser/editor, people body metadata, dimension management, UI design system. Read the one section matching your task. |
 | `references/release-workflow.md` | Packaging, testing builds, creating and publishing releases. |
+| `references/readme-media-capture.md` | (Re)generating README screenshots + animated demos: ffmpeg ddagrab recording, mp4→animated-WebP, chrome-devtools MCP screenshots, seeding demo data (ratings/bookmarks/gallery) via API, prod-build-on-8665 setup. Read when updating `docs/screenshots/`. |
 | `docs/multi-model-workflow.md` | The Fable-orchestrates / opus-sonnet-executes workflow in full. |
 | latest `docs/architecture-v0.x-mvp.md` | Current architecture snapshot to update after big features. |
