@@ -1,10 +1,13 @@
 // Shared config shape for the home People hero poster mosaic (columns, angle,
-// flow, image sources, person-type/favorites filters). Used by the personal-metadata
+// flow, image sources, rating-tier/favorites filters). Used by the personal-metadata
 // API, the /api/people/hero-wall endpoint, and the Preferences UI.
 
 import type { MosaicAngle, MosaicFlow } from "./hero-mosaic-config";
+import type { Tier } from "./tier";
 
-export type PersonMosaicType = "actor" | "director" | "writer" | "producer";
+// Rating tiers a person can be filtered by, plus "unrated" for people with no
+// personal rating. Mirrors the tier filter on the People browse page.
+export type PersonMosaicTier = Tier | "unrated";
 
 export interface PeopleMosaicConfig {
   columnCount: number;                    // 8–24
@@ -12,8 +15,8 @@ export interface PeopleMosaicConfig {
   flow: MosaicFlow;                       // "vertical" = columns drift up/down; "horizontal" = rows drift left/right
   includeFanart: boolean;                 // pair each photo with the person's own fanart
   includeGallery: boolean;                // mix in images from each person's gallery
-  galleryCount: number;                   // 0–10 gallery images per person
-  personTypes: PersonMosaicType[];        // subset of actor/director/writer/producer; [] = all
+  galleryCount: number;                   // 0–100 gallery images per person
+  tiers: PersonMosaicTier[];              // rating tiers to include; [] = all (no filter)
   favoritesOnly: boolean;
 }
 
@@ -24,13 +27,15 @@ export const DEFAULT_PEOPLE_MOSAIC_CONFIG: PeopleMosaicConfig = {
   includeFanart: true,
   includeGallery: true,
   galleryCount: 3,
-  personTypes: ["actor"],
+  tiers: [],
   favoritesOnly: false,
 };
 
 const MOSAIC_ANGLE_KEYS: MosaicAngle[] = ["flat", "gentle", "classic", "steep", "reverse"];
 const MOSAIC_FLOWS: MosaicFlow[] = ["vertical", "horizontal"];
-const PERSON_TYPES: PersonMosaicType[] = ["actor", "director", "writer", "producer"];
+export const PERSON_MOSAIC_TIERS: PersonMosaicTier[] = [
+  "SSS", "SS", "S", "A", "B", "C", "D", "E", "unrated",
+];
 
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {
   const n = Math.round(Number(value));
@@ -42,15 +47,14 @@ function normalizeBool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-// Keeps only valid person-type strings; invalid entries are dropped. An empty
-// (or missing/non-array) input falls back to the default; an explicit empty
-// array survives normalization to mean "all types".
-function normalizePersonTypes(value: unknown): PersonMosaicType[] {
-  if (!Array.isArray(value)) return [...DEFAULT_PEOPLE_MOSAIC_CONFIG.personTypes];
-  const result: PersonMosaicType[] = [];
+// Keeps only valid tier strings; invalid entries are dropped. A missing/non-array
+// input (and an explicit empty array) both mean "all tiers" → [].
+function normalizeTiers(value: unknown): PersonMosaicTier[] {
+  if (!Array.isArray(value)) return [];
+  const result: PersonMosaicTier[] = [];
   for (const raw of value) {
-    if (PERSON_TYPES.includes(raw as PersonMosaicType) && !result.includes(raw as PersonMosaicType)) {
-      result.push(raw as PersonMosaicType);
+    if (PERSON_MOSAIC_TIERS.includes(raw as PersonMosaicTier) && !result.includes(raw as PersonMosaicTier)) {
+      result.push(raw as PersonMosaicTier);
     }
   }
   return result;
@@ -70,8 +74,8 @@ export function normalizePeopleMosaicConfig(raw: unknown): PeopleMosaicConfig {
       : DEFAULT_PEOPLE_MOSAIC_CONFIG.flow,
     includeFanart: normalizeBool(input.includeFanart, DEFAULT_PEOPLE_MOSAIC_CONFIG.includeFanart),
     includeGallery: normalizeBool(input.includeGallery, DEFAULT_PEOPLE_MOSAIC_CONFIG.includeGallery),
-    galleryCount: clampInt(input.galleryCount, 0, 10, DEFAULT_PEOPLE_MOSAIC_CONFIG.galleryCount),
-    personTypes: normalizePersonTypes(input.personTypes),
+    galleryCount: clampInt(input.galleryCount, 0, 100, DEFAULT_PEOPLE_MOSAIC_CONFIG.galleryCount),
+    tiers: normalizeTiers(input.tiers),
     favoritesOnly: normalizeBool(input.favoritesOnly, DEFAULT_PEOPLE_MOSAIC_CONFIG.favoritesOnly),
   };
 }

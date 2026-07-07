@@ -15,10 +15,12 @@ import {
 } from "@/lib/hero-mosaic-config";
 import {
   type PeopleMosaicConfig,
-  type PersonMosaicType,
+  type PersonMosaicTier,
   DEFAULT_PEOPLE_MOSAIC_CONFIG,
+  PERSON_MOSAIC_TIERS,
 } from "@/lib/people-mosaic-config";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
+import { getTierColor, getTierBorderColor, type Tier } from "@/lib/tier";
 
 interface Library {
   id: string;
@@ -45,8 +47,8 @@ interface WallEntry {
 const STYLE_OPTIONS: MosaicStyle[] = ["poster", "fanart", "both"];
 const ANGLE_OPTIONS: MosaicAngle[] = ["flat", "gentle", "classic", "steep", "reverse"];
 const FLOW_OPTIONS: MosaicFlow[] = ["vertical", "horizontal"];
-// Person types available on the people wall — [] selection means "all".
-const PERSON_TYPE_OPTIONS: PersonMosaicType[] = ["actor", "director", "writer", "producer"];
+// Rating tiers available on the people wall — [] selection means "all".
+const TIER_OPTIONS: PersonMosaicTier[] = PERSON_MOSAIC_TIERS;
 // Minimum-resolution presets — null (Any) plus the widths the endpoint filters on.
 const RESOLUTION_OPTIONS: { value: number | null; key: string }[] = [
   { value: null, key: "resAny" },
@@ -95,7 +97,6 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 export default function HeroMosaicPage() {
   const t = useTranslations("heroMosaic");
   const tCommon = useTranslations("common");
-  const tPeople = useTranslations("peopleHero");
   const queryClient = useQueryClient();
 
   const { data: prefs } = useQuery<UserPreferences>({
@@ -198,7 +199,7 @@ export default function HeroMosaicPage() {
       peopleDraft.includeFanart,
       peopleDraft.includeGallery,
       peopleDraft.galleryCount,
-      peopleDraft.personTypes.join(","),
+      peopleDraft.tiers.join(","),
       peopleDraft.favoritesOnly,
     ],
     queryFn: () => {
@@ -206,9 +207,9 @@ export default function HeroMosaicPage() {
       params.set("includeFanart", String(peopleDraft.includeFanart));
       params.set("includeGallery", String(peopleDraft.includeGallery));
       params.set("galleryCount", String(peopleDraft.galleryCount));
-      // Send types even when empty (empty string → all), so clearing every type
+      // Send tiers even when empty (empty string → all), so clearing every tier
       // overrides the saved config's non-empty list.
-      params.set("types", peopleDraft.personTypes.join(","));
+      params.set("tiers", peopleDraft.tiers.join(","));
       params.set("favoritesOnly", String(peopleDraft.favoritesOnly));
       params.set("limit", "60");
       return fetch(`/api/people/hero-wall?${params.toString()}`).then((r) => r.json());
@@ -707,7 +708,7 @@ export default function HeroMosaicPage() {
               <input
                 type="range"
                 min={0}
-                max={10}
+                max={100}
                 step={1}
                 value={peopleDraft.galleryCount}
                 onChange={(e) => patchPeople({ galleryCount: Number(e.target.value) })}
@@ -718,39 +719,39 @@ export default function HeroMosaicPage() {
           )}
         </div>
 
-        {/* People filters: person types + favorites */}
+        {/* People filters: rating tiers + favorites */}
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-foreground">{t("filters")}</h2>
 
-          {/* Person types — multi-select; empty selection means all (see desc). */}
+          {/* Rating tiers — multi-select; empty selection means all (no filter).
+              Chips carry the tier's own color so S/A/B read at a glance. */}
           <div>
-            <p className="mb-1 text-sm font-medium text-foreground">{t("personTypes")}</p>
-            <p className="mb-2 text-xs text-muted-foreground">{t("personTypesDesc")}</p>
+            <p className="mb-1 text-sm font-medium text-foreground">{t("ratingTiers")}</p>
+            <p className="mb-2 text-xs text-muted-foreground">{t("ratingTiersDesc")}</p>
             <div className="flex flex-wrap gap-2">
-              {PERSON_TYPE_OPTIONS.map((pt) => {
-                const active = peopleDraft.personTypes.includes(pt);
+              {TIER_OPTIONS.map((tier) => {
+                const active = peopleDraft.tiers.includes(tier);
+                const isUnrated = tier === "unrated";
+                const tierColor = isUnrated ? "text-muted-foreground" : getTierColor(tier as Tier);
+                const tierBorder = isUnrated ? "border-white/10" : getTierBorderColor(tier as Tier);
                 return (
-                  <SegButton
-                    key={pt}
-                    active={active}
+                  <button
+                    key={tier}
                     onClick={() =>
                       patchPeople({
-                        personTypes: active
-                          ? peopleDraft.personTypes.filter((x) => x !== pt)
-                          : [...peopleDraft.personTypes, pt],
+                        tiers: active
+                          ? peopleDraft.tiers.filter((x) => x !== tier)
+                          : [...peopleDraft.tiers, tier],
                       })
                     }
+                    className={`min-w-[3rem] rounded-lg border px-3 py-2 text-sm font-black tracking-wider transition-fluid cursor-pointer ${
+                      active
+                        ? `bg-primary/20 border-primary/50 ${tierColor}`
+                        : `bg-white/[0.02] ${tierBorder} ${tierColor} opacity-60 hover:opacity-100`
+                    }`}
                   >
-                    {tPeople(
-                      pt === "actor"
-                        ? "typeActor"
-                        : pt === "director"
-                          ? "typeDirector"
-                          : pt === "writer"
-                            ? "typeWriter"
-                            : "typeProducer"
-                    )}
-                  </SegButton>
+                    {isUnrated ? t("unrated") : tier}
+                  </button>
                 );
               })}
             </div>

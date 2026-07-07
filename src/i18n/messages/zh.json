@@ -520,8 +520,9 @@
     "includeGallery": "包含图库",
     "includeGalleryDesc": "混入演员图库中的图片",
     "galleryCount": "每位演员的图库图片数",
-    "personTypes": "人物类型",
-    "personTypesDesc": "哪些人物会出现在墙上——不选则全部",
+    "ratingTiers": "评级筛选",
+    "ratingTiersDesc": "只显示这些评级的演员——不选则全部",
+    "unrated": "未评级",
     "favoritesOnly": "仅收藏",
     "peopleCount": "{count} 位"
   },

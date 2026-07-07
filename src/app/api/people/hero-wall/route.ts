@@ -121,13 +121,13 @@ export async function GET(request: NextRequest) {
       merged.galleryCount = Number.isFinite(n) ? n : merged.galleryCount;
     }
 
-    // types: present-but-empty string → [] (meaning all).
-    const typesParam = searchParams.get("types");
-    if (typesParam !== null) {
-      merged.personTypes = typesParam
+    // tiers: present-but-empty string → [] (meaning all — no rating filter).
+    const tiersParam = searchParams.get("tiers");
+    if (tiersParam !== null) {
+      merged.tiers = tiersParam
         .split(",")
         .map((t) => t.trim())
-        .filter(Boolean) as PeopleMosaicConfig["personTypes"];
+        .filter(Boolean) as PeopleMosaicConfig["tiers"];
     }
 
     // Re-normalize the merged result once more.
@@ -146,9 +146,34 @@ export async function GET(request: NextRequest) {
       sql`p.photo_path IS NOT NULL`,
     ];
 
-    if (config.personTypes.length > 0) {
-      const typeConds = config.personTypes.map((t) => sql`p.type = ${t}`);
-      conditions.push(sql`(${sql.join(typeConds, sql` OR `)})`);
+    // Rating-tier filter — mirrors /api/people. Empty tiers = no filter (all).
+    // "unrated" matches people with no personal rating (NULL or ≤ 0).
+    if (config.tiers.length > 0) {
+      const includeUnrated = config.tiers.includes("unrated");
+      const tierNames = config.tiers.filter((t) => t !== "unrated");
+      const tierConds: ReturnType<typeof sql>[] = [];
+
+      for (const tier of tierNames) {
+        switch (tier) {
+          case "SSS": tierConds.push(sql`upd.personal_rating >= 9.5`); break;
+          case "SS": tierConds.push(sql`(upd.personal_rating >= 9.0 AND upd.personal_rating < 9.5)`); break;
+          case "S": tierConds.push(sql`(upd.personal_rating >= 8.5 AND upd.personal_rating < 9.0)`); break;
+          case "A": tierConds.push(sql`(upd.personal_rating >= 8.0 AND upd.personal_rating < 8.5)`); break;
+          case "B": tierConds.push(sql`(upd.personal_rating >= 7.0 AND upd.personal_rating < 8.0)`); break;
+          case "C": tierConds.push(sql`(upd.personal_rating >= 6.0 AND upd.personal_rating < 7.0)`); break;
+          case "D": tierConds.push(sql`(upd.personal_rating >= 5.0 AND upd.personal_rating < 6.0)`); break;
+          case "E": tierConds.push(sql`(upd.personal_rating > 0 AND upd.personal_rating < 5.0)`); break;
+        }
+      }
+
+      if (includeUnrated) {
+        tierConds.push(sql`(upd.personal_rating IS NULL OR upd.personal_rating <= 0)`);
+      }
+
+      // Valid tiers were requested but none matched a known bucket — match nothing.
+      conditions.push(
+        tierConds.length > 0 ? sql`(${sql.join(tierConds, sql` OR `)})` : sql`0`
+      );
     }
 
     if (config.favoritesOnly) {

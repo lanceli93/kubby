@@ -375,7 +375,7 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 | movie_dimension_weights | text | JSON 对象, 电影维度权重 (如 `{"剧情":2,"特效":1}`), 默认全 1 |
 | person_dimension_weights | text | JSON 对象, 人物维度权重, 默认全 1 |
 | hero_mosaic_config | text | JSON `HeroMosaicConfig`, 首页海报墙配置 (列数/风格/角度/滚动方向/媒体库占比/年份/分辨率筛选), NULL = 默认 |
-| people_mosaic_config | text | JSON `PeopleMosaicConfig`, 首页演员海报墙配置 (列数/角度/滚动方向/fanart 开关/图库开关+每人张数/人物类型多选/仅收藏), NULL = 默认 |
+| people_mosaic_config | text | JSON `PeopleMosaicConfig`, 首页演员海报墙配置 (列数/角度/滚动方向/fanart 开关/图库开关+每人张数 0–100/评级 tier 多选 []=全部无筛选/仅收藏), NULL = 默认 |
 
 #### movie_discs (多碟电影)
 | 列 | 类型 | 说明 |
@@ -516,7 +516,7 @@ user_movie_data.personal_rating = 9.0                          ← 加权平均:
 |------|------|------|
 | `/api/movies` | GET | 电影列表 (支持 genre/includeGenres 参数) |
 | `/api/movies/hero-wall` | GET | 首页海报墙影片池: 按 hero_mosaic_config 做媒体库加权随机采样 + 年份/分辨率/风格筛选; 参数 style/yearFrom/yearTo/minWidth/weights/limit 可覆盖已存配置 (偏好页实时预览用) |
-| `/api/people/hero-wall` | GET | 首页演员墙人物池: 按 people_mosaic_config 抽样, **必须有 photo** + ≥1 部影片; 类型/仅收藏筛选; 每人展开为扁平条目 (photo 条目带自身 fanart 配对 + 最多 galleryCount 张图库条目, 图库条目 id 加 `:gN` 后缀防聚光灯寻址冲突, `personId` 供导航); 参数 includeFanart/includeGallery/galleryCount/types/favoritesOnly/limit 可覆盖已存配置 |
+| `/api/people/hero-wall` | GET | 首页演员墙人物池: 按 people_mosaic_config 抽样, **必须有 photo** + ≥1 部影片; 评级 tier/仅收藏筛选 (tier 分档同 `/api/people`, `unrated` 匹配无评级); 每人展开为扁平条目 (photo 条目带自身 fanart 配对 + 最多 galleryCount 张图库条目 ≤100, 图库条目 id 加 `:gN` 后缀防聚光灯寻址冲突, `personId` 供导航); 参数 includeFanart/includeGallery/galleryCount/tiers/favoritesOnly/limit 可覆盖已存配置 |
 | `/api/movies/genres` | GET | 按媒体库去重的类型列表 (参数: libraryId) |
 | `/api/movies/[id]` | GET/DELETE | 电影详情 / 删除电影 (含 cast/directors/userData) |
 | `/api/movies/[id]/stream` | GET | 视频流 (HTTP 206 Range Requests) |
@@ -922,7 +922,7 @@ Player (page.tsx)
 | `/people/[id]` | 演员详情 | fanart 渐变 + 大卡片 + 参演作品网格 + 照片墙(Justified 行布局+Lightbox+上传/删除) |
 | `/search` | 搜索 | 搜索框 + 电影结果 + 演员结果 + 书签剪辑 (按宽高比分横屏/竖屏行) |
 | `/profile` | 个人资料 | 头像/用户名/密码/账户类型 |
-| `/preferences/hero-mosaic` | 首页海报墙 | 分「电影海报墙」/「演员海报墙」两个 section。电影区: 滚动方向(纵向列/横向行)/列数(8–24, 横向映射为 4–12 行)/风格(仅海报/仅剧照/海报+剧照)/角度(5 档 transform 预设)/媒体库占比(默认按库大小比例, 可自定义加权, 0=排除)/年份范围/最低分辨率。演员区: 布局(方向/列数/角度)/图片来源(fanart 开关、图库开关+每人张数 0–10)/筛选(人物类型多选, 空选=全部; 仅收藏)。各自实时预览(真实 HeroMosaic 组件, 数据项变化才重新抽样, 方向/列数/角度纯重渲染); 单 Save 一次 PUT 保存两配置; `/preferences` 默认落此页 |
+| `/preferences/hero-mosaic` | 首页海报墙 | 分「电影海报墙」/「演员海报墙」两个 section。电影区: 滚动方向(纵向列/横向行)/列数(8–24, 横向映射为 4–12 行)/风格(仅海报/仅剧照/海报+剧照)/角度(5 档 transform 预设)/媒体库占比(默认按库大小比例, 可自定义加权, 0=排除)/年份范围/最低分辨率。演员区: 布局(方向/列数/角度)/图片来源(fanart 开关、图库开关+每人张数 0–100)/筛选(评级 tier 多选 chip 带各 tier 颜色, 空选=全部无筛选; 仅收藏)。各自实时预览(真实 HeroMosaic 组件, 数据项变化才重新抽样, 方向/列数/角度纯重渲染); 单 Save 一次 PUT 保存两配置; `/preferences` 默认落此页 |
 | `/preferences/card-badges` | 卡片标记 | 电影卡片(分辨率/评分)和演员卡片(段位)徽章开关, 预览卡片, 可展开规则说明 |
 | `/preferences/ratings-bookmarks` | 评分与书签 | 多维度评分维度管理(重命名/排序/权重/删除确认), 书签图标管理(内置9个+自定义上传), 快速书签模板 |
 | `/preferences/playback` | 播放设置 | 外部播放器选择 (IINA/PotPlayer/Web Player), 本地/串流模式 |

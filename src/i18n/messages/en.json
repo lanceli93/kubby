@@ -520,8 +520,9 @@
     "includeGallery": "Include gallery",
     "includeGalleryDesc": "Mix in images from each person's gallery",
     "galleryCount": "Gallery images per person",
-    "personTypes": "Person types",
-    "personTypesDesc": "Which people appear on the wall — none selected means all",
+    "ratingTiers": "Rating tiers",
+    "ratingTiersDesc": "Only show people in these rating tiers — none selected means all",
+    "unrated": "Unrated",
     "favoritesOnly": "Favorites only",
     "peopleCount": "{count} people"
   },
