@@ -238,7 +238,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "70vw",
             height: "70vw",
             filter: "blur(80px)",
-            opacity: 0.16,
+            opacity: 0.3,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
@@ -251,7 +251,23 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "50vw",
             height: "50vw",
             filter: "blur(80px)",
-            opacity: 0.13,
+            opacity: 0.26,
+            background: "rgb(var(--ambient) / 1)",
+          }}
+        />
+        {/* Bottom-center wash — sits directly under the hero wall so the color a
+            spotlit poster casts spills down into the page background right below
+            it (the effect the user wanted to make more obvious). Wide + soft. */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            top: "38%",
+            left: "50%",
+            width: "90vw",
+            height: "60vw",
+            transform: "translateX(-50%)",
+            filter: "blur(90px)",
+            opacity: 0.22,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
@@ -264,7 +280,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "45vw",
             height: "45vw",
             filter: "blur(80px)",
-            opacity: 0.1,
+            opacity: 0.2,
             background: "rgb(var(--ambient) / 1)",
           }}
         />

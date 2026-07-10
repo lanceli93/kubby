@@ -15,11 +15,14 @@
 const INDIGO_HUE = 239; // deg
 const GRAYSCALE_S_THRESHOLD = 0.08;
 
-// Cinema-safe clamp ranges (HSL, 0..1).
-const SAT_MIN = 0.25;
-const SAT_MAX = 0.55;
-const LIGHT_MIN = 0.16;
-const LIGHT_MAX = 0.3;
+// Cinema-safe clamp ranges (HSL, 0..1). Lifted from the original dim wash
+// (S≤0.55 / L≤0.3) so the tint the spotlit poster casts onto the page actually
+// reads as colored light instead of a barely-there smudge — still clamped well
+// under fully-saturated/bright so it stays a projector glow, not a color cast.
+const SAT_MIN = 0.3;
+const SAT_MAX = 0.68;
+const LIGHT_MIN = 0.2;
+const LIGHT_MAX = 0.44;
 
 // data URL → resolved RGB tuple (or null). Also holds in-flight promises so
 // concurrent hovers over the same card share one decode.
@@ -112,7 +115,7 @@ function decode(blurDataURL: string): Promise<[number, number, number] | null> {
         // Grayscale source → borrow the indigo brand hue so the glow still has
         // a cinematic tint instead of a muddy gray.
         if (s < GRAYSCALE_S_THRESHOLD) {
-          resolve(hslToRgb(INDIGO_HUE, 0.35, 0.2));
+          resolve(hslToRgb(INDIGO_HUE, 0.4, 0.3));
           return;
         }
         const clampedS = clamp(s, SAT_MIN, SAT_MAX);
