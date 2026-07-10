@@ -1,5 +1,21 @@
 # Completed Features
 
+## 2026-07-10: 打包软件两处安全性/易用性改动 — 卸载默认不清数据 + Windows 托盘图标双击打开
+
+用户诉求(两条):
+1. **卸载时默认清空本地 db/metadata 太危险**——曾因点太快把整个本地数据库清空了, 非常不友好。默认应为**不清空**; 若用户主动选清空, 要**再弹一次 warning** 确认。
+2. **Windows 托盘图标应支持双击直接打开 Kubby 网页主页**; 目前只能右键点 "Open Kubby"。
+
+- **改动一(卸载器)** `installer/windows/kubby.nsi`:
+  - **根因**: 卸载时的删数据 `MessageBox MB_YESNO` 中 **"Yes"(删除)是默认聚焦按钮**, 快速回车/点击就会误删数据库。
+  - **方案**: 两处删数据询问(默认目录 / 自定义目录)都加 `MB_DEFBUTTON2` 让**默认按钮变成 "No"(保留)**; 用户若选 Yes, 再弹一个 `MB_ICONEXCLAMATION|MB_DEFBUTTON2` 的二次 warning("PERMANENTLY delete … CANNOT be undone. Are you absolutely sure?"), **仍默认 No**。提示文案改为强调"数据默认保留"。两层确认 + 两次默认 No, 单次误触绝不会删库。
+
+- **改动二(托盘双击)** `launcher/tray.go` + `launcher/go.mod`/`go.sum`:
+  - **根因**: 原托盘库 `getlantern/systray v1.2.2` **完全没有托盘图标点击回调**(Windows 上左/右键都硬编码为弹菜单), 无从挂双击。
+  - **方案**: 换成其活跃维护的继任者 `fyne.io/systray v1.12.2`(API 兼容, 见 `docs/packaging-guide.md` 历史注), 用其 `SetOnTapped`(左键回调)在 **Windows** 上实现双击(400ms 内两次左键)直接 `openBrowser` 打开主页; 单击不做事, 右键菜单(Open Kubby / Quit)不变。macOS/Linux **不挂** tap 回调, 保持单击弹菜单的原生约定(挂了会抑制默认弹菜单)。
+  - **依赖**: `go.mod` 换 require, `go.sum` 按 sum.golang.org 权威哈希手写(fyne.io/systray + godbus/dbus/v5 v5.1.0 + golang.org/x/sys v0.15.0 三模块图)。
+  - **验证限制**: 本机 Go 1.20.6 无法解析仓库 `go 1.25.5` 且 fyne 模块不在本地缓存, 故**无法本地 `go build`**; 已用 `gofmt -e` 确认 `tray.go` 无语法错误、无 `getlantern` 残留引用; 真实编译由 CI(正确 Go 版本)完成。托盘双击行为需打包后在 Windows 上人工确认。
+
 ## 2026-07-10: 演员马赛克墙按真实宽高比渲染,不再把 fanart/图库图裁成 2:3
 
 用户诉求: 演员墙(首页「演员」tab)里所有图都被按 poster 的 2:3 裁剪了, 但 fanart / 图库图其实是各种比例(16:9、3:2 等), 需要尽量避免裁剪。

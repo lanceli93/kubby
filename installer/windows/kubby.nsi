@@ -284,25 +284,41 @@ Section "Uninstall"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Kubby"
   DeleteRegKey HKLM "Software\Kubby"
 
-  ; Ask user if they want to delete user data
-  ; Branch based on whether a custom data directory was used
+  ; Ask user if they want to delete user data.
+  ; SAFETY: data is KEPT by default. The prompt's default button is "No"
+  ; (MB_DEFBUTTON2) so a fast/accidental click or Enter can never wipe the
+  ; database, and deleting requires a second explicit "are you sure" warning.
+  ; Branch based on whether a custom data directory was used.
   ${If} $1 == ""
   ${OrIf} $1 == "$LOCALAPPDATA\Kubby"
     ; Default location — single directory
-    MessageBox MB_YESNO|MB_ICONQUESTION \
-      "Do you want to delete all Kubby user data (database, settings, metadata)?$\n$\nLocation: $LOCALAPPDATA\Kubby$\n$\nClick 'No' to keep your data for future installations." \
-      IDYES deleteDefault IDNO skipDelete
+    MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 \
+      "Do you want to delete all Kubby user data (database, settings, metadata)?$\n$\nLocation: $LOCALAPPDATA\Kubby$\n$\nYour data is KEPT by default — click 'No' to preserve it for future installations. Click 'Yes' only if you want to permanently erase it." \
+      IDYES confirmDeleteDefault IDNO skipDelete
+    Goto skipDelete
+    confirmDeleteDefault:
+      MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 \
+        "WARNING: This will PERMANENTLY delete your Kubby database and all metadata:$\n$\n$LOCALAPPDATA\Kubby$\n$\nThis action CANNOT be undone. Are you absolutely sure?" \
+        IDYES deleteDefault IDNO skipDelete
+      Goto skipDelete
     deleteDefault:
       RMDir /r "$LOCALAPPDATA\Kubby"
       Goto skipDelete
   ${Else}
     ; Custom location — two directories
-    MessageBox MB_YESNO|MB_ICONQUESTION \
-      "Do you want to delete all Kubby user data?$\n$\nConfig: $LOCALAPPDATA\Kubby$\nData: $1$\n$\nClick 'No' to keep your data for future installations." \
-      IDYES deleteCustom IDNO skipDelete
+    MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 \
+      "Do you want to delete all Kubby user data?$\n$\nConfig: $LOCALAPPDATA\Kubby$\nData: $1$\n$\nYour data is KEPT by default — click 'No' to preserve it for future installations. Click 'Yes' only if you want to permanently erase it." \
+      IDYES confirmDeleteCustom IDNO skipDelete
+    Goto skipDelete
+    confirmDeleteCustom:
+      MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 \
+        "WARNING: This will PERMANENTLY delete your Kubby database and all metadata:$\n$\nConfig: $LOCALAPPDATA\Kubby$\nData: $1$\n$\nThis action CANNOT be undone. Are you absolutely sure?" \
+        IDYES deleteCustom IDNO skipDelete
+      Goto skipDelete
     deleteCustom:
       RMDir /r "$LOCALAPPDATA\Kubby"
       RMDir /r "$1"
+      Goto skipDelete
   ${EndIf}
 
   skipDelete:

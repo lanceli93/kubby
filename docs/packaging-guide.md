@@ -182,7 +182,9 @@ go-winres make --arch amd64
 
 ### 7. Windows 系统托盘图标
 
-**踩坑：`getlantern/systray` 在 Windows 上只接受 ICO 格式，传 PNG 会导致托盘图标为空白。**
+**踩坑：`fyne.io/systray` 在 Windows 上只接受 ICO 格式，传 PNG 会导致托盘图标为空白。**
+
+> 历史注:托盘库自 v0.6.2 起从 `getlantern/systray`（已停更、无托盘图标点击回调）换成其活跃维护的继任者 `fyne.io/systray v1.12.2`，API 基本兼容（`Run`/`AddMenuItem`/`SetIcon`/`SetTitle`/`SetTooltip`/`Quit`/`MenuItem.ClickedCh` 签名一致），新增 `SetOnTapped`（左键点击回调）用于实现 Windows 托盘图标**双击直接打开网页主页**（见 `launcher/tray.go`，仅 Windows 启用，靠 400ms 点击间隔判定双击；macOS/Linux 保持单击弹菜单的原生约定）。
 
 解决方案：为 Windows 和 macOS 分别嵌入不同格式的图标：
 
