@@ -3,11 +3,17 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Search, ArrowLeft, House, Menu, User } from "lucide-react";
+import { Search, ArrowLeft, House, Menu, User, ChevronDown, Check, Clapperboard, Images } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { NavSidebar } from "@/components/layout/nav-sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
 
 function KubbyLogo({ className }: { className?: string }) {
@@ -151,37 +157,51 @@ export function AppHeader() {
           </>
         ) : (
           <>
-            <Link href="/" className="flex items-center gap-2 text-[22px] font-bold text-foreground">
-              <KubbyLogo className="h-7 w-7" />
-              Kubby
-            </Link>
-            {hasPhotoLibrary && (
-              <div className="flex items-center gap-1 rounded-full bg-white/[0.04] p-1">
-                <Link
-                  href="/"
-                  className={`rounded-full px-3 py-1 text-sm font-medium transition-fluid ${
-                    !isPhotoDomain
-                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
-                      : isTransparent
-                        ? "text-white/70 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
-                        : "text-muted-foreground hover:text-foreground"
+            {hasPhotoLibrary ? (
+              // Domain switcher lives on the brand as a low-frequency dropdown,
+              // so the header keeps a single row of primary navigation instead
+              // of two competing pill groups (see the home Tabs island).
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={`flex items-center gap-1.5 rounded-lg px-1 text-[22px] font-bold outline-none transition-colors ${
+                    isTransparent
+                      ? "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                      : "text-foreground"
                   }`}
                 >
-                  {tNav("cinema")}
-                </Link>
-                <Link
-                  href="/photos"
-                  className={`rounded-full px-3 py-1 text-sm font-medium transition-fluid ${
-                    isPhotoDomain
-                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
-                      : isTransparent
-                        ? "text-white/70 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
-                        : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  <KubbyLogo className="h-7 w-7" />
+                  Kubby
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${
+                      isTransparent ? "text-white/70" : "text-muted-foreground"
+                    }`}
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-44 border-white/10 bg-black/70 backdrop-blur-xl"
                 >
-                  {tNav("photos")}
-                </Link>
-              </div>
+                  <DropdownMenuItem asChild>
+                    <Link href="/" className="cursor-pointer">
+                      <Clapperboard className="h-4 w-4" />
+                      <span className="flex-1">{tNav("cinema")}</span>
+                      {!isPhotoDomain && <Check className="h-4 w-4 text-primary" />}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/photos" className="cursor-pointer">
+                      <Images className="h-4 w-4" />
+                      <span className="flex-1">{tNav("photos")}</span>
+                      {isPhotoDomain && <Check className="h-4 w-4 text-primary" />}
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/" className="flex items-center gap-2 text-[22px] font-bold text-foreground">
+                <KubbyLogo className="h-7 w-7" />
+                Kubby
+              </Link>
             )}
           </>
         )}
