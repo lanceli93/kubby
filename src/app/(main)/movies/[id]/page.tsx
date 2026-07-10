@@ -914,6 +914,7 @@ export default function MovieDetailPage() {
                 personalRating={m.personalRating}
                 videoWidth={m.videoWidth}
                 videoHeight={m.videoHeight}
+                dimTransition
               />
             ))}
           </ScrollRow>

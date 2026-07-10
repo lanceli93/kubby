@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Star, Heart, CheckCircle, MoreHorizontal, Play, Pencil, ImageIcon, Info, Trash2 } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
-import { startPosterViewTransition } from "@/lib/view-transition";
+import { startPosterViewTransition, startDimNavigation } from "@/lib/view-transition";
 import { useTranslations } from "next-intl";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
@@ -71,6 +71,11 @@ interface MovieCardProps {
   /** LCP hint — pass for the first ~10 above-the-fold cards in a grid so the
    *  poster loads eagerly with fetchpriority=high instead of lazy. */
   priority?: boolean;
+  /** Use the dip-through-dark navigation instead of the poster morph. Set on
+   *  the detail page's "You May Also Like" row: a full darken would hide a
+   *  flying poster, so detail→detail dips to black and rises into the new page
+   *  instead. See `startDimNavigation` in lib/view-transition.ts. */
+  dimTransition?: boolean;
 }
 
 export function MovieCard({
@@ -93,6 +98,7 @@ export function MovieCard({
   onDelete,
   responsive,
   priority,
+  dimTransition,
 }: MovieCardProps) {
   const router = useRouter();
   const posterRef = useRef<HTMLDivElement>(null);
@@ -121,7 +127,11 @@ export function MovieCard({
         // (new tab, etc.) fall through to Link's default behaviour.
         if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
-        startPosterViewTransition(`/movies/${id}`, posterRef.current, (href) => router.push(href));
+        if (dimTransition) {
+          startDimNavigation(`/movies/${id}`, posterRef.current, (href) => router.push(href));
+        } else {
+          startPosterViewTransition(`/movies/${id}`, posterRef.current, (href) => router.push(href));
+        }
       }}
     >
       {/* Poster shell — NOT overflow-hidden so tilt + ambient glow can bleed.

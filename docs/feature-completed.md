@@ -1,5 +1,19 @@
 # Completed Features
 
+## 2026-07-10: 详情页「猜你喜欢」跳转的 dim-and-fly 过渡(点击即变暗、海报明亮飞入)
+
+用户诉求: 在电影详情页点击「猜你喜欢」(youMayAlsoLike / 「猜你喜欢」)推荐卡时, 希望**除海报外其余部分立即变暗**, 等新的电影详情页出现后再变亮, 海报保持移动动画。
+
+- **两次错误尝试 → 定位根因**:
+  1. 先在 `globals.css` 给 `::view-transition-*(root)` 加变暗动画。实测「先卡顿一下再变黑」——因为 View Transition 的快照动画**必须等 update 回调 resolve** 才开始播, 而我们故意 hold 到新海报挂载(`waitForDetailPoster`), 所以点击后先冻结再突变。(这与 2026-07-06 回退 root 交叉淡化的教训同源: root 快照动画会拖累/冻结整页。)
+  2. 改用纯黑幕 fixed 淡入。变暗即时了, 但**黑幕把要飞的海报也盖住了**, 海报动画消失。
+  两者互斥 → 结论: 必须手写 FLIP + 黑幕, **完全不用 `startViewTransition`**。
+- **最终方案** `src/lib/view-transition.ts` 新增 `startDimNavigation(href, poster, navigate)`:
+  ① 立即淡入 `position:fixed` 黑幕(`--background` 色, z-index 9999, 纯 opacity 走合成器 → 点击即变暗、主线程忙也流畅);② `cloneNode(true)` 克隆被点海报, fixed 定位卡片原位、z-index 10000 压在黑幕**之上**保持明亮;③ navigate;④ `waitForDetailPoster` 加 `ignoreSrc` 参数——详情页本身已有一个 `data-vt-poster`, 故**比较 `img.src` 与离开时旧海报, 不同才算新页到位**, observer 兼监听 `childList` 与 `src` 属性(卸载重挂/复用节点两种情形);⑤ FLIP: 克隆坐到目标框 + 补偿 transform 使其仍渲染在卡片框(免跳变), 释放 transform 飞向目标, 黑幕同步淡出变亮, 真海报先 `visibility:hidden` 防双影, 落地后恢复并移除克隆+黑幕。
+- **接线**: `MovieCard` 新增 `dimTransition` prop, 仅详情页推荐行 (`movies/[id]/page.tsx` 的 youMayAlsoLike `MovieCard`) 传入; 其余位置(首页/库/演员页)仍走原 `startPosterViewTransition` 海报飞入。
+- **降级**: `prefers-reduced-motion` 直接普通导航; 移动端/无海报目标退化为纯黑幕 dip(只变暗再变亮, 不飞海报)。时长: 变暗 150ms、飞行 460ms。
+- 验证: `npx tsc --noEmit` 通过 + `next build` 通过; chrome-devtools 在 **:3000 生产构建**(读仓库 `data/` 测试库)逐帧探针实测: 点击后 veil opacity 0→1(~277ms 全暗)、克隆全程明亮、新海报 src 到位后才起飞、黑幕同步淡出、~1040ms 克隆移除真海报恢复 visible, 无双影/无残留; 冻结峰值暗态截图确认「背景全暗 + 被点海报明亮悬浮」。
+
 ## 2026-07-07: 首页演员海报墙 Tab — People 马赛克墙 + 偏好页分区配置
 
 首页顶部新增第三个 tab「演员/People」: 整页动态马赛克墙, 图片来源为演员 poster(photo)+ 自己的 fanart + 图库(gallery)图片; 与电影墙相同的 8s 随机聚光灯 + 左下字幕(NOW SHOWING · 类型 / 姓名 / 出生年 · 作品数 · ★ 个人评分 · ♥ 收藏), 整个 hero 点击进入 `/people/[id]`。该 tab 不再显示媒体库/继续观看等内容行, 墙覆盖整个页面。

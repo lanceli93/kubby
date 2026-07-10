@@ -1035,6 +1035,29 @@ MovieCard / PersonCard / ContinueWatchingCard / LibraryCard：
   `hidden md:block` 无目标）都直接普通导航。动画曲线/时长在 globals.css 的
   `::view-transition-*(movie-poster)` 规则中（420ms fluid 曲线）。
 
+#### 详情页「猜你喜欢」的 dim-and-fly 变体 (2026-07-10)
+
+详情页→详情页(点击「猜你喜欢」推荐卡)**不**走上面的 View Transition,改用
+`startDimNavigation`(同文件),`MovieCard` 的 `dimTransition` prop 开启,只在
+推荐行传入。观感:**点击瞬间除海报外全部变暗,新详情页出现后再变亮,海报全程明亮
+并飞入新大海报位**。
+
+- **为什么另起一套**: (1) View Transition 的动画要等 update 回调 resolve(我们
+  故意 hold 到新海报挂载)才开始播,导致「先卡顿一下再变暗」;(2) 一块盖住全屏
+  的黑幕会连要飞的海报一起遮住。两者不可兼得,故手写 FLIP + 黑幕,**完全不用
+  `startViewTransition`**。
+- **机制**: ① 立即淡入一块 `position:fixed` 黑幕(`--background` 色,z-index 9999,
+  纯 `opacity` 过渡走合成器线程 → 主线程忙于渲染目标页时仍流畅、点击即变暗);
+  ② 克隆被点海报 `cloneNode(true)`,`fixed` 定位到卡片原位、z-index 10000 压在
+  黑幕**之上**保持明亮;③ `navigate`;④ `waitForDetailPoster` 等到新大海报就位
+  (**比较 `img.src` 与离开时的旧海报,不同才算到位**——详情页本身已有一个
+  `data-vt-poster`,不能只等「出现海报」;observer 同时监听 childList 与 `src`
+  属性,兼顾卸载重挂/复用节点两种情形);⑤ FLIP:把克隆坐到目标框、加补偿
+  transform 使其仍**渲染在卡片框**(避免跳变),再释放 transform 飞向目标,黑幕
+  同步淡出变亮,真海报先 `visibility:hidden` 防双影,克隆落地后恢复并移除克隆+黑幕。
+- **降级**: `prefers-reduced-motion` 直接普通导航;移动端/无海报目标时退化为
+  「只变暗再变亮」的纯黑幕 dip(不飞海报)。时长: 变暗 150ms、飞行 460ms。
+
 ### 详情页深度舞台 (Phase 2)
 
 - **视差**: `hooks/use-hero-parallax.ts` — 滚动时 fanart 以 0.35× scrollTop 下沉,
