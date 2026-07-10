@@ -2,20 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Film, Search, Settings } from "lucide-react";
+import { House, Film, Images, Search, Settings } from "lucide-react";
+import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
 
-const tabs = [
+const baseTabs = [
   { label: "Home", href: "/", icon: House },
   { label: "Movies", href: "/movies", icon: Film },
   { label: "Search", href: "/search", icon: Search },
   { label: "Preferences", href: "/preferences", icon: Settings },
 ];
 
+const photosTab = { label: "Photos", href: "/photos", icon: Images };
+
 export function BottomTabs() {
   const pathname = usePathname();
+  const hasPhotoLibrary = useHasPhotoLibrary();
 
   // Hide on player pages
   if (/^\/movies\/[^/]+\/play$/.test(pathname)) return null;
+
+  const tabs = hasPhotoLibrary
+    ? [...baseTabs.slice(0, 2), photosTab, ...baseTabs.slice(2)]
+    : baseTabs;
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 flex md:hidden h-14 items-center justify-around border-t border-white/[0.06] bg-[var(--header)] backdrop-blur-xl">

@@ -33,7 +33,8 @@ export const authConfig: NextAuthConfig = {
       }
       return session;
     },
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }) {
+      const { nextUrl } = request;
       const isLoggedIn = !!auth?.user;
       const pathname = nextUrl.pathname;
 
@@ -50,6 +51,20 @@ export const authConfig: NextAuthConfig = {
         if (!isAdmin) {
           return Response.redirect(new URL("/", nextUrl));
         }
+      }
+
+      // Remember last visited domain (cinema vs photos) — if the user was
+      // last in the photos domain, jump straight there from the root so
+      // reopening the site has zero flash of the cinema homepage. Only for
+      // direct entry (address bar / bookmark → Sec-Fetch-Site: none): in-app
+      // links to "/" (logo, Home, cinema pill) are same-origin requests and
+      // must land on the cinema home, not bounce back to /photos.
+      if (
+        pathname === "/" &&
+        request.cookies.get("kubby-domain")?.value === "photos" &&
+        request.headers.get("sec-fetch-site") === "none"
+      ) {
+        return Response.redirect(new URL("/photos", nextUrl));
       }
 
       return true;

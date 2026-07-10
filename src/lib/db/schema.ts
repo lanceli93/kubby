@@ -256,3 +256,34 @@ export const mediaStreams = sqliteTable("media_streams", {
   index("idx_ms_movie").on(table.movieId),
   index("idx_ms_movie_type").on(table.movieId, table.streamType),
 ]);
+
+// ─── Photo Items (photos domain) ───────────────────────────────
+export const photoItems = sqliteTable("photo_items", {
+  id: text("id").primaryKey(),
+  libraryId: text("library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
+  filePath: text("file_path").notNull().unique(), // absolute path
+  fileName: text("file_name").notNull(),
+  isVideo: integer("is_video", { mode: "boolean" }).notNull().default(false),
+  takenAt: integer("taken_at"), // epoch ms; EXIF capture time, parsed at scan time, the timeline's sort key
+  width: integer("width"),
+  height: integer("height"),
+  durationSeconds: real("duration_seconds"), // video only
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  cameraMake: text("camera_make"),
+  cameraModel: text("camera_model"),
+  gpsLat: real("gps_lat"),
+  gpsLng: real("gps_lng"),
+  orientation: integer("orientation"),
+  thumbnailPath: text("thumbnail_path"), // relative to data dir
+  previewPath: text("preview_path"), // only for browser-unrenderable formats like HEIC
+  exifJson: text("exif_json"), // long-tail EXIF JSON fallback
+  folderPath: text("folder_path").notNull(), // relative to library root, for v2 albums
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+  dateModified: integer("date_modified"), // file mtime in ms, for incremental scan diffing
+}, (table) => [
+  index("idx_pi_library").on(table.libraryId),
+  index("idx_pi_taken").on(table.libraryId, table.takenAt),
+  index("idx_pi_folder").on(table.folderPath),
+  index("idx_pi_video").on(table.isVideo),
+]);

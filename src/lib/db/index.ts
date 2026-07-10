@@ -299,6 +299,35 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `user_preferences` ADD `hero_mosaic_config` text",
     // 0034: home People hero poster wall settings
     "ALTER TABLE `user_preferences` ADD `people_mosaic_config` text",
+    // 0035: photo_items table (photos domain)
+    `CREATE TABLE IF NOT EXISTS \`photo_items\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`library_id\` text NOT NULL REFERENCES \`media_libraries\`(\`id\`) ON DELETE CASCADE,
+    \`file_path\` text NOT NULL UNIQUE,
+    \`file_name\` text NOT NULL,
+    \`is_video\` integer NOT NULL DEFAULT 0,
+    \`taken_at\` integer,
+    \`width\` integer,
+    \`height\` integer,
+    \`duration_seconds\` real,
+    \`file_size\` integer,
+    \`mime_type\` text,
+    \`camera_make\` text,
+    \`camera_model\` text,
+    \`gps_lat\` real,
+    \`gps_lng\` real,
+    \`orientation\` integer,
+    \`thumbnail_path\` text,
+    \`preview_path\` text,
+    \`exif_json\` text,
+    \`folder_path\` text NOT NULL,
+    \`date_added\` text NOT NULL DEFAULT (datetime('now')),
+    \`date_modified\` integer
+  )`,
+    "CREATE INDEX IF NOT EXISTS `idx_pi_library` ON `photo_items` (`library_id`)",
+    "CREATE INDEX IF NOT EXISTS `idx_pi_taken` ON `photo_items` (`library_id`, `taken_at`)",
+    "CREATE INDEX IF NOT EXISTS `idx_pi_folder` ON `photo_items` (`folder_path`)",
+    "CREATE INDEX IF NOT EXISTS `idx_pi_video` ON `photo_items` (`is_video`)",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

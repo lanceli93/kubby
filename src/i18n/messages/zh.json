@@ -88,7 +88,9 @@
     "system": "系统",
     "user": "用户",
     "preferences": "偏好设置",
-    "profile": "个人资料"
+    "profile": "个人资料",
+    "photos": "照片",
+    "cinema": "影院"
   },
   "home": {
     "continueWatching": "继续观看",
@@ -660,5 +662,9 @@
     "noSubdirectories": "没有子目录",
     "cancel": "取消",
     "selectThisFolder": "选择此文件夹"
+  },
+  "photos": {
+    "title": "照片",
+    "comingSoon": "照片时间线即将上线。"
   }
 }

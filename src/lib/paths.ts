@@ -35,6 +35,10 @@ export function getBookmarkIconsDir(): string {
   return path.join(getMetadataDir(), "bookmark-icons");
 }
 
+export function getPhotoThumbsDir(): string {
+  return path.join(getMetadataDir(), "photo-thumbs");
+}
+
 export function getFfmpegPath(): string {
   return process.env.FFMPEG_PATH || "ffmpeg";
 }

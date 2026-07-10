@@ -88,7 +88,9 @@
     "system": "System",
     "user": "User",
     "preferences": "Preferences",
-    "profile": "Profile"
+    "profile": "Profile",
+    "photos": "Photos",
+    "cinema": "Cinema"
   },
   "home": {
     "continueWatching": "Continue Watching",
@@ -660,5 +662,9 @@
     "noSubdirectories": "No subdirectories",
     "cancel": "Cancel",
     "selectThisFolder": "Select This Folder"
+  },
+  "photos": {
+    "title": "Photos",
+    "comingSoon": "The photos timeline is coming soon."
   }
 }

@@ -4,6 +4,7 @@ import { ScanProvider } from "@/providers/scan-provider";
 import { AppHeader } from "@/components/layout/app-header";
 import { GlobalScanBar } from "@/components/layout/global-scan-bar";
 import { BottomTabs } from "@/components/layout/bottom-tabs";
+import { DomainCookieSync } from "@/components/layout/domain-cookie-sync";
 
 export default function MainLayout({
   children,
@@ -15,6 +16,7 @@ export default function MainLayout({
       <QueryProvider>
         <ScanProvider>
           <div className="relative flex h-full flex-col">
+            <DomainCookieSync />
             <AppHeader />
             <main className="flex-1 overflow-hidden pb-14 md:pb-0">{children}</main>
             <GlobalScanBar />

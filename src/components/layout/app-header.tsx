@@ -6,7 +6,9 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Search, ArrowLeft, House, Menu, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { NavSidebar } from "@/components/layout/nav-sidebar";
+import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
 
 function KubbyLogo({ className }: { className?: string }) {
   return (
@@ -41,6 +43,9 @@ export function AppHeader() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const tNav = useTranslations("nav");
+  const hasPhotoLibrary = useHasPhotoLibrary();
+  const isPhotoDomain = pathname.startsWith("/photos");
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
   const isPersonFilmography = pathname === "/movies" && searchParams.get("personId");
@@ -145,10 +150,40 @@ export function AppHeader() {
             </Link>
           </>
         ) : (
-          <Link href="/" className="flex items-center gap-2 text-[22px] font-bold text-foreground">
-            <KubbyLogo className="h-7 w-7" />
-            Kubby
-          </Link>
+          <>
+            <Link href="/" className="flex items-center gap-2 text-[22px] font-bold text-foreground">
+              <KubbyLogo className="h-7 w-7" />
+              Kubby
+            </Link>
+            {hasPhotoLibrary && (
+              <div className="flex items-center gap-1 rounded-full bg-white/[0.04] p-1">
+                <Link
+                  href="/"
+                  className={`rounded-full px-3 py-1 text-sm font-medium transition-fluid ${
+                    !isPhotoDomain
+                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+                      : isTransparent
+                        ? "text-white/70 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                        : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tNav("cinema")}
+                </Link>
+                <Link
+                  href="/photos"
+                  className={`rounded-full px-3 py-1 text-sm font-medium transition-fluid ${
+                    isPhotoDomain
+                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+                      : isTransparent
+                        ? "text-white/70 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                        : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tNav("photos")}
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </div>
       <div className="pointer-events-auto flex items-center gap-4">
