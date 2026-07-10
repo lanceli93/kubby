@@ -332,6 +332,23 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `photo_items` ADD `video_codec` text",
     "ALTER TABLE `photo_items` ADD `audio_codec` text",
     "ALTER TABLE `photo_items` ADD `container` text",
+    // 0037: photo albums (manual, user-created categories within a photo library)
+    `CREATE TABLE IF NOT EXISTS \`photo_albums\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`library_id\` text NOT NULL REFERENCES \`media_libraries\`(\`id\`) ON DELETE CASCADE,
+    \`name\` text NOT NULL,
+    \`cover_item_id\` text,
+    \`sort_order\` integer NOT NULL DEFAULT 0,
+    \`created_at\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+    "CREATE INDEX IF NOT EXISTS `idx_pa_library` ON `photo_albums` (`library_id`)",
+    `CREATE TABLE IF NOT EXISTS \`photo_album_items\` (
+    \`album_id\` text NOT NULL REFERENCES \`photo_albums\`(\`id\`) ON DELETE CASCADE,
+    \`item_id\` text NOT NULL REFERENCES \`photo_items\`(\`id\`) ON DELETE CASCADE,
+    \`added_at\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS `idx_pai_pk` ON `photo_album_items` (`album_id`, `item_id`)",
+    "CREATE INDEX IF NOT EXISTS `idx_pai_item` ON `photo_album_items` (`item_id`)",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

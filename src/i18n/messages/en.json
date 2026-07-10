@@ -677,6 +677,23 @@
     "infoCamera": "Camera",
     "infoDuration": "Duration",
     "infoGps": "Location",
-    "downloadOriginal": "Download Original"
+    "downloadOriginal": "Download Original",
+    "timelineTab": "Timeline",
+    "albumsTab": "Albums",
+    "allLibraries": "All Libraries",
+    "select": "Select",
+    "selectedCount": "{count} selected",
+    "addToAlbum": "Add to Album",
+    "addedToAlbum": "Added {count} to album",
+    "newAlbum": "New Album",
+    "albumNamePlaceholder": "Album name",
+    "create": "Create",
+    "chooseLibrary": "Choose a library",
+    "removeFromAlbum": "Remove from Album",
+    "renameAlbum": "Rename Album",
+    "deleteAlbum": "Delete Album",
+    "deleteAlbumConfirm": "This only removes the album. The photos themselves are kept.",
+    "albumOptions": "Album options",
+    "albumEmpty": "This album is empty — add photos from the timeline"
   }
 }

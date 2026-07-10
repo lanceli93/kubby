@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 
 // Inline video playback for a lightbox item. Calls the photo-domain
@@ -9,16 +9,27 @@ import Hls from "hls.js";
 // or when the id changes the parent remounts this via `key`, so cleanup runs
 // per item: pause the element, destroy the hls.js instance, and DELETE any HLS
 // session the server spun up (mirrors use-playback-session's cleanup).
+//
+// The <video> fills the stage from the first frame (a black box the size of the
+// viewport, like a real web player) with a spinner over it until the first
+// frame renders — instead of a tiny intrinsic-size box that pops to full size
+// when metadata arrives.
 export function LightboxVideo({ id }: { id: string }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     let cancelled = false;
+
+    // Clear the spinner once the first frame can be painted.
+    const onReady = () => setReady(true);
+    video.addEventListener("loadeddata", onReady);
+    video.addEventListener("playing", onReady);
 
     // iOS reports HEVC support via canPlayType but can't reliably direct-play
     // HEVC MP4 over HTTP range requests — force HLS (remux) on iOS. Mirrors the
@@ -82,6 +93,8 @@ export function LightboxVideo({ id }: { id: string }) {
 
     return () => {
       cancelled = true;
+      video.removeEventListener("loadeddata", onReady);
+      video.removeEventListener("playing", onReady);
       try {
         video.pause();
         video.removeAttribute("src");
@@ -104,12 +117,19 @@ export function LightboxVideo({ id }: { id: string }) {
   }, [id]);
 
   return (
-    <video
-      ref={videoRef}
-      controls
-      autoPlay
-      playsInline
-      className="max-h-full max-w-full"
-    />
+    <div className="flex h-full w-full items-center justify-center">
+      <video
+        ref={videoRef}
+        controls
+        autoPlay
+        playsInline
+        className="h-full max-h-full w-full max-w-full object-contain"
+      />
+      {!ready && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+        </div>
+      )}
+    </div>
   );
 }

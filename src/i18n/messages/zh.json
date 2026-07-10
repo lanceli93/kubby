@@ -677,6 +677,23 @@
     "infoCamera": "相机",
     "infoDuration": "时长",
     "infoGps": "位置",
-    "downloadOriginal": "下载原件"
+    "downloadOriginal": "下载原件",
+    "timelineTab": "时间线",
+    "albumsTab": "相册",
+    "allLibraries": "全部媒体库",
+    "select": "选择",
+    "selectedCount": "已选 {count} 项",
+    "addToAlbum": "加入相册",
+    "addedToAlbum": "已加入 {count} 项到相册",
+    "newAlbum": "新建相册",
+    "albumNamePlaceholder": "相册名称",
+    "create": "创建",
+    "chooseLibrary": "选择媒体库",
+    "removeFromAlbum": "移出相册",
+    "renameAlbum": "重命名相册",
+    "deleteAlbum": "删除相册",
+    "deleteAlbumConfirm": "仅删除相册本身,照片不会被删除。",
+    "albumOptions": "相册选项",
+    "albumEmpty": "相册为空——从时间线里添加照片"
   }
 }

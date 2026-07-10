@@ -8,11 +8,12 @@ import {
   useState,
   useCallback,
 } from "react";
-import { useRouter } from "next/navigation";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { X, ChevronLeft, ChevronRight, Info, FolderPlus } from "lucide-react";
 import { LightboxVideo } from "@/components/photos/lightbox-video";
 import { LightboxInfoPanel } from "@/components/photos/lightbox-info-panel";
+import { AddToAlbumDialog } from "@/components/photos/add-to-album-dialog";
 
 // Full-screen lightbox for a single photo/video (docs/photos-library-design.md
 // §7). The container is `fixed inset-0 z-50 bg-black` so it fully covers the
@@ -48,19 +49,36 @@ export default function PhotoViewPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Scope carried from the timeline / album view so prev/next walks the same
+  // set and shares its cache. `lib` = library filter, `album` = album detail.
+  const libParam = searchParams.get("lib");
+  const albumParam = searchParams.get("album");
 
   const [showInfo, setShowInfo] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
-  // Same infinite query as the timeline. React Query dedupes by queryKey, so
-  // opening the lightbox from the timeline reuses the loaded pages instantly;
-  // a deep link (fresh cache) fetches the first page here.
+  // The current item's library — needed to scope the album picker. Reuses the
+  // ["photo", id] detail cache the info panel also uses; only fetched once the
+  // user opens the album dialog.
+  const { data: detail } = useQuery<{ libraryId: string }>({
+    queryKey: ["photo", id],
+    queryFn: () => fetch(`/api/photos/${id}`).then((r) => r.json()),
+    enabled: addOpen,
+  });
+
+  // Same infinite query as the grid — the queryKey must match PhotoGrid's
+  // scoped key so opening the lightbox reuses the already-loaded pages; a deep
+  // link (fresh cache) fetches the first page here.
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery<PhotosPage>({
-      queryKey: ["photos"],
+      queryKey: ["photos", { libraryId: libParam, albumId: albumParam }],
       queryFn: ({ pageParam }) => {
         const p = new URLSearchParams();
         p.set("limit", String(PAGE_SIZE));
         if (pageParam) p.set("cursor", String(pageParam));
+        if (libParam) p.set("libraryId", libParam);
+        if (albumParam) p.set("albumId", albumParam);
         return fetch(`/api/photos?${p}`).then((r) => r.json());
       },
       initialPageParam: "",
@@ -94,11 +112,21 @@ export default function PhotoViewPage({
     }
   }, [index, items.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Preserve the scope params (?lib / ?album) across prev/next so the
+  // navigated-to item keeps the same cache scope.
+  const scopeQs = useMemo(() => {
+    const p = new URLSearchParams();
+    if (libParam) p.set("lib", libParam);
+    if (albumParam) p.set("album", albumParam);
+    const s = p.toString();
+    return s ? `?${s}` : "";
+  }, [libParam, albumParam]);
+
   const goTo = useCallback(
     (target: PhotoItem | null) => {
-      if (target) router.replace(`/photos/view/${target.id}`);
+      if (target) router.replace(`/photos/view/${target.id}${scopeQs}`);
     },
-    [router],
+    [router, scopeQs],
   );
   const close = useCallback(() => router.push("/photos"), [router]);
 
@@ -172,6 +200,14 @@ export default function PhotoViewPage({
         </span>
         <button
           type="button"
+          onClick={() => setAddOpen(true)}
+          aria-label="Add to album"
+          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white"
+        >
+          <FolderPlus className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
           onClick={() => setShowInfo((v) => !v)}
           aria-label="Info"
           className={`pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full drop-shadow transition-colors hover:bg-white/15 hover:text-white ${
@@ -207,14 +243,25 @@ export default function PhotoViewPage({
       {showInfo && (
         <LightboxInfoPanel id={id} onClose={() => setShowInfo(false)} />
       )}
+
+      {addOpen && detail?.libraryId && (
+        <AddToAlbumDialog
+          libraryId={detail.libraryId}
+          itemIds={[id]}
+          onClose={() => setAddOpen(false)}
+          onDone={() => setAddOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-// Center-anchored image with a thumbnail placeholder that fades out once the
-// full image loads (no white flash). Wheel zoom (0.5×–5×, center anchored),
-// double-click toggles 1×/2×, drag-pan when zoomed. State resets whenever the
-// component remounts (parent keys it by id).
+// Center-anchored image. The already-cached timeline thumbnail is shown crisp
+// (no blur) as an instant base so the stage is never empty; the full image
+// fades in on top of it once decoded — a soft crossfade rather than the old
+// rigid blur→sharp pop. Wheel zoom (0.5×–5×, center anchored), double-click
+// toggles 1×/2×, drag-pan when zoomed. State resets whenever the component
+// remounts (parent keys it by id).
 function ZoomableImage({ id }: { id: string }) {
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -288,15 +335,16 @@ function ZoomableImage({ id }: { id: string }) {
           transition: dragRef.current ? "none" : "transform 0.15s ease-out",
         }}
       >
-        {/* Blurred thumb placeholder underneath, revealed until the full image
-            loads. */}
+        {/* Crisp cached thumbnail as an instant base — kept mounted under the
+            full image so there's no empty stage and no visible blur. Fades away
+            once the full-res image has faded in. */}
         {!loaded && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`/api/photos/${id}/thumb`}
             alt=""
             aria-hidden
-            className="absolute max-h-full max-w-full scale-105 object-contain blur-lg"
+            className="absolute max-h-full max-w-full object-contain"
             draggable={false}
           />
         )}
@@ -312,7 +360,7 @@ function ZoomableImage({ id }: { id: string }) {
           alt=""
           onLoad={() => setLoaded(true)}
           draggable={false}
-          className={`max-h-full max-w-full object-contain transition-opacity duration-200 ${
+          className={`max-h-full max-w-full object-contain transition-opacity duration-300 ease-out ${
             loaded ? "opacity-100" : "opacity-0"
           }`}
         />

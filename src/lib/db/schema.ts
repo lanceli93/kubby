@@ -290,3 +290,27 @@ export const photoItems = sqliteTable("photo_items", {
   index("idx_pi_folder").on(table.folderPath),
   index("idx_pi_video").on(table.isVideo),
 ]);
+
+// Photo albums — manual, user-created categories WITHIN a photo library
+// (not auto-generated from scan folders). A photo can belong to many albums.
+export const photoAlbums = sqliteTable("photo_albums", {
+  id: text("id").primaryKey(),
+  libraryId: text("library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  coverItemId: text("cover_item_id"), // photo_items.id used as the album cover; null → newest member
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_pa_library").on(table.libraryId),
+]);
+
+// Album membership join. Composite unique (album_id, item_id) makes adding an
+// already-present photo a no-op (INSERT OR IGNORE).
+export const photoAlbumItems = sqliteTable("photo_album_items", {
+  albumId: text("album_id").notNull().references(() => photoAlbums.id, { onDelete: "cascade" }),
+  itemId: text("item_id").notNull().references(() => photoItems.id, { onDelete: "cascade" }),
+  addedAt: text("added_at").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  uniqueIndex("idx_pai_pk").on(table.albumId, table.itemId),
+  index("idx_pai_item").on(table.itemId),
+]);

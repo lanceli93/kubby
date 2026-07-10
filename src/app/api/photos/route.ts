@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { photoItems } from "@/lib/db/schema";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { photoItems, photoAlbumItems } from "@/lib/db/schema";
+import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
 
-// GET /api/photos?cursor=&limit=&libraryId=
+// GET /api/photos?cursor=&limit=&libraryId=&albumId=
 // Timeline pagination, ordered by takenAt DESC with id as a same-millisecond
 // tiebreak. Cursor format: "{takenAt}_{id}" (the last item of the previous page).
+// libraryId scopes to one photo library; albumId scopes to one album's members.
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const libraryId = searchParams.get("libraryId");
+    const albumId = searchParams.get("albumId");
     const cursorParam = searchParams.get("cursor");
     const limitParam = searchParams.get("limit");
     const limit = Math.max(1, Math.min(500, parseInt(limitParam || "100", 10) || 100));
@@ -17,6 +19,15 @@ export async function GET(request: NextRequest) {
     const conditions = [];
     if (libraryId) {
       conditions.push(eq(photoItems.libraryId, libraryId));
+    }
+    if (albumId) {
+      // Restrict to the album's members. A subquery keeps the same cursor
+      // pagination path (still ordered by taken_at on photo_items).
+      const memberIds = db
+        .select({ id: photoAlbumItems.itemId })
+        .from(photoAlbumItems)
+        .where(eq(photoAlbumItems.albumId, albumId));
+      conditions.push(inArray(photoItems.id, memberIds));
     }
 
     if (cursorParam) {
