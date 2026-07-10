@@ -12,6 +12,7 @@ import { fetchMovieCredits, fetchPersonDetails, downloadTmdbImage, getPersonPhot
 import { parseFolderPaths } from "@/lib/folder-paths";
 import { generateBlurDataURL, getFileMtime } from "@/lib/blur-utils";
 import { getPeopleMetadataDir, toRelativeDataPath } from "@/lib/paths";
+import { scanPhotoLibrary } from "./photo-scanner";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v", ".ts", ".rmvb", ".rm"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
@@ -224,6 +225,11 @@ export async function scanLibrary(
     .get();
 
   if (!library) throw new Error("Library not found");
+
+  // Dispatch by library type — photo libraries use a dedicated scanner.
+  if (library.type === "photo") {
+    return scanPhotoLibrary(library, onProgress);
+  }
 
   const folderPaths = parseFolderPaths(library.folderPath);
   if (folderPaths.length === 0) {

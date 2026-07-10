@@ -268,6 +268,9 @@ export const photoItems = sqliteTable("photo_items", {
   width: integer("width"),
   height: integer("height"),
   durationSeconds: real("duration_seconds"), // video only
+  videoCodec: text("video_codec"), // video only — playback decision inputs
+  audioCodec: text("audio_codec"), // video only
+  container: text("container"), // video only
   fileSize: integer("file_size"),
   mimeType: text("mime_type"),
   cameraMake: text("camera_make"),

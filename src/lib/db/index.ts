@@ -328,6 +328,10 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "CREATE INDEX IF NOT EXISTS `idx_pi_taken` ON `photo_items` (`library_id`, `taken_at`)",
     "CREATE INDEX IF NOT EXISTS `idx_pi_folder` ON `photo_items` (`folder_path`)",
     "CREATE INDEX IF NOT EXISTS `idx_pi_video` ON `photo_items` (`is_video`)",
+    // 0036: codec info for photo video items (playback decision inputs)
+    "ALTER TABLE `photo_items` ADD `video_codec` text",
+    "ALTER TABLE `photo_items` ADD `audio_codec` text",
+    "ALTER TABLE `photo_items` ADD `container` text",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }
