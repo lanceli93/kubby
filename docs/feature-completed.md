@@ -1,5 +1,21 @@
 # Completed Features
 
+## 2026-07-10 (2): 照片库 v1 — 域分离架构下的第二媒体域 (照片+手机视频)
+
+用户诉求: Kubby 全部围绕可刮削电影设计 (马赛克墙/演员墙/TMDB/NFO), 要加手机照片+视频功能且不破坏影院设计, 并为未来音乐库铺路。设计文档 `docs/photos-library-design.md` (决策: 照片+视频合并为一种库类型; v1 = 时间线+灯箱+视频内嵌播放), 任务清单 `docs/tasks-photos-v1.md` (T1–T8 全部完成)。
+
+- **架构**: 域分离 — 影院/照片各自独立表、扫描器、路由、首页; 共享库管理、图片服务、播放管线 (playback-decider + transcode-manager)、认证、i18n。影院侧代码零改动 (scanner 仅在入口按 `library.type` 分派一行)。
+- **T1 数据层**: `photo_items` 表 (24 列: takenAt epoch ms 非空排序键、isVideo flag、EXIF 列、thumbnailPath/previewPath、videoCodec/audioCodec/container 播放决策输入) + 4 索引; 迁移数组 0035/0036; `paths.ts` 加 `getPhotoThumbsDir()`。
+- **T2 照片扫描器** `src/lib/scanner/photo-scanner.ts`: 递归遍历 (跳过 @eaDir/#recycle/dotfile)、增量 (mtime+size)、exifr EXIF、并发池 4。**HEIC 关键坑**: 本机 Windows sharp/libvips 无 HEVC 插件无法解码 HEIC (`.metadata()` 可读尺寸但像素解码报错), 实测 ffmpeg 可转 → 缩略图 sharp 优先 + ffmpeg 兜底, HEIC 额外生成 2000px preview WebP。视频: probeVideo + ffprobe creation_time → takenAt + ffmpeg 中间帧缩略图。
+- **T3 API**: `/api/photos` cursor 分页 (`{takenAt}_{id}` 复合游标防同毫秒漏项)、`[id]`、`/thumb` (immutable 缓存)、`/file` (HEIC 自动给 preview; `?original=1` 下载; 视频支持 Range)、`/stream/decide` (`noHevc=1` 时 HEVC direct→remux; startSession 首参实测只是 session key 不查 movies 表)。
+- **T4 域导航**: header 域切换 pill「影院|照片」+ 侧栏/底部 tab 条件项, `useHasPhotoLibrary` 复用 `["libraries"]` React Query 缓存, **无 photo 库时 UI 与之前完全一致**。`kubby-domain` cookie 记住上次域: 直接进站 (Sec-Fetch-Site: none) 时 `/` → `/photos` 重定向, 站内点 logo 回影院不受影响 (Fable 验收时补的 header 判断, 否则 cinema pill 会被弹回)。注意: Next.js 16 已无 middleware.ts, 重定向实现在 `auth.config.ts` 的 authorized 回调 (proxy.ts 包装)。
+- **T5 时间线** `/photos`: 按月分组 justified 等高行网格 (`lib/photos/justified-layout.ts` 纯函数: 贪心填行+缩放, 末行不拉伸) + `@tanstack/react-virtual` 行级虚拟滚动 (月标题与图片行都是虚拟行, 行高精确已知) + `useInfiniteQuery` 无限加载。
+- **T6 灯箱** `/photos/view/[id]`: 全屏暗色, ←/→/触摸滑动切换 (复用时间线缓存找相邻, router.replace), 滚轮缩放/双击 2×/拖拽平移, ⓘ EXIF 面板 + 下载原件, 视频内嵌播放 (direct 或 hls.js, 卸载 DELETE session), 相邻预加载, thumb 糊图先显 (修了缓存图 load 事件早于 React onLoad 挂载导致 opacity:0 卡糊图的 bug — ref callback 同步查 `img.complete`)。
+- **T7 库管理**: 类型下拉解锁 photo; photo 表单隐藏刮削/Jellyfin 兼容/元数据语言; 后端 POST/PUT 强制 `scraperEnabled=false, jellyfinCompat=false, metadataLanguage=null`。
+- **主题返工** (用户反馈): 原设计照片域用明亮底色, 用户要求与影院一致 → 时间线改用现有暗色 token (`--header`/`text-muted-foreground`/`bg-white/[0.06]`), 设计文档已更新。
+- **验证**: 每任务 executor 自验 + Fable 抽查; 测试素材 `test-media/photos/` (4 EXIF JPEG + 1 HEIC + h264 mp4 + hevc mov), 扫描 7/7 入库、增量第二遍零重复; chrome-devtools 实测时间线月分组/灯箱切换缩放/EXIF 面板/mp4 direct + hevc remux HLS 播放/暗色主题截图确认。
+- **音乐库**: 仅设计 (`docs/music-library-design.md`), 未排期; 本轮铺好的 scanner 分派/域导航/按类型库表单是其前置。
+
 ## 2026-07-10: 打包软件两处安全性/易用性改动 — 卸载默认不清数据 + Windows 托盘图标双击打开
 
 用户诉求(两条):

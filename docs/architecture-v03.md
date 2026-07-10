@@ -1,6 +1,6 @@
 # Kubby Architecture Reference
 
-> 本地自托管影音管理系统，参考 Jellyfin 架构简化实现。当前版本仅支持电影媒体库。
+> 本地自托管影音管理系统，参考 Jellyfin 架构简化实现。当前版本支持**电影**与**照片**（手机照片+视频）两个媒体域：域分离架构（`docs/photos-library-design.md`），每域独立表/扫描器/页面，共享库管理、播放管线、认证、i18n。
 
 ## 技术栈
 
@@ -150,11 +150,12 @@ kubby/
 │   │   ├── auth.ts                                 # NextAuth 完整配置 (含 DB 查询, locale)
 │   │   ├── auth.config.ts                          # NextAuth 轻量配置 (供 middleware 使用, 无 DB)
 │   │   ├── db/
-│   │   │   ├── schema.ts                           # Drizzle schema (13 张表, 含 settings + user_preferences + bookmarks)
+│   │   │   ├── schema.ts                           # Drizzle schema (14 张表, 含 settings + user_preferences + bookmarks + photo_items)
 │   │   │   └── index.ts                            # DB 连接 (Proxy 懒初始化, WAL + FK + 自动迁移)
 │   │   ├── folder-paths.ts                         # 多文件夹路径 parse/serialize 辅助工具 (向后兼容 JSON 数组存储)
 │   │   ├── scanner/
-│   │   │   ├── index.ts                            # 媒体库扫描器 (多路径遍历+TMDB刮削+DB写入+跳过追踪)
+│   │   │   ├── index.ts                            # 媒体库扫描器 (按 library.type 分派; 电影: 多路径遍历+TMDB刮削+DB写入+跳过追踪)
+│   │   │   ├── photo-scanner.ts                    # 照片扫描器 (递归遍历+增量 mtime/size+exifr EXIF+sharp/ffmpeg 缩略图+HEIC 预览+视频 ffprobe)
 │   │   │   ├── nfo-parser.ts                       # NFO XML 解析器
 │   │   │   └── nfo-writer.ts                       # NFO 生成/回写 (完整 NFO 生成 + 追加 actor)
 │   │   ├── transcode/
@@ -202,7 +203,7 @@ kubby/
 
 ## 数据库 Schema
 
-13 张表，SQLite + WAL 模式，文件位于 `data/kubby.db`。
+14 张表，SQLite + WAL 模式，文件位于 `data/kubby.db`。
 
 ### ER 关系图
 
@@ -214,9 +215,10 @@ users ──1:N──> movie_bookmarks ──N:1──> movies
 users ──1:N──> bookmark_icons
                                           │
 media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1──> people
-                                   │
-                                   ├──1:N──> movie_discs
-                                   └──1:N──> media_streams
+                  │                │
+                  │                ├──1:N──> movie_discs
+                  │                └──1:N──> media_streams
+                  └──1:N──> photo_items (照片域, 与 movies 平行)
 
 settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 ```
@@ -245,7 +247,7 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 |----|------|------|
 | id | text PK | UUID |
 | name | text | 库名 |
-| type | text | enum: movie/tvshow/music/book/photo (MVP 仅 movie) |
+| type | text | enum: movie/tvshow/music/book/photo (已实现 movie + photo; photo 库强制 scraperEnabled=false/jellyfinCompat=false/metadataLanguage=null) |
 | folder_path | text | 服务端绝对路径 |
 | scraper_enabled | integer (bool) | 是否启用 TMDB 刮削器 |
 | last_scanned_at | text | 最后扫描时间 |
@@ -448,6 +450,30 @@ settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 
 **索引**: user_id
 
+#### photo_items (照片域 — 照片+手机视频合一)
+| 列 | 类型 | 说明 |
+|----|------|------|
+| id | text PK | UUID |
+| library_id | text FK | → media_libraries, CASCADE |
+| file_path | text UNIQUE | 原文件绝对路径 |
+| file_name | text | 文件名 |
+| is_video | integer (bool) | 照片/视频合一表, 用 flag 区分 |
+| taken_at | integer | 拍摄时间 epoch ms (EXIF DateTimeOriginal > CreateDate > 文件 mtime), **非空保证**, 时间线唯一排序键 |
+| width / height | integer | 显示方向尺寸 (EXIF orientation 5-8 已互换) |
+| duration_seconds | real | 仅视频 |
+| video_codec / audio_codec / container | text | 仅视频, 播放决策输入 |
+| file_size / mime_type | — | 文件大小/MIME |
+| camera_make / camera_model | text | EXIF 相机 |
+| gps_lat / gps_lng | real | EXIF GPS |
+| orientation | integer | EXIF 方向值 (1-8) |
+| thumbnail_path | text | 缩略图相对 data dir 路径 (`metadata/photo-thumbs/{libId}/{id}.webp`, 长边 400) |
+| preview_path | text | 仅浏览器不可显示格式 (HEIC/HEIF): 长边 2000 WebP 预览 |
+| exif_json | text | 长尾 EXIF JSON (剔除二进制/超长值, 上限 16KB) |
+| folder_path | text | 相对库根路径 (v2 相册预留) |
+| date_added / date_modified | — | 入库时间 / 文件 mtime ms (增量扫描比对键) |
+
+**索引**: library_id, (library_id, taken_at), folder_path, is_video
+
 ### 自定义评分维度：设计决策
 
 #### 需求
@@ -536,6 +562,11 @@ user_movie_data.personal_rating = 9.0                          ← 加权平均:
 | `/api/users/me/password` | PUT | 修改密码 |
 | `/api/images/[...path]` | GET | 本地图片服务 (绝对路径) |
 | `/api/libraries` | GET | 媒体库列表 |
+| `/api/photos` | GET | 照片时间线 cursor 分页 (`?cursor={takenAt}_{id}&limit=&libraryId=`, takenAt DESC + id tiebreak, limit 默认 100 上限 500) |
+| `/api/photos/[id]` | GET | 单项全字段 + 解析后的 `exif` 对象 |
+| `/api/photos/[id]/thumb` | GET | 缩略图 WebP (immutable 缓存一年) |
+| `/api/photos/[id]/file` | GET | 图片: HEIC 自动给 preview WebP, 其他给原图; `?original=1` 下载原件 (filename* UTF-8); 视频: 原文件含 Range 支持 |
+| `/api/photos/[id]/stream/decide` | GET | 视频播放决策 (复用 decidePlayback + transcode-manager; `?noHevc=1` iOS 时 HEVC direct→remux; 不做 mediaStreams profile 检查) |
 
 ### 需 Admin 端点
 
@@ -616,6 +647,7 @@ token.locale: string   // 语言偏好 (en/zh)
 ```
 scanLibrary(libraryId, onProgress?)
   │
+  ├── 若 library.type === "photo" → 分派到 scanPhotoLibrary() (photo-scanner.ts), 电影逻辑零改动
   ├── 读取 media_libraries 表获取 folder_path + scraper_enabled
   ├── 若 scraper_enabled, 从 settings 表加载 TMDB API key
   ├── 预计数所有子目录 → dirs[] (用于 progress total)
@@ -639,6 +671,26 @@ scanLibrary(libraryId, onProgress?)
   ├── 更新 media_libraries.last_scanned_at
   └── 返回 { scannedCount, removedCount, skipped[] }
 ```
+
+### 照片扫描器 (photo-scanner.ts)
+
+```
+scanPhotoLibrary(library, onProgress?)
+  │
+  ├── 递归遍历库根 (跳过 dotfile/@eaDir/#recycle/.thumbnails)
+  │     图片: .jpg/.jpeg/.png/.webp/.heic/.heif/.gif/.avif; 视频: .mp4/.mov/.m4v/.3gp
+  ├── 增量: 已有行 dateModified===mtimeMs && fileSize 相同 → 跳过
+  ├── 新/变更文件 (并发池 4):
+  │   ├── 图片: exifr 解析 EXIF (takenAt/相机/GPS/orientation)
+  │   │   缩略图 sharp→WebP 400px; sharp 失败 (HEIC on Windows, libvips 无 HEVC) → ffmpeg 兜底
+  │   │   HEIC/HEIF 额外生成 2000px preview WebP
+  │   ├── 视频: probeVideo (时长/宽高/编码) + ffprobe creation_time → takenAt + ffmpeg 中间帧缩略图
+  │   └── upsert photo_items (缩略图存 metadata/photo-thumbs/{libId}/)
+  ├── 清理磁盘已删文件的行 + 对应缩略图/预览
+  └── 返回 { scannedCount, removedCount, skipped: [] }
+```
+
+> **HEIC 铁律**: 本机 Windows sharp 无法解码 HEIC (报 "compression format has not been built in"), 但 `.metadata()` 仍可读尺寸; 像素解码必须 ffmpeg 兜底。打包时需验证目标机器 ffmpeg 可用。
 
 ### NFO 解析字段
 
@@ -920,6 +972,8 @@ Player (page.tsx)
 | `/movies/[id]` | 电影详情 | Jellyfin 风格: fanart 充分可见(仅底部渐变) + 左侧海报(300×450) + 右侧 text-shadow 信息面板(标题/元数据行/小型按钮行/Overview/Metadata 纵向列表) + 帧浏览书签模式(BookmarkPlus按钮, FrameScrubber两栏面板: 帧预览+进度条覆盖层/书签表单+截图到演员相册) + 书签 ScrollRow + 演员卡片 + 推荐 |
 | `/movies/[id]/play` | 播放器 | 全屏 + 自动保存进度 + 书签 (B/Shift+B) + 倍速 + 进度条图标标记 + 自动隐藏控制栏 (可 toggle) + 360° 全景模式 |
 | `/people/[id]` | 演员详情 | fanart 渐变 + 大卡片 + 参演作品网格 + 照片墙(Justified 行布局+Lightbox+上传/删除) |
+| `/photos` | 照片时间线 | 照片域首页 (Google Photos 式): 按月分组 justified 等高行网格 (`lib/photos/justified-layout.ts` 纯函数) + `@tanstack/react-virtual` 行级虚拟滚动 + cursor 无限加载 (`useInfiniteQuery`, limit 200) + 视频瓦片时长角标/▶ 标记; 与影院域共用暗色主题 |
+| `/photos/view/[id]` | 照片灯箱 | `fixed inset-0 z-50 bg-black` 全屏: ←/→/滑动切换 (复用时间线 `["photos"]` 缓存找相邻项, router.replace 不堆历史), 滚轮缩放 0.5×–5× / 双击 2× / 拖拽平移, ⓘ EXIF 面板 (拍摄时间/相机/尺寸/大小/GPS + 下载原件), 视频内嵌播放 (`components/photos/lightbox-video.tsx`: decide→direct 或 hls.js/原生 HLS, 卸载时 DELETE session), 相邻图片预加载, thumb 糊图先显 |
 | `/search` | 搜索 | 搜索框 + 电影结果 + 演员结果 + 书签剪辑 (按宽高比分横屏/竖屏行) |
 | `/profile` | 个人资料 | 头像/用户名/密码/账户类型 |
 | `/preferences/hero-mosaic` | 首页海报墙 | 分「电影海报墙」/「演员海报墙」两个 section。电影区: 滚动方向(纵向列/横向行)/列数(8–24, 横向映射为 4–12 行)/风格(仅海报/仅剧照/海报+剧照)/角度(5 档 transform 预设)/媒体库占比(默认按库大小比例, 可自定义加权, 0=排除)/年份范围/最低分辨率。演员区: 布局(方向/列数/角度)/图片来源(fanart 开关、图库开关+每人张数 0–100)/筛选(评级 tier 多选 chip 带各 tier 颜色, 空选=全部无筛选; 仅收藏)。各自实时预览(真实 HeroMosaic 组件, 数据项变化才重新抽样, 方向/列数/角度纯重渲染); 单 Save 一次 PUT 保存两配置; `/preferences` 默认落此页 |
@@ -937,8 +991,9 @@ Player (page.tsx)
 
 | 组件 | 位置 | 说明 |
 |------|------|------|
-| `AppHeader` | `components/layout/` | 顶部导航: logo + 搜索图标 + 用户头像(→/profile) |
-| `NavSidebar` | `components/layout/` | 汉堡菜单侧边栏: Home / MEDIA(All Movies) / ADMIN(Libraries+Users+System, 仅管理员) / USER(Preferences+Profile+Sign Out) |
+| `AppHeader` | `components/layout/` | 顶部导航: logo + 搜索图标 + 用户头像(→/profile); 存在 photo 库时 logo 右侧显示「影院 \| 照片」域切换 pill (`useHasPhotoLibrary` hook 复用 `["libraries"]` 缓存, 无 photo 库时零渲染) |
+| `NavSidebar` | `components/layout/` | 汉堡菜单侧边栏: Home / MEDIA(All Movies + Photos 条件项) / ADMIN(Libraries+Users+System, 仅管理员) / USER(Preferences+Profile+Sign Out) |
+| `DomainCookieSync` | `components/layout/` | 记录上次所在域 cookie `kubby-domain` (cinema/photos); auth.config.ts 的 authorized 回调在**直接进站** (Sec-Fetch-Site: none) 且 cookie=photos 时把 `/` 重定向到 `/photos`, 站内链接回 `/` 不受影响 |
 | `AdminSidebar` | `components/layout/` | 系统管理子导航: Overview/Scraper/Networking, 渐变高亮+圆角指示器 |
 | `PreferencesSidebar` | `components/layout/` | 偏好设置子导航: Card Badges/Ratings & Bookmarks/Playback/Language |
 | `GlassToast` | `components/ui/` | 玻璃风格 Toast 通知: `bg-[#0a0a0f]/70 backdrop-blur-2xl`, 居中底部/顶部, success=primary icon / error=red icon, `aria-live="polite"` |
