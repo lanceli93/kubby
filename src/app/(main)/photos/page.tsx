@@ -8,10 +8,10 @@ import { useTranslations, useLocale } from "next-intl";
 import { Play, ImageOff } from "lucide-react";
 import { computeJustifiedLayout } from "@/lib/photos/justified-layout";
 
-// The photos domain deliberately uses a bright/neutral theme, in contrast to
-// the dark cinema domain (see docs/photos-library-design.md §7). The timeline
-// is a month-grouped justified grid (Google Photos style) with row-level
-// virtual scrolling — tens of thousands of items is the expected scale.
+// The photos domain shares the cinema domain's dark theme (user decision —
+// one consistent Kubby look across domains). The timeline is a month-grouped
+// justified grid (Google Photos style) with row-level virtual scrolling —
+// tens of thousands of items is the expected scale.
 
 interface PhotoItem {
   id: string;
@@ -199,12 +199,12 @@ export default function PhotosPage() {
   const showEmpty = !isLoading && items.length === 0;
 
   return (
-    <div className="flex h-full flex-col bg-neutral-100 text-neutral-900">
+    <div className="flex h-full flex-col">
       {/* Title bar */}
-      <div className="flex items-baseline gap-3 border-b border-neutral-200 px-4 py-4 md:px-6">
-        <h1 className="text-xl font-semibold">{t("title")}</h1>
+      <div className="flex items-baseline gap-3 border-b border-white/[0.06] bg-[var(--header)] px-4 py-4 md:px-6">
+        <h1 className="text-xl font-semibold text-foreground">{t("title")}</h1>
         {items.length > 0 && (
-          <span className="text-sm text-neutral-500">
+          <span className="text-sm text-muted-foreground">
             {t("photoCount", { count: items.length })}
           </span>
         )}
@@ -215,7 +215,7 @@ export default function PhotosPage() {
         {isLoading && <TimelineSkeleton />}
 
         {showEmpty && (
-          <div className="flex h-full items-center justify-center text-center text-neutral-500">
+          <div className="flex h-full items-center justify-center text-center text-muted-foreground">
             {t("empty")}
           </div>
         )}
@@ -244,7 +244,7 @@ export default function PhotosPage() {
                   }}
                 >
                   {row.kind === "header" ? (
-                    <div className="flex items-end pb-2 pt-6 text-sm font-medium text-neutral-500">
+                    <div className="flex items-end pb-2 pt-6 text-sm font-medium text-muted-foreground">
                       {row.label}
                     </div>
                   ) : (
@@ -267,8 +267,8 @@ export default function PhotosPage() {
         )}
 
         {isFetchingNextPage && (
-          <div className="flex justify-center py-6 text-sm text-neutral-400">
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-500" />
+          <div className="flex justify-center py-6 text-sm text-muted-foreground">
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/15 border-t-white/60" />
           </div>
         )}
       </div>
@@ -294,10 +294,10 @@ function PhotoTile({
       type="button"
       onClick={() => onOpen(item.id)}
       style={{ width, height }}
-      className="group relative shrink-0 overflow-hidden rounded-[4px] bg-neutral-200"
+      className="group relative shrink-0 overflow-hidden rounded-[4px] bg-white/[0.06]"
     >
       {errored ? (
-        <div className="flex h-full w-full items-center justify-center bg-neutral-200 text-neutral-400">
+        <div className="flex h-full w-full items-center justify-center bg-white/[0.06] text-muted-foreground">
           <ImageOff className="h-6 w-6" />
         </div>
       ) : (
@@ -307,7 +307,7 @@ function PhotoTile({
           loading="lazy"
           decoding="async"
           onError={() => setErrored(true)}
-          className="h-full w-full object-cover transition-[filter] duration-150 group-hover:brightness-105"
+          className="h-full w-full object-cover transition-[filter] duration-150 group-hover:brightness-110"
         />
       )}
 
@@ -327,16 +327,16 @@ function PhotoTile({
   );
 }
 
-// Lightweight loading placeholder in the bright theme — a few rows of grey blocks.
+// Lightweight loading placeholder — a few rows of dim blocks on the dark theme.
 function TimelineSkeleton() {
   return (
     <div className="animate-pulse space-y-6 py-6">
       {[0, 1, 2].map((r) => (
         <div key={r} className="space-y-2">
-          <div className="h-4 w-32 rounded bg-neutral-200" />
+          <div className="h-4 w-32 rounded bg-white/[0.08]" />
           <div className="flex gap-1">
             {[0, 1, 2, 3, 4, 5].map((c) => (
-              <div key={c} className="h-40 flex-1 rounded-[4px] bg-neutral-200" />
+              <div key={c} className="h-40 flex-1 rounded-[4px] bg-white/[0.06]" />
             ))}
           </div>
         </div>
