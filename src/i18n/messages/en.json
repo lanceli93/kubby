@@ -667,6 +667,16 @@
   "photos": {
     "title": "Photos",
     "photoCount": "{count} items",
-    "empty": "No photos yet — scan a photo library"
+    "empty": "No photos yet — scan a photo library",
+    "close": "Close",
+    "infoTitle": "Info",
+    "infoFileName": "File Name",
+    "infoTakenAt": "Date Taken",
+    "infoDimensions": "Dimensions",
+    "infoFileSize": "File Size",
+    "infoCamera": "Camera",
+    "infoDuration": "Duration",
+    "infoGps": "Location",
+    "downloadOriginal": "Download Original"
   }
 }

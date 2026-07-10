@@ -667,6 +667,16 @@
   "photos": {
     "title": "照片",
     "photoCount": "{count} 项",
-    "empty": "还没有照片——先扫描一个照片库"
+    "empty": "还没有照片——先扫描一个照片库",
+    "close": "关闭",
+    "infoTitle": "信息",
+    "infoFileName": "文件名",
+    "infoTakenAt": "拍摄时间",
+    "infoDimensions": "尺寸",
+    "infoFileSize": "文件大小",
+    "infoCamera": "相机",
+    "infoDuration": "时长",
+    "infoGps": "位置",
+    "downloadOriginal": "下载原件"
   }
 }
