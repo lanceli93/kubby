@@ -7,6 +7,7 @@ import { eq, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
 import { resolveDataPath } from "@/lib/paths";
+import { getImageAspect } from "@/lib/blur-utils";
 import {
   PeopleMosaicConfig,
   normalizePeopleMosaicConfig,
@@ -67,10 +68,25 @@ interface WallEntry {
   posterPath: string | null;
   fanartPath: string | null;
   posterBlur: string | null;
+  // True width/height ratio of poster/fanart so the mosaic sizes each tile to
+  // its image (no crop). Photo entries: posterAspect = the head-shot's ratio,
+  // fanartAspect = the person's own fanart ratio. Gallery entries: posterAspect
+  // = the gallery image's ratio (arbitrary), fanartAspect null.
+  posterAspect: number | null;
+  fanartAspect: number | null;
   birthYear: number | null;
   movieCount: number;
   personalRating: number | null;
   isFavorite: boolean;
+}
+
+// Strip the `|mtime` cache-bust suffix a stamped path carries, yielding the raw
+// filesystem path getImageAspect needs. Windows paths ("D:\...") never contain
+// a bare "|", so splitting on the last "|" is safe.
+function unstamp(p: string | null): string | null {
+  if (!p) return null;
+  const i = p.lastIndexOf("|");
+  return i > 0 ? p.slice(0, i) : p;
 }
 
 // GET /api/people/hero-wall — people pool for the home People hero poster mosaic.
@@ -219,7 +235,8 @@ export async function GET(request: NextRequest) {
           ? stampPathFs(resolveDataPath(r.fanart_path))
           : null;
 
-      // Photo entry — keyed by the real person id.
+      // Photo entry — keyed by the real person id. Aspects filled after the
+      // final slice so we only stat the images actually returned.
       entries.push({
         id: r.id,
         personId: r.id,
@@ -228,6 +245,8 @@ export async function GET(request: NextRequest) {
         posterPath: stampPath(resolveDataPath(r.photo_path!), r.photo_mtime),
         fanartPath: ownFanart,
         posterBlur: r.photo_blur,
+        posterAspect: null,
+        fanartAspect: null,
         birthYear: r.birth_year,
         movieCount: r.movie_count,
         personalRating,
@@ -261,6 +280,8 @@ export async function GET(request: NextRequest) {
               posterPath: stampPathFs(path.join(galleryDir, filename)),
               fanartPath: null,
               posterBlur: r.photo_blur,
+              posterAspect: null,
+              fanartAspect: null,
               birthYear: r.birth_year,
               movieCount: r.movie_count,
               personalRating,
@@ -273,6 +294,23 @@ export async function GET(request: NextRequest) {
 
     // 5. Shuffle the flat array, then truncate to the requested limit.
     const results = shuffle(entries).slice(0, limit);
+
+    // 6. Read true aspect ratios for the returned entries only (post-slice, so
+    //    we never stat images we drop). Header-only + cached per file+mtime, run
+    //    in parallel. A null (missing file / no sharp) leaves the tile on its
+    //    fixed fallback ratio — same as before this change.
+    await Promise.all(
+      results.map(async (e) => {
+        const posterFs = unstamp(e.posterPath);
+        const fanartFs = unstamp(e.fanartPath);
+        const [pa, fa] = await Promise.all([
+          posterFs ? getImageAspect(posterFs) : Promise.resolve(null),
+          fanartFs ? getImageAspect(fanartFs) : Promise.resolve(null),
+        ]);
+        e.posterAspect = pa;
+        e.fanartAspect = fa;
+      })
+    );
 
     return NextResponse.json(results);
   } catch (error) {

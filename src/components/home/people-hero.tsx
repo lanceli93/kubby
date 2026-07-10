@@ -25,6 +25,11 @@ export interface PeopleWallEntry {
   posterPath?: string | null;
   fanartPath?: string | null;
   posterBlur?: string | null;
+  // True width/height ratios so the mosaic sizes each tile to its image (avoids
+  // cropping arbitrary-ratio fanart / gallery photos). Spread onto MosaicMovie
+  // via `...e` below.
+  posterAspect?: number | null;
+  fanartAspect?: number | null;
   birthYear?: number | null;
   movieCount?: number | null;
   personalRating?: number | null;

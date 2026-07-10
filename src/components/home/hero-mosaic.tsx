@@ -16,6 +16,14 @@ export interface MosaicMovie {
   posterPath?: string | null;
   fanartPath?: string | null;
   posterBlur?: string | null;
+  /** True width/height ratio of posterPath / fanartPath (e.g. 0.667 = 2:3,
+   *  1.78 = 16:9). When present the tile sizes its box to this ratio so
+   *  object-cover crops nothing; absent → the fixed poster/fanart class is used.
+   *  Movies leave these undefined (TMDB art is already standardized), so their
+   *  tiles behave exactly as before; the People wall supplies them for fanart /
+   *  gallery images whose real ratios are arbitrary. */
+  posterAspect?: number | null;
+  fanartAspect?: number | null;
 }
 
 /** Whether a movie can supply a tile for a given mosaic style — the single
@@ -74,13 +82,23 @@ function Card({
   lit,
   horizontal = false,
 }: MosaicCard & { tile: string; lit: boolean; horizontal?: boolean }) {
-  // Prefer the orientation-appropriate image, fall back to the other one.
+  // Prefer the orientation-appropriate image, fall back to the other one — and
+  // carry the aspect that belongs to whichever image actually renders, so the
+  // box matches the picture (no crop) when a real ratio is known.
   const img = landscape
     ? movie.fanartPath || movie.posterPath
     : movie.posterPath || movie.fanartPath;
   if (!img) return null;
+  const usingFanart = landscape ? !!movie.fanartPath : !movie.posterPath;
+  const aspect = usingFanart ? movie.fanartAspect : movie.posterAspect;
   const src = resolveImageSrc(img, 300);
-  const aspectClass = landscape ? "aspect-video" : "aspect-[2/3]";
+  // A known, sane ratio sizes the box to the image (object-cover then crops
+  // nothing). Otherwise fall back to the fixed poster/fanart class (movies, or
+  // images whose ratio couldn't be read). Guard against absurd panoramas that
+  // would blow out a lane's cross-axis size.
+  const hasRatio = typeof aspect === "number" && aspect > 0.2 && aspect < 5;
+  const aspectClass = hasRatio ? "" : landscape ? "aspect-video" : "aspect-[2/3]";
+  const aspectStyle = hasRatio ? { aspectRatio: String(aspect) } : undefined;
   return (
     <div
       data-tile={tile}
@@ -107,6 +125,7 @@ function Card({
         className={`relative overflow-hidden rounded-md ring-1 transition-[box-shadow] duration-700 ${
           lit ? "ring-2 ring-white/40" : "ring-white/10"
         } ${horizontal ? "h-full" : "w-full"} ${aspectClass}`}
+        style={aspectStyle}
       >
         <Image
           src={src}
@@ -202,6 +221,40 @@ export function HeroMosaic({
     perLane = Math.min(14, Math.max(3, Math.ceil((laneCount * 0.36) / aspect) + 1));
   }
 
+  // When any tile carries a real (arbitrary) aspect — the People wall's own
+  // fanart / gallery images — a fixed tile count per lane can't guarantee the
+  // seamless loop: a lane that happens to draw many WIDE (short, in vertical
+  // flow) images fills less drift-axis length than the fixed count assumed,
+  // opening a gap at the -50% seam. Detect that case and switch to filling by
+  // accumulated length instead of by count. Movies (standardized 2:3 / 16:9,
+  // no aspect supplied) keep the exact fixed-count path above — zero change.
+  const hasRealAspects = usable.some(
+    (m) =>
+      (typeof m.posterAspect === "number" && m.posterAspect > 0) ||
+      (typeof m.fanartAspect === "number" && m.fanartAspect > 0)
+  );
+
+  // Drift-axis length ONE set of tiles must reach to cover the visible plane
+  // (same plane estimates the fixed formula uses, in cross-axis units):
+  //   vertical  → plane height ≈ laneCount·0.36 (lane widths)
+  //   horizontal→ plane width  ≈ 2.8·laneCount   (lane heights)
+  const laneTargetLen = horizontal ? 2.8 * laneCount : laneCount * 0.36;
+  const minTiles = horizontal ? 6 : 3;
+  const maxTiles = horizontal ? 40 : 20;
+
+  // width/height of the image a card actually renders (real ratio when known,
+  // else the fixed fallback that matches the poster/fanart aspect class). Mirror
+  // the guard + image-choice in Card so length math tracks what's on screen.
+  const cardWH = (movie: MosaicMovie, landscape: boolean): number => {
+    const usingFanart = landscape ? !!movie.fanartPath : !movie.posterPath;
+    const a = usingFanart ? movie.fanartAspect : movie.posterAspect;
+    if (typeof a === "number" && a > 0.2 && a < 5) return a;
+    return landscape ? 1.778 : 0.667;
+  };
+  // Drift-axis extent of one tile, in the same cross-axis units as laneTargetLen:
+  // vertical drifts on height (= 1/·wh when width is the unit), horizontal on width.
+  const driftExtent = (wh: number): number => (horizontal ? wh : 1 / wh);
+
   // Fill the lanes. For "both", each movie contributes its poster immediately
   // followed by that SAME movie's fanart — during the drift a poster is always
   // trailed by its own landscape still, instead of a random poster-A / fanart-B
@@ -214,7 +267,19 @@ export function HeroMosaic({
   let cursor = 0;
   for (let lane = 0; lane < laneCount; lane++) {
     const stack = lanes[lane];
-    while (stack.length < perLane) {
+    let accLen = 0; // accumulated drift-axis length (real-aspect path only)
+    // Stop by count on the fixed path; by length (with a min/max clamp) when
+    // real aspects make the per-tile length vary.
+    const done = () =>
+      hasRealAspects
+        ? stack.length >= maxTiles ||
+          (stack.length >= minTiles && accLen >= laneTargetLen)
+        : stack.length >= perLane;
+    const push = (card: MosaicCard) => {
+      stack.push(card);
+      accLen += driftExtent(cardWH(card.movie, card.landscape));
+    };
+    while (!done()) {
       const movie = usable[cursor % usable.length];
       cursor++;
       // Avoid two identical neighbors when the pool wraps within a lane.
@@ -226,12 +291,12 @@ export function HeroMosaic({
         continue;
       }
       if (style === "poster") {
-        if (movie.posterPath) stack.push({ movie, landscape: false });
+        if (movie.posterPath) push({ movie, landscape: false });
       } else if (style === "fanart") {
-        if (movie.fanartPath) stack.push({ movie, landscape: true });
+        if (movie.fanartPath) push({ movie, landscape: true });
       } else {
-        if (movie.posterPath) stack.push({ movie, landscape: false });
-        if (movie.fanartPath) stack.push({ movie, landscape: true });
+        if (movie.posterPath) push({ movie, landscape: false });
+        if (movie.fanartPath) push({ movie, landscape: true });
       }
     }
   }

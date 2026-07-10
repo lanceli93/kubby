@@ -516,7 +516,7 @@ user_movie_data.personal_rating = 9.0                          ← 加权平均:
 |------|------|------|
 | `/api/movies` | GET | 电影列表 (支持 genre/includeGenres 参数) |
 | `/api/movies/hero-wall` | GET | 首页海报墙影片池: 按 hero_mosaic_config 做媒体库加权随机采样 + 年份/分辨率/风格筛选; 参数 style/yearFrom/yearTo/minWidth/weights/limit 可覆盖已存配置 (偏好页实时预览用) |
-| `/api/people/hero-wall` | GET | 首页演员墙人物池: 按 people_mosaic_config 抽样, **必须有 photo** + ≥1 部影片; 评级 tier/仅收藏筛选 (tier 分档同 `/api/people`, `unrated` 匹配无评级); 每人展开为扁平条目 (photo 条目带自身 fanart 配对 + 最多 galleryCount 张图库条目 ≤100, 图库条目 id 加 `:gN` 后缀防聚光灯寻址冲突, `personId` 供导航); 参数 includeFanart/includeGallery/galleryCount/tiers/favoritesOnly/limit 可覆盖已存配置 |
+| `/api/people/hero-wall` | GET | 首页演员墙人物池: 按 people_mosaic_config 抽样, **必须有 photo** + ≥1 部影片; 评级 tier/仅收藏筛选 (tier 分档同 `/api/people`, `unrated` 匹配无评级); 每人展开为扁平条目 (photo 条目带自身 fanart 配对 + 最多 galleryCount 张图库条目 ≤100, 图库条目 id 加 `:gN` 后缀防聚光灯寻址冲突, `personId` 供导航); **每条目携带真实 posterAspect/fanartAspect** (`getImageAspect()` 读图头, 仅对最终切片后的条目、并发计算、按 path+mtime 缓存), 供演员墙按真实宽高比渲染避免裁剪; 参数 includeFanart/includeGallery/galleryCount/tiers/favoritesOnly/limit 可覆盖已存配置 |
 | `/api/movies/genres` | GET | 按媒体库去重的类型列表 (参数: libraryId) |
 | `/api/movies/[id]` | GET/DELETE | 电影详情 / 删除电影 (含 cast/directors/userData) |
 | `/api/movies/[id]/stream` | GET | 视频流 (HTTP 206 Range Requests) |

@@ -38,6 +38,9 @@ interface WallEntry {
   posterPath: string | null;
   fanartPath: string | null;
   posterBlur: string | null;
+  // True width/height ratios so preview tiles size to the image (no crop).
+  posterAspect: number | null;
+  fanartAspect: number | null;
   birthYear: number | null;
   movieCount: number;
   personalRating: number | null;

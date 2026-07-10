@@ -1,5 +1,20 @@
 # Completed Features
 
+## 2026-07-10: 演员马赛克墙按真实宽高比渲染,不再把 fanart/图库图裁成 2:3
+
+用户诉求: 演员墙(首页「演员」tab)里所有图都被按 poster 的 2:3 裁剪了, 但 fanart / 图库图其实是各种比例(16:9、3:2 等), 需要尽量避免裁剪。
+
+- **根因** `src/components/home/hero-mosaic.tsx`: 每个 tile 被硬编码为两种比例之一(`landscape ? "aspect-video" : "aspect-[2/3]"`)+ `object-cover`。演员墙(style `"both"`)里图库条目被当竖图(`landscape:false`)推入, 于是 16:9 图库照被塞进 2:3 竖框硬裁; 自身 fanart 也被塞进 16:9。电影墙不受影响, 因为 TMDB 海报/fanart 本就标准 2:3 / 16:9。
+- **方案(三层)**:
+  1. **API 返回真实比例** `src/app/api/people/hero-wall/route.ts`: 新增 `getImageAspect()`(`src/lib/blur-utils.ts`, sharp 只读图头、`autoOrient` 尊重 EXIF、按 `path|mtime` 缓存上限 5000 条 FIFO), **仅在最终 shuffle+slice 之后**对返回的 ≤limit 条目并发计算 posterAspect/fanartAspect, 不 stat 被丢弃的图。sharp 不可用 → null → 回退旧固定比例。
+  2. **tile 按真实比例定框** `Card`: 有合法比例(0.2<r<5, 防全景炸列)时 `style={{ aspectRatio }}` 替代固定 class, `object-cover` 在等比框上零裁剪; 电影不带比例 → 走原固定 class, **字节级不变**。
+  3. **无缝循环填充改为按长度累加**: 有真实比例时一列内 tile 的漂移轴长度不再等长(宽图更短), 旧的定数 `perLane` 会欠填导致 `-50%` 接缝露空; 检测到 `hasRealAspects` 时改为累加漂移轴长度到覆盖可视面(带 min/max clamp), 电影仍走原定数路径。
+- **验证**(chrome-devtools 驱动已登录 Chrome, 新起临时 dev server :3939 读仓库本地 `data/` 测试库, 验完关闭):
+  - API: `posterAspect` 已返回, photo≈0.665、Leonardo DiCaprio 图库返回 1.778(16:9)与 0.667(2:3)各自真实比例。
+  - DOM: 演员墙 128/128 tile 全部用 inline `aspect-ratio`、0 个固定 class; 注入 Leo 全部图库后逐 tile 核对——`leo:g0/g2/g3`(001/003/005.jpg, 原图 300×169)框比例 `1.778/1` 实测 1.775, `leo:g1`(002.jpg 300×450)`0.667/1` 实测 0.668, photo 0.665, **框比例 = 图原始比例 → object-cover 零裁剪**。
+  - 截图确认: 演员墙同时出现横图(16:9「INCEPTION」图库图、情侣横照)与竖图头像, 各按原比例、无裁剪。
+  - `npx tsc --noEmit` + `next build` 均通过; lint 无新增 warning(仅 2 条预存)。
+
 ## 2026-07-10: 详情页「猜你喜欢」跳转的 dim-and-fly 过渡(点击即变暗、海报明亮飞入)
 
 用户诉求: 在电影详情页点击「猜你喜欢」(youMayAlsoLike / 「猜你喜欢」)推荐卡时, 希望**除海报外其余部分立即变暗**, 等新的电影详情页出现后再变亮, 海报保持移动动画。
