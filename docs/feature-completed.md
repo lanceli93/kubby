@@ -1,5 +1,18 @@
 # Completed Features
 
+## 2026-07-11: 照片库 v2 — 手动相册 + 库筛选 + 时间线/灯箱美化
+
+用户诉求: 照片库 v1 略显简陋 — 没有相册、没有 hover 反馈 (要像电影 poster 那样)、多个照片库时无法区分、灯箱打开有僵硬的糊图放大、视频先小框再放大不如直接开 web player。**相册明确定义为「媒体库内用户手动创建的分类」, 非扫描文件夹自动生成; 默认不分相册就是一条时间线。** 顶层导航形态经确认选「分段控件 + 库筛选」。
+
+- **相册数据层**: `photo_albums` (归属某照片库, name/coverItemId/sortOrder) + `photo_album_items` (join, UNIQUE(album_id,item_id) 使重复添加 no-op) 两张表, schema + 迁移数组 0037。一张照片可属多相册; 删相册/移出成员均不动底层照片。封面 = 显式 coverItemId (仍是成员时), 否则回退最新成员。
+- **相册 API**: `/api/photos/albums` (列表带成员数+解析封面 / 新建, 仅照片库) · `/albums/[id]` (头/重命名·设封面/删除) · `/albums/[id]/items` (加入 `onConflictDoNothing` 仅同库 / 移出)。`/api/photos` 加 `albumId` 子查询筛选。
+- **顶层导航**: `/photos` 加「时间线 \| 相册」分段控件 + 库筛选下拉 (仅 >1 照片库时出现, `usePhotoLibraries` 复用 `["libraries"]` 缓存)。多选模式 → 批量加入相册 (`add-to-album-dialog.tsx`, 可选已有或现建)。灯箱加「加入相册」按钮。
+- **相册视图**: `albums-view.tsx` 封面+数量卡网格 + 新建相册卡; 相册详情页 `/photos/album/[id]` 复用 `PhotoGrid` (albumId 作用域) + 头部重命名/删除 + 多选移出相册。
+- **共用网格**: 抽出 `components/photos/photo-grid.tsx`, 时间线与相册详情共用; queryKey 按 `{libraryId, albumId}` 分域, 灯箱 queryKey 与之对齐 (`?lib=`/`?album=` 参数携带作用域) 以复用缓存找相邻项。
+- **美化 (3 点)**: ① 瓦片 hover — 内部图片缩放 + 内嵌 ring + 底部渐变露拍摄日期; 瓦片本身不放大 (否则撑破 justified 行触发横向滚动条)。② 灯箱图片 — 删掉 `blur-lg` 糊图硬跳, 改清晰缩略图秒显打底 + 全图 300ms 柔和交叉淡入。③ 灯箱视频 — `<video>` 立即铺满舞台 + spinner (监听 loadeddata/playing 清除), 不再先小框后跳大, 像真正的 web player。
+- **域隔离修复** (本轮同期): 影院首页「媒体库」行/搜索库筛选/海报墙按库权重 UI 都遍历共享 `["libraries"]` 缓存却没按类型过滤, 泄漏了照片库 → 三处各加 `type !== "photo"` 客户端过滤 (API 不动, 因缓存被 nav/useHasPhotoLibrary/DomainCookieSync 共用)。
+- **验证**: `tsc` 通过; chrome-devtools 实测创建相册「旅行」→ 时间线多选 2 张加入 → 相册详情显示 2 项 → 删相册回时间线且照片保留; 瓦片 hover 拍摄日期、分段控件切换、单库时库筛选正确隐藏均确认。
+
 ## 2026-07-10 (2): 照片库 v1 — 域分离架构下的第二媒体域 (照片+手机视频)
 
 用户诉求: Kubby 全部围绕可刮削电影设计 (马赛克墙/演员墙/TMDB/NFO), 要加手机照片+视频功能且不破坏影院设计, 并为未来音乐库铺路。设计文档 `docs/photos-library-design.md` (决策: 照片+视频合并为一种库类型; v1 = 时间线+灯箱+视频内嵌播放), 任务清单 `docs/tasks-photos-v1.md` (T1–T8 全部完成)。

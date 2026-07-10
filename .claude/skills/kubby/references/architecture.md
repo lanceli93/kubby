@@ -3,7 +3,7 @@
 ## Contents
 - [Project Structure](#project-structure)
 - [Domains (Cinema + Photos)](#domains-cinema--photos)
-- [Database Schema (14 tables)](#database-schema-14-tables)
+- [Database Schema (16 tables)](#database-schema-16-tables)
 - [API Endpoints](#api-endpoints)
 - [Authentication](#authentication)
 - [Library Scanner](#library-scanner)
@@ -33,8 +33,9 @@ kubby/
 │   │   │   ├── layout.tsx                # Main layout (mounts DomainCookieSync + AppHeader + BottomTabs)
 │   │   │   ├── page.tsx                  # Cinema home (Tabs: Home/Favorites/People; Home = hero mosaic wall + ScrollRows, Favorites = FavoritesBrowser, People = actor mosaic wall)
 │   │   │   ├── photos/                    # 📷 Photos domain
-│   │   │   │   ├── page.tsx              # Timeline (month-grouped justified grid, cursor pagination, row-level virtual scroll)
-│   │   │   │   └── view/[id]/page.tsx    # Lightbox (full-screen, zoom/pan, prev/next, EXIF panel, inline video)
+│   │   │   │   ├── page.tsx              # Shell: Timeline|Albums segmented control + library filter + multi-select→add-to-album
+│   │   │   │   ├── album/[id]/page.tsx   # Album detail (PhotoGrid scoped by albumId, rename/delete, remove-from-album)
+│   │   │   │   └── view/[id]/page.tsx    # Lightbox (full-screen, zoom/pan, prev/next, EXIF panel, add-to-album, inline video)
 │   │   │   ├── movies/
 │   │   │   │   ├── page.tsx              # Library browse (Tabs: Movies/Favorites/Genres/Actors)
 │   │   │   │   └── [id]/
@@ -74,7 +75,7 @@ kubby/
 │   │   ├── auth.ts                       # NextAuth full config (DB queries, bcrypt)
 │   │   ├── auth.config.ts                # NextAuth lightweight (Edge-compatible, no DB)
 │   │   ├── db/
-│   │   │   ├── schema.ts                 # Drizzle schema (14 tables, incl. photo_items)
+│   │   │   ├── schema.ts                 # Drizzle schema (16 tables, incl. photo_items + photo_albums/photo_album_items)
 │   │   │   └── index.ts                  # Proxy lazy-init DB connection (WAL + FK + auto-migrate)
 │   │   ├── paths.ts                      # Centralized path management (KUBBY_DATA_DIR)
 │   │   ├── scanner/
@@ -152,7 +153,7 @@ pipeline, auth, i18n) is reused, not forked.
 - **Theme is shared** — the photos domain uses the same dark cinema tokens, not a
   separate light theme (explicit user decision).
 
-## Database Schema (14 tables)
+## Database Schema (16 tables)
 
 ### Core tables
 
@@ -191,11 +192,16 @@ pipeline, auth, i18n) is reused, not forked.
 
 **bookmark_icons**: id, user_id (FK), label, image_path, dot_color, created_at
 
-### Photos domain table
+### Photos domain tables
 
-**photo_items**: id, library_id (FK CASCADE), file_path (UNIQUE, absolute), file_name, is_video (bool), taken_at (epoch ms — EXIF capture time, **the timeline sort key**), width, height, duration_seconds (video), video_codec/audio_codec/container (video — playback decision inputs), file_size, mime_type, camera_make, camera_model, gps_lat, gps_lng, orientation, thumbnail_path (rel to data dir), preview_path (only for browser-unrenderable formats like HEIC), exif_json (long-tail EXIF fallback), folder_path (rel to library root, reserved for v2 albums), date_added, date_modified (file mtime ms, for incremental scan diffing)
+**photo_items**: id, library_id (FK CASCADE), file_path (UNIQUE, absolute), file_name, is_video (bool), taken_at (epoch ms — EXIF capture time, **the timeline sort key**), width, height, duration_seconds (video), video_codec/audio_codec/container (video — playback decision inputs), file_size, mime_type, camera_make, camera_model, gps_lat, gps_lng, orientation, thumbnail_path (rel to data dir), preview_path (only for browser-unrenderable formats like HEIC), exif_json (long-tail EXIF fallback), folder_path (rel to library root — scan-source dir only; **albums are unrelated to it**), date_added, date_modified (file mtime ms, for incremental scan diffing)
 - Indexes: `idx_pi_library` (library_id), `idx_pi_taken` (library_id, taken_at — timeline cursor), `idx_pi_folder` (folder_path), `idx_pi_video` (is_video)
 - Photos + videos share one table (`is_video` flag); a photo library is a merged media type, not separate photo/video libraries.
+
+**photo_albums**: id, library_id (FK CASCADE — an album belongs to one photo library), name, cover_item_id (a photo_items.id; falls back to newest member when null or no longer a member), sort_order, created_at. Index: `idx_pa_library`.
+- **Albums are manual, user-created categories** (not auto-generated from scan folders — explicit user requirement). Default state is no albums = one timeline. A photo can be in many albums.
+
+**photo_album_items**: album_id (FK CASCADE), item_id (FK CASCADE), added_at. Unique index `idx_pai_pk` (album_id, item_id) makes re-adding a no-op (`onConflictDoNothing`); `idx_pai_item` (item_id). Deleting an album (or removing members) never touches the underlying photos.
 
 ### ER relationships
 
@@ -208,8 +214,8 @@ users ──1:N──> bookmark_icons
 media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1──> people
    (type=movie)                    ├──1:N──> movie_discs
                                    └──1:N──> media_streams
-media_libraries ──1:N──> photo_items
-   (type=photo)
+media_libraries ──1:N──> photo_items <──N:M──> photo_albums
+   (type=photo)     └──1:N──> photo_albums ──1:N──> photo_album_items ──N:1──> photo_items
 ```
 
 ## API Endpoints
@@ -245,11 +251,14 @@ media_libraries ──1:N──> photo_items
 - `GET /api/images/[...path]` — Local image serving
 - `GET /api/libraries` — Library list
 - **Photos domain:**
-  - `GET /api/photos?cursor=&limit=&libraryId=` — Timeline page (cursor pagination, sorted `taken_at DESC, id DESC`; cursor = `"{takenAt}_{id}"`). Returns `{ items:[{id,isVideo,takenAt,width,height,durationSeconds,fileName}], nextCursor }`
+  - `GET /api/photos?cursor=&limit=&libraryId=&albumId=` — Timeline page (cursor pagination, sorted `taken_at DESC, id DESC`; cursor = `"{takenAt}_{id}"`; `albumId` restricts to an album's members via subquery). Returns `{ items:[{id,isVideo,takenAt,width,height,durationSeconds,fileName}], nextCursor }`
   - `GET /api/photos/[id]` — Full row + parsed `exif` object
   - `GET /api/photos/[id]/thumb` — WebP thumbnail (immutable 1yr cache)
   - `GET /api/photos/[id]/file` — Full image (HEIC→preview, else original; `?original=1` forces download) / video (HTTP 206 Range)
   - `GET /api/photos/[id]/stream/decide` — Video playback decision (reuses `decidePlayback` + transcode-manager; `?noHevc=1` for iOS forces HEVC direct→remux)
+  - `GET|POST /api/photos/albums` — List albums (`?libraryId=`, with member count + resolved cover) / create (name+libraryId, photo libraries only)
+  - `GET|PATCH|DELETE /api/photos/albums/[id]` — Album header / rename+set-cover / delete (member rows cascade, photos untouched)
+  - `POST|DELETE /api/photos/albums/[id]/items` — Add photos (`{itemIds}`, `onConflictDoNothing`, same-library only) / remove photos
 - HLS streaming: `GET /api/stream/[sessionId]/playlist.m3u8`, `GET /api/stream/[sessionId]/segment/[name]`, `POST/PATCH/DELETE /api/stream/[sessionId]` (POST=seek, PATCH=heartbeat, DELETE=stop)
 
 ### Admin only
@@ -396,7 +405,7 @@ GET /api/movies/{id}/stream/decide?disc=N
 | BookmarkCard | 280px mobile / 320px desktop | Thumbnail, icon, tags, edit/delete |
 | ScrollRow | Horizontal scroll | Chevron nav (hidden mobile), snap scroll on touch |
 | BottomTabs | Fixed bottom bar | Home/Movies/(Photos)/Search/Settings, md:hidden, hidden on play page; Photos tab only when a photo library exists |
-| Photos timeline | Full page | Month-grouped justified grid, cursor pagination, row-level virtual scroll (`@tanstack/react-virtual`) |
+| Photos grid | `components/photos/photo-grid.tsx` | Shared month-grouped justified grid (cursor pagination, row-level virtual scroll via `@tanstack/react-virtual`); drives both timeline + album detail, scoped by libraryId/albumId, optional multi-select |
 | Photos lightbox | Full-screen | Zoom/pan, prev/next (←/→/swipe), EXIF panel, neighbor preload, inline video (`LightboxVideo`) |
 | GlobalScanBar | Bottom bar | Current scan title + progress, expandable skipped list |
 

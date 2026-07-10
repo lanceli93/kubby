@@ -9,7 +9,7 @@ every task.
 - [Player controls grouping](#player-controls-grouping)
 - [Navigation structure](#navigation-structure)
 - [Domain switcher + photos navigation](#domain-switcher--photos-navigation)
-- [Photos timeline + lightbox](#photos-timeline--lightbox)
+- [Photos timeline + albums + lightbox](#photos-timeline--albums--lightbox)
 - [GlassToast](#glasstoast)
 - [Metadata Browser](#metadata-browser)
 - [Metadata editor Images tab](#metadata-editor-images-tab)
@@ -72,28 +72,59 @@ React Query cache (5-min staleTime) → `data?.some(l => l.type === "photo")`, s
 adds no extra request. `DomainCookieSync` (see architecture.md → Domains) persists
 the domain cookie and self-heals a stale `photos` cookie.
 
-## Photos timeline + lightbox
+## Photos timeline + albums + lightbox
 
-**Timeline** (`app/(main)/photos/page.tsx`): month-grouped justified grid.
-`useInfiniteQuery(["photos"])` with **cursor** pagination (not offset) — cursor
-`"{takenAt}_{id}"`, predicate `(takenAt < c) OR (takenAt = c AND id < c.id)`,
-sorted `taken_at DESC, id DESC`. Row-level **virtual scrolling** via
-`@tanstack/react-virtual` (`useVirtualizer`): month headers and justified grid rows
-are interleaved as virtual rows. `computeJustifiedLayout()` in
+**Shell** (`app/(main)/photos/page.tsx`): a `Timeline | Albums` segmented control
+plus a library-filter dropdown that appears **only when >1 photo library** exists
+(`usePhotoLibraries()`, derived from the shared `["libraries"]` cache). Timeline
+also has a multi-select mode → bulk **add-to-album** (`AddToAlbumDialog`, pick an
+existing album or create one inline).
+
+**Grid** (`components/photos/photo-grid.tsx`) — shared by the timeline and album
+detail. Month-grouped justified grid via `useInfiniteQuery` with **cursor**
+pagination (not offset): cursor `"{takenAt}_{id}"`, predicate
+`(takenAt < c) OR (takenAt = c AND id < c.id)`, sorted `taken_at DESC, id DESC`.
+Row-level **virtual scrolling** (`@tanstack/react-virtual`): month headers and
+justified grid rows interleaved as virtual rows. `computeJustifiedLayout()` in
 `lib/photos/justified-layout.ts` is a pure function → equal-height rows, last row
-not stretched. ResizeObserver triggers relayout.
+not stretched; ResizeObserver relayouts. **queryKey is scoped**:
+`["photos", {libraryId, albumId}]` — so the timeline, a filtered library, and each
+album are separate cache entries. Tile hover feedback is **contained** (inner image
+`scale-[1.06]` + inset ring + bottom scrim revealing the capture date); the tile
+itself never grows — scaling it would tear the justified row and trigger a
+horizontal scrollbar inside the virtualizer.
 
-**Lightbox** (`app/(main)/photos/view/[id]/page.tsx`): full-screen `fixed inset-0`,
-prev/next (←/→/swipe) walk the shared `["photos"]` cache with `router.replace`,
-wheel/double-click zoom + drag-pan, ⓘ EXIF panel (`LightboxInfoPanel` via
-`useQuery(["photo", id])`), neighbor preload, thumb-blur placeholder. Video items
-render `LightboxVideo` (`components/photos/lightbox-video.tsx`): iOS-detect →
+**Albums** are manual, user-created categories within a photo library (NOT scan
+folders — see architecture.md → Photos domain tables). `AlbumsView`
+(`albums-view.tsx`) is a cover+count card grid + a create card; album detail
+(`photos/album/[id]/page.tsx`) reuses `PhotoGrid` scoped by `albumId`, with header
+rename/delete and multi-select remove-from-album. Deleting an album removes only
+the category; the photos stay.
+
+**Lightbox** (`app/(main)/photos/view/[id]/page.tsx`): full-screen `fixed inset-0`.
+Its queryKey **must match PhotoGrid's** — it reads `?lib=`/`?album=` from the URL to
+rebuild the same scoped key, so prev/next (←/→/swipe, `router.replace`) walks the
+same set from cache; those params are preserved across navigation. Wheel/double-
+click zoom + drag-pan, ⊞ add-to-album (fetches the item's `libraryId` from the
+`["photo", id]` detail cache), ⓘ EXIF panel (`LightboxInfoPanel`), neighbor preload.
+Image loading: a **crisp cached thumbnail** shows instantly as a base, then the
+full image **crossfades in** over it (no blur→sharp pop — the old `blur-lg`
+placeholder was replaced because it felt rigid). Video items render `LightboxVideo`
+(`components/photos/lightbox-video.tsx`): the `<video>` **fills the stage
+immediately** with a spinner (cleared on `loadeddata`/`playing`) so it opens like a
+real web player instead of a tiny box that grows when metadata loads; iOS-detect →
 `decide?noHevc=1`, then direct play or hls.js/native HLS; DELETEs the transcode
 session on unmount.
 
 **Theme**: same dark cinema tokens as the rest of the app (`--header`,
 `text-muted-foreground`, `bg-white/[0.06]`) — not a light photo-album theme. This
 was an explicit user correction; keep future domains on the shared dark theme.
+
+**Domain isolation**: photo libraries must not leak into cinema-domain UI. The
+cinema home Media Libraries row, search library filter, and hero-mosaic
+per-library weights all read the shared `["libraries"]` cache and filter
+`type !== "photo"` client-side (the API stays untouched — the cache is shared with
+nav / `useHasPhotoLibrary` / `DomainCookieSync`).
 
 ## GlassToast
 
