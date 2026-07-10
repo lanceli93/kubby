@@ -150,7 +150,11 @@ export default function PersonDetailPage() {
   }
 
   return (
-    <div className="h-full overflow-y-scroll scrollbar-hide">
+    // `animate-fade-in` (opacity-only, safe for the backdrop-filter glass panel
+    // below) gives the person page an entrance beat. Movie cards fly their
+    // poster in via a shared-element View Transition on click; person cards are
+    // plain links with no such transition, so without this the page hard-cut.
+    <div className="h-full overflow-y-scroll scrollbar-hide animate-fade-in">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — matches movie detail layout */}
       <div className="relative md:min-h-[750px] w-full overflow-hidden">

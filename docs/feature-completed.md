@@ -14,6 +14,10 @@
 - **降级**: `prefers-reduced-motion` 直接普通导航; 移动端/无海报目标退化为纯黑幕 dip(只变暗再变亮, 不飞海报)。时长: 变暗 150ms、飞行 460ms。
 - 验证: `npx tsc --noEmit` 通过 + `next build` 通过; chrome-devtools 在 **:3000 生产构建**(读仓库 `data/` 测试库)逐帧探针实测: 点击后 veil opacity 0→1(~277ms 全暗)、克隆全程明亮、新海报 src 到位后才起飞、黑幕同步淡出、~1040ms 克隆移除真海报恢复 visible, 无双影/无残留; 冻结峰值暗态截图确认「背景全暗 + 被点海报明亮悬浮」。
 
+### 补: 演员详情页打开淡入 (同日)
+
+用户注意到电影详情页打开有渐变(实为电影卡点击触发的海报飞入 View Transition + 默认 root 交叉淡化), 而演员详情页硬切——因为 `PersonCard` 是裸 `<Link>` 无 onClick、演员详情页大照片也无 `data-vt-poster`, 整条演员链路从未接过渡系统。按用户选择, 采用**最轻量**方案: 给 `people/[id]/page.tsx` 最外层滚动容器加 `animate-fade-in`(纯 opacity 0→1, 0.4s, 对下方 backdrop-filter 玻璃面板安全, 不带位移)。验证: `getAnimations()` 确认容器注册了 fadeIn 0→1 400ms 动画, 页面渲染无回归。
+
 ## 2026-07-07: 首页演员海报墙 Tab — People 马赛克墙 + 偏好页分区配置
 
 首页顶部新增第三个 tab「演员/People」: 整页动态马赛克墙, 图片来源为演员 poster(photo)+ 自己的 fanart + 图库(gallery)图片; 与电影墙相同的 8s 随机聚光灯 + 左下字幕(NOW SHOWING · 类型 / 姓名 / 出生年 · 作品数 · ★ 个人评分 · ♥ 收藏), 整个 hero 点击进入 `/people/[id]`。该 tab 不再显示媒体库/继续观看等内容行, 墙覆盖整个页面。
