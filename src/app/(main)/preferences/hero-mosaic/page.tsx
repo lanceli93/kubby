@@ -25,6 +25,7 @@ import { getTierColor, getTierBorderColor, type Tier } from "@/lib/tier";
 interface Library {
   id: string;
   name: string;
+  type: string;
   movieCount?: number;
 }
 
@@ -108,10 +109,13 @@ export default function HeroMosaicPage() {
       fetch("/api/settings/personal-metadata").then((r) => r.json()),
   });
 
-  const { data: libraries = [] } = useQuery<Library[]>({
+  const { data: allLibraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
   });
+  // The hero mosaic is the cinema home wall — its per-library weight mix must
+  // only offer cinema-domain libraries, never photo libraries (own domain).
+  const libraries = allLibraries.filter((lib) => lib.type !== "photo");
 
   // Draft config (mirrors card-badges hydration pattern). Custom-mix toggle is
   // separate state: when OFF the sent/saved libraryWeights is {} (default mode).

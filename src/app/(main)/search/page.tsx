@@ -61,6 +61,7 @@ interface SearchResults {
 interface Library {
   id: string;
   name: string;
+  type: string;
 }
 
 type Category = "all" | "movies" | "genres" | "tags" | "people" | "bookmarks";
@@ -146,12 +147,15 @@ function SearchContent() {
   }, [debouncedQuery, category, libraryId]);
 
   // Fetch libraries — placeholderData keeps previous value across re-renders to avoid layout shift
-  const { data: libraries, isLoading: librariesLoading } = useQuery<Library[]>({
+  const { data: allLibraries, isLoading: librariesLoading } = useQuery<Library[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
     staleTime: 5 * 60 * 1000,
     placeholderData: (prev) => prev,
   });
+  // Search is a cinema-domain feature (movies/people/bookmarks); photo
+  // libraries belong to the /photos domain and must not appear in its filter.
+  const libraries = allLibraries?.filter((lib) => lib.type !== "photo");
   const showLibraryFilter = !librariesLoading && libraries && libraries.length > 1;
   const selectedLibraryName = libraries?.find((l) => l.id === libraryId)?.name;
 

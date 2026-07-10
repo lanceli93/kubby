@@ -127,10 +127,14 @@ export default function HomePage() {
   const { data: prefs } = useUserPreferences();
   const mosaicConfig = prefs?.heroMosaicConfig;
 
-  const { data: libraries = [] } = useQuery<Library[]>({
+  const { data: allLibraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
   });
+  // Cinema and Photos are fully separated domains that only share the
+  // ["libraries"] cache. The cinema home page must show cinema-domain
+  // libraries only — photo libraries live under /photos, never here.
+  const libraries = allLibraries.filter((lib) => lib.type !== "photo");
 
   const { data: continueWatching = [] } = useQuery<Movie[]>({
     queryKey: ["movies", "continue-watching"],
