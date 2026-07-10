@@ -2,10 +2,12 @@
 
 ## Contents
 - [Project Structure](#project-structure)
-- [Database Schema (13 tables)](#database-schema-13-tables)
+- [Domains (Cinema + Photos)](#domains-cinema--photos)
+- [Database Schema (14 tables)](#database-schema-14-tables)
 - [API Endpoints](#api-endpoints)
 - [Authentication](#authentication)
 - [Library Scanner](#library-scanner)
+- [Photo Scanner](#photo-scanner)
 - [Video Playback](#video-playback)
 - [Frontend Components](#frontend-components)
 - [Theme (always dark)](#theme-always-dark)
@@ -28,7 +30,11 @@ kubby/
 │   │   ├── (setup)/                      # First-time setup (no header, public)
 │   │   │   └── setup/setup-wizard.tsx    # 4-step wizard (language → admin → library → done)
 │   │   ├── (main)/                       # Main app (SessionProvider + QueryProvider + AppHeader)
-│   │   │   ├── page.tsx                  # Home (Tabs: Home/Favorites/People; Home = hero mosaic wall + ScrollRows, Favorites = FavoritesBrowser, People = actor mosaic wall)
+│   │   │   ├── layout.tsx                # Main layout (mounts DomainCookieSync + AppHeader + BottomTabs)
+│   │   │   ├── page.tsx                  # Cinema home (Tabs: Home/Favorites/People; Home = hero mosaic wall + ScrollRows, Favorites = FavoritesBrowser, People = actor mosaic wall)
+│   │   │   ├── photos/                    # 📷 Photos domain
+│   │   │   │   ├── page.tsx              # Timeline (month-grouped justified grid, cursor pagination, row-level virtual scroll)
+│   │   │   │   └── view/[id]/page.tsx    # Lightbox (full-screen, zoom/pan, prev/next, EXIF panel, inline video)
 │   │   │   ├── movies/
 │   │   │   │   ├── page.tsx              # Library browse (Tabs: Movies/Favorites/Genres/Actors)
 │   │   │   │   └── [id]/
@@ -50,7 +56,8 @@ kubby/
 │   │   │       └── users/page.tsx        # User management
 │   │   └── api/                          # ~30 API route files
 │   ├── components/
-│   │   ├── layout/                       # AppHeader, BottomTabs, AdminSidebar, NavSidebar, GlobalScanBar
+│   │   ├── layout/                       # AppHeader (brand domain-switcher dropdown), BottomTabs, AdminSidebar, NavSidebar, GlobalScanBar, DomainCookieSync, PreferencesSidebar
+│   │   ├── photos/                       # lightbox-video.tsx (iOS/HEVC-aware inline playback), lightbox-info-panel.tsx (EXIF)
 │   │   ├── movie/
 │   │   │   ├── movie-card.tsx            # Poster card (180x270, responsive prop for mobile grid)
 │   │   │   ├── bookmark-card.tsx         # Bookmark thumbnail card (320px, hover ambilight glow)
@@ -67,11 +74,13 @@ kubby/
 │   │   ├── auth.ts                       # NextAuth full config (DB queries, bcrypt)
 │   │   ├── auth.config.ts                # NextAuth lightweight (Edge-compatible, no DB)
 │   │   ├── db/
-│   │   │   ├── schema.ts                 # Drizzle schema (13 tables)
+│   │   │   ├── schema.ts                 # Drizzle schema (14 tables, incl. photo_items)
 │   │   │   └── index.ts                  # Proxy lazy-init DB connection (WAL + FK + auto-migrate)
 │   │   ├── paths.ts                      # Centralized path management (KUBBY_DATA_DIR)
 │   │   ├── scanner/
-│   │   │   ├── index.ts                  # Library scanner (multi-path, TMDB scrape, DB write)
+│   │   │   ├── index.ts                  # Scanner entry — dispatches to photo-scanner when library.type==="photo", else movie scan (multi-path, TMDB scrape, DB write)
+│   │   │   ├── photo-scanner.ts          # Photo/video scanner (EXIF via exifr, sharp thumbs w/ ffmpeg HEIC fallback, cursor timeline data)
+│   │   │   ├── probe.ts                  # Shared ffprobe wrapper (video codec/resolution/duration)
 │   │   │   ├── nfo-parser.ts             # NFO XML parser
 │   │   │   └── nfo-writer.ts             # NFO generator (Kodi/Jellyfin compatible)
 │   │   ├── transcode/
@@ -89,7 +98,7 @@ kubby/
 │   ├── i18n/
 │   │   ├── config.ts                     # locales: ["en", "zh"]
 │   │   ├── request.ts                    # Server: read locale from NEXT_LOCALE cookie
-│   │   └── messages/{en,zh}.json         # 12 namespaces
+│   │   └── messages/{en,zh}.json         # 20 namespaces (incl. photos)
 │   ├── providers/
 │   │   ├── query-provider.tsx            # TanStack React Query
 │   │   ├── session-provider.tsx          # NextAuth session
@@ -112,7 +121,38 @@ kubby/
     └── docker.yml                        # Docker image (amd64)
 ```
 
-## Database Schema (13 tables)
+## Domains (Cinema + Photos)
+
+Kubby is multi-domain. Each media domain has its own tables, scanner branch, API
+routes, and homepage; shared infra (library management, image serving, playback
+pipeline, auth, i18n) is reused, not forked.
+
+| Concern | 🎬 Cinema | 📷 Photos |
+|---------|-----------|-----------|
+| Library type | `media_libraries.type = "movie"` | `... = "photo"` |
+| Items table | `movies` (+ discs/streams/people) | `photo_items` |
+| Scanner | `scanner/index.ts` (NFO + TMDB) | `scanner/photo-scanner.ts` (EXIF) |
+| Homepage | `/` (hero mosaic Tabs) | `/photos` (timeline) |
+| Detail/view | `/movies/[id]` | `/photos/view/[id]` (lightbox) |
+| API prefix | `/api/movies/*` | `/api/photos/*` |
+
+- **Photo libraries force `scraper_enabled=false, jellyfin_compat=false,
+  metadata_language=null`** (server-side in libraries POST/PUT). The dashboard
+  library form hides those fields for photo type.
+- **Domain switcher**: dropdown on the Kubby brand in `AppHeader`, rendered only
+  when `useHasPhotoLibrary()` is true (reuses the `["libraries"]` React Query
+  cache). `NavSidebar` and `BottomTabs` likewise show a `/photos` entry only then.
+- **`DomainCookieSync`** (mounted in `(main)/layout.tsx`) writes a `kubby-domain`
+  cookie (`cinema`/`photos`) as the user navigates, so the root can jump to the
+  right homepage. The Edge proxy redirect in `auth.config.ts` reads the cookie but
+  **can't query the DB**, so DomainCookieSync self-heals a stale `photos` cookie to
+  `cinema` when no photo library exists (else `/` would bounce to an empty
+  `/photos` with no nav entry). The `/`→`/photos` redirect only fires on direct
+  entry (`sec-fetch-site: none`) so in-app links to `/` still work.
+- **Theme is shared** — the photos domain uses the same dark cinema tokens, not a
+  separate light theme (explicit user decision).
+
+## Database Schema (14 tables)
 
 ### Core tables
 
@@ -120,7 +160,7 @@ kubby/
 
 **settings**: key (PK), value — global key-value config (e.g., `tmdb_api_key`)
 
-**media_libraries**: id, name, type (movie/tvshow/music), folder_path, scraper_enabled, jellyfin_compat, metadata_language, last_scanned_at, created_at
+**media_libraries**: id, name, type (movie/tvshow/music/book/**photo**), folder_path, scraper_enabled, jellyfin_compat, metadata_language, last_scanned_at, created_at
 
 **movies**: id, title, original_title, sort_name, overview, tagline, file_path, folder_path, poster_path (relative), fanart_path (relative), nfo_path, community_rating, official_rating, runtime_minutes, premiere_date, year, genres (JSON array), studios (JSON array), country, video_codec, audio_codec, video_width, video_height, audio_channels, container, total_bitrate, file_size, format_name, disc_count, duration_seconds, tmdb_id, imdb_id, media_library_id (FK CASCADE), date_added
 - Indexes: media_library_id, year, date_added
@@ -151,6 +191,12 @@ kubby/
 
 **bookmark_icons**: id, user_id (FK), label, image_path, dot_color, created_at
 
+### Photos domain table
+
+**photo_items**: id, library_id (FK CASCADE), file_path (UNIQUE, absolute), file_name, is_video (bool), taken_at (epoch ms — EXIF capture time, **the timeline sort key**), width, height, duration_seconds (video), video_codec/audio_codec/container (video — playback decision inputs), file_size, mime_type, camera_make, camera_model, gps_lat, gps_lng, orientation, thumbnail_path (rel to data dir), preview_path (only for browser-unrenderable formats like HEIC), exif_json (long-tail EXIF fallback), folder_path (rel to library root, reserved for v2 albums), date_added, date_modified (file mtime ms, for incremental scan diffing)
+- Indexes: `idx_pi_library` (library_id), `idx_pi_taken` (library_id, taken_at — timeline cursor), `idx_pi_folder` (folder_path), `idx_pi_video` (is_video)
+- Photos + videos share one table (`is_video` flag); a photo library is a merged media type, not separate photo/video libraries.
+
 ### ER relationships
 
 ```
@@ -160,8 +206,10 @@ users ──1:1──> user_preferences
 users ──1:N──> movie_bookmarks ──N:1──> movies
 users ──1:N──> bookmark_icons
 media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1──> people
-                                  ├──1:N──> movie_discs
-                                  └──1:N──> media_streams
+   (type=movie)                    ├──1:N──> movie_discs
+                                   └──1:N──> media_streams
+media_libraries ──1:N──> photo_items
+   (type=photo)
 ```
 
 ## API Endpoints
@@ -196,6 +244,12 @@ media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1�
 - `PUT /api/users/me/password`
 - `GET /api/images/[...path]` — Local image serving
 - `GET /api/libraries` — Library list
+- **Photos domain:**
+  - `GET /api/photos?cursor=&limit=&libraryId=` — Timeline page (cursor pagination, sorted `taken_at DESC, id DESC`; cursor = `"{takenAt}_{id}"`). Returns `{ items:[{id,isVideo,takenAt,width,height,durationSeconds,fileName}], nextCursor }`
+  - `GET /api/photos/[id]` — Full row + parsed `exif` object
+  - `GET /api/photos/[id]/thumb` — WebP thumbnail (immutable 1yr cache)
+  - `GET /api/photos/[id]/file` — Full image (HEIC→preview, else original; `?original=1` forces download) / video (HTTP 206 Range)
+  - `GET /api/photos/[id]/stream/decide` — Video playback decision (reuses `decidePlayback` + transcode-manager; `?noHevc=1` for iOS forces HEVC direct→remux)
 - HLS streaming: `GET /api/stream/[sessionId]/playlist.m3u8`, `GET /api/stream/[sessionId]/segment/[name]`, `POST/PATCH/DELETE /api/stream/[sessionId]` (POST=seek, PATCH=heartbeat, DELETE=stop)
 
 ### Admin only
@@ -251,7 +305,43 @@ Expected directory structure:
 │   └── fanart.jpg      # Background image
 ```
 
+## Photo Scanner
+
+`scanPhotoLibrary(library, onProgress?)` in `scanner/photo-scanner.ts`, dispatched
+from `scanner/index.ts` when `library.type === "photo"`. The movie code path is
+untouched.
+
+```
+scanPhotoLibrary
+  ├── Recursive walk (skips dotfiles, @eaDir, #recycle, .thumbnails)
+  │     image exts: .jpg .jpeg .png .webp .heic .heif .gif .avif
+  │     video exts: .mp4 .mov .m4v .3gp
+  ├── Incremental: skip if date_modified === mtimeMs && file_size unchanged
+  ├── Concurrency pool of 4
+  ├── Images: exifr EXIF → sharp 400px WebP thumbnail (ffmpeg fallback);
+  │           HEIC/HEIF also get a 2000px preview WebP
+  │           taken_at = EXIF DateTimeOriginal > CreateDate > file mtime
+  ├── Videos: ffprobe (codec/res/duration) + creation_time → ffmpeg middle-frame thumbnail
+  │           taken_at = creation_time > file mtime
+  ├── Clean up rows whose files no longer exist
+  └── Return { scannedCount, removedCount, skipped[] }
+```
+
+> **HEIC 铁律 (Windows):** sharp's libvips on Windows **cannot decode HEIC**
+> ("Support for this compression format has not been built in") — but
+> `sharp().metadata()` still reads dimensions. **ffmpeg CAN decode HEIC → WebP.**
+> So the scanner is sharp-first, ffmpeg-fallback for pixel work, and HEIC/HEIF get
+> an extra browser-renderable preview (the lightbox/`file` route serves the preview,
+> not the raw HEIC). Do not assume sharp handles HEIC.
+
+Thumbnails/previews live under `metadata/photo-thumbs/` (via
+`getPhotoThumbsDir()` in `paths.ts`).
+
 ## Video Playback
+
+Photos-domain video reuses this whole pipeline via `/api/photos/[id]/stream/decide`
+— same `playback-decider` + `transcode-manager`. iOS passes `?noHevc=1` (HEVC
+direct→remux instead of the mediaStreams profile check, which photo videos lack).
 
 ### Decision flow
 ```
@@ -305,7 +395,9 @@ GET /api/movies/{id}/stream/decide?disc=N
 | AddLibraryCard | 360x200 | Dashed border, "+" icon, opens add library dialog |
 | BookmarkCard | 280px mobile / 320px desktop | Thumbnail, icon, tags, edit/delete |
 | ScrollRow | Horizontal scroll | Chevron nav (hidden mobile), snap scroll on touch |
-| BottomTabs | Fixed bottom bar | Home/Movies/Search/Settings, md:hidden, hidden on play page |
+| BottomTabs | Fixed bottom bar | Home/Movies/(Photos)/Search/Settings, md:hidden, hidden on play page; Photos tab only when a photo library exists |
+| Photos timeline | Full page | Month-grouped justified grid, cursor pagination, row-level virtual scroll (`@tanstack/react-virtual`) |
+| Photos lightbox | Full-screen | Zoom/pan, prev/next (←/→/swipe), EXIF panel, neighbor preload, inline video (`LightboxVideo`) |
 | GlobalScanBar | Bottom bar | Current scan title + progress, expandable skipped list |
 
 ## Theme (always dark)
@@ -326,7 +418,7 @@ Font: Inter (next/font/google), CJK fallback: PingFang SC → Microsoft YaHei �
 
 ## i18n
 
-Cookie-driven (`NEXT_LOCALE`), 12 namespaces: common, auth, setup, nav, home, settings, dashboard, movies, search, person, personalMetadata, folderPicker.
+Cookie-driven (`NEXT_LOCALE`), 20 namespaces: common, auth, setup, nav, home, settings, dashboard, movies, search, person, metadata, cardBadges, heroMosaic, peopleHero, preferences, personalMetadata, mediaInfoDialog, player, folderPicker, photos.
 
 Language switch: `setLocale()` server action writes cookie → `router.refresh()`. User locale persisted in DB via `PUT /api/users/me`.
 
@@ -339,7 +431,7 @@ Language switch: `setLocale()` server action writes cookie → `router.refresh()
 | Docker | Container | `/data` volume |
 | Dev | Project root | `./data/` |
 
-Data directory contents: `kubby.db`, `kubby.db-wal`, `auth-secret`, `config.json`, `logs/`, `metadata/people/`, `metadata/bookmarks/`, `metadata/bookmark-icons/`
+Data directory contents: `kubby.db`, `kubby.db-wal`, `auth-secret`, `config.json`, `logs/`, `metadata/people/`, `metadata/bookmarks/`, `metadata/bookmark-icons/`, `metadata/photo-thumbs/` (photo/video thumbnails + HEIC previews)
 
 ## Key Environment Variables
 

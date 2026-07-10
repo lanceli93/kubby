@@ -11,9 +11,23 @@ user_invocable: true
 
 # Kubby Project Reference
 
-Self-hosted movie server built with Next.js. Dark cinema theme, Jellyfin-compatible
-media libraries (NFO + folder structure), TMDB scraping, HLS transcoding,
-multi-dimension ratings.
+Self-hosted media server built with Next.js. Dark cinema theme (shared across all
+domains). Multi-domain: **🎬 Cinema** (Jellyfin-compatible movie libraries — NFO +
+folder structure, TMDB scraping, HLS transcoding, multi-dimension ratings) and
+**📷 Photos** (photo + video timeline library — EXIF, virtual-scroll grid, lightbox,
+inline video playback). Music is designed but unscheduled.
+
+## Domain separation
+
+Each media domain owns independent tables / scanner branch / API routes / homepage,
+but shares infra: library management, image serving, the playback pipeline
+(`playback-decider` + `transcode-manager`), auth, and i18n. A domain switcher lives
+as a dropdown on the Kubby brand in `AppHeader` (only rendered when a photo library
+exists — `useHasPhotoLibrary()`). `DomainCookieSync` persists the last domain in a
+`kubby-domain` cookie so the root can jump to the right homepage; it self-heals a
+stale `photos` cookie when no photo library exists (the Edge proxy redirect can't
+query the DB). **When adding a domain, follow this separation — do not fork the
+movie code path.**
 
 ## Working on this repo: delegate to subagents
 
@@ -125,8 +139,8 @@ manual edits. Release flow: push `v0.x.y` tag → CI extracts version → passes
 
 | File | When to read |
 |------|-------------|
-| `references/architecture.md` | Project structure, DB schema (13 tables), API endpoints, scanner, playback internals, theme, i18n, data dirs, mobile responsive. Read when implementing features or fixing bugs that touch these. |
-| `references/feature-patterns.md` | How a specific feature is built — 360° player, player controls, navigation, GlassToast, metadata browser/editor, people body metadata, dimension management, UI design system. Read the one section matching your task. |
+| `references/architecture.md` | Project structure, DB schema (14 tables), API endpoints, scanner (movie + photo branches), playback internals, theme, i18n, data dirs, mobile responsive. Read when implementing features or fixing bugs that touch these. |
+| `references/feature-patterns.md` | How a specific feature is built — 360° player, player controls, navigation, domain switcher, photos timeline/lightbox, GlassToast, metadata browser/editor, people body metadata, dimension management, UI design system. Read the one section matching your task. |
 | `references/release-workflow.md` | Packaging, testing builds, creating and publishing releases. |
 | `references/readme-media-capture.md` | (Re)generating README screenshots + animated demos: ffmpeg ddagrab recording, mp4→animated-WebP, chrome-devtools MCP screenshots, seeding demo data (ratings/bookmarks/gallery) via API, prod-build-on-8665 setup. Read when updating `docs/screenshots/`. |
 | `docs/multi-model-workflow.md` | The Fable-orchestrates / opus-sonnet-executes workflow in full. |

@@ -8,6 +8,8 @@ every task.
 - [360° panorama player](#360-panorama-player)
 - [Player controls grouping](#player-controls-grouping)
 - [Navigation structure](#navigation-structure)
+- [Domain switcher + photos navigation](#domain-switcher--photos-navigation)
+- [Photos timeline + lightbox](#photos-timeline--lightbox)
 - [GlassToast](#glasstoast)
 - [Metadata Browser](#metadata-browser)
 - [Metadata editor Images tab](#metadata-editor-images-tab)
@@ -53,6 +55,45 @@ sub-pages use `PreferencesSidebar` (same pattern).
 
 Route migrations: `/settings` → `/profile` + `/preferences/*`; `/card-badges` →
 `/preferences/card-badges`; `/personal-metadata` → `/preferences/ratings-bookmarks`.
+
+## Domain switcher + photos navigation
+
+The 🎬 Cinema / 📷 Photos switcher is a **dropdown on the Kubby brand** in
+`AppHeader` (`Kubby ▾` with Clapperboard/Images items + a Check on the active
+domain), not a second pill group. This was a deliberate de-clutter: the header
+already carries the home content Tabs (`首页/收藏/演员`), and two visually identical
+pill rows at different hierarchy levels read as messy. The dropdown only renders
+when `useHasPhotoLibrary()` is true; with no photo library the brand is a plain
+`/` link. `NavSidebar` (Media group) and `BottomTabs` likewise gate their `/photos`
+entry on `useHasPhotoLibrary()`.
+
+`useHasPhotoLibrary()` (`hooks/use-has-photo-library.ts`) reuses the `["libraries"]`
+React Query cache (5-min staleTime) → `data?.some(l => l.type === "photo")`, so it
+adds no extra request. `DomainCookieSync` (see architecture.md → Domains) persists
+the domain cookie and self-heals a stale `photos` cookie.
+
+## Photos timeline + lightbox
+
+**Timeline** (`app/(main)/photos/page.tsx`): month-grouped justified grid.
+`useInfiniteQuery(["photos"])` with **cursor** pagination (not offset) — cursor
+`"{takenAt}_{id}"`, predicate `(takenAt < c) OR (takenAt = c AND id < c.id)`,
+sorted `taken_at DESC, id DESC`. Row-level **virtual scrolling** via
+`@tanstack/react-virtual` (`useVirtualizer`): month headers and justified grid rows
+are interleaved as virtual rows. `computeJustifiedLayout()` in
+`lib/photos/justified-layout.ts` is a pure function → equal-height rows, last row
+not stretched. ResizeObserver triggers relayout.
+
+**Lightbox** (`app/(main)/photos/view/[id]/page.tsx`): full-screen `fixed inset-0`,
+prev/next (←/→/swipe) walk the shared `["photos"]` cache with `router.replace`,
+wheel/double-click zoom + drag-pan, ⓘ EXIF panel (`LightboxInfoPanel` via
+`useQuery(["photo", id])`), neighbor preload, thumb-blur placeholder. Video items
+render `LightboxVideo` (`components/photos/lightbox-video.tsx`): iOS-detect →
+`decide?noHevc=1`, then direct play or hls.js/native HLS; DELETEs the transcode
+session on unmount.
+
+**Theme**: same dark cinema tokens as the rest of the app (`--header`,
+`text-muted-foreground`, `bg-white/[0.06]`) — not a light photo-album theme. This
+was an explicit user correction; keep future domains on the shared dark theme.
 
 ## GlassToast
 
