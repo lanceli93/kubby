@@ -197,6 +197,7 @@
     "quickActions": "快速操作",
     "scanAllLibraries": "扫描所有媒体库",
     "addLibrary": "添加媒体库",
+    "libraryTypePhoto": "照片",
     "addUser": "添加用户",
     "metadataProviders": "元数据提供者",
     "tmdbApiKey": "TMDB API 密钥",
@@ -665,6 +666,7 @@
   },
   "photos": {
     "title": "照片",
-    "comingSoon": "照片时间线即将上线。"
+    "photoCount": "{count} 项",
+    "empty": "还没有照片——先扫描一个照片库"
   }
 }

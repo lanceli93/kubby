@@ -197,6 +197,7 @@
     "quickActions": "Quick Actions",
     "scanAllLibraries": "Scan All Libraries",
     "addLibrary": "Add Library",
+    "libraryTypePhoto": "Photos",
     "addUser": "Add User",
     "metadataProviders": "Metadata Providers",
     "tmdbApiKey": "TMDB API Key",
@@ -665,6 +666,7 @@
   },
   "photos": {
     "title": "Photos",
-    "comingSoon": "The photos timeline is coming soon."
+    "photoCount": "{count} items",
+    "empty": "No photos yet — scan a photo library"
   }
 }

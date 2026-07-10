@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useAllScans, useScanActions } from "@/providers/scan-provider";
 import Image from "next/image";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -22,7 +23,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X, Film, MoreVertical, Pencil, HardDriveDownload } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X, Film, Images, MoreVertical, Pencil, HardDriveDownload } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -43,6 +44,7 @@ interface Library {
 }
 
 export default function LibrariesPage() {
+  const t = useTranslations("dashboard");
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
@@ -60,6 +62,7 @@ export default function LibrariesPage() {
   // Edit dialog state
   const [editOpen, setEditOpen] = useState(false);
   const [editLibId, setEditLibId] = useState<string | null>(null);
+  const [editType, setEditType] = useState("movie");
   const [editName, setEditName] = useState("");
   const [editFolderPaths, setEditFolderPaths] = useState<string[]>([]);
   const [editNewFolderPath, setEditNewFolderPath] = useState("");
@@ -110,6 +113,7 @@ export default function LibrariesPage() {
       setName("");
       setFolderPaths([]);
       setNewFolderPath("");
+      setType("movie");
       setScraperEnabled(false);
       setJellyfinCompat(false);
       setMetadataLanguage("en");
@@ -140,6 +144,7 @@ export default function LibrariesPage() {
 
   const openEditDialog = (lib: Library) => {
     setEditLibId(lib.id);
+    setEditType(lib.type);
     setEditName(lib.name);
     setEditFolderPaths(lib.folderPaths);
     setEditNewFolderPath("");
@@ -233,6 +238,7 @@ export default function LibrariesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="movie">Movie</SelectItem>
+                      <SelectItem value="photo">{t("libraryTypePhoto")}</SelectItem>
                       <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
                       <SelectItem value="music" disabled>Music (coming soon)</SelectItem>
                     </SelectContent>
@@ -310,6 +316,8 @@ export default function LibrariesPage() {
                     setFolderPaths([...folderPaths, p]);
                   }}
                 />
+                {type !== "photo" && (
+                  <>
                 {/* Metadata downloaders section */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-muted-foreground">
@@ -417,9 +425,11 @@ export default function LibrariesPage() {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+                  </>
+                )}
 
                 {/* Scraper error alert */}
-                {scraperError && (
+                {type !== "photo" && scraperError && (
                   <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                     <div className="flex-1">
@@ -492,6 +502,8 @@ export default function LibrariesPage() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                       {lib.type === "movie" ? (
                         <Film className="h-6 w-6 text-primary" />
+                      ) : lib.type === "photo" ? (
+                        <Images className="h-6 w-6 text-primary" />
                       ) : (
                         <Folder className="h-6 w-6 text-primary" />
                       )}
@@ -569,7 +581,7 @@ export default function LibrariesPage() {
               <div className="mt-2 text-center">
                 <p className="truncate text-sm font-semibold text-foreground">{lib.name}</p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {lib.type === "movie" ? "Movies" : lib.type} · {lib.movieCount ?? 0}
+                  {lib.type === "movie" ? "Movies" : lib.type === "photo" ? t("libraryTypePhoto") : lib.type} · {lib.movieCount ?? 0}
                 </p>
               </div>
             </div>
@@ -674,6 +686,8 @@ export default function LibrariesPage() {
                 }}
               />
             </div>
+            {editType !== "photo" && (
+              <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-medium text-muted-foreground">
@@ -750,6 +764,8 @@ export default function LibrariesPage() {
                 Prevents Kubby from writing to NFO files and imports actor photos from Jellyfin local paths.
               </p>
             </div>
+              </>
+            )}
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"

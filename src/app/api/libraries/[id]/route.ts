@@ -71,9 +71,19 @@ export async function PUT(
     } else if (folderPath !== undefined) {
       updates.folderPath = folderPath;
     }
-    if (scraperEnabled !== undefined) updates.scraperEnabled = scraperEnabled;
-    if (jellyfinCompat !== undefined) updates.jellyfinCompat = jellyfinCompat;
-    if (metadataLanguage !== undefined) updates.metadataLanguage = metadataLanguage || null;
+
+    // Photo libraries have no scraper/NFO/metadata-language concept — force these off
+    // regardless of what the request body sent, no matter the existing stored type.
+    const isPhoto = existing.type === "photo";
+    if (isPhoto) {
+      updates.scraperEnabled = false;
+      updates.jellyfinCompat = false;
+      updates.metadataLanguage = null;
+    } else {
+      if (scraperEnabled !== undefined) updates.scraperEnabled = scraperEnabled;
+      if (jellyfinCompat !== undefined) updates.jellyfinCompat = jellyfinCompat;
+      if (metadataLanguage !== undefined) updates.metadataLanguage = metadataLanguage || null;
+    }
 
     if (Object.keys(updates).length > 0) {
       db.update(mediaLibraries)

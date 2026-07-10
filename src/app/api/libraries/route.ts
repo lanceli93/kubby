@@ -75,13 +75,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Photo libraries have no scraper/NFO/metadata-language concept — force these off
+    // regardless of what the request body sent.
+    const isPhoto = type === "photo";
+    const finalScraperEnabled = isPhoto ? false : !!scraperEnabled;
+    const finalJellyfinCompat = isPhoto ? false : !!jellyfinCompat;
+    const finalMetadataLanguage = isPhoto ? null : (metadataLanguage || null);
+
     const id = uuidv4();
     const serialized = serializeFolderPaths(paths);
     db.insert(mediaLibraries)
-      .values({ id, name, type, folderPath: serialized, scraperEnabled: !!scraperEnabled, jellyfinCompat: !!jellyfinCompat, metadataLanguage: metadataLanguage || null })
+      .values({ id, name, type, folderPath: serialized, scraperEnabled: finalScraperEnabled, jellyfinCompat: finalJellyfinCompat, metadataLanguage: finalMetadataLanguage })
       .run();
 
-    return NextResponse.json({ id, name, type, folderPath: serialized, folderPaths: paths, scraperEnabled: !!scraperEnabled, jellyfinCompat: !!jellyfinCompat, metadataLanguage: metadataLanguage || null }, { status: 201 });
+    return NextResponse.json({ id, name, type, folderPath: serialized, folderPaths: paths, scraperEnabled: finalScraperEnabled, jellyfinCompat: finalJellyfinCompat, metadataLanguage: finalMetadataLanguage }, { status: 201 });
   } catch (error) {
     console.error("Create library error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
