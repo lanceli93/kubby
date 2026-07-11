@@ -3,6 +3,35 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-11 — QQ-Music-style Now Playing overlay
+
+Redesigned the full-screen music Now Playing overlay to mimic QQ Music. Pattern
+detail in the skill (`references/feature-patterns.md` → Music library + global
+player). Orchestrated as 3 executor subagents (Web Audio / vinyl+lyrics / overlay
+restructure), each verified + a concurrency fix folded in by the orchestrator.
+
+- **Rotating vinyl disc** (`vinyl-disc.tsx`) — simple dark grooved disc, large
+  circular cover label (~64% diameter, per feedback the vinyl ring was too heavy),
+  spins via `.music-vinyl-spin`, freezes on pause, reduced-motion aware.
+- **Real audio spectrum** (`audio-spectrum.tsx` + `ensureAnalyser()` in the player
+  provider) — Web Audio `AnalyserNode` on the singleton `<audio>`, canvas rAF bars.
+  Safe-sequencing so audio is never silenced (resume-first, one-shot source, never
+  disconnect, **in-flight-promise-memoized** build so the two concurrent spectrum
+  mounts + StrictMode don't race a second `createMediaElementSource`).
+- **Left-aligned lyrics** (`LyricsView align="left"`), **left-aligned** in the
+  desktop right pane; self-scroll centering untouched.
+- **Bottom transport bar** — favorite heart (own query/mutation) + mini info ·
+  spectrum + transport + long seek · volume popover + queue-drawer toggle.
+- **Queue drawer** — right-anchored, frosted glass mirroring the homepage
+  `NavSidebar` drawer (dimming blur scrim + translucent panel + inset edge highlight).
+- **Adaptive ambient glow** — background halo + spectrum tint follow the album
+  cover's dominant colour via the existing `extractAmbientColor` helper.
+
+Verified in-browser (chrome-devtools MCP): vinyl spin/freeze, spectrum reacts to
+audio + survives overlay close/reopen, **audio keeps playing after closing the
+overlay** (the key regression), adaptive glow matches cover, drawer glass + scrim
+click-to-close.
+
 ## 2026-07-11 — Backend review + hardening (`574f5ec`)
 
 Four-dimension read-only review (cross-domain / API security / robustness / DB) via

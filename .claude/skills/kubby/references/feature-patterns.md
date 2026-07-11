@@ -199,16 +199,61 @@ when it is the player's current track.
   close button (`t("closePlayer")`) that calls it and also drops `expanded`.
 - `NowPlayingBar` (`components/music/now-playing-bar.tsx`): fixed glass bar at
   `bottom-[calc(3.5rem+env(safe-area-inset-bottom))]` on mobile (above BottomTabs,
-  tracking its safe-area height) / `md:bottom-0`; click the cover/title to
-  expand a full-screen `fixed inset-0` Now Playing overlay with a blurred cover
-  backdrop. The overlay is a **non-scrolling flex row** — desktop is two columns
-  (player left, a `歌词/播放队列` tabbed panel right, **lyrics open by default**);
-  each pane scrolls internally so the cover/transport never move. Mobile uses a top
-  segmented `正在播放 / 歌词 / 播放队列` switch (state: `mobileView "cover"|"panel"`
-  × `panel "lyrics"|"queue"`) plus a mini transport pinned under the panel. The
-  small pill switcher is the local `Segmented` component. Overlay top bar +
-  mobile transport fold the safe-area inset into their padding via calc (not
-  `pt-safe`/`pb-safe` — see the safe-area pitfall under UI Design System).
+  tracking its safe-area height) / `md:bottom-0`; click the cover/title to expand a
+  full-screen `fixed inset-0` Now Playing overlay. The overlay is a **QQ-Music-style
+  layout** (redesigned from the earlier two-column player + tabbed panel):
+  - **Desktop** is a non-scrolling **column**: a content row that grows (left =
+    rotating `VinylDisc` + meta; right = **left-aligned** `LyricsView align="left"`,
+    lyrics-only — the queue moved to a drawer) over a **full-width bottom transport
+    bar** — left cluster (mini circular cover + title/artist + `FavoriteHeart`),
+    center (real-audio `AudioSpectrum` over shuffle/prev/play/next/repeat over a long
+    seek bar), right cluster (`VolumePopover` + a `播放队列` toggle). Each pane scrolls
+    internally so the disc/transport never move.
+  - **Queue drawer** (desktop): a `queueOpen` boolean opens a right-anchored panel
+    (`animate-slide-in-right`, `top: calc(64px + inset)` so it clears the top bar)
+    with a **frosted-glass** treatment mirroring the homepage `NavSidebar` drawer —
+    a dimming `bg-black/50 backdrop-blur-sm` click-to-close scrim + a translucent
+    `bg-[#0a0a0f]/70 backdrop-blur-2xl` panel with an inset edge-highlight
+    (`shadow-[inset_0.5px_0_0_rgba(255,255,255,0.06)]`). Reuses the `TrackRow` map.
+  - **Mobile** keeps the top segmented `正在播放 / 歌词 / 播放队列` switch (state:
+    `mobileView "cover"|"panel"` × `panel "lyrics"|"queue"`, MOBILE-only now — desktop
+    no longer uses `panel`) + a mini transport; the `正在播放` view shows the
+    `VinylDisc` + a compact `AudioSpectrum`. The small pill switcher is the local
+    `Segmented` component.
+  - `FavoriteHeart` + `VolumePopover` are local helpers. `FavoriteHeart` owns its
+    own `useQuery`/`useMutation` on `/api/music/tracks/[id]/user-data` (favorite state
+    is NOT threaded through the player store — same as `TrackRow`). Overlay top bar +
+    mobile transport + bottom bar fold the safe-area inset into their padding via calc
+    (not `pt-safe`/`pb-safe` — see the safe-area pitfall under UI Design System).
+- **Rotating vinyl** — `components/music/vinyl-disc.tsx` (`VinylDisc`): a simple dark
+  grooved disc (CSS `repeating-radial-gradient` rings, NOT a skeuomorphic turntable)
+  with the album cover as a large **circular center label (~64% of the disc
+  diameter** — deliberately large so the cover dominates and the black ring stays
+  thin) + a spindle hole. Spins via `.music-vinyl-spin` (`@keyframes vinylSpin`,
+  globals.css, 24s linear); `animationPlayState` is bound to `isPlaying` so it
+  **freezes on pause**; `prefers-reduced-motion` disables the spin.
+- **Real audio spectrum (光柱)** — `components/music/audio-spectrum.tsx`
+  (`AudioSpectrum`, props `{className, bars=48, color}`) draws live frequency data on
+  a DPR-scaled `<canvas>` (rAF `getByteFrequencyData`). It taps the singleton
+  `<audio>` via the provider's exported **`ensureAnalyser(): Promise<AnalyserNode |
+  null>`**. Safe-sequencing rules that MUST hold (audio must never be silenced):
+  `createMediaElementSource` is one-shot per element and reroutes output, so it's
+  only reached once `audioCtx.state === "running"` (resume-first, bail before
+  rerouting); the graph is **never disconnected** (the element is a persistent
+  singleton — disconnecting would mute all playback after the overlay closes); and
+  the build is **memoized on an in-flight promise** (`analyserBuild`) so the two
+  concurrent `AudioSpectrum` mounts (desktop bottom bar + the `md:hidden` mobile one,
+  both in the DOM) — and React StrictMode double-mount — share ONE build instead of
+  racing into a second `createMediaElementSource` that throws + nulls the valid node.
+  On failure the memo is cleared so a later user-gestured call can retry. Reduced-
+  motion / no-analyser → a static faint idle bar row.
+- **Adaptive ambient glow** — the overlay tints its background halo to the current
+  album cover's dominant hue by reusing `extractAmbientColor(currentTrack.coverBlur)`
+  (`lib/ambient-color.ts`, the same helper the home hero uses; effect keyed on the
+  blur URL with a `cancelled` guard, state set only from the async callback). The hue
+  drives both a radial-gradient wash layer (`transition-[background] duration-700` so
+  it eases when the track changes) over the existing blurred-cover backdrop, and the
+  `AudioSpectrum` `color` (falls back to `--primary` when extraction returns null).
 
 **Domain integration** (same shared-cache pattern as photos): `useHasMusicLibrary()`
 reads the `["libraries"]` React Query cache (`type === "music"`, no extra request).

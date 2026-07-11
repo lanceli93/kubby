@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Play,
@@ -15,13 +15,19 @@ import {
   ChevronDown,
   Maximize2,
   Music,
+  Heart,
+  ListMusic,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { extractAmbientColor } from "@/lib/ambient-color";
 import { useMusicPlayer } from "@/providers/music-player-provider";
 import { TrackRow } from "@/components/music/track-row";
 import { LyricsView } from "@/components/music/lyrics-view";
+import { VinylDisc } from "@/components/music/vinyl-disc";
+import { AudioSpectrum } from "@/components/music/audio-spectrum";
 
 /** Format seconds as m:ss; null/invalid → "0:00". */
 function formatDuration(sec?: number | null): string {
@@ -41,11 +47,16 @@ export function NowPlayingBar() {
   const t = useTranslations("music");
   const player = useMusicPlayer();
   const [expanded, setExpanded] = useState(false);
-  // Side-panel content in the full-screen overlay — lyrics open by DEFAULT
-  // (QQ/Apple Music behaviour); switchable to the queue. Drives both platforms.
+  // MOBILE-ONLY: the top segmented control switches these. Desktop shows the
+  // vinyl + lyrics side by side and no longer uses `panel`.
   const [panel, setPanel] = useState<"lyrics" | "queue">("lyrics");
   // Mobile only: which region is on screen (the side panel shows `panel`).
   const [mobileView, setMobileView] = useState<"cover" | "panel">("cover");
+  // DESKTOP-ONLY: whether the right-side queue drawer is open.
+  const [queueOpen, setQueueOpen] = useState(false);
+  // Dominant album colour driving the adaptive glow + spectrum bar tint. Null
+  // (grayscale/SSR/extraction failure) falls back to --primary.
+  const [glow, setGlow] = useState<[number, number, number] | null>(null);
 
   const {
     currentTrack,
@@ -66,6 +77,22 @@ export function NowPlayingBar() {
     stop,
   } = player;
 
+  // Ease the ambient glow toward the current album's dominant hue; re-runs
+  // when the track (its blur) changes. Mirrors home-hero.tsx:237-246 — state is
+  // only set from the async callback so no synchronous cascade fires. A track
+  // with no blur simply keeps `extractAmbientColor` from resolving a colour.
+  const trackCoverBlur = currentTrack?.coverBlur;
+  useEffect(() => {
+    if (!trackCoverBlur) return;
+    let cancelled = false;
+    extractAmbientColor(trackCoverBlur).then((rgb) => {
+      if (rgb && !cancelled) setGlow(rgb);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [trackCoverBlur]);
+
   if (!currentTrack) return null;
 
   // Close the player: stop playback + clear the queue (this unmounts the bar)
@@ -81,6 +108,10 @@ export function NowPlayingBar() {
 
   const RepeatIcon = repeat === "one" ? Repeat1 : Repeat;
   const VolIcon = volume === 0 ? VolumeX : Volume2;
+
+  // Adaptive glow colour + spectrum tint; --primary when extraction returns null.
+  const glowColor = glow ? `rgb(${glow[0]} ${glow[1]} ${glow[2]})` : undefined;
+  const spectrumColor = glowColor ?? "var(--primary)";
 
   return (
     <>
@@ -201,6 +232,15 @@ export function NowPlayingBar() {
               style={{ backgroundImage: `url(${coverBlur})` }}
             />
           )}
+          {/* Adaptive hue wash — a dim halo tinted to the album's dominant colour,
+              fading smoothly when the track (and colour) changes. */}
+          {glowColor && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -z-10 opacity-40 transition-[background] duration-700"
+              style={{ background: `radial-gradient(60% 60% at 50% 40%, ${glowColor}, transparent 70%)` }}
+            />
+          )}
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-black/45" />
 
           {/* Top bar: collapse + label + (mobile) segmented view switch. Top
@@ -248,176 +288,303 @@ export function NowPlayingBar() {
             </button>
           </div>
 
-          {/* Body — a non-scrolling flex row; each pane scrolls internally so
-              the cover & transport stay put as the song (and lyrics) advance. */}
-          <div className="flex min-h-0 flex-1 md:flex-row md:items-stretch md:gap-12 md:px-12 md:pb-10">
-            {/* ── Player pane (cover + meta + transport) ── */}
-            {/* Equal flex-1 half; content centered by items-center. The cover's
-                own max-width keeps it from ballooning on wide screens. */}
-            <div
-              className={`min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 pb-8 md:flex md:px-0 md:pb-0 ${
-                mobileView === "cover" ? "flex" : "hidden"
-              }`}
-            >
-              <Cover
-                cover={cover}
-                coverBlur={coverBlur}
-                title={currentTrack.title}
-                size={320}
-                rounded="rounded-2xl"
-                className="aspect-square w-full max-w-[min(72vw,340px)] shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
-                sizes="340px"
-              />
-
-              <div className="w-full text-center">
-                <h2 className="truncate text-2xl font-semibold text-foreground">{currentTrack.title}</h2>
-                {currentTrack.artistName && (
-                  <p className="mt-1 truncate text-base text-muted-foreground">{currentTrack.artistName}</p>
-                )}
-                {currentTrack.albumTitle && (
-                  <p className="mt-0.5 truncate text-sm text-muted-foreground/70">{currentTrack.albumTitle}</p>
-                )}
-              </div>
-
-              {/* Seek */}
-              <div className="flex w-full max-w-md items-center gap-3">
-                <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
-                  {formatDuration(currentTime)}
-                </span>
-                <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
-                <span className="w-10 text-xs tabular-nums text-muted-foreground">
-                  {formatDuration(duration)}
-                </span>
-              </div>
-
-              {/* Transport */}
-              <div className="flex items-center gap-6">
-                <IconBtn label={t("shuffle")} onClick={toggleShuffle} active={shuffle} size="lg">
-                  <Shuffle className="h-5 w-5" />
-                </IconBtn>
-                <IconBtn label={t("previous")} onClick={prev} size="lg">
-                  <SkipBack className="h-7 w-7 fill-current" />
-                </IconBtn>
-                <button
-                  onClick={toggle}
-                  aria-label={isPlaying ? t("pause") : t("play")}
-                  className="focus-ring flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
-                >
-                  {isPlaying ? <Pause className="h-8 w-8 fill-current" /> : <Play className="h-8 w-8 translate-x-[2px] fill-current" />}
-                </button>
-                <IconBtn label={t("next")} onClick={next} size="lg">
-                  <SkipForward className="h-7 w-7 fill-current" />
-                </IconBtn>
-                <IconBtn
-                  label={repeat === "one" ? t("repeatOne") : t("repeat")}
-                  onClick={cycleRepeat}
-                  active={repeat !== "off"}
-                  size="lg"
-                >
-                  <RepeatIcon className="h-5 w-5" />
-                </IconBtn>
-              </div>
-
-              {/* Volume */}
-              <div className="flex w-full max-w-md items-center gap-3">
-                <button
-                  onClick={() => setVolume(volume === 0 ? 1 : 0)}
-                  aria-label={volume === 0 ? t("volume") : t("mute")}
-                  className="focus-ring flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 active:scale-95"
-                >
-                  <VolIcon className="h-5 w-5" />
-                </button>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={volume}
-                  onChange={(e) => setVolume(Number(e.target.value))}
-                  aria-label={t("volume")}
-                  className="music-range h-1 flex-1 cursor-pointer"
-                  style={{ "--fill": `${volume * 100}%` } as React.CSSProperties}
+          {/* Body — a column: a content row that grows (vinyl + lyrics on
+              desktop; segmented cover/panel on mobile) over a full-width bottom
+              transport bar (desktop) / mobile mini transport. */}
+          <div className="flex min-h-0 flex-1 flex-col">
+            {/* ── Content row ── */}
+            <div className="flex min-h-0 flex-1 md:flex-row md:items-stretch md:gap-12 md:px-12 md:pb-6">
+              {/* Left half (desktop) / cover view (mobile): vinyl + spectrum + meta.
+                  On mobile this pane also carries the seek/transport/volume that the
+                  desktop bottom bar owns. */}
+              <div
+                className={`min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 pb-8 md:flex md:px-0 md:pb-0 ${
+                  mobileView === "cover" ? "flex" : "hidden"
+                }`}
+              >
+                <VinylDisc
+                  cover={cover}
+                  coverBlur={coverBlur}
+                  title={currentTrack.title}
+                  isPlaying={isPlaying}
+                  className="w-full max-w-[72vw] md:max-w-[min(48vh,420px)]"
                 />
+
+                {/* Compact spectrum under the vinyl on mobile; the desktop bottom
+                    bar has its own wider spectrum. */}
+                <AudioSpectrum className="h-8 w-full max-w-xs md:hidden" color={spectrumColor} />
+
+                <div className="w-full text-center">
+                  <h2 className="truncate text-2xl font-semibold text-foreground">{currentTrack.title}</h2>
+                  {currentTrack.artistName && (
+                    <p className="mt-1 truncate text-base text-muted-foreground">{currentTrack.artistName}</p>
+                  )}
+                  {currentTrack.albumTitle && (
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground/70">{currentTrack.albumTitle}</p>
+                  )}
+                </div>
+
+                {/* Mobile-only seek + transport + volume (desktop uses the bottom
+                    bar). */}
+                <div className="flex w-full max-w-md items-center gap-3 md:hidden">
+                  <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
+                    {formatDuration(currentTime)}
+                  </span>
+                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                  <span className="w-10 text-xs tabular-nums text-muted-foreground">
+                    {formatDuration(duration)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-6 md:hidden">
+                  <IconBtn label={t("shuffle")} onClick={toggleShuffle} active={shuffle} size="lg">
+                    <Shuffle className="h-5 w-5" />
+                  </IconBtn>
+                  <IconBtn label={t("previous")} onClick={prev} size="lg">
+                    <SkipBack className="h-7 w-7 fill-current" />
+                  </IconBtn>
+                  <button
+                    onClick={toggle}
+                    aria-label={isPlaying ? t("pause") : t("play")}
+                    className="focus-ring flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
+                  >
+                    {isPlaying ? <Pause className="h-8 w-8 fill-current" /> : <Play className="h-8 w-8 translate-x-[2px] fill-current" />}
+                  </button>
+                  <IconBtn label={t("next")} onClick={next} size="lg">
+                    <SkipForward className="h-7 w-7 fill-current" />
+                  </IconBtn>
+                  <IconBtn
+                    label={repeat === "one" ? t("repeatOne") : t("repeat")}
+                    onClick={cycleRepeat}
+                    active={repeat !== "off"}
+                    size="lg"
+                  >
+                    <RepeatIcon className="h-5 w-5" />
+                  </IconBtn>
+                </div>
+
+                <div className="flex w-full max-w-md items-center gap-3 md:hidden">
+                  <button
+                    onClick={() => setVolume(volume === 0 ? 1 : 0)}
+                    aria-label={volume === 0 ? t("volume") : t("mute")}
+                    className="focus-ring flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 active:scale-95"
+                  >
+                    <VolIcon className="h-5 w-5" />
+                  </button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={volume}
+                    onChange={(e) => setVolume(Number(e.target.value))}
+                    aria-label={t("volume")}
+                    className="music-range h-1 flex-1 cursor-pointer"
+                    style={{ "--fill": `${volume * 100}%` } as React.CSSProperties}
+                  />
+                </div>
+              </div>
+
+              {/* Right half: lyrics (desktop) / segmented panel (mobile). Desktop
+                  is lyrics-only now — the queue moved to the drawer. */}
+              <div
+                className={`min-h-0 flex-1 flex-col md:flex ${
+                  mobileView === "panel" ? "flex" : "hidden"
+                }`}
+              >
+                {/* Content — bounded; scrolls WITHIN itself only. Desktop always
+                    shows lyrics; mobile obeys the top segmented `panel`. */}
+                <div className="min-h-0 flex-1">
+                  {panel === "lyrics" ? (
+                    <LyricsView
+                      align="left"
+                      trackId={currentTrack.id}
+                      currentTime={currentTime}
+                      onSeek={seek}
+                    />
+                  ) : queue.length > 0 ? (
+                    <div className="mx-auto h-full max-w-lg overflow-y-auto px-1">
+                      {queue.map((track, i) => (
+                        <TrackRow
+                          key={`${track.id}-${i}`}
+                          id={track.id}
+                          index={i}
+                          title={track.title}
+                          artistName={track.artistName}
+                          durationSeconds={track.durationSeconds}
+                          coverPath={track.coverPath}
+                          coverBlur={track.coverBlur}
+                          showCover
+                          onPlay={() => player.playAlbum(queue, i)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      {t("queue")}
+                    </div>
+                  )}
+                </div>
+
+                {/* Mobile mini transport so lyrics/queue panes stay controllable.
+                    Bottom padding folds in the home-indicator inset. */}
+                <div className="flex flex-shrink-0 items-center gap-3 border-t border-white/[0.06] px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
+                  <span className="w-9 text-right text-[11px] tabular-nums text-muted-foreground">
+                    {formatDuration(currentTime)}
+                  </span>
+                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                  <span className="w-9 text-[11px] tabular-nums text-muted-foreground">
+                    {formatDuration(duration)}
+                  </span>
+                  <IconBtn label={t("previous")} onClick={prev}>
+                    <SkipBack className="h-5 w-5 fill-current" />
+                  </IconBtn>
+                  <button
+                    onClick={toggle}
+                    aria-label={isPlaying ? t("pause") : t("play")}
+                    className="focus-ring flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid active:scale-95"
+                  >
+                    {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
+                  </button>
+                  <IconBtn label={t("next")} onClick={next}>
+                    <SkipForward className="h-5 w-5 fill-current" />
+                  </IconBtn>
+                </div>
               </div>
             </div>
 
-            {/* ── Side panel (lyrics by default, or queue) ── */}
-            <div
-              className={`min-h-0 flex-1 flex-col md:flex ${
-                mobileView === "panel" ? "flex" : "hidden"
-              }`}
-            >
-              {/* Panel tab switch: 歌词 / 队列 (desktop-only; mobile uses the
-                  top segmented control). */}
-              <div className="hidden flex-shrink-0 justify-center pb-4 md:flex">
-                <Segmented
-                  value={panel}
-                  onChange={setPanel}
-                  options={[
-                    { value: "lyrics", label: t("lyrics") },
-                    { value: "queue", label: t("queue") },
-                  ]}
+            {/* ── Desktop bottom transport bar ── full width, three clusters:
+                info + heart · spectrum/transport/seek · volume + playlist. */}
+            <div className="hidden flex-shrink-0 items-center gap-4 border-t border-white/[0.06] px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex lg:px-10">
+              {/* Left: mini cover + title/artist + favorite heart */}
+              <div className="flex w-1/4 min-w-0 items-center gap-3">
+                <Cover
+                  cover={cover}
+                  coverBlur={coverBlur}
+                  title={currentTrack.title}
+                  size={48}
+                  rounded="rounded-full"
                 />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{currentTrack.title}</p>
+                  {currentTrack.artistName && (
+                    <p className="truncate text-xs text-muted-foreground">{currentTrack.artistName}</p>
+                  )}
+                </div>
+                <FavoriteHeart trackId={currentTrack.id} />
               </div>
 
-              {/* Content — bounded; scrolls WITHIN itself only. */}
-              <div className="min-h-0 flex-1">
-                {panel === "lyrics" ? (
-                  <LyricsView
-                    trackId={currentTrack.id}
-                    currentTime={currentTime}
-                    onSeek={seek}
-                  />
-                ) : queue.length > 0 ? (
-                  <div className="mx-auto h-full max-w-lg overflow-y-auto px-1">
-                    {queue.map((track, i) => (
-                      <TrackRow
-                        key={`${track.id}-${i}`}
-                        id={track.id}
-                        index={i}
-                        title={track.title}
-                        artistName={track.artistName}
-                        durationSeconds={track.durationSeconds}
-                        coverPath={track.coverPath}
-                        coverBlur={track.coverBlur}
-                        showCover
-                        onPlay={() => player.playAlbum(queue, i)}
-                      />
-                    ))}
-                  </div>
+              {/* Center: spectrum + transport + long seek */}
+              <div className="flex flex-1 flex-col items-center gap-2">
+                <AudioSpectrum className="h-10 w-full max-w-xl" color={spectrumColor} />
+                <div className="flex items-center gap-6">
+                  <IconBtn label={t("shuffle")} onClick={toggleShuffle} active={shuffle}>
+                    <Shuffle className="h-4 w-4" />
+                  </IconBtn>
+                  <IconBtn label={t("previous")} onClick={prev}>
+                    <SkipBack className="h-5 w-5 fill-current" />
+                  </IconBtn>
+                  <button
+                    onClick={toggle}
+                    aria-label={isPlaying ? t("pause") : t("play")}
+                    className="focus-ring flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
+                  >
+                    {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
+                  </button>
+                  <IconBtn label={t("next")} onClick={next}>
+                    <SkipForward className="h-5 w-5 fill-current" />
+                  </IconBtn>
+                  <IconBtn
+                    label={repeat === "one" ? t("repeatOne") : t("repeat")}
+                    onClick={cycleRepeat}
+                    active={repeat !== "off"}
+                  >
+                    <RepeatIcon className="h-4 w-4" />
+                  </IconBtn>
+                </div>
+                <div className="flex w-full max-w-2xl items-center gap-3">
+                  <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
+                    {formatDuration(currentTime)}
+                  </span>
+                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                  <span className="w-10 text-[11px] tabular-nums text-muted-foreground">
+                    {formatDuration(duration)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Right: volume popover + playlist (queue drawer) toggle */}
+              <div className="flex w-1/4 items-center justify-end gap-2">
+                <VolumePopover
+                  volume={volume}
+                  setVolume={setVolume}
+                  VolIcon={VolIcon}
+                  volumeLabel={t("volume")}
+                  muteLabel={t("mute")}
+                />
+                <IconBtn
+                  label={t("queue")}
+                  onClick={() => setQueueOpen((v) => !v)}
+                  active={queueOpen}
+                >
+                  <ListMusic className="h-5 w-5" />
+                </IconBtn>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Desktop queue drawer ── right-anchored, below the top bar so it
+              never covers the collapse/close buttons. Desktop-only. Frosted
+              glass mirrors the homepage NavSidebar drawer (nav-sidebar.tsx):
+              a dimming blur scrim + a translucent blurred panel with an inset
+              edge highlight. */}
+          {queueOpen && (
+            <div
+              onClick={() => setQueueOpen(false)}
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 z-40 hidden bg-black/50 backdrop-blur-sm transition-opacity duration-300 md:block"
+              style={{ top: "calc(64px + env(safe-area-inset-top))" }}
+            />
+          )}
+          {queueOpen && (
+            <div
+              className="absolute right-0 bottom-0 z-50 hidden w-full max-w-sm animate-slide-in-right flex-col border-l border-white/[0.08] bg-[#0a0a0f]/70 shadow-[inset_0.5px_0_0_rgba(255,255,255,0.06)] backdrop-blur-2xl md:flex"
+              style={{ top: "calc(64px + env(safe-area-inset-top))" }}
+            >
+              <div className="flex flex-shrink-0 items-center justify-between px-5 py-4">
+                <span className="text-sm font-medium text-foreground">{t("queue")}</span>
+                <button
+                  onClick={() => setQueueOpen(false)}
+                  aria-label={t("collapse")}
+                  className="focus-ring flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 hover:text-foreground active:scale-95"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                {queue.length > 0 ? (
+                  queue.map((track, i) => (
+                    <TrackRow
+                      key={`${track.id}-${i}`}
+                      id={track.id}
+                      index={i}
+                      title={track.title}
+                      artistName={track.artistName}
+                      durationSeconds={track.durationSeconds}
+                      coverPath={track.coverPath}
+                      coverBlur={track.coverBlur}
+                      showCover
+                      onPlay={() => player.playAlbum(queue, i)}
+                    />
+                  ))
                 ) : (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                     {t("queue")}
                   </div>
                 )}
               </div>
-
-              {/* Mobile mini transport so lyrics/queue panes stay controllable.
-                  Bottom padding folds in the home-indicator inset. */}
-              <div className="flex flex-shrink-0 items-center gap-3 border-t border-white/[0.06] px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
-                <span className="w-9 text-right text-[11px] tabular-nums text-muted-foreground">
-                  {formatDuration(currentTime)}
-                </span>
-                <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
-                <span className="w-9 text-[11px] tabular-nums text-muted-foreground">
-                  {formatDuration(duration)}
-                </span>
-                <IconBtn label={t("previous")} onClick={prev}>
-                  <SkipBack className="h-5 w-5 fill-current" />
-                </IconBtn>
-                <button
-                  onClick={toggle}
-                  aria-label={isPlaying ? t("pause") : t("play")}
-                  className="focus-ring flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid active:scale-95"
-                >
-                  {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
-                </button>
-                <IconBtn label={t("next")} onClick={next}>
-                  <SkipForward className="h-5 w-5 fill-current" />
-                </IconBtn>
-              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </>
@@ -555,5 +722,99 @@ function SeekBar({
       className="music-range h-1 flex-1 cursor-pointer"
       style={{ "--fill": `${progress * 100}%` } as React.CSSProperties}
     />
+  );
+}
+
+/**
+ * VolumePopover — a volume IconBtn that toggles a small panel above it holding
+ * the volume slider. Closes on outside click (a document mousedown listener).
+ */
+function VolumePopover({
+  volume,
+  setVolume,
+  VolIcon,
+  volumeLabel,
+  muteLabel,
+}: {
+  volume: number;
+  setVolume: (v: number) => void;
+  VolIcon: typeof Volume2;
+  volumeLabel: string;
+  muteLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <IconBtn label={volume === 0 ? muteLabel : volumeLabel} onClick={() => setOpen((v) => !v)} active={open}>
+        <VolIcon className="h-5 w-5" />
+      </IconBtn>
+      {open && (
+        <div className="absolute bottom-full right-0 mb-2 rounded-lg border border-white/[0.08] bg-[#0a0a0f]/90 p-3 backdrop-blur-xl">
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={volume}
+            onChange={(e) => setVolume(Number(e.target.value))}
+            aria-label={volumeLabel}
+            className="music-range h-1 w-32 cursor-pointer"
+            style={{ "--fill": `${volume * 100}%` } as React.CSSProperties}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * FavoriteHeart — reads/toggles the current track's favourite flag via its own
+ * user-data query/mutation (NOT threaded through the player store, mirroring
+ * TrackRow). Always visible in the bottom bar (not hover-gated).
+ */
+function FavoriteHeart({ trackId }: { trackId: string }) {
+  const t = useTranslations("music");
+  const queryClient = useQueryClient();
+
+  const { data } = useQuery<{ isFavorite: boolean; playCount: number }>({
+    queryKey: ["music-track-user-data", trackId],
+    queryFn: () => fetch(`/api/music/tracks/${trackId}/user-data`).then((r) => r.json()),
+  });
+  const isFavorite = data?.isFavorite ?? false;
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      fetch(`/api/music/tracks/${trackId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !isFavorite }),
+      }).then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["music-track-user-data", trackId] });
+    },
+  });
+
+  return (
+    <button
+      onClick={() => mutation.mutate()}
+      aria-label={t("favorite")}
+      // p-2.5 + -m-2.5 grows the tap target to 44px without shifting layout.
+      className={`focus-ring -m-2.5 flex flex-shrink-0 items-center justify-center rounded-full p-2.5 transition-colors hover:bg-white/10 active:scale-95 ${
+        isFavorite ? "text-red-400" : "text-white/70"
+      }`}
+    >
+      <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-400" : ""}`} />
+    </button>
   );
 }

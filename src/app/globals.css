@@ -389,6 +389,19 @@
   .music-eq-bar { animation: none; transform: scaleY(0.65); }
 }
 
+/* Rotating vinyl disc — spins the whole record in the Now Playing overlay.
+   The caller freezes it on pause via inline `animation-play-state`. Reduced
+   motion holds it still (mirrors the eqBar guard above). */
+@keyframes vinylSpin {
+  to { transform: rotate(360deg); }
+}
+.music-vinyl-spin {
+  animation: vinylSpin 24s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .music-vinyl-spin { animation: none; }
+}
+
 /* Music seek/volume slider — a thin rounded track with a primary fill up to
    `--fill` and a small thumb that appears on hover/drag. Used by NowPlayingBar
    for the progress and volume inputs. */

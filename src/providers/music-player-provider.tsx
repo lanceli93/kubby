@@ -62,9 +62,88 @@ function setState(update: Partial<PlayerState>) {
 // mount. Actions drive it imperatively.
 let audioEl: HTMLAudioElement | null = null;
 
+// Web Audio graph for the frequency-spectrum visualiser. Built lazily and ONCE
+// (createMediaElementSource is one-shot per element and reroutes its output),
+// then kept forever — the <audio> is a persistent singleton, so we must NEVER
+// disconnect this graph or all playback would be silenced.
+let audioCtx: AudioContext | null = null;
+let analyser: AnalyserNode | null = null;
+let mediaSource: MediaElementAudioSourceNode | null = null;
+// In-flight (or resolved) build promise. Memoised so concurrent callers — e.g.
+// the desktop overlay mounts a mobile + desktop <AudioSpectrum> at once, both
+// firing ensureAnalyser() — share ONE build. Without this they'd race past the
+// `analyser` null-guard across the `await resume()` yield and both call the
+// one-shot createMediaElementSource; the loser throws and its catch would null
+// out the winner's valid node. Nulled again only if the build fails, so a later
+// (successfully-gestured) call can retry.
+let analyserBuild: Promise<AnalyserNode | null> | null = null;
+
 // Guards a single play-count increment per track-start (so seeking/pausing
 // while the same track plays never re-counts).
 let countedTrackId: string | null = null;
+
+/**
+ * Lazily build (once) and return an AnalyserNode tapping the persistent
+ * <audio>, for the spectrum visualiser. Safe sequencing is load-bearing —
+ * audio must NEVER be silenced:
+ *
+ * - The idempotent `analyser` guard makes React StrictMode double-mount safe:
+ *   the second call reuses the node and never calls createMediaElementSource
+ *   twice (which throws + would leave the element rerouted).
+ * - createMediaElementSource reroutes the element's output through the graph,
+ *   so we only reach it once the context is actually `running` (else audio
+ *   would play silently). Callers invoke this inside a user-gesture window
+ *   (the overlay opens on a click), so `resume()` succeeds.
+ * - On any failure we return null and leave no half-built graph, so audio keeps
+ *   flowing through the element's default path.
+ *
+ * The stream is same-origin and the <audio> has no `crossOrigin`, so there is
+ * no CORS taint — do NOT add `crossOrigin`, it would break the stream.
+ */
+export function ensureAnalyser(): Promise<AnalyserNode | null> {
+  if (analyser) return Promise.resolve(analyser); // idempotent → StrictMode-safe
+  // Coalesce concurrent callers onto one build (see analyserBuild comment).
+  if (!analyserBuild) {
+    analyserBuild = buildAnalyser().then((a) => {
+      // On failure, clear the memo so a later user-gestured call can retry.
+      if (!a) analyserBuild = null;
+      return a;
+    });
+  }
+  return analyserBuild;
+}
+
+async function buildAnalyser(): Promise<AnalyserNode | null> {
+  if (!audioEl) return null;
+  const Ctx =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!Ctx) return null;
+  if (!audioCtx) audioCtx = new Ctx();
+  if (audioCtx.state === "suspended") {
+    try {
+      await audioCtx.resume();
+    } catch {
+      return null;
+    }
+  }
+  if (audioCtx.state !== "running") return null; // bail BEFORE rerouting
+  try {
+    mediaSource = audioCtx.createMediaElementSource(audioEl); // one-shot per element
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256; // 128 bins
+    analyser.smoothingTimeConstant = 0.8;
+    mediaSource.connect(analyser);
+    analyser.connect(audioCtx.destination); // re-route to speakers
+  } catch {
+    // If createMediaElementSource throws (already-created, etc.), don't leave a
+    // half-built graph that could silence audio.
+    analyser = null;
+    mediaSource = null;
+    return null;
+  }
+  return analyser;
+}
 
 function currentTrackOf(s: PlayerState): PlayerTrack | null {
   return s.index >= 0 && s.index < s.queue.length ? s.queue[s.index] : null;

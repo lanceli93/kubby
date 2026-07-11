@@ -64,10 +64,12 @@ export function LyricsView({
   trackId,
   currentTime,
   onSeek,
+  align = "center",
 }: {
   trackId: string;
   currentTime: number;
   onSeek?: (seconds: number) => void;
+  align?: "center" | "left";
 }) {
   const t = useTranslations("music");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -135,7 +137,11 @@ export function LyricsView({
     >
       {/* Top/bottom padding lets the first & last lines reach the vertical
           centre; the container clips and fades them (mask in globals.css). */}
-      <div className="mx-auto flex max-w-lg flex-col gap-5 px-2 pb-[45vh] pt-[16vh] md:px-6 md:gap-6">
+      <div
+        className={`flex max-w-lg flex-col gap-5 px-2 pb-[45vh] pt-[16vh] md:px-6 md:gap-6 ${
+          align === "left" ? "mr-auto items-start" : "mx-auto"
+        }`}
+      >
         {parsed.lines.map((line, i) => {
           const isActive = parsed.synced && i === activeIndex;
           const isPast = parsed.synced && activeIndex >= 0 && i < activeIndex;
@@ -145,9 +151,9 @@ export function LyricsView({
               key={i}
               ref={isActive ? activeRef : undefined}
               onClick={clickable ? () => onSeek!(line.time!) : undefined}
-              className={`text-center text-lg leading-relaxed transition-all duration-300 md:text-xl ${
-                clickable ? "cursor-pointer" : ""
-              } ${
+              className={`text-lg leading-relaxed transition-all duration-300 md:text-xl ${
+                align === "left" ? "text-left" : "text-center"
+              } ${clickable ? "cursor-pointer" : ""} ${
                 isActive
                   ? "font-semibold text-foreground md:scale-[1.04]"
                   : isPast
