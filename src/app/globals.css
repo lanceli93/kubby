@@ -2,6 +2,14 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Markdown docs are reference prose, not a source of real utility classes. They
+   contain class-like tokens (some abbreviated, e.g. `pb-[calc(...env(...))]`)
+   that Tailwind's automatic content detection would otherwise try to compile
+   into invalid CSS and fail the build. Exclude them from scanning. Paths are
+   relative to this file (src/app/ → repo root is ../../). */
+@source not "../../docs";
+@source not "../../.claude";
+
 @custom-variant dark (&:is(.dark *));
 
 /* Hide scrollbar but keep scroll functionality */
