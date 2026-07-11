@@ -145,7 +145,7 @@ export function LyricsView({
               key={i}
               ref={isActive ? activeRef : undefined}
               onClick={clickable ? () => onSeek!(line.time!) : undefined}
-              className={`origin-left text-center text-lg leading-relaxed transition-all duration-300 md:text-left md:text-xl ${
+              className={`text-center text-lg leading-relaxed transition-all duration-300 md:text-xl ${
                 clickable ? "cursor-pointer" : ""
               } ${
                 isActive

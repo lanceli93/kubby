@@ -226,8 +226,10 @@ export function NowPlayingBar() {
               the cover & transport stay put as the song (and lyrics) advance. */}
           <div className="flex min-h-0 flex-1 md:flex-row md:items-stretch md:gap-12 md:px-12 md:pb-10">
             {/* ── Player pane (cover + meta + transport) ── */}
+            {/* Equal flex-1 half; content centered by items-center. The cover's
+                own max-width keeps it from ballooning on wide screens. */}
             <div
-              className={`min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 pb-8 md:flex md:max-w-md md:px-0 md:pb-0 ${
+              className={`min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 pb-8 md:flex md:px-0 md:pb-0 ${
                 mobileView === "cover" ? "flex" : "hidden"
               }`}
             >
