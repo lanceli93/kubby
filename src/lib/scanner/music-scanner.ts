@@ -524,6 +524,17 @@ export async function scanMusicLibrary(
     }
   });
 
+  // If the library was deleted mid-scan, skip the destructive cleanup + the
+  // lastScannedAt write so we don't touch state for a now-gone library.
+  const stillExists = db
+    .select({ id: mediaLibraries.id })
+    .from(mediaLibraries)
+    .where(eq(mediaLibraries.id, library.id))
+    .get();
+  if (!stillExists) {
+    return { scannedCount, removedCount: 0, skipped: [] };
+  }
+
   // ─── Cleanup ──────────────────────────────────────────────────
   let removedCount = 0;
 

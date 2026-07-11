@@ -423,9 +423,27 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "CREATE UNIQUE INDEX IF NOT EXISTS `idx_utd_user_track` ON `user_track_data` (`user_id`, `track_id`)",
     // 0039: inline lyrics on music tracks (plain or LRC-timestamped)
     "ALTER TABLE `music_tracks` ADD `lyrics` text",
+    // Backfill columns that were only in base CREATE (safe on fresh/new DBs, needed for pre-bootstrap DBs)
+    "ALTER TABLE `movies` ADD `video_codec` text",
+    "ALTER TABLE `movies` ADD `audio_codec` text",
+    "ALTER TABLE `movies` ADD `video_width` integer",
+    "ALTER TABLE `movies` ADD `video_height` integer",
+    "ALTER TABLE `movies` ADD `audio_channels` integer",
+    "ALTER TABLE `movies` ADD `container` text",
+    "ALTER TABLE `media_libraries` ADD `scraper_enabled` integer NOT NULL DEFAULT 0",
+    "ALTER TABLE `users` ADD `locale` text DEFAULT 'en'",
   ];
-  for (const sql of pending) {
-    try { sqlite.exec(sql); } catch { /* column already exists */ }
+  for (const stmt of pending) {
+    try {
+      sqlite.exec(stmt);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Benign: column/table/index already exists (idempotent re-run). Anything
+      // else is a real migration failure — log it (non-fatal) so it's visible.
+      if (!/duplicate column name|already exists/i.test(msg)) {
+        console.error("[db migration] statement failed:", stmt, msg);
+      }
+    }
   }
 
   // 0027: Migrate absolute photoPath to relative (idempotent — skips already-relative paths)

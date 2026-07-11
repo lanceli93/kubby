@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import { getImageCacheDir } from "@/lib/paths";
+import { getImageCacheDir, getDataDir } from "@/lib/paths";
+import { db } from "@/lib/db";
+import { mediaLibraries } from "@/lib/db/schema";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -51,6 +53,33 @@ export async function GET(
   const segments = normalizedPath.split(path.sep);
   if (segments.some((s) => s === "..")) {
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  }
+
+  // Security: confine the resolved path to an allowlist of roots. Legitimate
+  // images only ever live inside a configured library folder (movie posters/
+  // fanart) or under the Kubby data dir (people/bookmark/photo-thumb/music-art/
+  // image cache). Anything else — data/kubby.db, .env, SSH keys, etc. — is
+  // rejected before any fs read so a client can't turn this into a file reader.
+  const resolved = path.resolve(imagePath);
+  const roots = [
+    getDataDir(),
+    ...db
+      .select({ folderPath: mediaLibraries.folderPath })
+      .from(mediaLibraries)
+      .all()
+      .map((row) => row.folderPath),
+  ].map((root) => path.resolve(root));
+  // Windows paths are case-insensitive and the DB may store a different case
+  // than the request, so compare lowercased on Windows; keep the exact bytes
+  // on POSIX where paths are case-sensitive.
+  const norm = (p: string) => (process.platform === "win32" ? p.toLowerCase() : p);
+  const resolvedNorm = norm(resolved);
+  const isAllowed = roots.some((root) => {
+    const rootNorm = norm(root);
+    return resolvedNorm === rootNorm || resolvedNorm.startsWith(rootNorm + path.sep);
+  });
+  if (!isAllowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { searchParams } = request.nextUrl;

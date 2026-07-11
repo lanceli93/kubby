@@ -14,7 +14,6 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  console.log("[setup/complete] body:", JSON.stringify(body));
   const { username, password, locale, libraryName, libraryType, folderPath, folderPaths, jellyfinCompat, scraperEnabled, tmdbApiKey } = body;
 
   if (!username || !password) {

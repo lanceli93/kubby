@@ -19,7 +19,12 @@ export async function POST(
         const result = await scanLibrary(id, (progress) => {
           send({ current: progress.current, total: progress.total, title: progress.title });
         });
-        send({ done: true, scannedCount: result.scannedCount, removedCount: result.removedCount, skippedCount: result.skipped.length, skipped: result.skipped });
+        if (result.alreadyRunning) {
+          // A concurrent scan already holds the lock — report it without erroring.
+          send({ done: true, alreadyRunning: true, message: "A scan is already running for this library", scannedCount: 0, removedCount: 0, skippedCount: 0, skipped: [] });
+        } else {
+          send({ done: true, scannedCount: result.scannedCount, removedCount: result.removedCount, skippedCount: result.skipped.length, skipped: result.skipped });
+        }
       } catch (error) {
         console.error("[scan] error:", error);
         send({

@@ -40,7 +40,7 @@ export const authConfig: NextAuthConfig = {
 
       const publicPaths = ["/login", "/register", "/api/users", "/api/auth", "/setup", "/api/setup", "/api/filesystem"];
       const isPublic = publicPaths.some((p) => pathname.startsWith(p))
-        || /^\/api\/movies\/[^/]+\/stream/.test(pathname);
+        || /^\/api\/movies\/[^/]+\/stream\/?$/.test(pathname);
 
       if (isPublic) return true;
       if (!isLoggedIn) return false;

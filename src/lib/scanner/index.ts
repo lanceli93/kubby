@@ -215,10 +215,51 @@ export type ScanProgress = { current: number; total: number; title: string };
 export type SkipReason = 'no_nfo' | 'no_video' | 'nfo_parse_error';
 export interface SkippedFolder { name: string; reason: SkipReason }
 
+export interface ScanResult {
+  scannedCount: number;
+  removedCount: number;
+  skipped: SkippedFolder[];
+  /** Set when a scan was rejected because one was already running for this library. */
+  alreadyRunning?: boolean;
+}
+
+// Server-side scan lock: at most one in-flight scan per library, shared across
+// all requests/tabs/devices. Guards against interleaved scans whose end-of-run
+// cleanup would otherwise delete rows the other run just inserted.
+const scansInProgress = new Set<string>();
+
+/**
+ * Public entry point. Enforces the single-scan-per-library lock, then dispatches
+ * to the type-specific scanner. The lock is released in a `finally` so a crashed
+ * or early-returning scan never leaves the library permanently locked.
+ */
 export async function scanLibrary(
   libraryId: string,
   onProgress?: (progress: ScanProgress) => void
-) {
+): Promise<ScanResult> {
+  if (scansInProgress.has(libraryId)) {
+    // A concurrent scan is already running — no-op instead of interleaving.
+    return {
+      scannedCount: 0,
+      removedCount: 0,
+      skipped: [],
+      alreadyRunning: true,
+    };
+  }
+
+  scansInProgress.add(libraryId);
+  try {
+    return await runScan(libraryId, onProgress);
+  } finally {
+    // Always release the lock, even on throw/early error.
+    scansInProgress.delete(libraryId);
+  }
+}
+
+async function runScan(
+  libraryId: string,
+  onProgress?: (progress: ScanProgress) => void
+): Promise<ScanResult> {
   const library = db
     .select()
     .from(mediaLibraries)
@@ -701,6 +742,18 @@ export async function scanLibrary(
     }
 
     scannedCount++;
+  }
+
+  // If the library was deleted while this scan was running (minutes of probe/
+  // scrape I/O), skip the destructive cleanup + lastScannedAt write so we don't
+  // resurrect state for a now-gone library. Bail cleanly (no throw).
+  const stillExists = db
+    .select({ id: mediaLibraries.id })
+    .from(mediaLibraries)
+    .where(eq(mediaLibraries.id, libraryId))
+    .get();
+  if (!stillExists) {
+    return { scannedCount, removedCount: 0, skipped };
   }
 
   // ─── Cleanup: remove movies no longer present on disk or in configured paths ───

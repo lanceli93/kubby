@@ -7,6 +7,7 @@ import { eq, sql } from "drizzle-orm";
 import { parseFolderPaths, serializeFolderPaths } from "@/lib/folder-paths";
 import { getPersonDir } from "@/lib/person-utils";
 import { getPhotoThumbsDir, getMusicArtDir } from "@/lib/paths";
+import { pruneOrphanArtists } from "@/lib/music/mutations";
 
 // GET /api/libraries/[id]
 export async function GET(
@@ -155,6 +156,12 @@ export async function DELETE(
       await fsPromises
         .rm(nodePath.join(getMusicArtDir(), id), { recursive: true, force: true })
         .catch(() => {});
+      // The cascade already dropped this library's tracks/albums + their join
+      // rows, but music_artists are GLOBAL (no FK to the library). Sweep away
+      // any artist left with no remaining album/track links — mirrors the
+      // album/track DELETE routes. (No pruneEmptyAlbums: albums were cascade-
+      // deleted with the library, so none remain for it to find.)
+      pruneOrphanArtists();
     }
 
     // Delete NFO files from media folders (movie domain only)

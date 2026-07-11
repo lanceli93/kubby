@@ -30,6 +30,9 @@ const CLEANUP_INTERVAL_MS = 15 * 1000; // 15 seconds
 
 class TranscodeManager {
   private sessions = new Map<string, TranscodeSession>();
+  // Coalesces concurrent seeks for the same sessionId so rapid scrubbing can't
+  // spawn duplicate ffmpeg/session pairs. Keyed by the incoming (old) sessionId.
+  private seeksInFlight = new Map<string, Promise<string | null>>();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
   private ffmpegAvailable: boolean | null = null;
   private encoderConfig: EncoderConfig | null = null;
@@ -195,7 +198,26 @@ class TranscodeManager {
     return false;
   }
 
-  async seekSession(sessionId: string, seekToSeconds: number): Promise<string | null> {
+  seekSession(sessionId: string, seekToSeconds: number): Promise<string | null> {
+    // Coalesce concurrent seeks for the same sessionId. Two rapid seeks (user
+    // scrubbing) would otherwise both read the same live session, both kill the
+    // same process, then both startSession — leaking a duplicate ffmpeg + HLS dir.
+    // The second caller awaits the first seek's result instead. If the user wants
+    // a different time, the client issues another seek after this one resolves.
+    const inFlight = this.seeksInFlight.get(sessionId);
+    if (inFlight) return inFlight;
+
+    const promise = this.doSeek(sessionId, seekToSeconds).finally(() => {
+      // Always clear the entry so the map can't hold a stale promise. The
+      // sessionId changes after a seek, so this old key becomes unreachable
+      // anyway, but we clean it up explicitly.
+      this.seeksInFlight.delete(sessionId);
+    });
+    this.seeksInFlight.set(sessionId, promise);
+    return promise;
+  }
+
+  private async doSeek(sessionId: string, seekToSeconds: number): Promise<string | null> {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
 

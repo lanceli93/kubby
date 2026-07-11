@@ -593,6 +593,17 @@ export async function scanPhotoLibrary(
     }
   });
 
+  // If the library was deleted mid-scan, skip the destructive cleanup + the
+  // lastScannedAt write so we don't touch state for a now-gone library.
+  const stillExists = db
+    .select({ id: mediaLibraries.id })
+    .from(mediaLibraries)
+    .where(eq(mediaLibraries.id, library.id))
+    .get();
+  if (!stillExists) {
+    return { scannedCount, removedCount: 0, skipped: [] };
+  }
+
   // 6. Cleanup: rows whose file no longer exists on disk.
   let removedCount = 0;
   for (const row of existingRows) {
