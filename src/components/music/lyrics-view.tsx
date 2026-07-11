@@ -138,7 +138,7 @@ export function LyricsView({
       {/* Top/bottom padding lets the first & last lines reach the vertical
           centre; the container clips and fades them (mask in globals.css). */}
       <div
-        className={`flex max-w-lg flex-col gap-5 px-2 pb-[45vh] pt-[16vh] md:max-w-xl md:px-6 md:gap-7 ${
+        className={`flex max-w-lg flex-col gap-5 px-2 pb-[45vh] pt-[16vh] md:max-w-[min(40vw,720px)] md:px-6 md:gap-[clamp(1.5rem,1.6vw,2.25rem)] ${
           align === "left" ? "mr-auto items-start" : "mx-auto"
         }`}
       >
@@ -151,7 +151,7 @@ export function LyricsView({
               key={i}
               ref={isActive ? activeRef : undefined}
               onClick={clickable ? () => onSeek!(line.time!) : undefined}
-              className={`text-lg leading-relaxed transition-all duration-300 md:text-2xl ${
+              className={`text-lg leading-relaxed transition-all duration-300 md:text-[clamp(1.25rem,1.5vw,1.875rem)] ${
                 align === "left" ? "text-left" : "text-center"
               } ${clickable ? "cursor-pointer" : ""} ${
                 isActive

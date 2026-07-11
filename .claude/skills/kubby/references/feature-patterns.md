@@ -232,6 +232,13 @@ when it is the player's current track.
     is NOT threaded through the player store — same as `TrackRow`). Overlay top bar +
     mobile transport + bottom bar fold the safe-area inset into their padding via calc
     (not `pt-safe`/`pb-safe` — see the safe-area pitfall under UI Design System).
+  - **Viewport-relative sizing (QQ-style)**: both columns scale with the window so a
+    large/fullscreen overlay doesn't leave the components small. The vinyl is
+    `md:max-w-[min(58vh,40vw)]` (bounded by BOTH axes so it never overflows), the
+    title/artist/album use `text-[clamp(...vw...)]`, and the lyrics lines are
+    `md:text-[clamp(1.25rem,1.5vw,1.875rem)]` in a `md:max-w-[min(40vw,720px)]`
+    container. Fixed `md:max-w-…px` caps were the "components too small on fullscreen"
+    bug — prefer `vh`/`vw`/`clamp` over px caps here.
 - **Rotating vinyl** — `components/music/vinyl-disc.tsx` (`VinylDisc`): a simple dark
   grooved disc (CSS `repeating-radial-gradient` rings, NOT a skeuomorphic turntable)
   with the album cover as a large **circular center label (~64% of the disc

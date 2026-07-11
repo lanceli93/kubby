@@ -311,20 +311,34 @@ export function NowPlayingBar() {
                   coverBlur={coverBlur}
                   title={currentTrack.title}
                   isPlaying={isPlaying}
-                  className="w-full max-w-[72vw] md:max-w-[min(54vh,460px)]"
+                  // Scale with the viewport (QQ-style) so it grows on a large /
+                  // fullscreen window and shrinks on a small one, rather than
+                  // sitting at a fixed small cap. Bounded by both height and the
+                  // column width so it never overflows either axis.
+                  className="w-full max-w-[72vw] md:w-full md:max-w-[min(58vh,40vw)]"
                 />
 
                 {/* Compact spectrum under the vinyl on mobile; the desktop bottom
                     bar has its own wider spectrum. */}
                 <AudioSpectrum className="h-8 w-full max-w-xs md:hidden" color={spectrumColor} />
 
+                {/* Title/meta scale with the viewport (clamp on vw) so they grow
+                    with the disc on large windows instead of staying small. */}
                 <div className="w-full text-center">
-                  <h2 className="truncate text-2xl font-semibold text-foreground">{currentTrack.title}</h2>
+                  <h2
+                    className="truncate text-2xl font-semibold text-foreground md:text-[clamp(1.5rem,2vw,2.25rem)]"
+                  >
+                    {currentTrack.title}
+                  </h2>
                   {currentTrack.artistName && (
-                    <p className="mt-1 truncate text-base text-muted-foreground">{currentTrack.artistName}</p>
+                    <p className="mt-1 truncate text-base text-muted-foreground md:text-[clamp(1rem,1.15vw,1.375rem)]">
+                      {currentTrack.artistName}
+                    </p>
                   )}
                   {currentTrack.albumTitle && (
-                    <p className="mt-0.5 truncate text-sm text-muted-foreground/70">{currentTrack.albumTitle}</p>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground/70 md:text-[clamp(0.875rem,0.9vw,1.125rem)]">
+                      {currentTrack.albumTitle}
+                    </p>
                   )}
                 </div>
 
