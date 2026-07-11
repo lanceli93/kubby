@@ -195,7 +195,12 @@ when it is the player's current track.
 - `NowPlayingBar` (`components/music/now-playing-bar.tsx`): fixed glass bar at
   `bottom-14` on mobile (above BottomTabs) / `md:bottom-0`; click the cover/title to
   expand a full-screen `fixed inset-0` Now Playing overlay with a blurred cover
-  backdrop.
+  backdrop. The overlay is a **non-scrolling flex row** — desktop is two columns
+  (player left, a `歌词/播放队列` tabbed panel right, **lyrics open by default**);
+  each pane scrolls internally so the cover/transport never move. Mobile uses a top
+  segmented `正在播放 / 歌词 / 播放队列` switch (state: `mobileView "cover"|"panel"`
+  × `panel "lyrics"|"queue"`) plus a mini transport pinned under the panel. The
+  small pill switcher is the local `Segmented` component.
 
 **Domain integration** (same shared-cache pattern as photos): `useHasMusicLibrary()`
 reads the `["libraries"]` React Query cache (`type === "music"`, no extra request).
@@ -236,10 +241,17 @@ LRC `[mm:ss.xx]`, else plain text — `lib/music/lyrics.ts`). `GET
 /api/music/tracks/[id]/lyrics` serves it and **back-fills on first request** for
 libraries scanned before lyrics support (parse the file, cache the result; `""`
 means "checked, none" so a lyric-less track isn't re-parsed). `LyricsView`
-(`components/music/lyrics-view.tsx`) parses LRC, highlights + auto-scrolls the
-active line to `currentTime` when synced, else shows a centered scrollable block;
-it's toggled by a Mic2 button in the full-screen Now Playing overlay (replaces the
-queue side-panel while active).
+(`components/music/lyrics-view.tsx`) parses LRC and, when synced, highlights the
+active line for `currentTime` and keeps it centered; clicking a timed line calls
+`onSeek`. Plain lyrics render as a centered block. It's the **default** panel in
+the Now Playing overlay (see `NowPlayingBar` above).
+  - **Critical scroll rule**: the active line is centered by scrolling the lyrics
+    container ITSELF (compute the delta from `getBoundingClientRect`, then
+    `container.scrollTo`) — **never `scrollIntoView`**, which bubbles up and scrolls
+    every scrollable ancestor, dragging the whole overlay down as the song plays
+    (the original bug). The container is bounded, self-scrolling, has hidden
+    scrollbars + top/bottom fade masks (`.music-lyrics-scroll` in globals.css), and
+    big top/bottom padding so first/last lines can reach the centre.
 
 ## Cross-domain safety (a hard rule)
 

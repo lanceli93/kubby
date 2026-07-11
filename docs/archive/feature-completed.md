@@ -1,5 +1,16 @@
 # Completed Features
 
+## 2026-07-11 (3): 音乐库 Now Playing UI 重构 — 歌词默认开 + 有界内滚 (对齐 QQ/Apple Music)
+
+用户诉求 (`docs/feature-request.md`): 全屏 Now Playing 的 UI 有大问题 — ① 歌词应默认打开; ② 歌词面板没有下界, 随播放推进整个页面往下移。要求调研 QQ 音乐等流行 app 的交互, 整体优化音乐域 UI。根因: 侧栏歌词默认关 (`showLyrics=false`) 且只是替换队列的次要视图; 覆盖层 body 是 `overflow-y-auto`, 而 `LyricsView` 用 `scrollIntoView({block:"center"})` — 它会冒泡滚动**所有**可滚动祖先, 把封面/传输一起往下拽。
+
+- **歌词有界内滚 (核心修复)**: `LyricsView` 改为只滚动**自己的容器** — 用 `getBoundingClientRect` 算当前行相对容器的偏移, `container.scrollTo` 居中, 绝不触碰祖先。实测 t=39s→100s 封面 Y 坐标完全不动 (`coverTop` 139 恒定), `overlayScrollTop`/`windowScrollY` 恒为 0, 页面不再漂移。容器加 `.music-lyrics-scroll` (globals.css): 上下 `mask-image` 渐隐 + 隐藏滚动条; 上下大 padding (`pt-[16vh] pb-[45vh]`) 让首尾行也能滚到中线。
+- **歌词默认打开 + 一级视图**: 侧栏 state 由 `showLyrics` 布尔改为 `panel: "lyrics"|"queue"`, **默认 "lyrics"**。桌面双列 (左播放器 + 右歌词面板, 面板顶部 `歌词/播放队列` 分段切换); 删掉传输区的 Mic2 切换按钮 (不再需要)。
+- **点击歌词行跳转**: 同步歌词的每行可点击 → `onSeek(行时间戳)`。实测点「培养一种独特」音频 154s→230s。
+- **移动端分段布局**: 顶栏 `正在播放/歌词/播放队列` 分段控件 (`mobileView: "cover"|"panel"` × `panel`); 歌词/队列面板下方固定 mini 传输条 (进度 + 上一首/播放/下一首), 读歌词时仍可控。新增 `Segmented` 内部组件 (iOS 风药丸切换)。
+- **i18n**: 零新增键 (复用既有 lyrics/queue/nowPlaying/...)。
+- **验证**: `tsc` 通过、ESLint 干净; chrome-devtools 实测桌面 (歌词默认开+高亮居中+页面零漂移+队列 tab+点击跳转) 与移动端 (分段切换+歌词高亮+mini 传输) 全绿; 第二首自动续播时内嵌歌词按需回写并同步。
+
 ## 2026-07-11 (2): 音乐库管理能力 — 删除/编辑元数据/浏览器上传 + 歌词展示
 
 用户诉求 (`docs/feature-request.md`): ① 音乐库的专辑、歌曲都不支持删除, 也没有在 UI 里添加音乐、编辑元数据等基本操作; ② FLAC 自带歌词但播放器不显示。此前音乐域 `/api/music/*` 完全只读 (仅一个 favorite 的 PUT), 卡片/列表也没有电影卡那样的 ⋯ 菜单。确认范围: 全做 (删除 + 编辑 + 浏览器上传 + 歌词), 删除提供「同时删源文件」勾选框, **默认只删库内记录** (对齐电影域)。

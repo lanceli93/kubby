@@ -54,18 +54,23 @@ function parseLrc(text: string): { lines: LyricLine[]; synced: boolean } {
 
 /**
  * Lyrics panel for the Now Playing overlay. Fetches lyrics for `trackId`; when
- * synced (LRC), highlights + auto-scrolls the active line to `currentTime`.
- * Plain lyrics render as a centered scrollable block.
+ * synced (LRC), highlights the active line and keeps it vertically centered by
+ * scrolling ITS OWN container only (never `scrollIntoView`, which would bubble
+ * up and drag the whole overlay). Clicking a timed line seeks to it. Plain
+ * lyrics render as a centered scrollable block. The container is bounded and
+ * self-scrolling, with gradient fade masks top and bottom.
  */
 export function LyricsView({
   trackId,
   currentTime,
+  onSeek,
 }: {
   trackId: string;
   currentTime: number;
+  onSeek?: (seconds: number) => void;
 }) {
   const t = useTranslations("music");
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLParagraphElement>(null);
 
   const { data, isLoading } = useQuery<LyricsResponse>({
@@ -91,11 +96,20 @@ export function LyricsView({
     return idx;
   }, [parsed, currentTime]);
 
-  // Keep the active line centered.
+  // Keep the active line centered — scrolling ONLY the lyrics container. We
+  // compute the delta from bounding rects and call scrollTo on our own element,
+  // so no scrollable ancestor (the overlay) is ever touched. This is the fix
+  // for "the whole page drifts down as the song plays".
   useEffect(() => {
-    if (activeIndex < 0 || !activeRef.current) return;
-    activeRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [activeIndex]);
+    const container = scrollRef.current;
+    const active = activeRef.current;
+    if (!parsed.synced || activeIndex < 0 || !container || !active) return;
+    const cRect = container.getBoundingClientRect();
+    const aRect = active.getBoundingClientRect();
+    const delta =
+      aRect.top - cRect.top - (container.clientHeight / 2 - active.clientHeight / 2);
+    container.scrollTo({ top: container.scrollTop + delta, behavior: "smooth" });
+  }, [activeIndex, parsed.synced]);
 
   if (isLoading) {
     return (
@@ -115,26 +129,35 @@ export function LyricsView({
   }
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto px-2 py-8 md:px-6">
-      <div className="mx-auto flex max-w-lg flex-col gap-4">
+    <div
+      ref={scrollRef}
+      className="music-lyrics-scroll h-full overflow-y-auto overflow-x-hidden"
+    >
+      {/* Top/bottom padding lets the first & last lines reach the vertical
+          centre; the container clips and fades them (mask in globals.css). */}
+      <div className="mx-auto flex max-w-lg flex-col gap-5 px-2 pb-[45vh] pt-[16vh] md:px-6 md:gap-6">
         {parsed.lines.map((line, i) => {
           const isActive = parsed.synced && i === activeIndex;
           const isPast = parsed.synced && activeIndex >= 0 && i < activeIndex;
+          const clickable = parsed.synced && line.time != null && !!onSeek;
           return (
             <p
               key={i}
               ref={isActive ? activeRef : undefined}
-              className={`text-center text-lg leading-relaxed transition-all duration-300 md:text-xl ${
+              onClick={clickable ? () => onSeek!(line.time!) : undefined}
+              className={`origin-left text-center text-lg leading-relaxed transition-all duration-300 md:text-left md:text-xl ${
+                clickable ? "cursor-pointer" : ""
+              } ${
                 isActive
-                  ? "scale-[1.03] font-semibold text-foreground"
+                  ? "font-semibold text-foreground md:scale-[1.04]"
                   : isPast
-                    ? "text-muted-foreground/40"
+                    ? "text-muted-foreground/35 hover:text-muted-foreground/60"
                     : parsed.synced
-                      ? "text-muted-foreground/70"
-                      : "text-foreground/90"
+                      ? "text-muted-foreground/55 hover:text-muted-foreground/80"
+                      : "text-foreground/85"
               }`}
             >
-              {line.text || " "}
+              {line.text || " "}
             </p>
           );
         })}

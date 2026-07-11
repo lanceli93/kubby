@@ -15,7 +15,6 @@ import {
   ChevronDown,
   Maximize2,
   Music,
-  Mic2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -41,7 +40,11 @@ export function NowPlayingBar() {
   const t = useTranslations("music");
   const player = useMusicPlayer();
   const [expanded, setExpanded] = useState(false);
-  const [showLyrics, setShowLyrics] = useState(false);
+  // Side-panel content in the full-screen overlay — lyrics open by DEFAULT
+  // (QQ/Apple Music behaviour); switchable to the queue. Drives both platforms.
+  const [panel, setPanel] = useState<"lyrics" | "queue">("lyrics");
+  // Mobile only: which region is on screen (the side panel shows `panel`).
+  const [mobileView, setMobileView] = useState<"cover" | "panel">("cover");
 
   const {
     currentTrack,
@@ -180,33 +183,61 @@ export function NowPlayingBar() {
               style={{ backgroundImage: `url(${coverBlur})` }}
             />
           )}
-          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-black/40" />
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-black/45" />
 
-          {/* Top bar: collapse + label */}
-          <div className="flex flex-shrink-0 items-center justify-between px-4 py-4 md:px-8">
+          {/* Top bar: collapse + label + (mobile) segmented view switch */}
+          <div className="flex flex-shrink-0 items-center justify-between gap-3 px-4 py-4 md:px-8">
             <button
               onClick={() => setExpanded(false)}
               aria-label={t("collapse")}
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-foreground transition-fluid hover:bg-white/10 active:scale-95"
+              className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground transition-fluid hover:bg-white/10 active:scale-95"
             >
               <ChevronDown className="h-6 w-6" />
             </button>
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+
+            {/* Mobile: 封面 vs 歌词/队列 panel switch. Tapping 歌词 or 队列
+                both flips to the panel and selects that content. */}
+            <div className="md:hidden">
+              <Segmented
+                value={mobileView === "cover" ? "cover" : panel}
+                onChange={(v) => {
+                  if (v === "cover") setMobileView("cover");
+                  else {
+                    setPanel(v);
+                    setMobileView("panel");
+                  }
+                }}
+                options={[
+                  { value: "cover", label: t("nowPlaying") },
+                  { value: "lyrics", label: t("lyrics") },
+                  { value: "queue", label: t("queue") },
+                ]}
+              />
+            </div>
+            {/* Desktop: static label */}
+            <span className="hidden text-xs font-medium uppercase tracking-wider text-muted-foreground md:block">
               {t("nowPlaying")}
             </span>
-            <span className="h-10 w-10" aria-hidden />
+
+            <span className="h-10 w-10 flex-shrink-0" aria-hidden />
           </div>
 
-          {/* Body: cover + meta + transport, and (desktop) queue on the side */}
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-8 md:flex-row md:items-center md:justify-center md:gap-16 md:px-12">
-            <div className="flex flex-col items-center gap-6 md:max-w-md md:flex-1">
+          {/* Body — a non-scrolling flex row; each pane scrolls internally so
+              the cover & transport stay put as the song (and lyrics) advance. */}
+          <div className="flex min-h-0 flex-1 md:flex-row md:items-stretch md:gap-12 md:px-12 md:pb-10">
+            {/* ── Player pane (cover + meta + transport) ── */}
+            <div
+              className={`min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 pb-8 md:flex md:max-w-md md:px-0 md:pb-0 ${
+                mobileView === "cover" ? "flex" : "hidden"
+              }`}
+            >
               <Cover
                 cover={cover}
                 coverBlur={coverBlur}
                 title={currentTrack.title}
                 size={320}
                 rounded="rounded-2xl"
-                className="aspect-square w-full max-w-[min(80vw,340px)] shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
+                className="aspect-square w-full max-w-[min(72vw,340px)] shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
                 sizes="340px"
               />
 
@@ -257,14 +288,6 @@ export function NowPlayingBar() {
                 >
                   <RepeatIcon className="h-5 w-5" />
                 </IconBtn>
-                <IconBtn
-                  label={t("showLyrics")}
-                  onClick={() => setShowLyrics((v) => !v)}
-                  active={showLyrics}
-                  size="lg"
-                >
-                  <Mic2 className="h-5 w-5" />
-                </IconBtn>
               </div>
 
               {/* Volume */}
@@ -290,23 +313,35 @@ export function NowPlayingBar() {
               </div>
             </div>
 
-            {/* Side panel: lyrics (when toggled) else the queue (if >1 track) */}
-            {showLyrics ? (
-              <div className="flex min-h-0 w-full flex-col md:max-w-sm md:flex-1">
-                <p className="mb-2 flex-shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {t("lyrics")}
-                </p>
-                <div className="min-h-0 flex-1 md:max-h-[60vh]">
-                  <LyricsView trackId={currentTrack.id} currentTime={currentTime} />
-                </div>
+            {/* ── Side panel (lyrics by default, or queue) ── */}
+            <div
+              className={`min-h-0 flex-1 flex-col md:flex ${
+                mobileView === "panel" ? "flex" : "hidden"
+              }`}
+            >
+              {/* Panel tab switch: 歌词 / 队列 (desktop-only; mobile uses the
+                  top segmented control). */}
+              <div className="hidden flex-shrink-0 justify-center pb-4 md:flex">
+                <Segmented
+                  value={panel}
+                  onChange={setPanel}
+                  options={[
+                    { value: "lyrics", label: t("lyrics") },
+                    { value: "queue", label: t("queue") },
+                  ]}
+                />
               </div>
-            ) : (
-              queue.length > 1 && (
-                <div className="flex min-h-0 w-full flex-col md:max-w-sm md:flex-1">
-                  <p className="mb-2 flex-shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {t("queue")}
-                  </p>
-                  <div className="min-h-0 flex-1 overflow-y-auto md:max-h-[60vh]">
+
+              {/* Content — bounded; scrolls WITHIN itself only. */}
+              <div className="min-h-0 flex-1">
+                {panel === "lyrics" ? (
+                  <LyricsView
+                    trackId={currentTrack.id}
+                    currentTime={currentTime}
+                    onSeek={seek}
+                  />
+                ) : queue.length > 0 ? (
+                  <div className="mx-auto h-full max-w-lg overflow-y-auto px-1">
                     {queue.map((track, i) => (
                       <TrackRow
                         key={`${track.id}-${i}`}
@@ -322,13 +357,72 @@ export function NowPlayingBar() {
                       />
                     ))}
                   </div>
-                </div>
-              )
-            )}
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    {t("queue")}
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile mini transport so lyrics/queue panes stay controllable. */}
+              <div className="flex flex-shrink-0 items-center gap-3 border-t border-white/[0.06] px-6 py-3 md:hidden">
+                <span className="w-9 text-right text-[11px] tabular-nums text-muted-foreground">
+                  {formatDuration(currentTime)}
+                </span>
+                <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                <span className="w-9 text-[11px] tabular-nums text-muted-foreground">
+                  {formatDuration(duration)}
+                </span>
+                <IconBtn label={t("previous")} onClick={prev}>
+                  <SkipBack className="h-5 w-5 fill-current" />
+                </IconBtn>
+                <button
+                  onClick={toggle}
+                  aria-label={isPlaying ? t("pause") : t("play")}
+                  className="flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid active:scale-95"
+                >
+                  {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
+                </button>
+                <IconBtn label={t("next")} onClick={next}>
+                  <SkipForward className="h-5 w-5 fill-current" />
+                </IconBtn>
+              </div>
+            </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Segmented — a small pill switcher (iOS-style). Highlights the active option.
+ */
+function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { value: T; label: string }[];
+}) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.04] p-1 backdrop-blur-sm">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`cursor-pointer rounded-full px-3.5 py-1 text-[13px] font-medium transition-fluid active:scale-95 ${
+            value === opt.value
+              ? "bg-white text-black"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
   );
 }
 

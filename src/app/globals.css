@@ -420,6 +420,29 @@
   cursor: default;
 }
 
+/* Lyrics viewport — self-scrolling, with soft top/bottom fade so lines
+   dissolve into the panel edges instead of clipping hard. Scrollbar hidden. */
+.music-lyrics-scroll {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
+  scrollbar-width: none;
+}
+.music-lyrics-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* Cinema iris reveal — circle expands from center, classic film opening */
 @keyframes irisOpen {
   0% { clip-path: circle(0% at 50% 40%); }
