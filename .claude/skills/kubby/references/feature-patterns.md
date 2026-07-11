@@ -13,6 +13,7 @@ every task.
 - [Photos timeline + albums + lightbox](#photos-timeline--albums--lightbox)
 - [Music library + global player](#music-library--global-player)
 - [Cross-domain safety (a hard rule)](#cross-domain-safety-a-hard-rule)
+- [Backend review checklist](#backend-review-checklist)
 - [GlassToast](#glasstoast)
 - [Metadata Browser](#metadata-browser)
 - [Metadata editor Images tab](#metadata-editor-images-tab)
@@ -295,6 +296,61 @@ The general shape: **allowlist the current domain, gate every destructive/global
 side-effect on the library's own `type` (defence-in-depth on the server, not just
 the UI), and when a domain writes generated files under `metadata/…/{libraryId}/`,
 its delete path owns removing them.**
+
+- **Global-scoped rows with no FK to the library must be pruned on delete.**
+  `music_artists` is global (an artist spans libraries), so the FK cascade from
+  `media_libraries` never removes it — deleting a music library left orphaned
+  0-track artist rows. The `type === "music"` delete branch calls
+  `pruneOrphanArtists()` (from `music/mutations.ts`) *after* the cascade, mirroring
+  the movie branch's orphan-people cleanup. Any future global/shared table needs
+  the same explicit sweep in each domain's delete path.
+
+## Backend review checklist
+
+How this repo's backend was reviewed (2026-07-11) and the recurring failure shapes.
+Re-run this per-dimension (four independent read-only reviewers, then self-verify
+every High before touching code) when auditing the backend. The two highest-yield
+categories: **client-controlled parameter → filesystem / process / SQL**, and
+**concurrency of long-running stateful subsystems (scanner, transcode) + deletion
+racing them.**
+
+1. **Cross-domain** — see the hard-rule section above. Allowlist not blocklist;
+   count per-domain table; gate destructive side-effects on server-side `type`;
+   prune global-scoped rows (artists) on delete.
+2. **API security** — auth coverage (which routes are reachable unauthenticated;
+   the middleware is `src/proxy.ts` in Next 16, gating via `authorized()` in
+   `auth.config.ts` — its `publicPaths` list + the stream regex are the whole
+   allowlist); path traversal on any route that turns a **client-supplied** param
+   into an `fs` path (DB-sourced paths are safe, client-sourced are not); command/
+   arg injection (all ffmpeg/external-player spawns use arg arrays, no shell — keep
+   it that way); SSRF (TMDB fetches are fixed-domain); SQL is fully Drizzle-
+   parameterized. Known residual (deferred): most `settings`/`libraries`/mutation
+   routes authorize on "any logged-in session", not `isAdmin` — fine for a single-
+   admin install, revisit when a non-admin user exists.
+3. **Robustness** — orphaned ffmpeg (client disconnect / shutdown / mid-stream),
+   unbounded concurrent transcode sessions (**still uncapped** — deferred), races
+   between session create/kill/seek, scanner concurrency (needs a server-side lock,
+   not just a client ref), delete racing an in-flight scan, one corrupt file
+   aborting a whole scan, `readFileSync` on a hot path blocking the event loop
+   (**HLS segment serving still sync** — deferred).
+4. **Database** — the migration cross-check is mandatory: every column in
+   `schema.ts` on a base table (`users`/`media_libraries`/`movies` etc.) needs a
+   matching idempotent `ALTER TABLE … ADD` in the `pending` array of
+   `db/index.ts`, or a DB created before that column's base-CREATE crashes
+   `no such column` on upgrade. Also: FK cascade completeness (+ `PRAGMA
+   foreign_keys=ON`), indexes on hot WHERE/ORDER-BY/JOIN columns of large tables,
+   UNIQUE constraints the upsert logic assumes.
+
+**Fixes shipped from this review** (`574f5ec`, hardening only, no behavior change):
+confined `/api/images/[...path]` to library-folders + data-dir roots (was an
+authenticated arbitrary-file-read — `kubby.db`/`.env`); anchored the public stream
+regex to exactly `/stream` so `/stream/decide` (spawns ffmpeg) needs auth;
+server-side per-library scan lock (released in `finally`) + a library-still-exists
+re-check before the destructive end-of-scan cleanup in all three scanners;
+coalesced concurrent per-session seeks in the transcode manager; prune orphan
+artists on music-library delete; 8 idempotent backfill ALTERs + migration catch now
+logs non-benign failures instead of swallowing all; removed the plaintext-password
+log in `setup/complete`.
 
 ## GlassToast
 
