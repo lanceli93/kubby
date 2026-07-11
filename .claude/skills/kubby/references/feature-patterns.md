@@ -9,6 +9,7 @@ every task.
 - [Player controls grouping](#player-controls-grouping)
 - [Navigation structure](#navigation-structure)
 - [Domain switcher + photos navigation](#domain-switcher--photos-navigation)
+- [Movie poster card hover](#movie-poster-card-hover)
 - [Photos timeline + albums + lightbox](#photos-timeline--albums--lightbox)
 - [GlassToast](#glasstoast)
 - [Metadata Browser](#metadata-browser)
@@ -71,6 +72,30 @@ entry on `useHasPhotoLibrary()`.
 React Query cache (5-min staleTime) → `data?.some(l => l.type === "photo")`, so it
 adds no extra request. `DomainCookieSync` (see architecture.md → Domains) persists
 the domain cookie and self-heals a stale `photos` cookie.
+
+## Movie poster card hover
+
+`components/movie/movie-card.tsx` — the reference hover treatment for the whole
+app. On hover the card composes several affordances at once:
+- **Whole card scales** `hover:scale-[1.03]` (outer wrapper, `transition-[scale]`);
+  also pinned to `scale-[1.03]` while the more-menu is open (`menuOpen`).
+- **3D tilt + glare** via `TiltCard` (`components/ui/tilt-card.tsx`) wrapping the
+  poster: pointer-driven rotateX/rotateY (`[transform-style:preserve-3d]`) + a
+  cursor-following radial glare (`group-hover/tilt:opacity-100`). Disabled while the
+  menu is open.
+- **Ambient glow** — a blurred, `saturate-150` copy of the poster bleeds behind at
+  `scale-110`, `opacity-0 group-hover:opacity-55` (only when `posterBlur` exists).
+- **Centered play button** `scale-75 opacity-0 group-hover:scale-100
+  group-hover:opacity-100`, lifted toward the viewer in 3D (`--tilt-lift: 40px`).
+- **Gradient-scrim overlay bar** (`bg-gradient-to-t from-black/85…`, NOT
+  backdrop-blur — preserve-3d breaks backdrop-filter on descendants) with
+  watched / favorite / more-menu buttons.
+- **Badges lift on tilt** — resolution/rating badges use `tilt-lift`
+  (`--tilt-lift: 22px`) so they float above the poster plane.
+
+The photo timeline tile (see below) is a deliberately **contained** cousin of this:
+it borrows the language (inner image zoom + ring + scrim) but the tile itself must
+NOT scale/tilt, because it lives in a justified virtual-scroll row.
 
 ## Photos timeline + albums + lightbox
 

@@ -398,7 +398,7 @@ GET /api/movies/{id}/stream/decide?disc=N
 
 | Component | Size | Key features |
 |-----------|------|-------------|
-| MovieCard | 180x270 (responsive: w-full+aspect-[2/3]) | Poster, rating/resolution badges, hover: play/favorite/watched/menu |
+| MovieCard | 180x270 (responsive: w-full+aspect-[2/3]) | Poster, rating/resolution badges; hover: whole-card `scale-[1.03]` + `TiltCard` 3D tilt/glare + ambient glow + centered play + gradient-scrim overlay bar (watched/favorite/more), badges lift on tilt. See feature-patterns → Movie poster card hover |
 | PersonCard | sm:140x210, md:160x240, lg:240x340 | Photo, tier badge |
 | LibraryCard | 360x200 | Cover image, name overlay, scan progress, hover menu |
 | AddLibraryCard | 360x200 | Dashed border, "+" icon, opens add library dialog |
