@@ -421,6 +421,8 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     \`last_played_at\` text
   )`,
     "CREATE UNIQUE INDEX IF NOT EXISTS `idx_utd_user_track` ON `user_track_data` (`user_id`, `track_id`)",
+    // 0039: inline lyrics on music tracks (plain or LRC-timestamped)
+    "ALTER TABLE `music_tracks` ADD `lyrics` text",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

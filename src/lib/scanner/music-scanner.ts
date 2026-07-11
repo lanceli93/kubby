@@ -15,6 +15,7 @@ import { eq, sql } from "drizzle-orm";
 import { parseFolderPaths } from "@/lib/folder-paths";
 import { getMusicArtDir } from "@/lib/paths";
 import { generateBlurDataURL } from "@/lib/blur-utils";
+import { extractLyricsFromCommon, readLrcSidecar } from "@/lib/music/lyrics";
 import type { ScanProgress, SkippedFolder } from "./index";
 
 // ─── Constants ─────────────────────────────────────────────────
@@ -471,6 +472,9 @@ export async function scanMusicLibrary(
         }
       }
 
+      // Lyrics: `.lrc` sidecar (synced, authoritative) then embedded tags.
+      const lyrics = readLrcSidecar(file.fullPath) ?? extractLyricsFromCommon(common);
+
       const trackId = existing?.id || uuidv4();
       const values: typeof musicTracks.$inferInsert = {
         id: trackId,
@@ -491,6 +495,7 @@ export async function scanMusicLibrary(
         genres: JSON.stringify(genreArray),
         year,
         lyricsPath: null,
+        lyrics,
         mimeType: MIME_BY_EXT[ext] ?? null,
         dateModified: Math.floor(stat.mtimeMs),
       };

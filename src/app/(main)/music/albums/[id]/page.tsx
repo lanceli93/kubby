@@ -1,12 +1,13 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Shuffle, Music, ArrowLeft } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { TrackRow } from "@/components/music/track-row";
+import { MusicItemMenu } from "@/components/music/music-item-menu";
 import { useTranslations } from "next-intl";
 import { useMusicPlayer, type PlayerTrack } from "@/providers/music-player-provider";
 
@@ -41,6 +42,7 @@ export default function AlbumDetailPage() {
   const params = useParams();
   const albumId = params.id as string;
   const t = useTranslations("music");
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { playAlbum, toggleShuffle, shuffle } = useMusicPlayer();
 
@@ -204,6 +206,15 @@ export default function AlbumDetailPage() {
                 <Shuffle className="h-5 w-5" />
                 {t("shuffle")}
               </button>
+              <MusicItemMenu
+                type="album"
+                id={album.id}
+                initial={{ title: album.title, year: album.year, genres: genres }}
+                invalidateKeys={[["music-album", albumId], ["music-albums"], ["music-home"], ["libraries"]]}
+                onDeleted={() => router.push("/music")}
+                variant="row"
+                triggerClassName="h-10 w-10 border border-white/[0.08]"
+              />
             </div>
           </div>
         </div>
@@ -222,6 +233,18 @@ export default function AlbumDetailPage() {
               isFavorite={track.isFavorite}
               onPlay={() => playAlbum(buildQueue(), index)}
               onToggleFavorite={() => toggleFavorite.mutate({ id: track.id, current: !!track.isFavorite })}
+              menu={
+                <MusicItemMenu
+                  type="track"
+                  id={track.id}
+                  initial={{
+                    title: track.title,
+                    trackNumber: track.trackNumber,
+                    discNumber: track.discNumber,
+                  }}
+                  invalidateKeys={[["music-album", albumId], ["music-songs"]]}
+                />
+              }
             />
           ))}
         </div>

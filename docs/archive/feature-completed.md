@@ -1,5 +1,19 @@
 # Completed Features
 
+## 2026-07-11 (2): 音乐库管理能力 — 删除/编辑元数据/浏览器上传 + 歌词展示
+
+用户诉求 (`docs/feature-request.md`): ① 音乐库的专辑、歌曲都不支持删除, 也没有在 UI 里添加音乐、编辑元数据等基本操作; ② FLAC 自带歌词但播放器不显示。此前音乐域 `/api/music/*` 完全只读 (仅一个 favorite 的 PUT), 卡片/列表也没有电影卡那样的 ⋯ 菜单。确认范围: 全做 (删除 + 编辑 + 浏览器上传 + 歌词), 删除提供「同时删源文件」勾选框, **默认只删库内记录** (对齐电影域)。
+
+- **歌词后端**: `music_tracks` 加内联 `lyrics` TEXT 列 (schema + 迁移 0039)。新建 `lib/music/lyrics.ts` — 优先读同名 `.lrc` 边车文件, 否则从 `music-metadata` 的 `common.lyrics` 提取 (同步歌词序列化为 LRC `[mm:ss.xx]`, 否则纯文本)。扫描器在已 parse 的 `common` 上顺带提取 (零额外 IO)。`GET /api/music/tracks/[id]/lyrics` 按需返回, 对旧库 (lyrics 为 NULL) 首次请求时解析文件并回写缓存 (空串 = 查过无歌词, 不再重复解析)。
+- **歌词 UI**: `components/music/lyrics-view.tsx` — 解析 LRC 时间戳, 按 `currentTime` 高亮并平滑滚动当前行 (居中); 纯文本歌词居中滚动展示; 无歌词友好空态。全屏 Now Playing 覆盖层加「歌词」(Mic2) 切换按钮, 开启时侧栏 (桌面) / 下方 (移动) 显示歌词, 关闭时回到播放队列。
+- **删除后端**: `DELETE /api/music/albums|tracks|artists/[id]?deleteFiles=true`。共享 `lib/music/mutations.ts` (孤儿艺术家清理 / 空专辑 prune / 生成封面清理 / 安全删文件+空目录)。默认仅删库内记录 + 该专辑生成的封面 (Kubby 产物); `deleteFiles` 才递归删源音频文件并清理空目录。删曲目/专辑后 prune 变空的专辑与孤儿艺术家; 删艺术家 = 删其全部作品 (曲目-艺术家 ∪ 专辑-艺术家 的并集)。
+- **编辑后端**: `PUT /api/music/albums/[id]` (title/sortTitle/year/genres) · `tracks/[id]` (title/trackNumber/discNumber/year/lyrics) · `artists/[id]` (name/sortName/overview, 改名冲突返回 409)。全部要求登录。已知取舍: 增量扫描在文件 mtime/size 变化时会覆盖库内编辑 (编辑属库内层, 已在代码注释说明)。
+- **管理 UI**: `music-item-menu.tsx` (⋯ 菜单, **仅管理员可见**, 内聚编辑对话框 + 删除确认 + DELETE 请求 + 缓存失效) + `music-metadata-editor.tsx` (album/artist/track 三态共用表单; 从卡片打开时不带 genres → 隐藏该字段且不发送, 避免误清空) + `music-delete-dialog.tsx` (「同时删源文件」勾选框默认关)。接入专辑详情 (头部 + 每曲目)、艺术家详情 (头部)、歌曲 Tab (每行)。`TrackRow` 加可选 `menu` 插槽。
+- **浏览器上传**: `POST /api/music/upload` (multipart, 仅音乐库, 流式落盘避免大 FLAC 占内存, 写入库首个文件夹的 `Uploads/` 子目录, 文件名消毒 + 去重), 落盘后前端复用 `scan-provider` 触发库扫描入库。`music-upload-button.tsx` (仅管理员; 多音乐库时下拉选库, 单库/当前筛选库直接选文件), 置于音乐页 Tabs 右侧。
+- **i18n (EN + ZH)**: `music` 命名空间新增 36 键 (lyrics/noLyrics/showLyrics、editAlbum/Artist/Track、deleteAlbum/Artist/Track/Song + confirm* 、deleteSourceFiles(+Warning)、save/saved/deleted/*Failed、trackNumber/discNumber/genres(+Hint)/name/sortName、upload/uploadMusic/uploadTo/uploading/uploadDone/uploadFailed/chooseFiles/filesSelected/noMusicLibrary)。
+- **跨域安全**: 上传路由服务端校验 `type === "music"` 才接受; 删除只清理音乐域自己的 `metadata/music-art/{libraryId}` 产物; 管理菜单/上传按钮客户端按 `isAdmin` 门控。
+- **验证**: `npx tsc --noEmit` 通过、ESLint 干净、`npm run build` 成功 (新增 `/api/music/tracks/[id]`、`/lyrics`、`/api/music/upload` 三路由已注册)。
+
 ## 2026-07-11: 照片库 v2 — 手动相册 + 库筛选 + 时间线/灯箱美化
 
 用户诉求: 照片库 v1 略显简陋 — 没有相册、没有 hover 反馈 (要像电影 poster 那样)、多个照片库时无法区分、灯箱打开有僵硬的糊图放大、视频先小框再放大不如直接开 web player。**相册明确定义为「媒体库内用户手动创建的分类」, 非扫描文件夹自动生成; 默认不分相册就是一条时间线。** 顶层导航形态经确认选「分段控件 + 库筛选」。

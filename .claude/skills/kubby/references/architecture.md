@@ -217,7 +217,7 @@ pipeline, auth, i18n) is reused, not forked.
 
 **photo_album_items**: album_id (FK CASCADE), item_id (FK CASCADE), added_at. Unique index `idx_pai_pk` (album_id, item_id) makes re-adding a no-op (`onConflictDoNothing`); `idx_pai_item` (item_id). Deleting an album (or removing members) never touches the underlying photos.
 
-### Music domain tables (migration 0038)
+### Music domain tables (migration 0038; `music_tracks.lyrics` added 0039)
 
 Six tables. Artists are aggregated **only via the join tables** (`music_album_artists` /
 `music_track_artists`) — never physical folders — so Various-Artists albums resolve
@@ -230,7 +230,7 @@ naturally. Cover art is stored under `metadata/music-art/{libraryId}/{albumId}.j
 
 **music_album_artists** (M:N): album_id (FK CASCADE), artist_id (FK CASCADE). Unique `idx_maa_pk` (album_id, artist_id); `idx_maa_artist` (artist_id).
 
-**music_tracks**: id, library_id (FK CASCADE), album_id (FK CASCADE, **nullable** — tracks with no album tag → "Unknown Album"), file_path (UNIQUE), file_name, title, sort_title, track_number, disc_number, duration_seconds (real), codec, bitrate, sample_rate, channels, file_size, genres (JSON text), year, lyrics_path, mime_type, date_added, date_modified (int ms, for incremental scan). Indexes `idx_mt_library` (library_id), `idx_mt_album` (album_id).
+**music_tracks**: id, library_id (FK CASCADE), album_id (FK CASCADE, **nullable** — tracks with no album tag → "Unknown Album"), file_path (UNIQUE), file_name, title, sort_title, track_number, disc_number, duration_seconds (real), codec, bitrate, sample_rate, channels, file_size, genres (JSON text), year, lyrics_path (legacy/unused), lyrics (inline text — plain, or LRC `[mm:ss.xx]` when synced; `""` = "checked, none"), mime_type, date_added, date_modified (int ms, for incremental scan). Indexes `idx_mt_library` (library_id), `idx_mt_album` (album_id).
 
 **music_track_artists** (M:N): track_id (FK CASCADE), artist_id (FK CASCADE). Unique `idx_mta_pk` (track_id, artist_id); `idx_mta_artist` (artist_id).
 
@@ -298,12 +298,15 @@ users ──1:N──> user_track_data ──N:1──> music_tracks
   - `POST|DELETE /api/photos/albums/[id]/items` — Add photos (`{itemIds}`, `onConflictDoNothing`, same-library only) / remove photos
 - **Music domain:** (all list routes paginate `offset`/`limit` + `search`, return `{ items, totalCount, offset, limit, hasMore }`; artist names via batched `GROUP_CONCAT` in `lib/music/queries.ts`, no N+1; covers served via `/api/images` + `resolveImageSrc(coverPath)`, no dedicated cover route)
   - `GET /api/music/albums?libraryId=&sort=&sortOrder=&search=` — sort title|year|dateAdded (default dateAdded desc); item `{id,title,year,coverPath,coverBlur,artistName,trackCount}`
-  - `GET /api/music/albums/[id]` — `{...album, genres, artists:[{id,name}], tracks:[{id,title,trackNumber,discNumber,durationSeconds,artistName,isFavorite,playCount}]}` (tracks ordered discNumber, trackNumber)
+  - `GET|PUT|DELETE /api/music/albums/[id]` — GET `{...album, genres, artists:[{id,name}], tracks:[{id,title,trackNumber,discNumber,durationSeconds,artistName,isFavorite,playCount}]}` (tracks ordered discNumber, trackNumber); PUT edits `{title,sortTitle,year,genres}`; DELETE `?deleteFiles=true` (cascade tracks + generated cover art; optional source-file removal; prunes orphan artists)
   - `GET /api/music/artists?libraryId=&sort=&search=` — item `{id,name,imagePath,imageBlur,albumCount,trackCount}`
-  - `GET /api/music/artists/[id]` — `{id,name,imagePath,imageBlur,overview,albums:[...]}`
+  - `GET|PUT|DELETE /api/music/artists/[id]` — GET `{id,name,imagePath,imageBlur,overview,albums:[...]}`; PUT edits `{name,sortName,overview}` (rename collision → 409); DELETE removes the artist + their whole catalogue (`?deleteFiles=` optional), prunes emptied albums
   - `GET /api/music/songs?libraryId=&sort=&search=` — item `{id,title,durationSeconds,artistName,albumId,albumTitle,coverPath,coverBlur,trackNumber,isFavorite}`
   - `GET /api/music/home?libraryId=` — `{recentAlbums, randomAlbums, mostPlayed}`
+  - `PUT|DELETE /api/music/tracks/[id]` — PUT edits `{title,trackNumber,discNumber,year,lyrics}`; DELETE `?deleteFiles=true` (prunes emptied album/artist)
   - `GET|PUT /api/music/tracks/[id]/user-data` — GET `{isFavorite,playCount}`; PUT body `{isFavorite?}` or `{incrementPlay:true}`, upsert on (userId,trackId)
+  - `GET /api/music/tracks/[id]/lyrics` — `{lyrics, synced}`; serves the DB `lyrics` column, back-filling on first request for pre-lyrics libraries (parse file → cache; `.lrc` sidecar > embedded `common.lyrics`)
+  - `POST /api/music/upload` — multipart audio upload (music libraries only, admin); streams files into `{libraryFolder}/Uploads/` then the client triggers a scan to ingest
   - `GET /api/music/tracks/[id]/stream` — **direct** mode: original file with HTTP 206 Range (mp3/aac/flac/ogg/opus/wav); **transcode** mode: ffmpeg→mp3 pipe (`-f mp3 -ab 192k`, no Range) for wma/aiff/alac/etc. Mode from `decideAudioPlayback` (see Audio Playback)
 - HLS streaming: `GET /api/stream/[sessionId]/playlist.m3u8`, `GET /api/stream/[sessionId]/segment/[name]`, `POST/PATCH/DELETE /api/stream/[sessionId]` (POST=seek, PATCH=heartbeat, DELETE=stop)
 
@@ -407,12 +410,15 @@ scanMusicLibrary
   ├── parseFile() from `music-metadata` per file → title/album/albumartist/
   │     artist(s)/track/disc/year/genre/duration/codec/bitrate/sampleRate/
   │     channels + embedded picture
-  ├── Album grouping key = albumartist||album (fallback artist||album, then folder)
-  │     → Various-Artists albums resolve naturally
+  ├── Album grouping: same title (case-insensitive) + shares ≥1 artist (album-
+  │     artist ∪ track-artist), matched via an in-memory title→candidates cache
+  │     (see getOrCreateAlbum) → Various-Artists / differing per-track artists
+  │     still collapse to one album as long as tracks chain through an artist
   ├── Artists linked ONLY via music_album_artists / music_track_artists (never folders)
   ├── Cover priority: album folder cover.*/folder.*/albumart.*/front.* >
   │     embedded picture (extracted to metadata/music-art/{libraryId}/{albumId}.jpg) > none
   │     coverBlur via generateBlurDataURL (lib/blur-utils)
+  ├── Lyrics: `.lrc` sidecar > embedded common.lyrics (synced→LRC, else plain) → music_tracks.lyrics
   ├── Tracks with no album tag → album_id = null ("Unknown Album")
   ├── Clean up rows whose files vanished; delete albums/artists left with no tracks
   └── Return { scannedCount, removedCount, skipped[] }

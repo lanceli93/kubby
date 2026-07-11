@@ -15,11 +15,13 @@ import {
   ChevronDown,
   Maximize2,
   Music,
+  Mic2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useMusicPlayer } from "@/providers/music-player-provider";
 import { TrackRow } from "@/components/music/track-row";
+import { LyricsView } from "@/components/music/lyrics-view";
 
 /** Format seconds as m:ss; null/invalid → "0:00". */
 function formatDuration(sec?: number | null): string {
@@ -39,6 +41,7 @@ export function NowPlayingBar() {
   const t = useTranslations("music");
   const player = useMusicPlayer();
   const [expanded, setExpanded] = useState(false);
+  const [showLyrics, setShowLyrics] = useState(false);
 
   const {
     currentTrack,
@@ -254,6 +257,14 @@ export function NowPlayingBar() {
                 >
                   <RepeatIcon className="h-5 w-5" />
                 </IconBtn>
+                <IconBtn
+                  label={t("showLyrics")}
+                  onClick={() => setShowLyrics((v) => !v)}
+                  active={showLyrics}
+                  size="lg"
+                >
+                  <Mic2 className="h-5 w-5" />
+                </IconBtn>
               </div>
 
               {/* Volume */}
@@ -279,29 +290,40 @@ export function NowPlayingBar() {
               </div>
             </div>
 
-            {/* Queue (if more than one track) */}
-            {queue.length > 1 && (
+            {/* Side panel: lyrics (when toggled) else the queue (if >1 track) */}
+            {showLyrics ? (
               <div className="flex min-h-0 w-full flex-col md:max-w-sm md:flex-1">
                 <p className="mb-2 flex-shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {t("queue")}
+                  {t("lyrics")}
                 </p>
-                <div className="min-h-0 flex-1 overflow-y-auto md:max-h-[60vh]">
-                  {queue.map((track, i) => (
-                    <TrackRow
-                      key={`${track.id}-${i}`}
-                      id={track.id}
-                      index={i}
-                      title={track.title}
-                      artistName={track.artistName}
-                      durationSeconds={track.durationSeconds}
-                      coverPath={track.coverPath}
-                      coverBlur={track.coverBlur}
-                      showCover
-                      onPlay={() => player.playAlbum(queue, i)}
-                    />
-                  ))}
+                <div className="min-h-0 flex-1 md:max-h-[60vh]">
+                  <LyricsView trackId={currentTrack.id} currentTime={currentTime} />
                 </div>
               </div>
+            ) : (
+              queue.length > 1 && (
+                <div className="flex min-h-0 w-full flex-col md:max-w-sm md:flex-1">
+                  <p className="mb-2 flex-shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {t("queue")}
+                  </p>
+                  <div className="min-h-0 flex-1 overflow-y-auto md:max-h-[60vh]">
+                    {queue.map((track, i) => (
+                      <TrackRow
+                        key={`${track.id}-${i}`}
+                        id={track.id}
+                        index={i}
+                        title={track.title}
+                        artistName={track.artistName}
+                        durationSeconds={track.durationSeconds}
+                        coverPath={track.coverPath}
+                        coverBlur={track.coverBlur}
+                        showCover
+                        onPlay={() => player.playAlbum(queue, i)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
             )}
           </div>
         </div>

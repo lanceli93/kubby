@@ -12,6 +12,8 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { AlbumCard } from "@/components/music/album-card";
 import { ArtistCard } from "@/components/music/artist-card";
 import { TrackRow } from "@/components/music/track-row";
+import { MusicItemMenu } from "@/components/music/music-item-menu";
+import { MusicUploadButton } from "@/components/music/music-upload-button";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTranslations } from "next-intl";
@@ -99,12 +101,15 @@ function MusicBrowseContent() {
   return (
     <div className="flex h-full flex-col">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-full flex-col">
-        <div className="flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
+        <div className="relative flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">
             <TabsTrigger value="albums" className="transition-fluid cursor-pointer">{t("albums")}</TabsTrigger>
             <TabsTrigger value="artists" className="transition-fluid cursor-pointer">{t("artists")}</TabsTrigger>
             <TabsTrigger value="songs" className="transition-fluid cursor-pointer">{t("songs")}</TabsTrigger>
           </TabsList>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <MusicUploadButton activeLibraryId={libraryId || undefined} />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-scroll px-4 md:px-12">
@@ -520,6 +525,14 @@ function SongsTabContent({ libraryId }: { libraryId: string }) {
             showCover
             onPlay={() => handlePlay(index)}
             onToggleFavorite={() => toggleFavorite.mutate({ id: song.id, current: !!song.isFavorite })}
+            menu={
+              <MusicItemMenu
+                type="track"
+                id={song.id}
+                initial={{ title: song.title, trackNumber: song.trackNumber }}
+                invalidateKeys={[["music-songs"], ["music-albums"], ["music-home"]]}
+              />
+            }
           />
         ))}
       </div>

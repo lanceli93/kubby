@@ -23,6 +23,8 @@ interface TrackRowProps {
   showCover?: boolean;
   onPlay?: () => void;
   onToggleFavorite?: () => void;
+  /** Optional actions slot (e.g. the ⋯ edit/delete menu), shown after duration. */
+  menu?: React.ReactNode;
 }
 
 /** Format seconds as m:ss; null/invalid → "--:--". */
@@ -47,6 +49,7 @@ export function TrackRow({
   showCover,
   onPlay,
   onToggleFavorite,
+  menu,
 }: TrackRowProps) {
   const t = useTranslations("music");
   const { currentTrackId, isPlaying } = useMusicPlayer();
@@ -123,6 +126,9 @@ export function TrackRow({
         <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
           {formatDuration(durationSeconds)}
         </span>
+        {menu && (
+          <div onClick={(e) => e.stopPropagation()}>{menu}</div>
+        )}
       </div>
     </div>
   );

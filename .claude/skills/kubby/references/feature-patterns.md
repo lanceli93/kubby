@@ -206,6 +206,41 @@ exists; `auth.config.ts` redirects `/` → `/music` when that cookie is set. Mus
 libraries force `scraperEnabled=false, jellyfinCompat=false, metadataLanguage=null`
 server-side, same as photo.
 
+**Management (edit / delete / upload) — admin-gated.** The music domain started
+read-only; CRUD was added mirroring the movie card pattern:
+- `MusicItemMenu` (`components/music/music-item-menu.tsx`) is the shared ⋯ menu
+  (Edit / Delete), rendered only when `session.user.isAdmin`. It owns the
+  `MusicMetadataEditor` (album/artist/track three-in-one form) + `MusicDeleteDialog`
+  (an "also delete source files" checkbox, **default off → DB-only**, like the
+  movie delete dialog), performs the `DELETE`, and invalidates the caller's query
+  keys. Wired into album detail (header + each `TrackRow`), artist detail (header),
+  and the Songs tab. `TrackRow` gained an optional `menu` slot.
+  - Gotcha: opening the editor from a card that lacks `genres` must NOT wipe them
+    — the editor only sends/edits `genres` when `initial.genres !== undefined`.
+- Server routes: `PUT`/`DELETE` on `/api/music/{albums,artists,tracks}/[id]`
+  (see architecture.md → API). `lib/music/mutations.ts` centralises the shared
+  cleanup: prune empty albums, prune orphan artists (global sweep), remove the
+  album's **generated** cover art under `metadata/music-art/{libraryId}` (a Kubby
+  artifact — always removed), and `deleteFiles` source-file + empty-dir removal.
+  Deleting an artist removes their whole catalogue (track-artist ∪ album-artist).
+  Caveat: an incremental re-scan overwrites DB edits when a file's mtime/size
+  changes (edits live in the DB layer, not written back to tags).
+- Upload: `MusicUploadButton` (music page Tabs, admin-only) → `POST /api/music/upload`
+  (multipart, music libraries only, streams to `{libraryFolder}/Uploads/`), then
+  reuses `scan-provider`'s `startScan` to ingest. Multi-library → dropdown to pick
+  the target; single/filtered library → straight to the file picker.
+
+**Lyrics.** `music_tracks.lyrics` (inline text, migration 0039) is filled by the
+scanner (`.lrc` sidecar > embedded `common.lyrics`; synced entries serialised to
+LRC `[mm:ss.xx]`, else plain text — `lib/music/lyrics.ts`). `GET
+/api/music/tracks/[id]/lyrics` serves it and **back-fills on first request** for
+libraries scanned before lyrics support (parse the file, cache the result; `""`
+means "checked, none" so a lyric-less track isn't re-parsed). `LyricsView`
+(`components/music/lyrics-view.tsx`) parses LRC, highlights + auto-scrolls the
+active line to `currentTime` when synced, else shows a centered scrollable block;
+it's toggled by a Mic2 button in the full-screen Now Playing overlay (replaces the
+queue side-panel while active).
+
 ## Cross-domain safety (a hard rule)
 
 **Cross-domain operations are a cardinal sin.** Cinema / Photos / Music share ONE

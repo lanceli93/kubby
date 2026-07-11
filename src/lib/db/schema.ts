@@ -375,6 +375,7 @@ export const musicTracks = sqliteTable("music_tracks", {
   genres: text("genres"), // JSON array string
   year: integer("year"),
   lyricsPath: text("lyrics_path"),
+  lyrics: text("lyrics"), // inline lyrics text; plain or LRC-timestamped ([mm:ss.xx]) when synced
   mimeType: text("mime_type"),
   dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
   dateModified: integer("date_modified"), // file mtime in ms, for incremental scan diffing

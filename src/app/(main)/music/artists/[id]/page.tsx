@@ -1,12 +1,13 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import { UserRound, ArrowLeft } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { AlbumCard } from "@/components/music/album-card";
+import { MusicItemMenu } from "@/components/music/music-item-menu";
 import { useTranslations } from "next-intl";
 
 interface ArtistAlbum {
@@ -31,6 +32,7 @@ export default function ArtistDetailPage() {
   const params = useParams();
   const artistId = params.id as string;
   const t = useTranslations("music");
+  const router = useRouter();
 
   const { data: artist, isLoading } = useQuery<ArtistDetail>({
     queryKey: ["music-artist", artistId],
@@ -97,7 +99,18 @@ export default function ArtistDetailPage() {
 
           {/* Name + meta */}
           <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-            <h1 className="text-3xl font-bold text-foreground md:text-4xl">{artist.name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-foreground md:text-4xl">{artist.name}</h1>
+              <MusicItemMenu
+                type="artist"
+                id={artist.id}
+                initial={{ name: artist.name, overview: artist.overview }}
+                invalidateKeys={[["music-artist", artistId], ["music-artists"], ["music-albums"], ["music-home"], ["libraries"]]}
+                onDeleted={() => router.push("/music?tab=artists")}
+                variant="row"
+                triggerClassName="h-9 w-9 border border-white/[0.08]"
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
               {t("albumCount", { count: artist.albums.length })}
             </p>
