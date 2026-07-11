@@ -154,9 +154,16 @@ pipeline, auth, i18n) is reused, not forked.
   library form hides those fields for both types.
 - **Domain switcher**: dropdown on the Kubby brand in `AppHeader`, rendered when
   `useHasPhotoLibrary()` OR `useHasMusicLibrary()` is true (both reuse the
-  `["libraries"]` React Query cache — no extra request). `NavSidebar` and
-  `BottomTabs` likewise show a `/photos` / `/music` entry only when the matching
-  library exists.
+  `["libraries"]` React Query cache — no extra request). This dropdown is the only
+  cross-domain jump point.
+- **Domain-following chrome**: `NavSidebar` and `BottomTabs` show only the *current*
+  domain's media entry (All Movies / All Photos / All Music) rather than one entry
+  per existing library. Current domain comes from `useCurrentDomain()`
+  (`hooks/use-current-domain.ts`): path-owned routes (`/movies|/people|/metadata|/`
+  → cinema, `/photos` → photos, `/music` → music) decide directly; neutral pages
+  (search/profile/preferences/dashboard) fall back to the `kubby-domain` cookie via
+  `useSyncExternalStore` (SSR snapshot `cinema`, corrected after hydration). Cinema-
+  only nav (the Metadata group: scraper + browse) is gated to `domain === "cinema"`.
 - **`DomainCookieSync`** (mounted in `(main)/layout.tsx`) writes a `kubby-domain`
   cookie (`cinema`/`photos`/`music`) as the user navigates, so the root can jump to
   the right homepage. The Edge proxy redirect in `auth.config.ts` reads the cookie
@@ -531,7 +538,7 @@ decideAudioPlayback({ codec, ext })
 | AddLibraryCard | 360x200 | Dashed border, "+" icon, opens add library dialog |
 | BookmarkCard | 280px mobile / 320px desktop | Thumbnail, icon, tags, edit/delete |
 | ScrollRow | Horizontal scroll | Chevron nav (hidden mobile), snap scroll on touch |
-| BottomTabs | Fixed bottom bar | Home/Movies/(Photos)/(Music)/Search/Settings, md:hidden, hidden on play page; Photos/Music tabs each shown only when a library of that type exists |
+| BottomTabs | Fixed bottom bar | Home / <current-domain media tab> / Search / Settings, md:hidden; media tab follows `useCurrentDomain()` (Movies OR Photos OR Music, not all); hidden on movie play page + photo viewer `/photos/view/[id]` |
 | Photos grid | `components/photos/photo-grid.tsx` | Shared month-grouped justified grid (cursor pagination, row-level virtual scroll via `@tanstack/react-virtual`); drives both timeline + album detail, scoped by libraryId/albumId, optional multi-select |
 | Photos lightbox | Full-screen | Zoom/pan, prev/next (←/→/swipe), EXIF panel, neighbor preload, inline video (`LightboxVideo`) |
 | AlbumCard | square (~180px) | Cover + TiltCard 3D tilt/glare + ambilight glow (like MovieCard) + centered play overlay (plays album), title + artist below → `/music/albums/[id]` |
@@ -588,7 +595,7 @@ Strategy: mobile-first CSS with `md:` prefix (768px breakpoint) for desktop styl
 
 Key patterns:
 - **useIsMobile hook** (`hooks/use-mobile.ts`): `matchMedia("(max-width: 767px)")`, synced with Tailwind `md:`
-- **BottomTabs** (`components/layout/bottom-tabs.tsx`): mobile nav (Home/Movies/Search/Settings + Photos/Music when those libraries exist), `md:hidden`, hidden on player pages
+- **BottomTabs** (`components/layout/bottom-tabs.tsx`): mobile nav (Home / current-domain media tab / Search / Settings), `md:hidden`, hidden on player pages + photo viewer
 - **Hero refactoring** (Movie/Person Detail): mobile = fanart banner `h-[220px]` + hidden poster + flow layout; desktop = absolute overlay (unchanged)
 - **Grid responsive**: movie grids use `grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fill,180px)]` with `responsive` MovieCard prop
 - **Container padding**: all `px-12`/`px-20` → `px-4 md:px-12`/`px-4 md:px-20`

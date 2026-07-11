@@ -51,11 +51,28 @@ resolution (transcode only). Skip duration also applies to desktop skip buttons.
 
 ## Navigation structure
 
-Three-tier navigation — content (MEDIA: All Movies) / admin (ADMIN: Libraries,
-Users, System) / user (Preferences, Profile). Admin items (Libraries, Users) are
-direct sidebar entries, not nested under Dashboard. System sub-pages (Overview,
-Scraper, Networking) use `(system)` route group with `AdminSidebar`. Preferences
-sub-pages use `PreferencesSidebar` (same pattern).
+Three-tier navigation — content (MEDIA: current domain's All-X entry) / admin
+(ADMIN: Libraries, Users, System) / user (Preferences, Profile). Admin items
+(Libraries, Users) are direct sidebar entries, not nested under Dashboard. System
+sub-pages (Overview, Scraper, Networking) use `(system)` route group with
+`AdminSidebar`. Preferences sub-pages use `PreferencesSidebar` (same pattern).
+
+**Domain-following (Plan A).** The chrome is organized by media domain so the
+photos/music domains don't inherit cinema-only entries:
+- `NavSidebar` Media group shows exactly one entry (All Movies / All Photos / All
+  Music) for `useCurrentDomain()`; the Metadata group (scraper + browse) is cinema-
+  only (`isAdmin && domain === "cinema"`).
+- `PreferencesSidebar` groups its entries into **Cinema** (hero-mosaic, card-badges,
+  ratings-bookmarks, playback) + **General** (language). Routes are unchanged — only
+  the sidebar grouping. i18n: `preferences.groupCinema` / `groupGeneral`.
+- The libraries dashboard (`dashboard/libraries/page.tsx`) renders cards in fixed-
+  order **type sections** (movie → photo → music, empty sections hidden, unknown
+  types fall into a trailing "Other" section so nothing is dropped). Type-specific
+  form branches use a `type === "movie"` **allowlist**, never a
+  `!== "photo" && !== "music"` blocklist (cross-domain-safety rule).
+- `useCurrentDomain()` (`hooks/use-current-domain.ts`): path decides for domain-owned
+  routes, else the `kubby-domain` cookie via `useSyncExternalStore` (SSR snapshot
+  `cinema`). i18n: `nav.allPhotos` / `nav.allMusic`, `dashboard.libraryTypeMovie`.
 
 Route migrations: `/settings` → `/profile` + `/preferences/*`; `/card-badges` →
 `/preferences/card-badges`; `/personal-metadata` → `/preferences/ratings-bookmarks`.
@@ -68,8 +85,9 @@ domain), not a second pill group. This was a deliberate de-clutter: the header
 already carries the home content Tabs (`首页/收藏/演员`), and two visually identical
 pill rows at different hierarchy levels read as messy. The dropdown only renders
 when `useHasPhotoLibrary()` is true; with no photo library the brand is a plain
-`/` link. `NavSidebar` (Media group) and `BottomTabs` likewise gate their `/photos`
-entry on `useHasPhotoLibrary()`.
+`/` link. The brand dropdown is the **only** cross-domain jump point — `NavSidebar`
+(Media group) and `BottomTabs` show only the *current* domain's entry (see
+Navigation structure → Domain-following), not one per existing library.
 
 `useHasPhotoLibrary()` (`hooks/use-has-photo-library.ts`) reuses the `["libraries"]`
 React Query cache (5-min staleTime) → `data?.some(l => l.type === "photo")`, so it
@@ -271,11 +289,12 @@ when it is the player's current track.
 
 **Domain integration** (same shared-cache pattern as photos): `useHasMusicLibrary()`
 reads the `["libraries"]` React Query cache (`type === "music"`, no extra request).
-The `AppHeader` brand dropdown, `NavSidebar`, and `BottomTabs` each add a `/music`
-entry only when it's true; `DomainCookieSync` tracks `music` as a third
-`kubby-domain` value and self-heals a stale `music` cookie when no music library
-exists; `auth.config.ts` redirects `/` → `/music` when that cookie is set. Music
-libraries force `scraperEnabled=false, jellyfinCompat=false, metadataLanguage=null`
+The `AppHeader` brand dropdown adds a `/music` entry only when it's true; `NavSidebar`
+and `BottomTabs` show the `/music` entry when `useCurrentDomain() === "music"` (see
+Navigation structure → Domain-following). `DomainCookieSync` tracks `music` as a
+third `kubby-domain` value and self-heals a stale `music` cookie when no music
+library exists; `auth.config.ts` redirects `/` → `/music` when that cookie is set.
+Music libraries force `scraperEnabled=false, jellyfinCompat=false, metadataLanguage=null`
 server-side, same as photo.
 
 **Management (edit / delete / upload) — admin-gated.** The music domain started
