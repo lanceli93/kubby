@@ -125,7 +125,7 @@ kubby/
 │   └── generate-icon.ts                  # Icon generation (icns/ico/png)
 ├── installer/windows/kubby.nsi           # NSIS installer script
 ├── docs/
-│   ├── architecture-v03.md               # Latest architecture doc (canonical, update this on big changes)
+│   ├── architecture-v03.md               # Historical architecture snapshot (NOT maintained — keep the kubby skill current instead)
 │   ├── packaging-guide.md                # Packaging technical deep-dive
 │   ├── feature-completed.md              # Completed features log
 │   └── feature-request.md               # Pending feature requests
@@ -584,6 +584,6 @@ Key patterns:
 ## Doc Maintenance
 
 Per CLAUDE.md instructions:
-- After big features: update the latest `docs/architecture-v0.x-mvp.md` (currently `docs/architecture-v03.md`)
+- After big features: update **this skill** (SKILL.md, references/architecture.md, references/feature-patterns.md) — this doc is the maintained reference, NOT `docs/architecture-v0.x-mvp.md`. Verify against shipped code; grep for stale counts/claims before committing.
 - Remove completed items from `docs/feature-request.md`, record in `docs/feature-completed.md`
 - Git commit with short message after many code changes

@@ -133,7 +133,11 @@ manual edits. Release flow: push `v0.x.y` tag → CI extracts version → passes
 
 ## Doc Maintenance (per project CLAUDE.md)
 
-- After a big feature: update the latest `docs/architecture-v0.x-mvp.md`.
+- After a big feature: update **this skill** (`SKILL.md`, `references/architecture.md`,
+  `references/feature-patterns.md`) — the skill is the reference kept current, NOT
+  `docs/architecture-v0.x-mvp.md` (no longer maintained). Verify against the actual
+  shipped code, and grep for stale counts/claims (e.g. "N tables", "N namespaces")
+  before committing.
 - Remove completed items from `docs/feature-request.md`, record in
   `docs/feature-completed.md`.
 - Git commit with a short message after many code changes, and call out that you
@@ -148,4 +152,4 @@ manual edits. Release flow: push `v0.x.y` tag → CI extracts version → passes
 | `references/release-workflow.md` | Packaging, testing builds, creating and publishing releases. |
 | `references/readme-media-capture.md` | (Re)generating README screenshots + animated demos: ffmpeg ddagrab recording, mp4→animated-WebP, chrome-devtools MCP screenshots, seeding demo data (ratings/bookmarks/gallery) via API, prod-build-on-8665 setup. Read when updating `docs/screenshots/`. |
 | `docs/multi-model-workflow.md` | The Fable-orchestrates / opus-sonnet-executes workflow in full. |
-| latest `docs/architecture-v0.x-mvp.md` | Current architecture snapshot to update after big features. |
+| `docs/architecture-v0.x-mvp.md` | Historical architecture snapshot — **no longer maintained**; keep this skill current instead. Read only for background on how earlier versions were structured. |
