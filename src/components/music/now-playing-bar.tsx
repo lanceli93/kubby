@@ -315,7 +315,7 @@ export function NowPlayingBar() {
                   // fullscreen window and shrinks on a small one, rather than
                   // sitting at a fixed small cap. Bounded by both height and the
                   // column width so it never overflows either axis.
-                  className="w-full max-w-[72vw] md:w-full md:max-w-[min(58vh,40vw)]"
+                  className="w-full max-w-[72vw] md:w-full md:max-w-[min(46vh,32vw)]"
                 />
 
                 {/* Compact spectrum under the vinyl on mobile; the desktop bottom
@@ -326,17 +326,17 @@ export function NowPlayingBar() {
                     with the disc on large windows instead of staying small. */}
                 <div className="w-full text-center">
                   <h2
-                    className="truncate text-2xl font-semibold text-foreground md:text-[clamp(1.5rem,2vw,2.25rem)]"
+                    className="truncate text-2xl font-semibold text-foreground md:text-[clamp(1.375rem,1.5vw,1.875rem)]"
                   >
                     {currentTrack.title}
                   </h2>
                   {currentTrack.artistName && (
-                    <p className="mt-1 truncate text-base text-muted-foreground md:text-[clamp(1rem,1.15vw,1.375rem)]">
+                    <p className="mt-1 truncate text-base text-muted-foreground md:text-[clamp(0.9375rem,0.95vw,1.125rem)]">
                       {currentTrack.artistName}
                     </p>
                   )}
                   {currentTrack.albumTitle && (
-                    <p className="mt-0.5 truncate text-sm text-muted-foreground/70 md:text-[clamp(0.875rem,0.9vw,1.125rem)]">
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground/70 md:text-[clamp(0.8125rem,0.8vw,1rem)]">
                       {currentTrack.albumTitle}
                     </p>
                   )}
@@ -488,7 +488,10 @@ export function NowPlayingBar() {
                 capsule play button is `h-9` so it matches the icon buttons and
                 adds no extra row height. The spectrum lives ABOVE this bar. */}
             <div className="hidden flex-shrink-0 items-center gap-4 border-t border-white/[0.06] px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex lg:px-10">
-              {/* Left: mini cover + title/artist + favorite heart */}
+              {/* Left: mini cover + title/artist + favorite heart. The info
+                  block is width-bounded (not flex-1) so the heart sits right
+                  beside the title instead of being pushed to the far edge of
+                  the quarter — keeps the heart grouped at the left. */}
               <div className="flex w-1/4 min-w-0 items-center gap-3">
                 <Cover
                   cover={cover}
@@ -497,7 +500,7 @@ export function NowPlayingBar() {
                   size={48}
                   rounded="rounded-full"
                 />
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 max-w-[180px]">
                   <p className="truncate text-sm font-medium text-foreground">{currentTrack.title}</p>
                   {currentTrack.artistName && (
                     <p className="truncate text-xs text-muted-foreground">{currentTrack.artistName}</p>
@@ -850,7 +853,7 @@ function FavoriteHeart({ trackId }: { trackId: string }) {
         isFavorite ? "text-red-400" : "text-white/70"
       }`}
     >
-      <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-400" : ""}`} />
+      <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-400" : ""}`} />
     </button>
   );
 }
