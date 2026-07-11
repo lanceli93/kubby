@@ -3,6 +3,26 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-11 — Music: split symbol-joined artist names
+
+Scanner used to treat a collaboration tag ("周杰伦&林迈可") as ONE artist, which
+also blocked same-title duet/solo tracks from grouping into one album (grouping
+keys on shared artist id).
+
+- **`lib/music/artist-split.ts` → `splitArtistNames()`** — language-aware split:
+  `、` always; `&`/`＆` when a CJK char is adjacent on EITHER side; `-`/`－` only
+  when CJK on BOTH sides. Western band names preserved ("AC/DC", "Simon &
+  Garfunkel", "Jay-Z", "Earth, Wind & Fire"). NUL sentinel so spaces in names
+  survive. 17 unit cases pass.
+- **Scanner** derives artists via the splitter (dedupe, order-stable) → album
+  grouping then collapses duet+solo tracks naturally (no grouping-algo change).
+- **Backfill** (`backfillArtistSplits`, runs at scan start, idempotent): splits
+  legacy combined-artist ROWS, rewires their track/album joins to the parts,
+  deletes the combined row, then merges same-title albums that now share an artist
+  (fixed-point, gap-fills cover/year). Old libraries self-heal on next rescan.
+- Verified via an end-to-end temp-DB scan test (8 assertions: split, merge, track
+  re-parent, join rewire, cover gap-fill) + tsc + eslint clean.
+
 ## 2026-07-11 — QQ-Music-style Now Playing overlay
 
 Redesigned the full-screen music Now Playing overlay to mimic QQ Music. Pattern

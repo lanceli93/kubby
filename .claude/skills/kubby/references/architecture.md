@@ -410,10 +410,21 @@ scanMusicLibrary
   ├── parseFile() from `music-metadata` per file → title/album/albumartist/
   │     artist(s)/track/disc/year/genre/duration/codec/bitrate/sampleRate/
   │     channels + embedded picture
+  ├── Artist splitting (lib/music/artist-split.ts → splitArtistNames): a
+  │     collaboration tag ("周杰伦&林迈可", "陈奕迅、王菲", "周杰伦-费玉清") becomes
+  │     MULTIPLE artists. Language-aware guard — CJK artists split, Western band
+  │     names don't: 、 always; & / ＆ when CJK adjacent on EITHER side; - / －
+  │     only when CJK on BOTH sides. So "AC/DC" / "Simon & Garfunkel" / "Jay-Z"
+  │     stay intact. Splitting also lets same-title duet + solo tracks share an
+  │     artist id → group into one album (below).
   ├── Album grouping: same title (case-insensitive) + shares ≥1 artist (album-
   │     artist ∪ track-artist), matched via an in-memory title→candidates cache
   │     (see getOrCreateAlbum) → Various-Artists / differing per-track artists
   │     still collapse to one album as long as tracks chain through an artist
+  ├── Backfill (pre-split libraries): at scan start, split any legacy combined-
+  │     artist ROW, rewire its track/album joins to the parts, delete it, then
+  │     merge same-title albums that now share an artist (fixed-point,
+  │     gap-fills cover/year). Idempotent → runs every scan. See backfillArtistSplits.
   ├── Artists linked ONLY via music_album_artists / music_track_artists (never folders)
   ├── Cover priority: album folder cover.*/folder.*/albumart.*/front.* >
   │     embedded picture (extracted to metadata/music-art/{libraryId}/{albumId}.jpg) > none

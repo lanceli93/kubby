@@ -16,6 +16,7 @@ import { parseFolderPaths } from "@/lib/folder-paths";
 import { getMusicArtDir } from "@/lib/paths";
 import { generateBlurDataURL } from "@/lib/blur-utils";
 import { extractLyricsFromCommon, readLrcSidecar } from "@/lib/music/lyrics";
+import { splitArtistNames } from "@/lib/music/artist-split";
 import type { ScanProgress, SkippedFolder } from "./index";
 
 // ─── Constants ─────────────────────────────────────────────────
@@ -120,6 +121,21 @@ async function runPool<T>(items: T[], size: number, worker: (item: T) => Promise
 }
 
 // ─── Artist resolution (global, case-insensitive) ──────────────
+
+/** Dedupe names case-insensitively, keeping first occurrence + original order. */
+function dedupeNames(names: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of names) {
+    const name = raw.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
 
 /**
  * Case-insensitive lookup of an artist by name; inserts a row if missing.
@@ -329,6 +345,187 @@ function ensureTrackArtists(trackId: string, artistIds: string[]) {
   }
 }
 
+// ─── Backfill: split legacy combined-artist rows + re-group albums ──
+
+/** Union of an album's artist ids: its album-artists ∪ its tracks' track-artists. */
+function albumArtistSet(albumId: string): Set<string> {
+  const albumArtistRows = db
+    .select({ artistId: musicAlbumArtists.artistId })
+    .from(musicAlbumArtists)
+    .where(eq(musicAlbumArtists.albumId, albumId))
+    .all();
+  const trackArtistRows = db
+    .select({ artistId: musicTrackArtists.artistId })
+    .from(musicTrackArtists)
+    .innerJoin(musicTracks, eq(musicTracks.id, musicTrackArtists.trackId))
+    .where(eq(musicTracks.albumId, albumId))
+    .all();
+  return new Set<string>([
+    ...albumArtistRows.map((r) => r.artistId),
+    ...trackArtistRows.map((r) => r.artistId),
+  ]);
+}
+
+/**
+ * Merge `drop` album into `keep`: move its tracks + album-artist links, adopt
+ * its cover/year when `keep` lacks one, then delete `drop` (cascade drops its
+ * join rows). DB-only cleanup — mirrors the scanner's empty-album prune, which
+ * likewise doesn't touch generated cover files.
+ */
+function mergeAlbumInto(
+  keep: { id: string; coverPath: string | null; coverBlur: string | null; year: number | null },
+  dropId: string,
+) {
+  const dropArtistIds = db
+    .select({ artistId: musicAlbumArtists.artistId })
+    .from(musicAlbumArtists)
+    .where(eq(musicAlbumArtists.albumId, dropId))
+    .all()
+    .map((r) => r.artistId);
+  ensureAlbumArtists(keep.id, dropArtistIds);
+
+  db.update(musicTracks)
+    .set({ albumId: keep.id })
+    .where(eq(musicTracks.albumId, dropId))
+    .run();
+
+  // Adopt the dropped album's cover/year only to fill gaps on the kept one.
+  if (!keep.coverPath) {
+    const drop = db
+      .select({ coverPath: musicAlbums.coverPath, coverBlur: musicAlbums.coverBlur, year: musicAlbums.year })
+      .from(musicAlbums)
+      .where(eq(musicAlbums.id, dropId))
+      .get();
+    const patch: Partial<typeof musicAlbums.$inferInsert> = {};
+    if (drop?.coverPath) {
+      patch.coverPath = drop.coverPath;
+      patch.coverBlur = drop.coverBlur;
+      keep.coverPath = drop.coverPath; // reflect for subsequent merges in this group
+    }
+    if (keep.year == null && drop?.year != null) {
+      patch.year = drop.year;
+      keep.year = drop.year;
+    }
+    if (Object.keys(patch).length > 0) {
+      db.update(musicAlbums).set(patch).where(eq(musicAlbums.id, keep.id)).run();
+    }
+  }
+
+  db.delete(musicAlbums).where(eq(musicAlbums.id, dropId)).run();
+}
+
+/**
+ * Collapse same-title albums in a library that (after artist splitting) now
+ * share ≥1 artist — the same rule getOrCreateAlbum uses at scan time, applied to
+ * already-persisted rows. Transitive: A∩B and B∩C fold A, B, C together.
+ */
+function mergeDuplicateAlbums(libraryId: string): void {
+  const albums = db
+    .select({
+      id: musicAlbums.id,
+      title: musicAlbums.title,
+      coverPath: musicAlbums.coverPath,
+      coverBlur: musicAlbums.coverBlur,
+      year: musicAlbums.year,
+    })
+    .from(musicAlbums)
+    .where(eq(musicAlbums.libraryId, libraryId))
+    .all();
+
+  const byTitle = new Map<string, typeof albums>();
+  for (const a of albums) {
+    const key = a.title.toLowerCase();
+    const list = byTitle.get(key);
+    if (list) list.push(a);
+    else byTitle.set(key, [a]);
+  }
+
+  for (const group of byTitle.values()) {
+    if (group.length < 2) continue;
+    // `kept` = survivors with their (growing) artist sets. Fold each album into a
+    // survivor it shares an artist with, else it becomes one. Then loop to a fixed
+    // point so survivors that only got linked transitively (A{x}, C{y}, B{x,y})
+    // still collapse — the single pass is otherwise order-dependent.
+    const kept: { album: (typeof group)[number]; artists: Set<string> }[] = [];
+    for (const album of group) {
+      const artists = albumArtistSet(album.id);
+      const target = kept.find((k) => [...artists].some((id) => k.artists.has(id)));
+      if (target) {
+        mergeAlbumInto(target.album, album.id);
+        for (const id of artists) target.artists.add(id);
+      } else {
+        kept.push({ album, artists });
+      }
+    }
+    // Fixed-point pass over survivors: merge any two that now share an artist.
+    let merged = true;
+    while (merged && kept.length > 1) {
+      merged = false;
+      for (let i = 0; i < kept.length && !merged; i++) {
+        for (let j = i + 1; j < kept.length; j++) {
+          if ([...kept[j].artists].some((id) => kept[i].artists.has(id))) {
+            mergeAlbumInto(kept[i].album, kept[j].album.id);
+            for (const id of kept[j].artists) kept[i].artists.add(id);
+            kept.splice(j, 1);
+            merged = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * One-time migration for pre-split libraries: any artist whose stored name is
+ * itself a collaboration string ("周杰伦&林迈可") is split into individual
+ * artists, its track/album join rows are rewired to the parts, and the combined
+ * row is deleted. Then same-title albums that now share an artist are merged.
+ * Idempotent — a fully-split library short-circuits after one cheap query.
+ *
+ * Artist rows are global, so splitting rewires every library's links; the album
+ * merge is scoped to the library currently being scanned (albums are per-library
+ * and getOrCreateAlbum only ever grouped within a library).
+ */
+function backfillArtistSplits(libraryId: string): void {
+  const allArtists = db
+    .select({ id: musicArtists.id, name: musicArtists.name })
+    .from(musicArtists)
+    .all();
+  const combined = allArtists.filter((a) => splitArtistNames(a.name).length > 1);
+
+  for (const artist of combined) {
+    const partIds = dedupeNames(splitArtistNames(artist.name)).map((n) => getOrCreateArtist(n));
+
+    const trackRows = db
+      .select({ trackId: musicTrackArtists.trackId })
+      .from(musicTrackArtists)
+      .where(eq(musicTrackArtists.artistId, artist.id))
+      .all();
+    for (const { trackId } of trackRows) ensureTrackArtists(trackId, partIds);
+    db.delete(musicTrackArtists).where(eq(musicTrackArtists.artistId, artist.id)).run();
+
+    const albumRows = db
+      .select({ albumId: musicAlbumArtists.albumId })
+      .from(musicAlbumArtists)
+      .where(eq(musicAlbumArtists.artistId, artist.id))
+      .all();
+    for (const { albumId } of albumRows) ensureAlbumArtists(albumId, partIds);
+    db.delete(musicAlbumArtists).where(eq(musicAlbumArtists.artistId, artist.id)).run();
+
+    // The combined row is now unreferenced — remove it.
+    db.delete(musicArtists).where(eq(musicArtists.id, artist.id)).run();
+  }
+
+  if (combined.length > 0) {
+    console.log(`Music backfill: split ${combined.length} combined-artist row(s) in library ${libraryId}`);
+  }
+
+  // Always attempt the album merge: a combined artist may have been split by an
+  // EARLIER library's scan, leaving THIS library's albums still un-merged.
+  mergeDuplicateAlbums(libraryId);
+}
+
 // ─── Entry point ───────────────────────────────────────────────
 
 export async function scanMusicLibrary(
@@ -358,6 +555,12 @@ export async function scanMusicLibrary(
     files.push(...walkLibrary(root));
   }
   console.log(`Music scan: found ${files.length} audio files in library ${library.id}`);
+
+  // One-time backfill for pre-split libraries: split legacy combined-artist rows
+  // ("周杰伦&林迈可") into individual artists and merge same-title albums that now
+  // share an artist. Idempotent + cheap once done, so it runs every scan. Must
+  // precede the album grouping below (it may change album_id on existing tracks).
+  backfillArtistSplits(library.id);
 
   // Load existing track rows keyed by absolute filePath.
   const existingRows = db
@@ -417,21 +620,29 @@ export async function scanMusicLibrary(
       const year = typeof common.year === "number" ? common.year : null;
 
       // Album-artist name(s): prefer albumartist, else first track artist, else Unknown.
-      const albumArtistName =
+      const albumArtistRaw =
         (common.albumartist && common.albumartist.trim()) ||
         (common.artist && common.artist.trim()) ||
         UNKNOWN_ARTIST;
 
       // Track artist name(s): the array music-metadata gives, else the single string.
-      const trackArtistNames =
+      const trackArtistRaw =
         Array.isArray(common.artists) && common.artists.length > 0
           ? common.artists.filter((a) => a && a.trim())
           : common.artist && common.artist.trim()
             ? [common.artist.trim()]
             : [UNKNOWN_ARTIST];
 
+      // Split symbol-joined collaboration tags into individual artists
+      // ("周杰伦&林迈可" → ["周杰伦", "林迈可"]); Western band names are preserved
+      // (see splitArtistNames). dedupeNames keeps distinct names, order-stable.
+      const albumArtistNames = dedupeNames(splitArtistNames(albumArtistRaw));
+      const trackArtistNames = dedupeNames(
+        trackArtistRaw.flatMap((n) => splitArtistNames(n)),
+      );
+
       // Ensure every distinct artist has a row.
-      const albumArtistIds = [getOrCreateArtist(albumArtistName)];
+      const albumArtistIds = albumArtistNames.map((n) => getOrCreateArtist(n));
       const trackArtistIds = trackArtistNames.map((n) => getOrCreateArtist(n));
 
       // Album grouping — no album tag → albumId null (unknown-album track).
