@@ -77,8 +77,28 @@ uv run --with pillow python -c "import sys;from PIL import Image;im=Image.open(s
   retry; confirm Chrome is up with a debug port (`netstat | grep :9222`).
 - `take_screenshot({format:"webp", quality:90, filePath})` = clean viewport, no
   browser chrome, no mouse. `resize_page(1440, 860)` first for consistent framing.
+  The MCP tool is sandboxed to the workspace root — `filePath` must be **inside the
+  repo** (e.g. a temp `./.capture-tmp/`), NOT `$CLAUDE_JOB_DIR` or another drive, or
+  it errors with "not within any of the configured workspace roots". Output is a
+  retina 2× webp (2162×1292 at this DPI) — same size as the existing static shots,
+  so re-encode through libwebp (`-qscale 82`) to shrink but don't upscale/resize.
 - Switch UI to English: `evaluate_script` → `document.cookie="NEXT_LOCALE=en;
   path=/; max-age=31536000"` then `navigate_page({type:"reload"})`.
+- **Blurring private photo pixels (photos domain uses the user's own photos).**
+  Inject a style that blurs only image content, leaving all UI chrome sharp:
+  `<style id=kubby-privacy-blur> img { filter: blur(20px)!important } nextjs-portal
+  { display:none!important } </style>`. `blur(18-24px)` makes faces unrecognizable
+  while poster/tile shapes still read. Gotchas: (1) the `<style>` is **wiped on every
+  `navigate_page`** — re-inject after each nav (and after opening a route-based
+  lightbox); (2) blur `img` broadly, not `main img` — lightboxes/dialogs portal
+  outside `<main>`; (3) check the EXIF/info panel text for GPS/location before
+  shooting (Kubby's only shows filename/date/dims/size — safe); (4) the Next.js dev
+  "N" button (`nextjs-portal`, bottom-left) must be hidden or it shows in prod-less
+  dev shots. The music domain uses commercial cover art → no blur needed.
+- **Seeding demo data** for empty features (e.g. Photos had no albums): POST through
+  the real APIs from the browser (carries the session cookie) with neutral public
+  names, shoot, then **DELETE what you created** to leave the user's test library as
+  you found it. All writes land in the gitignored test library.
 
 ## Driving animation during a recording
 CDP `press_key` / `click` round-trips are too slow to animate live (≈1 call/turn).

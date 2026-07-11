@@ -2,7 +2,7 @@
 
 # Kubby
 
-A self-hosted movie server inspired by Jellyfin, reimagined with a modern tech stack. Built with Next.js.
+A self-hosted media server inspired by Jellyfin, reimagined with a modern tech stack. Built with Next.js. Kubby spans three media domains — **movies**, **photos**, and **music** — each with its own library, scanner, and browsing experience, all sharing one dark cinema theme.
 
 I've been using Jellyfin since 2022 and check the release notes every week, hoping to see long-requested features finally land. Unfortunately, development moves very slowly — for example, the highly requested lazy loading feature was first proposed in 2020 and still hasn't been implemented. That's understandable given Jellyfin's history: it evolved from Media Browser to Emby to Jellyfin over many years, so every change has ripple effects. So I decided to rebuild a similar local media system from scratch using AI and a modern tech stack — that's how Kubby was born.
 
@@ -107,6 +107,52 @@ One search box for movies, actors, and bookmarks. Filter by category if you're l
 ### Lazy loading
 
 All movie and actor cards use lazy loading instead of pagination — a [long-requested Jellyfin feature](https://features.jellyfin.org/posts/216/remove-pagination-use-lazy-loading-for-library-view) since 2020 that still hasn't shipped as of February 2026.
+
+## Photos
+
+Point Kubby at a folder of photos and videos and it builds a date-sorted library from their EXIF metadata. Everything below is the same dark theme as the movie side, so your whole media collection feels like one app.
+
+> The screenshots below are intentionally blurred — the demo library is personal photos.
+
+### Timeline
+
+A virtual-scrolling grid grouped by month, with mixed portrait/landscape tiles in a justified layout. Scroll through thousands of photos smoothly — only the visible rows render.
+
+![Photo timeline](docs/screenshots/photos-timeline.webp)
+
+### Lightbox with EXIF
+
+Open any photo into a full-screen lightbox with previous/next navigation and an info panel showing the capture date, dimensions, and file size. Videos play inline. One click downloads the original.
+
+![Photo lightbox with EXIF panel](docs/screenshots/photos-lightbox.webp)
+
+### Albums
+
+Group photos into albums with a cover thumbnail and item count. A photo can live in any number of albums; the album itself never duplicates or moves the underlying files.
+
+![Photo albums](docs/screenshots/photos-albums.webp)
+
+## Music
+
+Point Kubby at a music folder and it reads the embedded tags (`music-metadata`) to build an album / artist / song library, pulling cover art from embedded images or folder art. Audio streams over HTTP Range, with an ffmpeg→mp3 fallback for formats the browser can't play directly.
+
+### Library
+
+Browse by album, artist, or song, with a "Recently Added" shelf and sortable grid. Symbol-joined artist names (feat., ×, /) are split on scan, CJK-aware, so collaborations group under each artist.
+
+![Music library](docs/screenshots/music-library.webp)
+
+### Now Playing
+
+A QQ-Music-style full-screen player: the cover art spins on a vinyl record, time-synced lyrics scroll beside it, and a spectrum visualizer floats above the transport bar. A compact player stays docked at the bottom of every page while you keep browsing.
+
+![Now Playing overlay](docs/screenshots/music-nowplaying.webp)
+
+## One app, three libraries
+
+Movies, photos, and music each get their own homepage and navigation, but share the same account, theme, and image pipeline. A domain switcher on the Kubby brand jumps between them, and the last one you used is remembered. The global music player keeps playing no matter which domain you browse.
+
+![Domain switcher and global player](docs/screenshots/domain-switcher.webp)
 
 ## Quick start (development)
 
