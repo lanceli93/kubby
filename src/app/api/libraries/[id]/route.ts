@@ -24,7 +24,14 @@ export async function GET(
         jellyfinCompat: mediaLibraries.jellyfinCompat,
         metadataLanguage: mediaLibraries.metadataLanguage,
         lastScannedAt: mediaLibraries.lastScannedAt,
-        movieCount: sql<number>`(SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")`,
+        // Count the right table per domain: movies / photo_items / music_tracks.
+        movieCount: sql<number>`(
+          CASE "media_libraries"."type"
+            WHEN 'photo' THEN (SELECT COUNT(*) FROM photo_items WHERE library_id = "media_libraries"."id")
+            WHEN 'music' THEN (SELECT COUNT(*) FROM music_tracks WHERE library_id = "media_libraries"."id")
+            ELSE (SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")
+          END
+        )`,
       })
       .from(mediaLibraries)
       .where(eq(mediaLibraries.id, id))

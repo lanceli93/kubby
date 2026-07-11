@@ -204,48 +204,78 @@ async function resolveAlbumCover(
 
 // ─── Album resolution ──────────────────────────────────────────
 
+/** One grouping candidate: an album id + the artist ids accumulated for it. */
+interface AlbumCandidate {
+  albumId: string;
+  artistIds: Set<string>;
+}
+/** Lowercased album title → candidates sharing that title. */
+type AlbumCache = Map<string, AlbumCandidate[]>;
+
 /**
- * Find or create an album for this scan run, keyed by `${albumArtistName}||${title}`.
- * Checks the in-memory map first, then the DB (matched by title scoped to the
- * library AND a joined album-artist), so reruns don't duplicate albums.
- * Returns the album id. Album-artist join rows are inserted (guarded) here.
+ * Find or create an album for this scan run. Grouping rule (matches the user's
+ * intent): **same album title (case-insensitive) + shares ≥1 artist**, where
+ * "artist" means any album-artist OR track-artist of a member track — so a
+ * compilation whose tracks have differing per-track artists still collapses to
+ * ONE album as long as its tracks chain together through a shared artist.
+ *
+ * The in-memory cache does the matching (a title can hold several genuinely
+ * distinct same-name albums by different artists); the DB is consulted only to
+ * seed candidates on the first encounter of a title in this run, so reruns
+ * don't duplicate. `groupArtistIds` is the union of album- and track-artist ids
+ * for THIS track — used both for the intersection test and to widen the
+ * candidate's set so later tracks can chain in. Album-artist join rows are
+ * inserted (guarded) for the album's own album-artists.
  */
 function getOrCreateAlbum(
-  cache: Map<string, string>,
+  cache: AlbumCache,
   libraryId: string,
   title: string,
   albumArtistIds: string[],
-  albumArtistName: string,
+  groupArtistIds: string[],
   year: number | null,
   genreArray: string[],
   folderDir: string,
 ): string {
-  const groupKey = `${albumArtistName.toLowerCase()}||${title.toLowerCase()}`;
-  const cached = cache.get(groupKey);
-  if (cached) {
-    ensureAlbumArtists(cached, albumArtistIds);
-    return cached;
+  const titleKey = title.toLowerCase();
+  let candidates = cache.get(titleKey);
+
+  // First time we see this title in the run: seed candidates from the DB (title
+  // scoped to the library) with each existing album's linked artist set.
+  if (!candidates) {
+    candidates = [];
+    const dbAlbums = db
+      .select({ id: musicAlbums.id })
+      .from(musicAlbums)
+      .where(sql`${musicAlbums.libraryId} = ${libraryId} and lower(${musicAlbums.title}) = lower(${title})`)
+      .all();
+    for (const a of dbAlbums) {
+      const albumArtistRows = db
+        .select({ artistId: musicAlbumArtists.artistId })
+        .from(musicAlbumArtists)
+        .where(eq(musicAlbumArtists.albumId, a.id))
+        .all();
+      const trackArtistRows = db
+        .select({ artistId: musicTrackArtists.artistId })
+        .from(musicTrackArtists)
+        .innerJoin(musicTracks, eq(musicTracks.id, musicTrackArtists.trackId))
+        .where(eq(musicTracks.albumId, a.id))
+        .all();
+      const artistIds = new Set<string>([
+        ...albumArtistRows.map((r) => r.artistId),
+        ...trackArtistRows.map((r) => r.artistId),
+      ]);
+      candidates.push({ albumId: a.id, artistIds });
+    }
+    cache.set(titleKey, candidates);
   }
 
-  // DB lookup: an album in this library with this title (case-insensitive) whose
-  // album-artist set includes any of the resolved album-artist ids.
-  const candidates = db
-    .select({ id: musicAlbums.id })
-    .from(musicAlbums)
-    .where(sql`${musicAlbums.libraryId} = ${libraryId} and lower(${musicAlbums.title}) = lower(${title})`)
-    .all();
-  for (const cand of candidates) {
-    const joinRows = db
-      .select({ artistId: musicAlbumArtists.artistId })
-      .from(musicAlbumArtists)
-      .where(eq(musicAlbumArtists.albumId, cand.id))
-      .all();
-    const joinIds = new Set(joinRows.map((j) => j.artistId));
-    if (albumArtistIds.some((id) => joinIds.has(id))) {
-      cache.set(groupKey, cand.id);
-      ensureAlbumArtists(cand.id, albumArtistIds);
-      return cand.id;
-    }
+  // Reuse the first candidate that shares ≥1 artist with this track.
+  const match = candidates.find((c) => groupArtistIds.some((id) => c.artistIds.has(id)));
+  if (match) {
+    for (const id of groupArtistIds) match.artistIds.add(id);
+    ensureAlbumArtists(match.albumId, albumArtistIds);
+    return match.albumId;
   }
 
   const albumId = uuidv4();
@@ -261,7 +291,7 @@ function getOrCreateAlbum(
     })
     .run();
   ensureAlbumArtists(albumId, albumArtistIds);
-  cache.set(groupKey, albumId);
+  candidates.push({ albumId, artistIds: new Set(groupArtistIds) });
   return albumId;
 }
 
@@ -359,8 +389,11 @@ export async function scanMusicLibrary(
     toProcess.push({ file, stat, existing });
   }
 
-  // In-memory album cache for this run: `${albumArtistName}||${title}` → albumId.
-  const albumCache = new Map<string, string>();
+  // In-memory album grouping cache for this run. Keyed by the LOWERCASED album
+  // title; each title maps to the candidate albums seen so far with the set of
+  // artist ids (album-artists ∪ track-artists) accumulated for each. Grouping
+  // rule: "same title + shares ≥1 artist" (see getOrCreateAlbum).
+  const albumCache: AlbumCache = new Map();
 
   // NOTE: process serially (pool size 1) — album/artist resolution reads &
   // writes shared tables, and better-sqlite3 calls are synchronous, so a wider
@@ -401,21 +434,29 @@ export async function scanMusicLibrary(
       const trackArtistIds = trackArtistNames.map((n) => getOrCreateArtist(n));
 
       // Album grouping — no album tag → albumId null (unknown-album track).
+      // "shares ≥1 artist" tests against the union of album- and track-artists,
+      // so compilations chain together even when per-track artists differ.
+      const groupArtistIds = Array.from(new Set([...albumArtistIds, ...trackArtistIds]));
       let albumId: string | null = null;
       let albumWasNew = false;
       if (albumTitle) {
-        const before = albumCache.size;
         albumId = getOrCreateAlbum(
           albumCache,
           library.id,
           albumTitle,
           albumArtistIds,
-          albumArtistName,
+          groupArtistIds,
           year,
           genreArray,
           file.dir,
         );
-        albumWasNew = albumCache.size > before;
+        // "New" = this album currently has no persisted tracks yet (first track
+        // of the run to land on it), so we know to (re)resolve its cover below.
+        albumWasNew = !db
+          .select({ id: musicTracks.id })
+          .from(musicTracks)
+          .where(eq(musicTracks.albumId, albumId))
+          .get();
       }
 
       // Cover art: once per album, when just created OR the album still has no cover.
