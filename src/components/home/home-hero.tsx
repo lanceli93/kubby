@@ -260,7 +260,7 @@ export function HomeHero({
   // then get pushed down when the wall arrives.
   if (!displayEntry && wallPending) {
     return (
-      <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden bg-[#0a0a0f] md:h-[64vh] md:min-h-[480px]">
+      <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden bg-[#0a0a0f] md:h-[calc(100vh-340px)] md:min-h-[480px]">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[55%] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/55 to-transparent" />
       </div>
     );
@@ -321,7 +321,7 @@ export function HomeHero({
     );
 
   return (
-    <div className="group/hero relative h-[52vh] min-h-[380px] w-full overflow-hidden md:h-[64vh] md:min-h-[480px]">
+    <div className="group/hero relative h-[52vh] min-h-[380px] w-full overflow-hidden md:h-[calc(100vh-340px)] md:min-h-[480px]">
       {/* Backdrop layer (z-0, non-interactive): animated poster wall that drives
           the featured movie, or a single fallback backdrop of the active slide. */}
       {wallMode ? (
