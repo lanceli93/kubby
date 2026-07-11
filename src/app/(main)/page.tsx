@@ -131,10 +131,11 @@ export default function HomePage() {
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
   });
-  // Cinema and Photos are fully separated domains that only share the
-  // ["libraries"] cache. The cinema home page must show cinema-domain
-  // libraries only — photo libraries live under /photos, never here.
-  const libraries = allLibraries.filter((lib) => lib.type !== "photo");
+  // Cinema is a fully separated domain that only shares the ["libraries"]
+  // cache. The cinema home page must show cinema-domain libraries ONLY — use a
+  // positive allowlist (=== "movie"), never a blacklist, so newly-added domains
+  // (photos, music, …) can't leak in here.
+  const libraries = allLibraries.filter((lib) => lib.type === "movie");
 
   const { data: continueWatching = [] } = useQuery<Movie[]>({
     queryKey: ["movies", "continue-watching"],

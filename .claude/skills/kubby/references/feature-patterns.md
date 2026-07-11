@@ -12,6 +12,7 @@ every task.
 - [Movie poster card hover](#movie-poster-card-hover)
 - [Photos timeline + albums + lightbox](#photos-timeline--albums--lightbox)
 - [Music library + global player](#music-library--global-player)
+- [Cross-domain safety (a hard rule)](#cross-domain-safety-a-hard-rule)
 - [GlassToast](#glasstoast)
 - [Metadata Browser](#metadata-browser)
 - [Metadata editor Images tab](#metadata-editor-images-tab)
@@ -146,11 +147,13 @@ session on unmount.
 `text-muted-foreground`, `bg-white/[0.06]`) — not a light photo-album theme. This
 was an explicit user correction; keep future domains on the shared dark theme.
 
-**Domain isolation**: photo libraries must not leak into cinema-domain UI. The
-cinema home Media Libraries row, search library filter, and hero-mosaic
-per-library weights all read the shared `["libraries"]` cache and filter
-`type !== "photo"` client-side (the API stays untouched — the cache is shared with
-nav / `useHasPhotoLibrary` / `DomainCookieSync`).
+**Domain isolation**: photo (and music) libraries must not leak into cinema-domain
+UI. The cinema home Media Libraries row, search library filter, and hero-mosaic
+per-library weights all read the shared `["libraries"]` cache and filter to
+`type === "movie"` client-side — a positive allowlist, NOT a blocklist (an earlier
+`!== "photo"` blocklist leaked music libraries once Music shipped; see Cross-domain
+safety below). The API stays untouched — the cache is shared with nav /
+`useHasPhotoLibrary` / `DomainCookieSync`.
 
 ## Music library + global player
 
@@ -202,6 +205,42 @@ entry only when it's true; `DomainCookieSync` tracks `music` as a third
 exists; `auth.config.ts` redirects `/` → `/music` when that cookie is set. Music
 libraries force `scraperEnabled=false, jellyfinCompat=false, metadataLanguage=null`
 server-side, same as photo.
+
+## Cross-domain safety (a hard rule)
+
+**Cross-domain operations are a cardinal sin.** Cinema / Photos / Music share ONE
+`media_libraries` table (distinguished by `type`) and the `["libraries"]` cache, so
+it's easy for code scoped to one domain to accidentally read, display, or *delete*
+another domain's data. Three real bugs shipped from exactly this and were fixed —
+learn from them:
+
+- **Blocklist filters rot when a domain is added.** Cinema-domain UI (home Media
+  Libraries row `app/(main)/page.tsx`, search library filter `search/page.tsx`,
+  hero-mosaic weights `preferences/hero-mosaic/page.tsx`) filtered with
+  `type !== "photo"` — so when Music arrived, music libraries leaked into cinema UI.
+  **Always use a positive allowlist (`type === "movie"`), never a blocklist.** A new
+  domain must be invisible to old domains by default, not by remembering to exclude
+  it everywhere.
+- **Per-domain counts must pick the right table.** `GET /api/libraries[/:id]`
+  counted `movies` unconditionally, so photo/music libraries always showed `· 0`.
+  Count per `type` via a `CASE` (movies / photo_items / music_tracks). The field is
+  still aliased `movieCount` for consumers, but the query is domain-aware.
+- **Delete must clean up ONLY its own domain, and ALL of it.** `DELETE
+  /api/libraries/[id]` (a) read `lib.type` *before* the cascade wipes rows, then
+  gated NFO-deletion and orphan-people cleanup behind `type === "movie"` — the
+  orphan-people sweep is **global** (scans actors across every cinema library), so
+  running it while deleting a music/photo library is an out-of-domain data-loss
+  side effect; and (b) removes the domain's on-disk generated artifacts, which the
+  FK cascade does NOT touch: `metadata/photo-thumbs/{libraryId}/` for photo,
+  `metadata/music-art/{libraryId}/` for music. The delete **dialog** is likewise
+  type-aware (`dashboard/libraries/page.tsx` + `LibraryCard`): movie-only options
+  (orphan cleanup, NFO deletion) are hidden and forced `false` for other domains,
+  with per-type confirmation copy (`confirmDeleteLibrary{,Photo,Music}` i18n keys).
+
+The general shape: **allowlist the current domain, gate every destructive/global
+side-effect on the library's own `type` (defence-in-depth on the server, not just
+the UI), and when a domain writes generated files under `metadata/…/{libraryId}/`,
+its delete path owns removing them.**
 
 ## GlassToast
 

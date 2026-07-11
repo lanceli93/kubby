@@ -114,8 +114,9 @@ export default function HeroMosaicPage() {
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
   });
   // The hero mosaic is the cinema home wall — its per-library weight mix must
-  // only offer cinema-domain libraries, never photo libraries (own domain).
-  const libraries = allLibraries.filter((lib) => lib.type !== "photo");
+  // only offer cinema-domain libraries. Positive allowlist (=== "movie"), never
+  // a blacklist, so photo/music libraries can't leak into the mix.
+  const libraries = allLibraries.filter((lib) => lib.type === "movie");
 
   // Draft config (mirrors card-badges hydration pattern). Custom-mix toggle is
   // separate state: when OFF the sent/saved libraryWeights is {} (default mode).

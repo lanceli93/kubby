@@ -33,6 +33,16 @@ DB). **When adding a domain, follow this separation — do not fork the movie co
 path.** Music was the third domain built this way (albums/artists/songs + a global
 `NowPlayingBar` mounted in `(main)/layout.tsx`).
 
+**Cross-domain operations are a cardinal sin.** All domains share one
+`media_libraries` table (by `type`) + the `["libraries"]` cache, so it's easy to
+read/show/delete another domain's data by accident. Rules: allowlist the current
+domain (`type === "movie"`, never a `!== "photo"` blocklist that rots when a domain
+is added); count per-domain tables (movies/photo_items/music_tracks); and gate every
+destructive/global side-effect on the library's own `type` server-side, cleaning up
+that domain's `metadata/…/{libraryId}/` artifacts on delete. Full detail +
+the three real bugs this came from: `references/feature-patterns.md` → Cross-domain
+safety.
+
 ## Working on this repo: delegate to subagents
 
 For any feature or bug fix beyond a trivial one-liner, **orchestrate rather than do

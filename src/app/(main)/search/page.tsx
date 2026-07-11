@@ -153,9 +153,10 @@ function SearchContent() {
     staleTime: 5 * 60 * 1000,
     placeholderData: (prev) => prev,
   });
-  // Search is a cinema-domain feature (movies/people/bookmarks); photo
-  // libraries belong to the /photos domain and must not appear in its filter.
-  const libraries = allLibraries?.filter((lib) => lib.type !== "photo");
+  // Search is a cinema-domain feature (movies/people/bookmarks). Only
+  // cinema-domain libraries belong in its filter — use a positive allowlist
+  // (=== "movie"), never a blacklist, so photo/music libraries can't leak in.
+  const libraries = allLibraries?.filter((lib) => lib.type === "movie");
   const showLibraryFilter = !librariesLoading && libraries && libraries.length > 1;
   const selectedLibraryName = libraries?.find((l) => l.id === libraryId)?.name;
 

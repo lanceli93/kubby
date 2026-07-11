@@ -6,6 +6,7 @@ import { mediaLibraries, movies, people, moviePeople } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { parseFolderPaths, serializeFolderPaths } from "@/lib/folder-paths";
 import { getPersonDir } from "@/lib/person-utils";
+import { getPhotoThumbsDir, getMusicArtDir } from "@/lib/paths";
 
 // GET /api/libraries/[id]
 export async function GET(
@@ -117,9 +118,20 @@ export async function DELETE(
   const deleteNfo = request.nextUrl.searchParams.get("deleteNfo") === "true";
 
   try {
-    // Collect NFO paths BEFORE cascade-deleting movies
+    // Read the library type BEFORE deletion — the FK cascade wipes its rows,
+    // and per-domain on-disk cleanup below depends on knowing the type.
+    const lib = db
+      .select({ type: mediaLibraries.type })
+      .from(mediaLibraries)
+      .where(eq(mediaLibraries.id, id))
+      .get();
+    if (!lib) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Collect NFO paths BEFORE cascade-deleting movies (movie domain only)
     let nfoPaths: { folderPath: string; nfoPath: string | null }[] = [];
-    if (deleteNfo) {
+    if (deleteNfo && lib.type === "movie") {
       nfoPaths = db
         .select({ folderPath: movies.folderPath, nfoPath: movies.nfoPath })
         .from(movies)
@@ -127,11 +139,26 @@ export async function DELETE(
         .all();
     }
 
-    // Delete the library (movies + moviePeople cascade-delete via FK)
+    // Delete the library. FK cascade removes the domain's DB rows:
+    // movies+moviePeople / photo_items+photo_albums / music_tracks+music_albums.
     db.delete(mediaLibraries).where(eq(mediaLibraries.id, id)).run();
 
-    // Delete NFO files from media folders
-    if (deleteNfo) {
+    // Per-domain on-disk artifact cleanup. The cascade only touches the DB;
+    // library-scoped generated media dirs must be removed here or they orphan.
+    if (lib.type === "photo") {
+      // metadata/photo-thumbs/{libraryId}/ — generated thumbnails + previews.
+      await fsPromises
+        .rm(nodePath.join(getPhotoThumbsDir(), id), { recursive: true, force: true })
+        .catch(() => {});
+    } else if (lib.type === "music") {
+      // metadata/music-art/{libraryId}/ — extracted embedded cover art.
+      await fsPromises
+        .rm(nodePath.join(getMusicArtDir(), id), { recursive: true, force: true })
+        .catch(() => {});
+    }
+
+    // Delete NFO files from media folders (movie domain only)
+    if (deleteNfo && lib.type === "movie") {
       for (const m of nfoPaths) {
         if (!m.nfoPath) continue;
         const fullPath = nodePath.join(m.folderPath, m.nfoPath);
@@ -143,8 +170,11 @@ export async function DELETE(
       }
     }
 
-    // Clean up orphan people (no remaining moviePeople associations)
-    if (cleanupOrphans) {
+    // Clean up orphan people (no remaining moviePeople associations).
+    // People belong to the cinema domain — this must never run for a photo or
+    // music library (cleanupOrphans is GLOBAL: it would delete actors across
+    // ALL cinema libraries, an out-of-domain side effect).
+    if (cleanupOrphans && lib.type === "movie") {
       // Find people with no movie associations (orphans)
       const orphans = db
         .select({ id: people.id, name: people.name, photoPath: people.photoPath })
