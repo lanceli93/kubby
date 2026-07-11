@@ -349,6 +349,78 @@ function initDb(): BetterSQLite3Database<typeof schema> {
   )`,
     "CREATE UNIQUE INDEX IF NOT EXISTS `idx_pai_pk` ON `photo_album_items` (`album_id`, `item_id`)",
     "CREATE INDEX IF NOT EXISTS `idx_pai_item` ON `photo_album_items` (`item_id`)",
+    // 0038: music domain tables (artists, albums, tracks + join + user data)
+    `CREATE TABLE IF NOT EXISTS \`music_artists\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`name\` text NOT NULL UNIQUE,
+    \`sort_name\` text,
+    \`image_path\` text,
+    \`image_blur\` text,
+    \`overview\` text,
+    \`musicbrainz_id\` text,
+    \`date_added\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+    "CREATE INDEX IF NOT EXISTS `idx_mar_name` ON `music_artists` (`name`)",
+    `CREATE TABLE IF NOT EXISTS \`music_albums\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`library_id\` text NOT NULL REFERENCES \`media_libraries\`(\`id\`) ON DELETE CASCADE,
+    \`title\` text NOT NULL,
+    \`sort_title\` text,
+    \`year\` integer,
+    \`cover_path\` text,
+    \`cover_blur\` text,
+    \`folder_path\` text,
+    \`genres\` text,
+    \`musicbrainz_id\` text,
+    \`date_added\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+    "CREATE INDEX IF NOT EXISTS `idx_mal_library` ON `music_albums` (`library_id`)",
+    `CREATE TABLE IF NOT EXISTS \`music_album_artists\` (
+    \`album_id\` text NOT NULL REFERENCES \`music_albums\`(\`id\`) ON DELETE CASCADE,
+    \`artist_id\` text NOT NULL REFERENCES \`music_artists\`(\`id\`) ON DELETE CASCADE
+  )`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS `idx_maa_pk` ON `music_album_artists` (`album_id`, `artist_id`)",
+    "CREATE INDEX IF NOT EXISTS `idx_maa_artist` ON `music_album_artists` (`artist_id`)",
+    `CREATE TABLE IF NOT EXISTS \`music_tracks\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`library_id\` text NOT NULL REFERENCES \`media_libraries\`(\`id\`) ON DELETE CASCADE,
+    \`album_id\` text REFERENCES \`music_albums\`(\`id\`) ON DELETE CASCADE,
+    \`file_path\` text NOT NULL UNIQUE,
+    \`file_name\` text NOT NULL,
+    \`title\` text NOT NULL,
+    \`sort_title\` text,
+    \`track_number\` integer,
+    \`disc_number\` integer,
+    \`duration_seconds\` real,
+    \`codec\` text,
+    \`bitrate\` integer,
+    \`sample_rate\` integer,
+    \`channels\` integer,
+    \`file_size\` integer,
+    \`genres\` text,
+    \`year\` integer,
+    \`lyrics_path\` text,
+    \`mime_type\` text,
+    \`date_added\` text NOT NULL DEFAULT (datetime('now')),
+    \`date_modified\` integer
+  )`,
+    "CREATE INDEX IF NOT EXISTS `idx_mt_library` ON `music_tracks` (`library_id`)",
+    "CREATE INDEX IF NOT EXISTS `idx_mt_album` ON `music_tracks` (`album_id`)",
+    `CREATE TABLE IF NOT EXISTS \`music_track_artists\` (
+    \`track_id\` text NOT NULL REFERENCES \`music_tracks\`(\`id\`) ON DELETE CASCADE,
+    \`artist_id\` text NOT NULL REFERENCES \`music_artists\`(\`id\`) ON DELETE CASCADE
+  )`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS `idx_mta_pk` ON `music_track_artists` (`track_id`, `artist_id`)",
+    "CREATE INDEX IF NOT EXISTS `idx_mta_artist` ON `music_track_artists` (`artist_id`)",
+    `CREATE TABLE IF NOT EXISTS \`user_track_data\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+    \`track_id\` text NOT NULL REFERENCES \`music_tracks\`(\`id\`) ON DELETE CASCADE,
+    \`play_count\` integer DEFAULT 0,
+    \`is_favorite\` integer DEFAULT 0,
+    \`last_played_at\` text
+  )`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS `idx_utd_user_track` ON `user_track_data` (`user_id`, `track_id`)",
   ];
   for (const sql of pending) {
     try { sqlite.exec(sql); } catch { /* column already exists */ }

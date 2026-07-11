@@ -39,6 +39,10 @@ export function getPhotoThumbsDir(): string {
   return path.join(getMetadataDir(), "photo-thumbs");
 }
 
+export function getMusicArtDir(): string {
+  return path.join(getMetadataDir(), "music-art");
+}
+
 export function getFfmpegPath(): string {
   return process.env.FFMPEG_PATH || "ffmpeg";
 }

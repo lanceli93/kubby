@@ -13,6 +13,22 @@
 - **域隔离修复** (本轮同期): 影院首页「媒体库」行/搜索库筛选/海报墙按库权重 UI 都遍历共享 `["libraries"]` 缓存却没按类型过滤, 泄漏了照片库 → 三处各加 `type !== "photo"` 客户端过滤 (API 不动, 因缓存被 nav/useHasPhotoLibrary/DomainCookieSync 共用)。
 - **验证**: `tsc` 通过; chrome-devtools 实测创建相册「旅行」→ 时间线多选 2 张加入 → 相册详情显示 2 项 → 删相册回时间线且照片保留; 瓦片 hover 拍摄日期、分段控件切换、单库时库筛选正确隐藏均确认。
 
+## 2026-07-11: 音乐库 v1 — 域分离架构下的第三媒体域 (专辑/艺术家/歌曲 + 全局常驻播放器)
+
+用户诉求: 按现有框架 (照片域铺好的 scanner 按 `library.type` 分派 / 域切换 / 按类型库表单) 新增音乐媒体库, 参考 `docs/music-library-design.md`; UI 美观且沿用影片库的动效/hover/暗色主题。在 git worktree (`feat/music-library` 分支, `D:/AIworkspace/kubby-music`) 独立开发, 不影响主工作区在改的照片功能。任务清单 `docs/music-library-tasks.md` (T1–T9 全完成), Fable 编排 + opus executor 分波执行 + 逐波抽查。
+
+- **架构**: 域分离第三域 — 音乐独立表/扫描器/API/页面, 共享库管理、图片服务 (`/api/images` 服绝对路径封面)、认证、i18n。影院/照片代码零改动 (scanner 仅加一行按 `library.type === "music"` 分派)。
+- **T1 数据层**: 6 张表 — `music_artists` / `music_albums` / `music_album_artists`(M:N) / `music_tracks`(albumId 可空, 无专辑标签的曲目) / `music_track_artists`(M:N) / `user_track_data`(playCount/isFavorite/lastPlayedAt)。**聚合靠映射表, 绝不绑物理文件夹** (吸收 Jellyfin 教训, 群星/feat. 专辑天然可解)。迁移数组 `// 0038`, `paths.ts` 加 `getMusicArtDir()` → `metadata/music-art`。遵守 schema 双更新铁律。
+- **T3 音乐扫描器** `src/lib/scanner/music-scanner.ts`: 递归收音频 (`.mp3 .flac .m4a .aac .ogg .opus .wav .wma .aiff .alac`), `music-metadata` 读内嵌 tag (title/album/albumartist/artist(s)/track/disc/year/genre/duration/codec/bitrate/sampleRate/channels + 内嵌封面); 专辑按 `albumartist||album` tag 归组 (非文件夹, 多碟目录天然合并); 封面优先级 folder `cover/folder/albumart/front.*` > 内嵌帧 (抽到 music-art) > 无, coverBlur 复用 `generateBlurDataURL`; 增量 mtime+size; 清理消失曲目 + 空专辑 + 孤儿艺术家。**注意**: 专辑/艺术家 read-then-write 用串行写 (better-sqlite3 同步) 保证幂等不重复。
+- **T5 播放**: `src/lib/music/audio-decider.ts` 按扩展名判定 direct (浏览器原生 mp3/aac/flac/ogg/opus/wav) vs transcode (wma/aiff/alac/dsf → `ffmpeg -f mp3` 管道); `/api/music/tracks/[id]/stream` direct 支持 HTTP 206 Range (`<audio>` 可 seek), transcode 流式且 abort 时 kill ffmpeg。归一化 (LUFS) 归 v2。
+- **T4 API** (`/api/music/*`): `albums` / `albums/[id]` (曲目按 disc/track 排序 + 每用户 isFavorite/playCount) / `artists` / `artists/[id]` / `songs` / `home` (最近添加 + 随机 + 最常播放) / `tracks/[id]/user-data` (GET/PUT upsert, incrementPlay/isFavorite)。列表统一 `{items,totalCount,offset,limit,hasMore}` 分页 + libraryId/search/sort; 批量取艺术家名/曲目数避免 N+1 (`src/lib/music/queries.ts`)。
+- **T7 全局播放器** (音乐域最大前端架构点): `src/providers/music-player-provider.tsx` — 模块级 external store + `useSyncExternalStore` (照抄 scan-provider 模式) + **一个常驻 `<audio>` 挂在 `(main)/layout.tsx` 域布局之外, 绝不随路由卸载** → 跨页导航音乐不断。`useMusicPlayer()` 暴露 queue/index/isPlaying/currentTime/duration/volume/shuffle/repeat + playTrack/playAlbum/toggle/next/prev/seek/setVolume/toggleShuffle/cycleRepeat; 曲目开始时 PUT incrementPlay (去重防 seek 重复计)。`NowPlayingBar` 底部常驻玻璃条 (封面 + 标题/艺术家 + 传输 + 进度 + 音量, 点击展开全屏 Now Playing + 队列), 移动端浮在 BottomTabs 之上 (`bottom-14 md:bottom-0`), 用 `NowPlayingBarGate` 仅在有音乐库时渲染。
+- **T6 卡片** (照抄 MovieCard 审美): `AlbumCard` 方形封面 + TiltCard 倾斜 + coverBlur ambilight 悬停辉光 + 居中播放按钮 (播整张); `ArtistCard` 圆形头像 + 辉光; `TrackRow` 序号↔悬停播放、当前曲目 primary 高亮 + 均衡器动画、收藏心、时长。
+- **T2 域导航**: `useHasMusicLibrary` 复用 `["libraries"]` 缓存; header 品牌下拉加「音乐」项 (有 photo 或 music 库时显示); 侧栏/底部 tab 条件项; `domain-cookie-sync` + `auth.config` 重定向支持 music (含 stale cookie 自愈); 库表单类型下拉解锁 music + 隐藏刮削/Jellyfin/元数据语言; POST/PUT 强制 `scraperEnabled=false` 等 (同 photo); i18n en/zh 加 `nav.music` + `dashboard.libraryTypeMusic` + 新 `music` 命名空间。
+- **页面** (`T8`): `/music` (Tabs 专辑/艺术家/歌曲, 专辑页含「最近添加」ScrollRow + 无限滚动网格 + 玻璃排序下拉) / `/music/albums/[id]` (大封面 + 元信息 + Play All/Shuffle + 曲目列表) / `/music/artists/[id]` (艺术家头 + 专辑网格); header 加音乐详情页返回箭头。
+- **验证** (T9): 全量 `tsc` + `next build` 通过 (`music-metadata` v11 ESM 在服务端正常打包); 生成含 tag + 封面的测试音乐库 (4 专辑/11 曲, Aurora Skies 跨文件夹归并为 2 专辑 7 曲验证映射表聚合, 群星 FLAC 专辑); 隔离 `KUBBY_DATA_DIR` 起 prod server, 扫描 11/11 入库零跳过; API 验专辑/艺术家/歌曲/home/user-data; mp3 + FLAC direct 流 206 Range; 新 Chrome tab (独立 profile + 调试端口) 实测三 Tab 渲染、专辑详情、Play All 起播 NowPlayingBar (进度推进/传输/音量/展开)、AlbumCard 播放按钮从艺术家页起播证明播放器全局挂载、控制台零 error/warn。
+- **明确未做 (归 v2)**: 音量归一化 (LUFS 任务)、播放列表、MusicBrainz/AudioDB 刮削、歌词显示、gapless (Jellyfin 都没做)。
+
 ## 2026-07-10 (2): 照片库 v1 — 域分离架构下的第二媒体域 (照片+手机视频)
 
 用户诉求: Kubby 全部围绕可刮削电影设计 (马赛克墙/演员墙/TMDB/NFO), 要加手机照片+视频功能且不破坏影院设计, 并为未来音乐库铺路。设计文档 `docs/photos-library-design.md` (决策: 照片+视频合并为一种库类型; v1 = 时间线+灯箱+视频内嵌播放), 任务清单 `docs/tasks-photos-v1.md` (T1–T8 全部完成)。

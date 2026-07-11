@@ -3,10 +3,11 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid, Images } from "lucide-react";
+import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid, Images, Music } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
+import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
 
 interface NavSidebarProps {
   open: boolean;
@@ -20,6 +21,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
   const hasPhotoLibrary = useHasPhotoLibrary();
+  const hasMusicLibrary = useHasMusicLibrary();
 
   // Close on ESC
   useEffect(() => {
@@ -39,6 +41,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
   const mediaItems = [
     { href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true },
     ...(hasPhotoLibrary ? [{ href: "/photos", label: tNav("photos"), icon: Images, matchPrefix: true }] : []),
+    ...(hasMusicLibrary ? [{ href: "/music", label: tNav("music"), icon: Music, matchPrefix: true }] : []),
   ];
 
   const metadataItems = [

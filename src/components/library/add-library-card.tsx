@@ -138,7 +138,7 @@ export function AddLibraryCard() {
                 <SelectContent>
                   <SelectItem value="movie">Movie</SelectItem>
                   <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
-                  <SelectItem value="music" disabled>Music (coming soon)</SelectItem>
+                  <SelectItem value="music">Music</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -214,6 +214,8 @@ export function AddLibraryCard() {
                 setFolderPaths([...folderPaths, p]);
               }}
             />
+            {type !== "photo" && type !== "music" && (
+              <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-medium text-muted-foreground">
@@ -343,6 +345,8 @@ export function AddLibraryCard() {
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
+            )}
+              </>
             )}
             <div className="flex justify-end gap-3 pt-2">
               <button

@@ -72,10 +72,11 @@ export async function PUT(
       updates.folderPath = folderPath;
     }
 
-    // Photo libraries have no scraper/NFO/metadata-language concept — force these off
-    // regardless of what the request body sent, no matter the existing stored type.
-    const isPhoto = existing.type === "photo";
-    if (isPhoto) {
+    // Photo and music libraries have no scraper/NFO/metadata-language concept —
+    // force these off regardless of what the request body sent, no matter the
+    // existing stored type.
+    const isMetadataless = existing.type === "photo" || existing.type === "music";
+    if (isMetadataless) {
       updates.scraperEnabled = false;
       updates.jellyfinCompat = false;
       updates.metadataLanguage = null;

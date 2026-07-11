@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Search, ArrowLeft, House, Menu, User, ChevronDown, Check, Clapperboard, Images } from "lucide-react";
+import { Search, ArrowLeft, House, Menu, User, ChevronDown, Check, Clapperboard, Images, Music } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
+import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
 
 function KubbyLogo({ className }: { className?: string }) {
   return (
@@ -51,17 +52,22 @@ export function AppHeader() {
   const { data: session } = useSession();
   const tNav = useTranslations("nav");
   const hasPhotoLibrary = useHasPhotoLibrary();
+  const hasMusicLibrary = useHasMusicLibrary();
   const isPhotoDomain = pathname.startsWith("/photos");
+  const isMusicDomain = pathname.startsWith("/music");
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
   const isPersonFilmography = pathname === "/movies" && searchParams.get("personId");
   const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
   const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
+  // Music album/artist detail — solid-header back-nav (these pages are their own
+  // scroll containers with a fanart-free layout, so they stay non-transparent).
+  const isMusicDetail = /^\/music\/(albums|artists)\/[^/]+$/.test(pathname);
   const isPlayerPage = /^\/movies\/[^/]+\/play$/.test(pathname);
   const isSearchPage = pathname === "/search";
   const isProfilePage = pathname === "/profile";
   const isPreferencesPage = pathname.startsWith("/preferences");
-  const needsBackNav = isMovieDetail || isPersonDetail || isSearchPage || isProfilePage || isPreferencesPage;
+  const needsBackNav = isMovieDetail || isPersonDetail || isMusicDetail || isSearchPage || isProfilePage || isPreferencesPage;
   const libraryId = searchParams.get("libraryId");
   const personId = searchParams.get("personId");
   const filterGenre = searchParams.get("genre");
@@ -157,7 +163,7 @@ export function AppHeader() {
           </>
         ) : (
           <>
-            {hasPhotoLibrary ? (
+            {hasPhotoLibrary || hasMusicLibrary ? (
               // Domain switcher lives on the brand as a low-frequency dropdown,
               // so the header keeps a single row of primary navigation instead
               // of two competing pill groups (see the home Tabs island).
@@ -185,16 +191,27 @@ export function AppHeader() {
                     <Link href="/" className="cursor-pointer">
                       <Clapperboard className="h-4 w-4" />
                       <span className="flex-1">{tNav("cinema")}</span>
-                      {!isPhotoDomain && <Check className="h-4 w-4 text-primary" />}
+                      {!isPhotoDomain && !isMusicDomain && <Check className="h-4 w-4 text-primary" />}
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/photos" className="cursor-pointer">
-                      <Images className="h-4 w-4" />
-                      <span className="flex-1">{tNav("photos")}</span>
-                      {isPhotoDomain && <Check className="h-4 w-4 text-primary" />}
-                    </Link>
-                  </DropdownMenuItem>
+                  {hasPhotoLibrary && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/photos" className="cursor-pointer">
+                        <Images className="h-4 w-4" />
+                        <span className="flex-1">{tNav("photos")}</span>
+                        {isPhotoDomain && <Check className="h-4 w-4 text-primary" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {hasMusicLibrary && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/music" className="cursor-pointer">
+                        <Music className="h-4 w-4" />
+                        <span className="flex-1">{tNav("music")}</span>
+                        {isMusicDomain && <Check className="h-4 w-4 text-primary" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (

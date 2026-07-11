@@ -53,18 +53,19 @@ export const authConfig: NextAuthConfig = {
         }
       }
 
-      // Remember last visited domain (cinema vs photos) — if the user was
-      // last in the photos domain, jump straight there from the root so
-      // reopening the site has zero flash of the cinema homepage. Only for
-      // direct entry (address bar / bookmark → Sec-Fetch-Site: none): in-app
-      // links to "/" (logo, Home, cinema pill) are same-origin requests and
-      // must land on the cinema home, not bounce back to /photos.
+      // Remember last visited domain (cinema vs photos vs music) — if the user
+      // was last in the photos or music domain, jump straight there from the
+      // root so reopening the site has zero flash of the cinema homepage. Only
+      // for direct entry (address bar / bookmark → Sec-Fetch-Site: none):
+      // in-app links to "/" (logo, Home, cinema pill) are same-origin requests
+      // and must land on the cinema home, not bounce back to /photos or /music.
       if (
         pathname === "/" &&
-        request.cookies.get("kubby-domain")?.value === "photos" &&
         request.headers.get("sec-fetch-site") === "none"
       ) {
-        return Response.redirect(new URL("/photos", nextUrl));
+        const dom = request.cookies.get("kubby-domain")?.value;
+        if (dom === "photos") return Response.redirect(new URL("/photos", nextUrl));
+        if (dom === "music") return Response.redirect(new URL("/music", nextUrl));
       }
 
       return true;

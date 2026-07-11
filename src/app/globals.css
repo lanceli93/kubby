@@ -343,6 +343,83 @@
   animation: ambientBreathe 9s ease-in-out infinite alternate;
 }
 
+/* Now-playing equalizer — three bars pumping at offset phases. Used by the
+   music TrackRow to mark the current track. Respects reduced-motion (bars
+   just hold a mid height when motion is off). */
+@keyframes eqBar {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+.music-eq-bar {
+  transform-origin: bottom;
+  animation: eqBar 0.9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .music-eq-bar { animation: none; transform: scaleY(0.65); }
+}
+
+/* Music seek/volume slider — a thin rounded track with a primary fill up to
+   `--fill` and a small thumb that appears on hover/drag. Used by NowPlayingBar
+   for the progress and volume inputs. */
+.music-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border-radius: 9999px;
+}
+.music-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--primary) var(--fill, 0%),
+    rgba(255, 255, 255, 0.15) var(--fill, 0%)
+  );
+}
+.music-range::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--primary) var(--fill, 0%),
+    rgba(255, 255, 255, 0.15) var(--fill, 0%)
+  );
+}
+.music-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  margin-top: -4px;
+  border-radius: 9999px;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.music-range::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border: none;
+  border-radius: 9999px;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.music-range:hover::-webkit-slider-thumb,
+.music-range:active::-webkit-slider-thumb,
+.music-range:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+}
+.music-range:hover::-moz-range-thumb,
+.music-range:active::-moz-range-thumb,
+.music-range:focus-visible::-moz-range-thumb {
+  opacity: 1;
+}
+.music-range:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* Cinema iris reveal — circle expands from center, classic film opening */
 @keyframes irisOpen {
   0% { clip-path: circle(0% at 50% 40%); }
