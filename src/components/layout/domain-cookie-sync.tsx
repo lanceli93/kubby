@@ -8,11 +8,11 @@ interface LibraryTypeOnly {
   type: string;
 }
 
-function writeCookie(domain: "cinema" | "photos") {
+function writeCookie(domain: "cinema" | "photos" | "music") {
   document.cookie = `kubby-domain=${domain}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
 }
 
-// Persists which domain (cinema vs photos) the user last visited so that
+// Persists which domain (cinema vs photos vs music) the user last visited so that
 // reopening the site at "/" can jump straight to their domain without a
 // flash of the other one (see the "/" redirect in src/lib/auth.config.ts's
 // authorized callback, which reads this same cookie).
@@ -24,10 +24,11 @@ export function DomainCookieSync() {
   const pathname = usePathname();
 
   // Shares the ["libraries"] cache with the nav hooks (no extra request). Used
-  // to self-heal a stale "photos" cookie: the proxy redirect in auth.config.ts
-  // can't query the DB, so if the photo library is later deleted the cookie
-  // would keep bouncing "/" → "/photos" (an empty page with no nav entry).
-  // Once library data resolves and no photo library exists, reset to cinema.
+  // to self-heal a stale "photos"/"music" cookie: the proxy redirect in
+  // auth.config.ts can't query the DB, so if the photo/music library is later
+  // deleted the cookie would keep bouncing "/" → "/photos" (or "/music"), an
+  // empty page with no nav entry. Once library data resolves and no library of
+  // that type exists, reset the cookie to cinema.
   const { data: libraries } = useQuery<LibraryTypeOnly[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
@@ -35,15 +36,24 @@ export function DomainCookieSync() {
   });
 
   useEffect(() => {
-    if (Array.isArray(libraries) && !libraries.some((lib) => lib.type === "photo")) {
-      // No photo library exists — the photos domain isn't reachable, so never
-      // leave a "photos" cookie that would redirect the root there.
-      if (document.cookie.includes("kubby-domain=photos")) writeCookie("cinema");
-      return;
+    if (Array.isArray(libraries)) {
+      const hasPhoto = libraries.some((lib) => lib.type === "photo");
+      const hasMusic = libraries.some((lib) => lib.type === "music");
+      // No photo/music library exists — that domain isn't reachable, so never
+      // leave a matching cookie that would redirect the root there.
+      if (!hasPhoto && document.cookie.includes("kubby-domain=photos")) {
+        writeCookie("cinema");
+        return;
+      }
+      if (!hasMusic && document.cookie.includes("kubby-domain=music")) {
+        writeCookie("cinema");
+        return;
+      }
     }
 
-    let domain: "cinema" | "photos" | null = null;
+    let domain: "cinema" | "photos" | "music" | null = null;
     if (pathname.startsWith("/photos")) domain = "photos";
+    else if (pathname.startsWith("/music")) domain = "music";
     else if (pathname === "/" || pathname.startsWith("/movies")) domain = "cinema";
 
     if (!domain) return;

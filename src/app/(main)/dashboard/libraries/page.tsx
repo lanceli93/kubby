@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X, Film, Images, MoreVertical, Pencil, HardDriveDownload } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X, Film, Images, Music, MoreVertical, Pencil, HardDriveDownload } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -239,8 +239,8 @@ export default function LibrariesPage() {
                     <SelectContent>
                       <SelectItem value="movie">Movie</SelectItem>
                       <SelectItem value="photo">{t("libraryTypePhoto")}</SelectItem>
+                      <SelectItem value="music">{t("libraryTypeMusic")}</SelectItem>
                       <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
-                      <SelectItem value="music" disabled>Music (coming soon)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -316,7 +316,7 @@ export default function LibrariesPage() {
                     setFolderPaths([...folderPaths, p]);
                   }}
                 />
-                {type !== "photo" && (
+                {type !== "photo" && type !== "music" && (
                   <>
                 {/* Metadata downloaders section */}
                 <div className="flex flex-col gap-2">
@@ -429,7 +429,7 @@ export default function LibrariesPage() {
                 )}
 
                 {/* Scraper error alert */}
-                {type !== "photo" && scraperError && (
+                {type !== "photo" && type !== "music" && scraperError && (
                   <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                     <div className="flex-1">
@@ -504,6 +504,8 @@ export default function LibrariesPage() {
                         <Film className="h-6 w-6 text-primary" />
                       ) : lib.type === "photo" ? (
                         <Images className="h-6 w-6 text-primary" />
+                      ) : lib.type === "music" ? (
+                        <Music className="h-6 w-6 text-primary" />
                       ) : (
                         <Folder className="h-6 w-6 text-primary" />
                       )}
@@ -581,7 +583,7 @@ export default function LibrariesPage() {
               <div className="mt-2 text-center">
                 <p className="truncate text-sm font-semibold text-foreground">{lib.name}</p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {lib.type === "movie" ? "Movies" : lib.type === "photo" ? t("libraryTypePhoto") : lib.type} · {lib.movieCount ?? 0}
+                  {lib.type === "movie" ? "Movies" : lib.type === "photo" ? t("libraryTypePhoto") : lib.type === "music" ? t("libraryTypeMusic") : lib.type} · {lib.movieCount ?? 0}
                 </p>
               </div>
             </div>
@@ -686,7 +688,7 @@ export default function LibrariesPage() {
                 }}
               />
             </div>
-            {editType !== "photo" && (
+            {editType !== "photo" && editType !== "music" && (
               <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">

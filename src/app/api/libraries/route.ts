@@ -75,12 +75,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Photo libraries have no scraper/NFO/metadata-language concept — force these off
-    // regardless of what the request body sent.
-    const isPhoto = type === "photo";
-    const finalScraperEnabled = isPhoto ? false : !!scraperEnabled;
-    const finalJellyfinCompat = isPhoto ? false : !!jellyfinCompat;
-    const finalMetadataLanguage = isPhoto ? null : (metadataLanguage || null);
+    // Photo and music libraries have no scraper/NFO/metadata-language concept —
+    // force these off regardless of what the request body sent.
+    const isMetadataless = type === "photo" || type === "music";
+    const finalScraperEnabled = isMetadataless ? false : !!scraperEnabled;
+    const finalJellyfinCompat = isMetadataless ? false : !!jellyfinCompat;
+    const finalMetadataLanguage = isMetadataless ? null : (metadataLanguage || null);
 
     const id = uuidv4();
     const serialized = serializeFolderPaths(paths);

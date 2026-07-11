@@ -290,3 +290,92 @@ export const photoItems = sqliteTable("photo_items", {
   index("idx_pi_folder").on(table.folderPath),
   index("idx_pi_video").on(table.isVideo),
 ]);
+
+// ─── Music Artists (music domain) ──────────────────────────────
+export const musicArtists = sqliteTable("music_artists", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  sortName: text("sort_name"),
+  imagePath: text("image_path"), // relative to data dir
+  imageBlur: text("image_blur"), // tiny base64 data URL for blur placeholder
+  overview: text("overview"),
+  musicbrainzId: text("musicbrainz_id"),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_mar_name").on(table.name),
+]);
+
+// ─── Music Albums (music domain) ───────────────────────────────
+export const musicAlbums = sqliteTable("music_albums", {
+  id: text("id").primaryKey(),
+  libraryId: text("library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  sortTitle: text("sort_title"),
+  year: integer("year"),
+  coverPath: text("cover_path"), // relative to data dir
+  coverBlur: text("cover_blur"), // tiny base64 data URL for blur placeholder
+  folderPath: text("folder_path"),
+  genres: text("genres"), // JSON array string
+  musicbrainzId: text("musicbrainz_id"),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_mal_library").on(table.libraryId),
+]);
+
+// ─── Music Album-Artists (M:N) ─────────────────────────────────
+export const musicAlbumArtists = sqliteTable("music_album_artists", {
+  albumId: text("album_id").notNull().references(() => musicAlbums.id, { onDelete: "cascade" }),
+  artistId: text("artist_id").notNull().references(() => musicArtists.id, { onDelete: "cascade" }),
+}, (table) => [
+  uniqueIndex("idx_maa_pk").on(table.albumId, table.artistId),
+  index("idx_maa_artist").on(table.artistId),
+]);
+
+// ─── Music Tracks (music domain) ───────────────────────────────
+export const musicTracks = sqliteTable("music_tracks", {
+  id: text("id").primaryKey(),
+  libraryId: text("library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
+  albumId: text("album_id").references(() => musicAlbums.id, { onDelete: "cascade" }), // nullable — tracks with no album tag
+  filePath: text("file_path").notNull().unique(), // absolute path
+  fileName: text("file_name").notNull(),
+  title: text("title").notNull(),
+  sortTitle: text("sort_title"),
+  trackNumber: integer("track_number"),
+  discNumber: integer("disc_number"),
+  durationSeconds: real("duration_seconds"),
+  codec: text("codec"),
+  bitrate: integer("bitrate"),
+  sampleRate: integer("sample_rate"),
+  channels: integer("channels"),
+  fileSize: integer("file_size"),
+  genres: text("genres"), // JSON array string
+  year: integer("year"),
+  lyricsPath: text("lyrics_path"),
+  mimeType: text("mime_type"),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+  dateModified: integer("date_modified"), // file mtime in ms, for incremental scan diffing
+}, (table) => [
+  index("idx_mt_library").on(table.libraryId),
+  index("idx_mt_album").on(table.albumId),
+]);
+
+// ─── Music Track-Artists (M:N) ─────────────────────────────────
+export const musicTrackArtists = sqliteTable("music_track_artists", {
+  trackId: text("track_id").notNull().references(() => musicTracks.id, { onDelete: "cascade" }),
+  artistId: text("artist_id").notNull().references(() => musicArtists.id, { onDelete: "cascade" }),
+}, (table) => [
+  uniqueIndex("idx_mta_pk").on(table.trackId, table.artistId),
+  index("idx_mta_artist").on(table.artistId),
+]);
+
+// ─── User Track Data ───────────────────────────────────────────
+export const userTrackData = sqliteTable("user_track_data", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  trackId: text("track_id").notNull().references(() => musicTracks.id, { onDelete: "cascade" }),
+  playCount: integer("play_count").default(0),
+  isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
+  lastPlayedAt: text("last_played_at"),
+}, (table) => [
+  uniqueIndex("idx_utd_user_track").on(table.userId, table.trackId),
+]);

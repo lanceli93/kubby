@@ -1,6 +1,6 @@
 # Kubby Architecture Reference
 
-> 本地自托管影音管理系统，参考 Jellyfin 架构简化实现。当前版本支持**电影**与**照片**（手机照片+视频）两个媒体域：域分离架构（`docs/photos-library-design.md`），每域独立表/扫描器/页面，共享库管理、播放管线、认证、i18n。
+> 本地自托管影音管理系统，参考 Jellyfin 架构简化实现。当前版本支持**电影**、**照片**（手机照片+视频）与**音乐**（专辑/艺术家/歌曲 + 全局常驻播放器）三个媒体域：域分离架构（`docs/photos-library-design.md`、`docs/music-library-design.md`），每域独立表/扫描器/页面，共享库管理、播放管线、认证、i18n。音乐域引入唯一的跨路由常驻播放器（`music-player-provider` + 底部 `NowPlayingBar`）。
 
 ## 技术栈
 
@@ -150,12 +150,14 @@ kubby/
 │   │   ├── auth.ts                                 # NextAuth 完整配置 (含 DB 查询, locale)
 │   │   ├── auth.config.ts                          # NextAuth 轻量配置 (供 middleware 使用, 无 DB)
 │   │   ├── db/
-│   │   │   ├── schema.ts                           # Drizzle schema (14 张表, 含 settings + user_preferences + bookmarks + photo_items)
+│   │   │   ├── schema.ts                           # Drizzle schema (20 张表, 含 settings + user_preferences + bookmarks + photo_items + music_* 6 表)
 │   │   │   └── index.ts                            # DB 连接 (Proxy 懒初始化, WAL + FK + 自动迁移)
 │   │   ├── folder-paths.ts                         # 多文件夹路径 parse/serialize 辅助工具 (向后兼容 JSON 数组存储)
+│   │   ├── music/                                  # 音乐域: audio-decider (direct/transcode) + queries (批量聚合避免 N+1)
 │   │   ├── scanner/
 │   │   │   ├── index.ts                            # 媒体库扫描器 (按 library.type 分派; 电影: 多路径遍历+TMDB刮削+DB写入+跳过追踪)
 │   │   │   ├── photo-scanner.ts                    # 照片扫描器 (递归遍历+增量 mtime/size+exifr EXIF+sharp/ffmpeg 缩略图+HEIC 预览+视频 ffprobe)
+│   │   │   ├── music-scanner.ts                    # 音乐扫描器 (music-metadata 读内嵌 tag + 按 albumartist||album 归组 + 封面 folder/内嵌 + 增量)
 │   │   │   ├── nfo-parser.ts                       # NFO XML 解析器
 │   │   │   └── nfo-writer.ts                       # NFO 生成/回写 (完整 NFO 生成 + 追加 actor)
 │   │   ├── transcode/
@@ -203,7 +205,7 @@ kubby/
 
 ## 数据库 Schema
 
-14 张表，SQLite + WAL 模式，文件位于 `data/kubby.db`。
+20 张表，SQLite + WAL 模式，文件位于 `data/kubby.db`。
 
 ### ER 关系图
 
@@ -213,12 +215,17 @@ users ──1:N──> user_person_data ──N:1──> people
 users ──1:1──> user_preferences
 users ──1:N──> movie_bookmarks ──N:1──> movies
 users ──1:N──> bookmark_icons
+users ──1:N──> user_track_data ──N:1──> music_tracks
                                           │
 media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1──> people
                   │                │
                   │                ├──1:N──> movie_discs
                   │                └──1:N──> media_streams
-                  └──1:N──> photo_items (照片域, 与 movies 平行)
+                  ├──1:N──> photo_items (照片域, 与 movies 平行)
+                  └──1:N──> music_albums ──1:N──> music_tracks   (音乐域, 与 movies 平行)
+                            │                        │
+                            └─M:N─ music_album_artists │  music_track_artists ─M:N─┐
+                                            └──> music_artists <────────────────────┘
 
 settings (独立 key-value 表, 用于全局配置如 TMDB API key)
 ```
