@@ -3,37 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { House, Film, Images, Music, Search, Settings } from "lucide-react";
-import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
-import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
+import { useCurrentDomain } from "@/hooks/use-current-domain";
 
-const baseTabs = [
-  { label: "Home", href: "/", icon: House },
-  { label: "Movies", href: "/movies", icon: Film },
-  { label: "Search", href: "/search", icon: Search },
-  { label: "Preferences", href: "/preferences", icon: Settings },
-];
+const homeTab = { label: "Home", href: "/", icon: House };
+const searchTab = { label: "Search", href: "/search", icon: Search };
+const preferencesTab = { label: "Preferences", href: "/preferences", icon: Settings };
 
-const photosTab = { label: "Photos", href: "/photos", icon: Images };
-const musicTab = { label: "Music", href: "/music", icon: Music };
+const mediaTabByDomain = {
+  cinema: { label: "Movies", href: "/movies", icon: Film },
+  photos: { label: "Photos", href: "/photos", icon: Images },
+  music: { label: "Music", href: "/music", icon: Music },
+};
 
 export function BottomTabs() {
   const pathname = usePathname();
-  const hasPhotoLibrary = useHasPhotoLibrary();
-  const hasMusicLibrary = useHasMusicLibrary();
+  const domain = useCurrentDomain();
 
-  // Hide on player pages
+  // Hide on player pages / immersive full-screen viewers
   if (/^\/movies\/[^/]+\/play$/.test(pathname)) return null;
+  if (/^\/photos\/view\/[^/]+$/.test(pathname)) return null;
 
-  // Insert Photos then Music right after Movies (index 2) so tab order is
-  // Home, Movies, [Photos], [Music], Search, Preferences.
-  const mediaTabs = [
-    ...(hasPhotoLibrary ? [photosTab] : []),
-    ...(hasMusicLibrary ? [musicTab] : []),
-  ];
-  const tabs =
-    mediaTabs.length > 0
-      ? [...baseTabs.slice(0, 2), ...mediaTabs, ...baseTabs.slice(2)]
-      : baseTabs;
+  // Tab order: Home, <current domain's media tab>, Search, Preferences.
+  const tabs = [homeTab, mediaTabByDomain[domain], searchTab, preferencesTab];
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 flex md:hidden h-[calc(3.5rem+env(safe-area-inset-bottom))] items-center justify-around border-t border-white/[0.06] bg-[var(--header)] pb-safe backdrop-blur-xl">

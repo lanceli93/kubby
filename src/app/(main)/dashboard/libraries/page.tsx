@@ -181,6 +181,141 @@ export default function LibrariesPage() {
     }
   };
 
+  // Render a single library card. Shared by every type section so all card
+  // behavior (scan overlay, dropdown menu, edit/delete) stays identical.
+  const renderCard = (lib: Library) => {
+    const libScan = scansMap.get(lib.id);
+    const isScanning = libScan?.scanning ?? false;
+    const progress = libScan?.progress;
+    return (
+      <div key={lib.id} className="group flex flex-col" style={{ width: 320 }}>
+        {/* Cover image — click to edit */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => openEditDialog(lib)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openEditDialog(lib); }}
+          className="relative w-full overflow-hidden rounded-lg ring-1 ring-white/[0.06] bg-white/[0.05] cursor-pointer transition-fluid hover:scale-[1.03]"
+          style={{ height: 180 }}
+        >
+          {lib.coverImage ? (
+            <Image
+              src={resolveImageSrc(lib.coverImage)}
+              alt={lib.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                {lib.type === "movie" ? (
+                  <Film className="h-6 w-6 text-primary" />
+                ) : lib.type === "photo" ? (
+                  <Images className="h-6 w-6 text-primary" />
+                ) : lib.type === "music" ? (
+                  <Music className="h-6 w-6 text-primary" />
+                ) : (
+                  <Folder className="h-6 w-6 text-primary" />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Library name overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
+            <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: 40 }}>{lib.name}</h2>
+          </div>
+
+          {/* Scanning overlay with progress */}
+          {isScanning && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/60 px-6">
+              {progress ? (
+                <>
+                  <Progress value={(progress.current / progress.total) * 100} className="h-1.5 w-full" />
+                  <span className="text-xs text-white/80">
+                    Scanning {progress.current}/{progress.total}
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs text-white/80">Scanning...</span>
+              )}
+            </div>
+          )}
+
+          {/* Hover: three-dot menu on cover */}
+          <div className="absolute inset-x-0 bottom-0 flex justify-end px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => { e.stopPropagation(); }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20 outline-none"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem
+                  disabled={isScanning}
+                  onClick={(e) => { e.stopPropagation(); startScan(lib.id); }}
+                >
+                  <HardDriveDownload className="h-4 w-4" />
+                  Scan Library
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(lib); }}>
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteLibId(lib.id);
+                    setDeleteLibName(lib.name);
+                    setDeleteLibType(lib.type);
+                    setDeleteOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Labels below cover — centered */}
+        <div className="mt-2 text-center">
+          <p className="truncate text-sm font-semibold text-foreground">{lib.name}</p>
+          <p className="text-xs text-muted-foreground capitalize">
+            {lib.type === "movie" ? t("libraryTypeMovie") : lib.type === "photo" ? t("libraryTypePhoto") : lib.type === "music" ? t("libraryTypeMusic") : lib.type} · {lib.movieCount ?? 0}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  // Fixed-order sections; each is an ALLOWLIST for a known domain so adding a
+  // 4th domain later can't silently reuse another section's icon/label.
+  const KNOWN_TYPE_SECTIONS: { type: string; label: string; icon: typeof Film }[] = [
+    { type: "movie", label: t("libraryTypeMovie"), icon: Film },
+    { type: "photo", label: t("libraryTypePhoto"), icon: Images },
+    { type: "music", label: t("libraryTypeMusic"), icon: Music },
+  ];
+  const knownTypes = new Set(KNOWN_TYPE_SECTIONS.map((s) => s.type));
+  // Any unknown/future type lands here so libraries are never dropped.
+  const otherLibraries = libraries.filter((lib) => !knownTypes.has(lib.type));
+  // Label the trailing section with the raw type when it's homogeneous;
+  // fall back to "Other" if several unknown types are mixed together.
+  const otherLabel = new Set(otherLibraries.map((lib) => lib.type)).size === 1
+    ? otherLibraries[0].type
+    : "Other";
+
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
@@ -317,7 +452,7 @@ export default function LibrariesPage() {
                     setFolderPaths([...folderPaths, p]);
                   }}
                 />
-                {type !== "photo" && type !== "music" && (
+                {type === "movie" && (
                   <>
                 {/* Metadata downloaders section */}
                 <div className="flex flex-col gap-2">
@@ -430,7 +565,7 @@ export default function LibrariesPage() {
                 )}
 
                 {/* Scraper error alert */}
-                {type !== "photo" && type !== "music" && scraperError && (
+                {type === "movie" && scraperError && (
                   <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                     <div className="flex-1">
@@ -473,125 +608,38 @@ export default function LibrariesPage() {
         </div>
       </div>
 
-      {/* Library cards grid — Jellyfin style with cover images */}
-      <div className="flex flex-wrap gap-6">
-        {libraries.map((lib) => {
-          const libScan = scansMap.get(lib.id);
-          const isScanning = libScan?.scanning ?? false;
-          const progress = libScan?.progress;
-          return (
-            <div key={lib.id} className="group flex flex-col" style={{ width: 320 }}>
-              {/* Cover image — click to edit */}
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => openEditDialog(lib)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openEditDialog(lib); }}
-                className="relative w-full overflow-hidden rounded-lg ring-1 ring-white/[0.06] bg-white/[0.05] cursor-pointer transition-fluid hover:scale-[1.03]"
-                style={{ height: 180 }}
-              >
-                {lib.coverImage ? (
-                  <Image
-                    src={resolveImageSrc(lib.coverImage)}
-                    alt={lib.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                      {lib.type === "movie" ? (
-                        <Film className="h-6 w-6 text-primary" />
-                      ) : lib.type === "photo" ? (
-                        <Images className="h-6 w-6 text-primary" />
-                      ) : lib.type === "music" ? (
-                        <Music className="h-6 w-6 text-primary" />
-                      ) : (
-                        <Folder className="h-6 w-6 text-primary" />
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Library name overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
-                  <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: 40 }}>{lib.name}</h2>
-                </div>
-
-                {/* Scanning overlay with progress */}
-                {isScanning && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/60 px-6">
-                    {progress ? (
-                      <>
-                        <Progress value={(progress.current / progress.total) * 100} className="h-1.5 w-full" />
-                        <span className="text-xs text-white/80">
-                          Scanning {progress.current}/{progress.total}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-xs text-white/80">Scanning...</span>
-                    )}
-                  </div>
-                )}
-
-                {/* Hover: three-dot menu on cover */}
-                <div className="absolute inset-x-0 bottom-0 flex justify-end px-2 py-1.5 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); }}
-                        className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20 outline-none"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-48 border-white/10 bg-black/70 backdrop-blur-xl"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <DropdownMenuItem
-                        disabled={isScanning}
-                        onClick={(e) => { e.stopPropagation(); startScan(lib.id); }}
-                      >
-                        <HardDriveDownload className="h-4 w-4" />
-                        Scan Library
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(lib); }}>
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteLibId(lib.id);
-                          setDeleteLibName(lib.name);
-                          setDeleteLibType(lib.type);
-                          setDeleteOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-
-              {/* Labels below cover — centered */}
-              <div className="mt-2 text-center">
-                <p className="truncate text-sm font-semibold text-foreground">{lib.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {lib.type === "movie" ? "Movies" : lib.type === "photo" ? t("libraryTypePhoto") : lib.type === "music" ? t("libraryTypeMusic") : lib.type} · {lib.movieCount ?? 0}
-                </p>
-              </div>
+      {/* Library cards grid — grouped into fixed-order type sections */}
+      {KNOWN_TYPE_SECTIONS.map((section) => {
+        const sectionLibraries = libraries.filter((lib) => lib.type === section.type);
+        if (sectionLibraries.length === 0) return null;
+        const SectionIcon = section.icon;
+        return (
+          <div key={section.type} className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <SectionIcon className="h-5 w-5 text-primary" />
+              <span>{section.label}</span>
+              <span className="text-sm font-normal text-muted-foreground">{sectionLibraries.length}</span>
             </div>
-          );
-        })}
-      </div>
+            <div className="flex flex-wrap gap-6">
+              {sectionLibraries.map(renderCard)}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Unknown/future types — never silently dropped */}
+      {otherLibraries.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Folder className="h-5 w-5 text-primary" />
+            <span className="capitalize">{otherLabel}</span>
+            <span className="text-sm font-normal text-muted-foreground">{otherLibraries.length}</span>
+          </div>
+          <div className="flex flex-wrap gap-6">
+            {otherLibraries.map(renderCard)}
+          </div>
+        </div>
+      )}
 
       {libraries.length === 0 && (
         <div className="flex h-64 items-center justify-center text-muted-foreground">
@@ -690,7 +738,7 @@ export default function LibrariesPage() {
                 }}
               />
             </div>
-            {editType !== "photo" && editType !== "music" && (
+            {editType === "movie" && (
               <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">

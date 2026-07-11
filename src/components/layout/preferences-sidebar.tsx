@@ -9,46 +9,60 @@ export function PreferencesSidebar() {
   const pathname = usePathname();
   const t = useTranslations("preferences");
 
-  const sidebarItems = [
+  const cinemaItems = [
     { label: t("heroMosaic"), href: "/preferences/hero-mosaic", icon: LayoutGrid },
     { label: t("cardBadges"), href: "/preferences/card-badges", icon: BadgeCheck },
     { label: t("ratingsBookmarks"), href: "/preferences/ratings-bookmarks", icon: SlidersHorizontal },
     { label: t("playback"), href: "/preferences/playback", icon: Play },
-    { label: t("language"), href: "/preferences/language", icon: Languages },
   ];
+  const generalItems = [{ label: t("language"), href: "/preferences/language", icon: Languages }];
+  const sidebarGroups = [
+    { label: t("groupCinema"), items: cinemaItems },
+    { label: t("groupGeneral"), items: generalItems },
+  ];
+  const sidebarItems = [...cinemaItems, ...generalItems];
 
   return (
     <>
-      <aside className="hidden md:flex w-60 flex-col gap-1 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6 ring-1 ring-white/[0.06]">
-        <span className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
-          {t("title")}
-        </span>
-        <div className="mx-3 mb-2 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />
-        {sidebarItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`group relative mx-2 flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-all duration-200 ${
-                isActive
-                  ? "bg-gradient-to-r from-primary/[0.12] to-transparent font-medium text-foreground"
-                  : "font-normal text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-              }`}
-            >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
-              )}
-              <Icon
-                className={`h-[18px] w-[18px] transition-colors ${
-                  isActive ? "text-primary" : "text-[#666680] group-hover:text-muted-foreground"
-                }`}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
+      <aside className="hidden md:flex w-60 flex-col gap-4 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6 ring-1 ring-white/[0.06]">
+        <div>
+          <span className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
+            {t("title")}
+          </span>
+          <div className="mx-3 mt-2 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />
+        </div>
+        {sidebarGroups.map((group) => (
+          <div key={group.label} className="flex flex-col gap-1">
+            <span className="mb-1 px-5 text-[10px] font-medium uppercase tracking-wider text-[#444458]">
+              {group.label}
+            </span>
+            {group.items.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group relative mx-2 flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-all duration-200 ${
+                    isActive
+                      ? "bg-gradient-to-r from-primary/[0.12] to-transparent font-medium text-foreground"
+                      : "font-normal text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+                  )}
+                  <Icon
+                    className={`h-[18px] w-[18px] transition-colors ${
+                      isActive ? "text-primary" : "text-[#666680] group-hover:text-muted-foreground"
+                    }`}
+                  />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </aside>
       {/* Mobile horizontal nav */}
       <nav className="flex md:hidden overflow-x-auto border-b border-white/[0.06] bg-black/30 backdrop-blur-xl px-2 py-2 gap-1">

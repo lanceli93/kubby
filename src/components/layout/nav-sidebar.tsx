@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid, Images, Music } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
-import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
+import { useCurrentDomain } from "@/hooks/use-current-domain";
 
 interface NavSidebarProps {
   open: boolean;
@@ -20,8 +19,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
   const isAdmin = !!(session?.user as { isAdmin?: boolean })?.isAdmin;
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
-  const hasPhotoLibrary = useHasPhotoLibrary();
-  const hasMusicLibrary = useHasMusicLibrary();
+  const domain = useCurrentDomain();
 
   // Close on ESC
   useEffect(() => {
@@ -38,11 +36,12 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
     { href: "/", label: tNav("home"), icon: Home },
   ];
 
-  const mediaItems = [
-    { href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true },
-    ...(hasPhotoLibrary ? [{ href: "/photos", label: tNav("photos"), icon: Images, matchPrefix: true }] : []),
-    ...(hasMusicLibrary ? [{ href: "/music", label: tNav("music"), icon: Music, matchPrefix: true }] : []),
-  ];
+  const mediaItems =
+    domain === "photos"
+      ? [{ href: "/photos", label: tNav("allPhotos"), icon: Images, matchPrefix: true }]
+      : domain === "music"
+      ? [{ href: "/music", label: tNav("allMusic"), icon: Music, matchPrefix: true }]
+      : [{ href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true }];
 
   const metadataItems = [
     { href: "/metadata/scraper", label: tNav("providers"), icon: Wand2 },
@@ -130,8 +129,8 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
             {mediaItems.map(renderItem)}
           </div>
 
-          {/* Metadata (admin only) */}
-          {isAdmin && (
+          {/* Metadata (admin only, cinema domain only) */}
+          {isAdmin && domain === "cinema" && (
             <div className="flex flex-col gap-0.5">
               <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {tNav("metadata")}
