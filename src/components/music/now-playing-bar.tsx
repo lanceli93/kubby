@@ -292,8 +292,12 @@ export function NowPlayingBar() {
               desktop; segmented cover/panel on mobile) over a full-width bottom
               transport bar (desktop) / mobile mini transport. */}
           <div className="flex min-h-0 flex-1 flex-col">
-            {/* ── Content row ── */}
-            <div className="flex min-h-0 flex-1 md:flex-row md:items-stretch md:gap-12 md:px-12 md:pb-6">
+            {/* ── Content row ── two flex-1 halves, the whole row width-capped
+                and centred (`md:mx-auto md:max-w-[2200px]`) so on wide/4K screens
+                the vinyl + lyrics keep a comfortable spread near the middle:
+                wide enough that they don't clump dead-centre (过于靠拢中间), capped
+                enough that they don't fly to the far corners (分散). */}
+            <div className="flex min-h-0 flex-1 md:mx-auto md:w-full md:max-w-[2200px] md:flex-row md:items-stretch md:gap-16 md:px-12 md:pb-6">
               {/* Left half (desktop) / cover view (mobile): vinyl + spectrum + meta.
                   On mobile this pane also carries the seek/transport/volume that the
                   desktop bottom bar owns. */}
@@ -307,7 +311,7 @@ export function NowPlayingBar() {
                   coverBlur={coverBlur}
                   title={currentTrack.title}
                   isPlaying={isPlaying}
-                  className="w-full max-w-[72vw] md:max-w-[min(48vh,420px)]"
+                  className="w-full max-w-[72vw] md:max-w-[min(54vh,460px)]"
                 />
 
                 {/* Compact spectrum under the vinyl on mobile; the desktop bottom
@@ -397,7 +401,7 @@ export function NowPlayingBar() {
                 <div className="min-h-0 flex-1">
                   {panel === "lyrics" ? (
                     <LyricsView
-                      align="left"
+                      align="center"
                       trackId={currentTrack.id}
                       currentTime={currentTime}
                       onSeek={seek}
@@ -453,12 +457,22 @@ export function NowPlayingBar() {
               </div>
             </div>
 
-            {/* ── Desktop bottom transport bar ── QQ-Music layout: a left info
-                cluster · a centered STACK (spectrum on top, then transport with a
-                capsule play + inline volume, then a seek bar of the SAME width as
-                the spectrum — 律动效果和进度条等长, 在上部) · a right queue toggle.
-                The capsule play button is `h-9` so it matches the icon buttons and
-                adds no extra row height. */}
+            {/* ── Desktop spectrum ── floats ABOVE the docker (not inside it):
+                its own row in the free space over the transport bar's top
+                border, centered and inset by the time-label width (px-[3.25rem]
+                = w-10 label + gap-3) so it's the SAME length as the seek bar
+                below and blooms up, QQ-style (律动效果和进度条等长, 在上部). */}
+            <div className="hidden flex-shrink-0 justify-center px-6 pb-1 md:flex lg:px-10">
+              <div className="w-full max-w-xl px-[3.25rem]">
+                <AudioSpectrum className="h-12 w-full" color={spectrumColor} bars={64} />
+              </div>
+            </div>
+
+            {/* ── Desktop bottom transport bar (the docker) ── a left info
+                cluster · a centered stack (transport with a capsule play +
+                inline volume, over a seek bar) · a right queue toggle. The
+                capsule play button is `h-9` so it matches the icon buttons and
+                adds no extra row height. The spectrum lives ABOVE this bar. */}
             <div className="hidden flex-shrink-0 items-center gap-4 border-t border-white/[0.06] px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex lg:px-10">
               {/* Left: mini cover + title/artist + favorite heart */}
               <div className="flex w-1/4 min-w-0 items-center gap-3">
@@ -478,12 +492,9 @@ export function NowPlayingBar() {
                 <FavoriteHeart trackId={currentTrack.id} />
               </div>
 
-              {/* Center stack: spectrum → transport → seek, all one matched
-                  width (max-w-xl) so the bloom and the progress bar are equal
-                  length with the spectrum on top. */}
+              {/* Center stack: transport over a matched-width seek bar. */}
               <div className="flex flex-1 justify-center">
-                <div className="flex w-full max-w-xl flex-col items-center gap-1.5">
-                  <AudioSpectrum className="h-12 w-full" color={spectrumColor} bars={64} />
+                <div className="flex w-full max-w-xl flex-col items-center gap-2">
                   <div className="flex items-center gap-6">
                     <IconBtn label={t("shuffle")} onClick={toggleShuffle} active={shuffle}>
                       <Shuffle className="h-4 w-4" />
