@@ -8,13 +8,14 @@ import { useTranslations } from "next-intl";
 interface LibraryUsage {
   libraryId: string;
   libraryName: string;
+  type: string;
   bytes: number;
   formatted: string;
-  movieCount: number;
+  itemCount: number;
 }
 
 interface DashboardStats {
-  totalMovies: number;
+  totalItems: number;
   totalLibraries: number;
   totalUsers: number;
   diskUsage: string;
@@ -76,13 +77,17 @@ export default function DashboardPage() {
   const libraryUsage = stats?.libraryUsage ?? [];
   const maxBytes = libraryUsage.length > 0 ? libraryUsage[0].bytes : 0;
 
+  // Per-library item count with the unit that matches the library's domain.
+  const itemCountLabel = (type: string, count: number) =>
+    t(type === "photo" ? "itemCountPhotos" : type === "music" ? "itemCountTracks" : "itemCountMovies", { count });
+
   return (
     <div className="stagger-children flex flex-col gap-8 p-8 px-10">
       {/* Stats */}
       <div className="flex gap-4">
         <StatCard
-          label={t("totalMovies")}
-          value={stats?.totalMovies ?? 0}
+          label={t("totalItems")}
+          value={stats?.totalItems ?? 0}
           icon={Film}
         />
         <StatCard
@@ -123,7 +128,7 @@ export default function DashboardPage() {
                         <Folder className="h-4 w-4 text-muted-foreground/60" />
                         <span className="font-medium text-foreground">{lib.libraryName}</span>
                         <span className="text-xs text-muted-foreground">
-                          {lib.movieCount} {lib.movieCount === 1 ? "movie" : "movies"}
+                          {itemCountLabel(lib.type, lib.itemCount)}
                         </span>
                       </div>
                       <span className="font-mono text-sm text-muted-foreground">{lib.formatted}</span>

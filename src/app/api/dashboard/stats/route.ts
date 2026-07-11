@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { movies, movieDiscs, mediaLibraries, users } from "@/lib/db/schema";
+import { movies, movieDiscs, mediaLibraries, users, photoItems, musicTracks } from "@/lib/db/schema";
 import { count, sum, eq } from "drizzle-orm";
 
 function formatBytes(bytes: number): string {
@@ -13,72 +13,85 @@ function formatBytes(bytes: number): string {
 
 export async function GET() {
   try {
-    const [{ total: totalMovies }] = db.select({ total: count() }).from(movies).all();
     const [{ total: totalLibraries }] = db.select({ total: count() }).from(mediaLibraries).all();
     const [{ total: totalUsers }] = db.select({ total: count() }).from(users).all();
 
-    // Per-library disk usage: sum movie file sizes grouped by library
-    const libraryMovieBytes = db
-      .select({
-        libraryId: movies.mediaLibraryId,
-        totalBytes: sum(movies.fileSize),
-        movieCount: count(),
-      })
+    // ── Per-library item counts + disk usage, aggregated across ALL domains ──
+    // Each domain keys its rows differently (movies.mediaLibraryId vs
+    // photo_items/music_tracks.libraryId) and stores its own fileSize, so we
+    // sum each domain separately then merge by libraryId. bytes/items are the
+    // per-library accumulators the dashboard renders.
+    const usage = new Map<string, { bytes: number; items: number }>();
+    const bump = (libraryId: string, bytes: number, items: number) => {
+      const cur = usage.get(libraryId) ?? { bytes: 0, items: 0 };
+      cur.bytes += bytes;
+      cur.items += items;
+      usage.set(libraryId, cur);
+    };
+
+    // Movies + their extra disc files (movie domain).
+    for (const row of db
+      .select({ libraryId: movies.mediaLibraryId, totalBytes: sum(movies.fileSize), items: count() })
       .from(movies)
       .groupBy(movies.mediaLibraryId)
-      .all();
-
-    // Per-library disc file sizes
-    const libraryDiscBytes = db
-      .select({
-        libraryId: movies.mediaLibraryId,
-        totalBytes: sum(movieDiscs.fileSize),
-      })
+      .all()) {
+      bump(row.libraryId, Number(row.totalBytes) || 0, row.items);
+    }
+    for (const row of db
+      .select({ libraryId: movies.mediaLibraryId, totalBytes: sum(movieDiscs.fileSize) })
       .from(movieDiscs)
       .innerJoin(movies, eq(movieDiscs.movieId, movies.id))
       .groupBy(movies.mediaLibraryId)
+      .all()) {
+      bump(row.libraryId, Number(row.totalBytes) || 0, 0); // discs add bytes, not item count
+    }
+
+    // Photos + videos (photo domain).
+    for (const row of db
+      .select({ libraryId: photoItems.libraryId, totalBytes: sum(photoItems.fileSize), items: count() })
+      .from(photoItems)
+      .groupBy(photoItems.libraryId)
+      .all()) {
+      bump(row.libraryId, Number(row.totalBytes) || 0, row.items);
+    }
+
+    // Tracks (music domain).
+    for (const row of db
+      .select({ libraryId: musicTracks.libraryId, totalBytes: sum(musicTracks.fileSize), items: count() })
+      .from(musicTracks)
+      .groupBy(musicTracks.libraryId)
+      .all()) {
+      bump(row.libraryId, Number(row.totalBytes) || 0, row.items);
+    }
+
+    // Every library appears in the breakdown (0-item ones included), with its
+    // type so the UI can label the count with the right unit.
+    const allLibraries = db
+      .select({ id: mediaLibraries.id, name: mediaLibraries.name, type: mediaLibraries.type })
+      .from(mediaLibraries)
       .all();
 
-    // Merge into a map
-    const discMap = new Map(libraryDiscBytes.map((r) => [r.libraryId, Number(r.totalBytes) || 0]));
-
-    // Get all libraries for names
-    const allLibraries = db.select({ id: mediaLibraries.id, name: mediaLibraries.name }).from(mediaLibraries).all();
-    const libraryNameMap = new Map(allLibraries.map((l) => [l.id, l.name]));
-
     let totalBytes = 0;
-    const libraryUsage = libraryMovieBytes.map((row) => {
-      const movieSize = Number(row.totalBytes) || 0;
-      const discSize = discMap.get(row.libraryId) || 0;
-      const bytes = movieSize + discSize;
-      totalBytes += bytes;
+    let totalItems = 0;
+    const libraryUsage = allLibraries.map((lib) => {
+      const u = usage.get(lib.id) ?? { bytes: 0, items: 0 };
+      totalBytes += u.bytes;
+      totalItems += u.items;
       return {
-        libraryId: row.libraryId,
-        libraryName: libraryNameMap.get(row.libraryId) || row.libraryId,
-        bytes,
-        formatted: formatBytes(bytes),
-        movieCount: row.movieCount,
+        libraryId: lib.id,
+        libraryName: lib.name,
+        type: lib.type,
+        bytes: u.bytes,
+        formatted: formatBytes(u.bytes),
+        itemCount: u.items,
       };
     });
-
-    // Include empty libraries (no movies)
-    for (const lib of allLibraries) {
-      if (!libraryUsage.find((l) => l.libraryId === lib.id)) {
-        libraryUsage.push({
-          libraryId: lib.id,
-          libraryName: lib.name,
-          bytes: 0,
-          formatted: "0 B",
-          movieCount: 0,
-        });
-      }
-    }
 
     // Sort by bytes descending
     libraryUsage.sort((a, b) => b.bytes - a.bytes);
 
     return NextResponse.json({
-      totalMovies,
+      totalItems,
       totalLibraries,
       totalUsers,
       diskUsage: totalBytes > 0 ? formatBytes(totalBytes) : "—",
