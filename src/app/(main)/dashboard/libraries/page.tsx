@@ -80,6 +80,7 @@ export default function LibrariesPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLibId, setDeleteLibId] = useState<string | null>(null);
   const [deleteLibName, setDeleteLibName] = useState("");
+  const [deleteLibType, setDeleteLibType] = useState<string>("movie");
   const [deleteCleanupOrphans, setDeleteCleanupOrphans] = useState(true);
   const [deleteNfo, setDeleteNfo] = useState(false);
 
@@ -568,6 +569,7 @@ export default function LibrariesPage() {
                           e.stopPropagation();
                           setDeleteLibId(lib.id);
                           setDeleteLibName(lib.name);
+                          setDeleteLibType(lib.type);
                           setDeleteOpen(true);
                         }}
                       >
@@ -831,29 +833,38 @@ export default function LibrariesPage() {
           <DialogHeader>
             <DialogTitle>Delete Library</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteLibName}&rdquo;? All movies in it will be removed.
+              Are you sure you want to delete &ldquo;{deleteLibName}&rdquo;?{" "}
+              {deleteLibType === "photo"
+                ? "All photos and videos in it will be removed from the library (source files on disk are untouched)."
+                : deleteLibType === "music"
+                  ? "All albums, artists and tracks in it will be removed from the library (source files on disk are untouched)."
+                  : "All movies in it will be removed."}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={deleteCleanupOrphans}
-                onChange={(e) => setDeleteCleanupOrphans(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
-              />
-              <span className="text-sm text-muted-foreground">Clean up actors no longer associated with any movie</span>
-            </label>
-            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={deleteNfo}
-                onChange={(e) => setDeleteNfo(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
-              />
-              <span className="text-sm text-muted-foreground">Delete NFO files from media folders (allows re-scraping)</span>
-            </label>
-          </div>
+          {/* Orphan-actor cleanup and NFO deletion are movie-domain concepts —
+              only show them for movie libraries. */}
+          {deleteLibType === "movie" && (
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteCleanupOrphans}
+                  onChange={(e) => setDeleteCleanupOrphans(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
+                />
+                <span className="text-sm text-muted-foreground">Clean up actors no longer associated with any movie</span>
+              </label>
+              <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteNfo}
+                  onChange={(e) => setDeleteNfo(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
+                />
+                <span className="text-sm text-muted-foreground">Delete NFO files from media folders (allows re-scraping)</span>
+              </label>
+            </div>
+          )}
           <DialogFooter>
             <button
               type="button"
@@ -865,7 +876,15 @@ export default function LibrariesPage() {
             <button
               type="button"
               onClick={() => {
-                if (deleteLibId) deleteLibrary.mutate({ id: deleteLibId, cleanupOrphans: deleteCleanupOrphans, deleteNfo });
+                // The cleanup options are movie-only; never send them for other
+                // domains (cleanupOrphans scans actors globally, not per-library).
+                const isMovie = deleteLibType === "movie";
+                if (deleteLibId)
+                  deleteLibrary.mutate({
+                    id: deleteLibId,
+                    cleanupOrphans: isMovie && deleteCleanupOrphans,
+                    deleteNfo: isMovie && deleteNfo,
+                  });
                 setDeleteOpen(false);
               }}
               className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"

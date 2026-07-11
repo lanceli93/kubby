@@ -579,28 +579,38 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
         >
           <DialogHeader>
             <DialogTitle>{tHome("deleteLibrary")}</DialogTitle>
-            <DialogDescription>{tHome("confirmDeleteLibrary")}</DialogDescription>
+            <DialogDescription>
+              {type === "photo"
+                ? tHome("confirmDeleteLibraryPhoto")
+                : type === "music"
+                  ? tHome("confirmDeleteLibraryMusic")
+                  : tHome("confirmDeleteLibrary")}
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
-            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={cleanupOrphans}
-                onChange={(e) => setCleanupOrphans(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
-              />
-              <span className="text-sm text-muted-foreground">{tHome("cleanupOrphanPeople")}</span>
-            </label>
-            <label className="flex items-center gap-2.5 px-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={deleteNfo}
-                onChange={(e) => setDeleteNfo(e.target.checked)}
-                className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
-              />
-              <span className="text-sm text-muted-foreground">{tHome("deleteNfoFiles")}</span>
-            </label>
-          </div>
+          {/* Orphan-actor cleanup and NFO deletion are movie-domain concepts —
+              only show them for movie libraries. */}
+          {type === "movie" && (
+            <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+              <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cleanupOrphans}
+                  onChange={(e) => setCleanupOrphans(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
+                />
+                <span className="text-sm text-muted-foreground">{tHome("cleanupOrphanPeople")}</span>
+              </label>
+              <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteNfo}
+                  onChange={(e) => setDeleteNfo(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
+                />
+                <span className="text-sm text-muted-foreground">{tHome("deleteNfoFiles")}</span>
+              </label>
+            </div>
+          )}
           <DialogFooter>
             <button
               onClick={(e) => {
@@ -616,7 +626,10 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onDelete?.({ cleanupOrphans, deleteNfo });
+                // Cleanup options are movie-only; never send them for other
+                // domains (cleanupOrphans scans actors globally, not per-library).
+                const isMovie = type === "movie";
+                onDelete?.({ cleanupOrphans: isMovie && cleanupOrphans, deleteNfo: isMovie && deleteNfo });
                 setDeleteOpen(false);
               }}
               className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"

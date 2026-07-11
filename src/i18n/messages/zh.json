@@ -128,6 +128,8 @@
     "removeImage": "移除封面",
     "deleteLibrary": "删除",
     "confirmDeleteLibrary": "确定要删除此媒体库吗？其中的所有电影都会被移除。",
+    "confirmDeleteLibraryPhoto": "确定要删除此媒体库吗？其中的所有照片和视频都会从媒体库移除（磁盘上的源文件不受影响）。",
+    "confirmDeleteLibraryMusic": "确定要删除此媒体库吗？其中的所有专辑、艺术家和曲目都会从媒体库移除（磁盘上的源文件不受影响）。",
     "cleanupOrphanPeople": "同时清理不再关联任何电影的演员数据",
     "deleteNfoFiles": "删除媒体文件夹中的 NFO 文件（下次可重新刮削）",
     "tmdbApiKeyRequired": "请输入 TMDB API 密钥以启用刮削器。",
