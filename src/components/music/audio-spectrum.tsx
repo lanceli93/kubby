@@ -5,7 +5,7 @@ import { ensureAnalyser } from "@/providers/music-player-provider";
 
 interface AudioSpectrumProps {
   className?: string;
-  bars?: number; // default 48
+  bars?: number; // default 64
   color?: string; // CSS color for bars; default "var(--primary)"
 }
 
@@ -26,7 +26,7 @@ const USABLE_BINS = 96;
  */
 export function AudioSpectrum({
   className,
-  bars = 48,
+  bars = 64,
   color = "var(--primary)",
 }: AudioSpectrumProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,19 +59,46 @@ export function AudioSpectrum({
       return { w: rect.width, h: rect.height };
     };
 
-    // A flat, faint idle row — the fallback when there's no analyser or the
-    // user prefers reduced motion.
+    // Draw one bar centred vertically on the strip, mirrored above & below the
+    // midline (QQ-Music style) with rounded caps. `mag` is 0–1.
+    const drawBar = (x: number, barWidth: number, mag: number, w: number, h: number) => {
+      const mid = h / 2;
+      // Total bar height blooms toward the centre of the strip (edge taper) so
+      // the ends fade like QQ's waveform rather than a hard rectangle.
+      const half = Math.max(1, (mag * h) / 2);
+      const r = Math.min(barWidth / 2, half);
+      const top = mid - half;
+      const bottom = mid + half;
+      ctx.beginPath();
+      // Rounded-rect path (round caps top & bottom).
+      ctx.moveTo(x, top + r);
+      ctx.arcTo(x, top, x + r, top, r);
+      ctx.arcTo(x + barWidth, top, x + barWidth, top + r, r);
+      ctx.lineTo(x + barWidth, bottom - r);
+      ctx.arcTo(x + barWidth, bottom, x + barWidth - r, bottom, r);
+      ctx.arcTo(x, bottom, x, bottom - r, r);
+      ctx.closePath();
+      ctx.fill();
+    };
+
+    // Cosine edge taper (0 at the ends → 1 in the middle) so the strip blooms
+    // centrally, matching the reference.
+    const taper = (i: number) => {
+      const t = i / (bars - 1); // 0..1
+      return 0.35 + 0.65 * Math.sin(Math.PI * t);
+    };
+
+    // A faint, low idle row — the fallback when there's no analyser or the user
+    // prefers reduced motion.
     const drawIdle = () => {
       const { w, h } = resize();
       ctx.clearRect(0, 0, w, h);
-      const gap = 2;
+      const gap = Math.max(1, w / bars * 0.35);
       const barWidth = Math.max(1, (w - gap * (bars - 1)) / bars);
-      const barHeight = Math.max(2, h * 0.12);
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = 0.22;
       ctx.fillStyle = color;
       for (let i = 0; i < bars; i++) {
-        const x = i * (barWidth + gap);
-        ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+        drawBar(i * (barWidth + gap), barWidth, 0.06 * taper(i), w, h);
       }
       ctx.globalAlpha = 1;
     };
@@ -82,21 +109,22 @@ export function AudioSpectrum({
       const { w, h } = resize();
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = color;
-      const gap = 2;
+      // A soft glow so the bars bloom like QQ's neon waveform.
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      const gap = Math.max(1, w / bars * 0.35);
       const barWidth = Math.max(1, (w - gap * (bars - 1)) / bars);
-      // Map `bars` bars across the usable bins, averaging the bins that fall
-      // into each bar's slice.
+      // Map `bars` bars across the usable bins, averaging each bar's slice.
       const perBar = USABLE_BINS / bars;
       for (let i = 0; i < bars; i++) {
         const start = Math.floor(i * perBar);
         const end = Math.max(start + 1, Math.floor((i + 1) * perBar));
         let sum = 0;
         for (let b = start; b < end; b++) sum += dataArray[b];
-        const value = sum / (end - start) / 255; // 0–1
-        const barHeight = Math.max(2, value * h);
-        const x = i * (barWidth + gap);
-        ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+        const value = (sum / (end - start) / 255) * taper(i); // 0–1, centre-bloomed
+        drawBar(i * (barWidth + gap), barWidth, Math.max(0.02, value), w, h);
       }
+      ctx.shadowBlur = 0;
       raf = requestAnimationFrame(drawFrame);
     };
 

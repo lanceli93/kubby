@@ -205,9 +205,13 @@ when it is the player's current track.
   - **Desktop** is a non-scrolling **column**: a content row that grows (left =
     rotating `VinylDisc` + meta; right = **left-aligned** `LyricsView align="left"`,
     lyrics-only — the queue moved to a drawer) over a **full-width bottom transport
-    bar** — left cluster (mini circular cover + title/artist + `FavoriteHeart`),
-    center (real-audio `AudioSpectrum` over shuffle/prev/play/next/repeat over a long
-    seek bar), right cluster (`VolumePopover` + a `播放队列` toggle). Each pane scrolls
+    bar** shaped like QQ's: a left info cluster (mini circular cover + title/artist +
+    `FavoriteHeart`) · a **centered stack** (`max-w-xl`) of real-audio `AudioSpectrum`
+    on top, then the transport (shuffle/prev/**capsule play button** `h-9 w-14
+    rounded-full` — pill, kept at icon-button height so it adds no row height —
+    /next/repeat with the `VolumePopover` folded in on its right), then a `SeekBar`
+    with edge time labels of the **same width as the spectrum** (律动效果和进度条等长,
+    在上部) · a right cluster (`播放队列` drawer toggle). Each pane scrolls
     internally so the disc/transport never move.
   - **Queue drawer** (desktop): a `queueOpen` boolean opens a right-anchored panel
     (`animate-slide-in-right`, `top: calc(64px + inset)` so it clears the top bar)

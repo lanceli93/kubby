@@ -13,6 +13,7 @@ import {
   Volume2,
   VolumeX,
   ChevronDown,
+  ChevronRight,
   Maximize2,
   Music,
   Heart,
@@ -273,10 +274,9 @@ export function NowPlayingBar() {
                 ]}
               />
             </div>
-            {/* Desktop: static label */}
-            <span className="hidden text-xs font-medium uppercase tracking-wider text-muted-foreground md:block">
-              {t("nowPlaying")}
-            </span>
+            {/* Desktop: spacer keeps the collapse/close buttons at the edges
+                (no "正在播放" label — it read as redundant clutter). */}
+            <span className="hidden flex-1 md:block" aria-hidden />
 
             {/* Close the player entirely (stops playback, dismisses the bar). */}
             <button
@@ -453,9 +453,13 @@ export function NowPlayingBar() {
               </div>
             </div>
 
-            {/* ── Desktop bottom transport bar ── full width, three clusters:
-                info + heart · spectrum/transport/seek · volume + playlist. */}
-            <div className="hidden flex-shrink-0 items-center gap-4 border-t border-white/[0.06] px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex lg:px-10">
+            {/* ── Desktop bottom transport bar ── QQ-Music layout: a left info
+                cluster · a centered STACK (spectrum on top, then transport with a
+                capsule play + inline volume, then a seek bar of the SAME width as
+                the spectrum — 律动效果和进度条等长, 在上部) · a right queue toggle.
+                The capsule play button is `h-9` so it matches the icon buttons and
+                adds no extra row height. */}
+            <div className="hidden flex-shrink-0 items-center gap-4 border-t border-white/[0.06] px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex lg:px-10">
               {/* Left: mini cover + title/artist + favorite heart */}
               <div className="flex w-1/4 min-w-0 items-center gap-3">
                 <Cover
@@ -474,54 +478,58 @@ export function NowPlayingBar() {
                 <FavoriteHeart trackId={currentTrack.id} />
               </div>
 
-              {/* Center: spectrum + transport + long seek */}
-              <div className="flex flex-1 flex-col items-center gap-2">
-                <AudioSpectrum className="h-10 w-full max-w-xl" color={spectrumColor} />
-                <div className="flex items-center gap-6">
-                  <IconBtn label={t("shuffle")} onClick={toggleShuffle} active={shuffle}>
-                    <Shuffle className="h-4 w-4" />
-                  </IconBtn>
-                  <IconBtn label={t("previous")} onClick={prev}>
-                    <SkipBack className="h-5 w-5 fill-current" />
-                  </IconBtn>
-                  <button
-                    onClick={toggle}
-                    aria-label={isPlaying ? t("pause") : t("play")}
-                    className="focus-ring flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
-                  >
-                    {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
-                  </button>
-                  <IconBtn label={t("next")} onClick={next}>
-                    <SkipForward className="h-5 w-5 fill-current" />
-                  </IconBtn>
-                  <IconBtn
-                    label={repeat === "one" ? t("repeatOne") : t("repeat")}
-                    onClick={cycleRepeat}
-                    active={repeat !== "off"}
-                  >
-                    <RepeatIcon className="h-4 w-4" />
-                  </IconBtn>
-                </div>
-                <div className="flex w-full max-w-2xl items-center gap-3">
-                  <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
-                    {formatDuration(currentTime)}
-                  </span>
-                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
-                  <span className="w-10 text-[11px] tabular-nums text-muted-foreground">
-                    {formatDuration(duration)}
-                  </span>
+              {/* Center stack: spectrum → transport → seek, all one matched
+                  width (max-w-xl) so the bloom and the progress bar are equal
+                  length with the spectrum on top. */}
+              <div className="flex flex-1 justify-center">
+                <div className="flex w-full max-w-xl flex-col items-center gap-1.5">
+                  <AudioSpectrum className="h-12 w-full" color={spectrumColor} bars={64} />
+                  <div className="flex items-center gap-6">
+                    <IconBtn label={t("shuffle")} onClick={toggleShuffle} active={shuffle}>
+                      <Shuffle className="h-4 w-4" />
+                    </IconBtn>
+                    <IconBtn label={t("previous")} onClick={prev}>
+                      <SkipBack className="h-5 w-5 fill-current" />
+                    </IconBtn>
+                    <button
+                      onClick={toggle}
+                      aria-label={isPlaying ? t("pause") : t("play")}
+                      className="focus-ring flex h-9 w-14 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-105 active:scale-95"
+                    >
+                      {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
+                    </button>
+                    <IconBtn label={t("next")} onClick={next}>
+                      <SkipForward className="h-5 w-5 fill-current" />
+                    </IconBtn>
+                    <IconBtn
+                      label={repeat === "one" ? t("repeatOne") : t("repeat")}
+                      onClick={cycleRepeat}
+                      active={repeat !== "off"}
+                    >
+                      <RepeatIcon className="h-4 w-4" />
+                    </IconBtn>
+                    <VolumePopover
+                      volume={volume}
+                      setVolume={setVolume}
+                      VolIcon={VolIcon}
+                      volumeLabel={t("volume")}
+                      muteLabel={t("mute")}
+                    />
+                  </div>
+                  <div className="flex w-full items-center gap-3">
+                    <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
+                      {formatDuration(currentTime)}
+                    </span>
+                    <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                    <span className="w-10 text-[11px] tabular-nums text-muted-foreground">
+                      {formatDuration(duration)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Right: volume popover + playlist (queue drawer) toggle */}
+              {/* Right: queue drawer toggle */}
               <div className="flex w-1/4 items-center justify-end gap-2">
-                <VolumePopover
-                  volume={volume}
-                  setVolume={setVolume}
-                  VolIcon={VolIcon}
-                  volumeLabel={t("volume")}
-                  muteLabel={t("mute")}
-                />
                 <IconBtn
                   label={t("queue")}
                   onClick={() => setQueueOpen((v) => !v)}
@@ -553,12 +561,15 @@ export function NowPlayingBar() {
             >
               <div className="flex flex-shrink-0 items-center justify-between px-5 py-4">
                 <span className="text-sm font-medium text-foreground">{t("queue")}</span>
+                {/* Dismiss the drawer by pushing it back to the right — a
+                    ChevronRight instead of an X so it doesn't stack visually
+                    with the overlay-close X directly above it. */}
                 <button
                   onClick={() => setQueueOpen(false)}
                   aria-label={t("collapse")}
                   className="focus-ring flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 hover:text-foreground active:scale-95"
                 >
-                  <X className="h-5 w-5" />
+                  <ChevronRight className="h-5 w-5" />
                 </button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
