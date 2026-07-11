@@ -11,6 +11,7 @@ every task.
 - [Domain switcher + photos navigation](#domain-switcher--photos-navigation)
 - [Movie poster card hover](#movie-poster-card-hover)
 - [Photos timeline + albums + lightbox](#photos-timeline--albums--lightbox)
+- [Music library + global player](#music-library--global-player)
 - [GlassToast](#glasstoast)
 - [Metadata Browser](#metadata-browser)
 - [Metadata editor Images tab](#metadata-editor-images-tab)
@@ -150,6 +151,57 @@ cinema home Media Libraries row, search library filter, and hero-mosaic
 per-library weights all read the shared `["libraries"]` cache and filter
 `type !== "photo"` client-side (the API stays untouched — the cache is shared with
 nav / `useHasPhotoLibrary` / `DomainCookieSync`).
+
+## Music library + global player
+
+The third domain (after cinema + photos), built to the same domain-separation rules
+— its own tables, scanner branch, `/api/music/*` routes, and `/music` homepage; no
+forking of the movie path. See architecture.md → Domains / Music Scanner / Audio
+Playback for the data model, scan, and streaming internals; this section is the
+UI + client-state wiring.
+
+**Shell** (`app/(main)/music/page.tsx`): `Tabs` (Albums / Artists / Songs) mirroring
+the movies-page tab shell, plus a top `ScrollRow` band of recent albums. Each tab is
+a responsive grid/list with `useInfiniteScroll` + the glass sort dropdown (Albums
+sort title|year|dateAdded, etc). Album detail (`music/albums/[id]`) is a hero cover +
+meta + "Play all" + `TrackRow` list; artist detail (`music/artists/[id]`) is a header
++ album grid.
+
+**Cards** reuse the cinema hover language: `AlbumCard` (`components/music/album-card.tsx`)
+is a square cover wrapped in `TiltCard` with the same blurred-copy ambilight glow as
+`MovieCard` (see Movie poster card hover) + a centered play button that plays the
+whole album. `ArtistCard` is a circular image + "N albums". `TrackRow` highlights
+when it is the player's current track.
+
+**Global player** — the key architectural piece:
+- `providers/music-player-provider.tsx` is a Zustand-free **external store**
+  (`useSyncExternalStore`, mirroring `scan-provider.tsx`): module-level `state` +
+  `listeners` + `emitChange()` that swaps in a new reference. Actions
+  (`playTrack`/`playAlbum`/`toggle`/`playPauseTrack`/`next`/`prev`/`seek`/`setVolume`/
+  `toggleShuffle`/`cycleRepeat`) are module-level singletons, so components can use
+  them without memoization. `useMusicPlayer()` returns live state + actions +
+  `currentTrack`/`currentTrackId`.
+- **A single persistent `<audio>` lives inside the provider** (hidden, never
+  unmounted) and the provider is mounted **unconditionally** in `(main)/layout.tsx`
+  (NOT inside any page) so route navigation never tears down playback. Only the
+  *visible* `NowPlayingBar` is gated (`NowPlayingBarGate` → `useHasMusicLibrary()`).
+- Play-count fires once per track-start on the `<audio>` `play` event
+  (`PUT .../user-data {incrementPlay:true}`), guarded by a module `countedTrackId`
+  so seeking/pausing never re-counts. Failures are swallowed — a count must never
+  interrupt playback.
+- `NowPlayingBar` (`components/music/now-playing-bar.tsx`): fixed glass bar at
+  `bottom-14` on mobile (above BottomTabs) / `md:bottom-0`; click the cover/title to
+  expand a full-screen `fixed inset-0` Now Playing overlay with a blurred cover
+  backdrop.
+
+**Domain integration** (same shared-cache pattern as photos): `useHasMusicLibrary()`
+reads the `["libraries"]` React Query cache (`type === "music"`, no extra request).
+The `AppHeader` brand dropdown, `NavSidebar`, and `BottomTabs` each add a `/music`
+entry only when it's true; `DomainCookieSync` tracks `music` as a third
+`kubby-domain` value and self-heals a stale `music` cookie when no music library
+exists; `auth.config.ts` redirects `/` → `/music` when that cookie is set. Music
+libraries force `scraperEnabled=false, jellyfinCompat=false, metadataLanguage=null`
+server-side, same as photo.
 
 ## GlassToast
 
