@@ -1,5 +1,13 @@
 # Completed Features
 
+## 2026-07-11 (5): 影片首页 hero 马赛克墙增高 — 16:9 下正好露一行媒体库 + 40px 余量
+
+用户诉求: 影片首页马赛克墙占首页的高度比例适当增大, 只要在 16:9 荧幕下能显示出一行媒体库即可 (目前"继续观看"也会露头)。后续两轮微调: 媒体库行底部无余量 → 加 30px → 再加到 40px。
+
+- **改动**: `home-hero.tsx` 桌面高度由固定 `md:h-[64vh]` 改为 `md:h-[calc(100vh-340px)]`(移动端 `h-[52vh]` 不变)。340px = 固定开销 (顶部 padding + 一行 Media Libraries ScrollRow ≈ 248px + ~40px 底部余量), 因是常量而非比例, 折叠效果在 1080p/1440p/4K 一致 —— hero + 正好一行媒体库填满首屏, 继续观看落在折叠线下。真实 hero 与加载占位骨架两处高度类同步修改, 避免马赛克墙 pop-in 时行跳动 (首页 header 透明/`absolute`, 滚动视口 ≈ 全 `100vh`, 是该算法的前提)。
+- **流程**: 独立 git worktree (`feat/hero-taller`) 隔离测试 —— 踩了三个坑并回写进 kubby skill: ① `.env.local` 被 gitignore, worktree 不带过来 → NextAuth `Configuration` 报错, 需手动 copy; ② junction 的 `node_modules` 会让 Turbopack 崩 ("Symlink ... points out of the filesystem root"), 改用 `next dev --webpack`; ③ 用 `KUBBY_DATA_DIR=<main>/data` 指向真库 + `PORT=3001` 与主 `:3000` 服务并存。用户自行在 :3001 实测确认。
+- **skill 修正**: 顺带修了 SKILL.md 里 `npm run dev` 端口 8665 的错误标注 (实为裸 `next dev` = 3000); 新增"在 worktree 里测试改动"三坑说明; feature-patterns.md hero-mosaic 段补充 hero 高度算法。
+
 ## 2026-07-11 (4): Photos + Music 域 UI/UX 无障碍强化 (ui-ux-pro-max) + 音乐栏关闭 + 网格对齐
 
 用户诉求: 参考 [ui-ux-pro-max skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) 整体优化 photos 与 music 两域 UI; 追加两点反馈 — ① 播放音乐时底部状态栏没有地方关闭; ② 专辑网格与上方「最近添加」不对齐 (左侧空一列)。范围确认: CRITICAL/HIGH 优先级 (键盘焦点/语义角色/安全区/触摸目标/网格溢出), 保留已认可的暗色影院外观 (仅微调)。两 Explore agent 先盘点两域, 再由两个 opus executor 并行改 music/photos 子集 (Windows 无 tmux, 用无名并行子代理), 共享基座 (globals.css + 布局) 由 lead 先落地。

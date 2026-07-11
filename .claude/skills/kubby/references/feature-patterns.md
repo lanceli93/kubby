@@ -376,6 +376,15 @@ movies + ScrollRows for libraries/continue-watching/favorites), Favorites
   poster means their fanart/gallery are excluded too, not just deprioritized.
 - Both walls: 8s random spotlight rotation + bottom-left caption (title/type/year/
   rating/favorite), click-through to the movie/person detail page.
+- **Movie hero height**: desktop is `md:h-[calc(100vh-340px)]` (mobile
+  `h-[52vh]`), NOT a fixed vh. The 340px is a constant overhead (top padding + one
+  Media Libraries ScrollRow ≈ 248px + ~40px bottom margin) so that on a 16:9 screen
+  the hero + exactly one library row fill the fold and Continue Watching stays just
+  below it — and this holds across 1080p/1440p/4K because the overhead is fixed, not
+  proportional. The loading-placeholder skeleton in `home-hero.tsx` uses the SAME
+  height class as the real hero; keep them in sync or the rows jump when the wall
+  pops in. (Home header is transparent/`absolute`, so the scroll viewport ≈ full
+  `100vh` — the math assumes that.)
 - **Preferences UI**: `/preferences/hero-mosaic/page.tsx` — two sections (Movie
   wall / Actor wall) separated by a divider, each with live preview. Single Save
   button PUTs both configs in one request and invalidates both hero-wall queries.

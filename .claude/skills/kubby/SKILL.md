@@ -125,12 +125,25 @@ These hold across the whole codebase — know them before changing anything.
 ## Common Commands
 
 ```bash
-npm run dev                    # Dev server at localhost:8665
+npm run dev                    # Dev server at localhost:3000 (bare `next dev`, no port flag)
 npm run build                  # Production build (standalone)
 npx drizzle-kit push           # Push schema changes to DB (local dev only)
 npx tsc --noEmit               # Type check without emitting
 npx tsx scripts/package.ts     # Package for current platform
 ```
+
+**Testing a change in an isolated git worktree** (so it doesn't disturb the main
+dev server / uncommitted WIP). Three gotchas, all learned the hard way:
+- **`.env.local` is gitignored** → `git worktree add` does NOT carry it over, so
+  NextAuth throws a `Configuration` error (`/api/auth/error`). Copy it in:
+  `cp <main>/.env.local <worktree>/.env.local`.
+- **A junctioned `node_modules` breaks Turbopack** ("Symlink node_modules is
+  invalid, it points out of the filesystem root"). Either run a real `npm install`
+  in the worktree, or junction `node_modules` from the main repo AND run dev with
+  the **webpack** engine: `node node_modules/next/dist/bin/next dev --webpack`.
+- **Point the worktree at the real library** with `KUBBY_DATA_DIR=<main>/data`
+  (otherwise it uses the empty `<worktree>/data`), and give it a **different port**
+  (`PORT=3001`) so it coexists with the main `:3000` server.
 
 ## Versioning
 
