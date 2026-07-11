@@ -114,7 +114,7 @@ export function AddToAlbumDialog({
               <button
                 type="submit"
                 disabled={!newName.trim() || busy}
-                className="rounded-md bg-primary/25 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/35 disabled:opacity-40"
+                className="focus-ring rounded-md bg-primary/25 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/35 disabled:opacity-40"
               >
                 {t("create")}
               </button>
@@ -123,7 +123,7 @@ export function AddToAlbumDialog({
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.06]"
+              className="focus-ring flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.06]"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white/[0.06] text-primary">
                 <Plus className="h-5 w-5" />
@@ -143,7 +143,7 @@ export function AddToAlbumDialog({
                 type="button"
                 disabled={busy}
                 onClick={() => addToAlbum.mutate(album.id)}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/[0.06] disabled:opacity-50"
+                className="focus-ring flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/[0.06] disabled:opacity-50"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white/[0.06]">
                   {album.coverItemId ? (

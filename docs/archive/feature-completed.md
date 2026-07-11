@@ -1,5 +1,18 @@
 # Completed Features
 
+## 2026-07-11 (4): Photos + Music 域 UI/UX 无障碍强化 (ui-ux-pro-max) + 音乐栏关闭 + 网格对齐
+
+用户诉求: 参考 [ui-ux-pro-max skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) 整体优化 photos 与 music 两域 UI; 追加两点反馈 — ① 播放音乐时底部状态栏没有地方关闭; ② 专辑网格与上方「最近添加」不对齐 (左侧空一列)。范围确认: CRITICAL/HIGH 优先级 (键盘焦点/语义角色/安全区/触摸目标/网格溢出), 保留已认可的暗色影院外观 (仅微调)。两 Explore agent 先盘点两域, 再由两个 opus executor 并行改 music/photos 子集 (Windows 无 tmux, 用无名并行子代理), 共享基座 (globals.css + 布局) 由 lead 先落地。
+
+- **共享基座 (globals.css)**: 新增 `.focus-ring`(`:focus-visible` 双层 box-shadow, `--background` 间隙 + `--ring` 靛蓝, 仅键盘/编程聚焦显示, 鼠标触摸不显) — 全仓 `outline-none` 无替代焦点环 (86 处) 的统一修复; `.pb-safe`/`.pt-safe`(`max(0px, env(safe-area-inset-*))`)。`sr-only` 复用 Tailwind v4 内建。
+- **安全区 (共享布局)**: `bottom-tabs.tsx` 高度改 `calc(3.5rem+env(safe-area-inset-bottom))` + `pb-safe`(图标行仍 56px, 安全条在其下); `glass-toast.tsx` 底/顶偏移折入 inset; 音乐 mini 栏 `bottom` 改 `calc(3.5rem+env(...))` 跟随 tab 栏; 全屏覆盖层顶栏/移动传输条折入 inset。**关键坑**: `pt-safe`/`pb-safe` 是无 layer 的 CSS, 会整体覆盖 Tailwind 的 `py-4`/`py-3` padding — 无刘海设备 (env→0) 会把基础 padding 归零。覆盖层顶栏 + 移动传输条改为 `pt-[calc(1rem+env(safe-area-inset-top))]` / `pb-[calc(0.75rem+env(...))]` 把基础值折进 calc (photos 灯箱顶栏同法), 避免常见设备丢 padding。
+- **焦点环**: 两域所有自定义可交互元素加 `.focus-ring` — music (传输键/Segmented/IconBtn/折叠展开/mini 栏/SortDropdown 触发+项+升降序/上传键/卡片链接+悬浮播放键)、photos (分段 tab/选择·关闭·加入相册键/库筛选触发/PhotoTile/新建相册+相册卡链接/灯箱顶栏 5 键/信息面板关闭+下载/加入相册行)。seek/volume 滑块已有 `.music-range:focus-visible`, 跳过。
+- **语义角色 & 触摸目标**: `TrackRow` 由 `<div onClick>` 加 `role="button"`+`tabIndex`+`aria-label`(曲名—艺人—播放)+`onKeyDown`(Enter/Space, Space `preventDefault` 防滚动) — 嵌套的心形/⋯ 按钮禁止真 `<button>` 包裹故用 role; 收藏心形由 28px 用 `p-2.5 -m-2.5` 扩到 44px 命中区 (可见 16px 图标与布局不变); `PlayingIndicator` 加 `sr-only` "Now Playing" 文本替代 (三条动画 `aria-hidden`)。`PhotoTile`: 选择模式 `role="checkbox"`+`aria-checked`+`aria-label`, 普通模式 `aria-label="打开 {name}"`(新增 i18n 键 `photos.openItem` EN/ZH)。
+- **网格溢出 + 对齐**: music 专辑/艺术家网格 `md:grid-cols-[repeat(auto-fill,180px)]` → `minmax(150px,180px)`(列随宽收缩), 并**删掉 `justify-center`** — 之前定宽列 + 居中在宽屏把整块推右 ~59px, 与左对齐的「最近添加」band/标题错位 (用户反馈的空左列)。实测「最近添加」标题与首张专辑卡现同为 x=48。photos justified/相册网格纯流式, 320/360/390px 无横向溢出 (实测确认)。
+- **音乐栏关闭 (用户反馈①)**: `music-player-provider.tsx` 新增 `stop()` action (暂停 + 清空 `src`/`load()` + 队列清零 → `currentTrack` 变 null → 栏自动卸载)。docked 栏右侧 (音量+展开后) 与全屏覆盖层顶栏右侧 (原占位 spacer 处) 各加 `X` 关闭键, `closePlayer` 同时清 `expanded`。新增 i18n `music.closePlayer` (关闭播放器)。
+- **验证**: `tsc` + ESLint 干净 (photos 3 个 lint 问题经 `git stash` 确认为既存, 本轮零新增)。全新 dev server (3005, 因既有 dev server 文件监听卡死不刷新, kill 后清 lock 重启) chrome-devtools 实测: 焦点环键盘聚焦渲染 (靛蓝双环)、`stop()` 关栏后 audio 暂停 + `src` 清空、PhotoTile 选择模式 `aria-checked` false→true、灯箱顶栏 `padding-top` 折 inset 保基础 12px + 5 键均带 focus-ring、专辑网格左对齐 x=48、360px 移动端两域零横向溢出。
+- **本轮明确不做 (deferred)**: 歌词滚动的 reduced-motion、空/加载态统一、disabled 态对比度、灯箱信息面板离主题灰、队列虚拟化、硬编码色→token 重构。
+
 ## 2026-07-11 (3): 音乐库 Now Playing UI 重构 — 歌词默认开 + 有界内滚 (对齐 QQ/Apple Music)
 
 用户诉求 (`docs/feature-request.md`): 全屏 Now Playing 的 UI 有大问题 — ① 歌词应默认打开; ② 歌词面板没有下界, 随播放推进整个页面往下移。要求调研 QQ 音乐等流行 app 的交互, 整体优化音乐域 UI。根因: 侧栏歌词默认关 (`showLyrics=false`) 且只是替换队列的次要视图; 覆盖层 body 是 `overflow-y-auto`, 而 `LyricsView` 用 `scrollIntoView({block:"center"})` — 它会冒泡滚动**所有**可滚动祖先, 把封面/传输一起往下拽。

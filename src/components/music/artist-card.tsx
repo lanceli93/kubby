@@ -36,7 +36,8 @@ export function ArtistCard({
       className={`group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03] ${responsive ? "w-full" : ""}`}
       style={responsive ? undefined : { width: 180 }}
     >
-      <Link href={`/music/artists/${id}`}>
+      <Link href={`/music/artists/${id}`} className="focus-ring block rounded-md">
+
         {/* Round image shell — a gentle hover scale is enough for a round card,
             so no TiltCard, but keep the same ambient-glow (ambilight) bleed. */}
         <div className="relative aspect-square w-full">

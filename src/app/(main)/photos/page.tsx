@@ -94,7 +94,7 @@ export default function PhotosPage() {
               type="button"
               onClick={exitSelection}
               aria-label={t("close")}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+              className="focus-ring flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -105,7 +105,7 @@ export default function PhotosPage() {
               type="button"
               disabled={selectedIds.size === 0 || !targetLibraryId}
               onClick={() => setAddOpen(true)}
-              className="flex items-center gap-2 rounded-lg bg-primary/20 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
+              className="focus-ring flex items-center gap-2 rounded-lg bg-primary/20 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <FolderPlus className="h-4 w-4" />
               {t("addToAlbum")}
@@ -130,7 +130,7 @@ export default function PhotosPage() {
             {/* Library filter — only with more than one photo library */}
             {showLibraryFilter && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground outline-none transition-colors hover:bg-white/[0.06] hover:text-foreground">
+                <DropdownMenuTrigger className="focus-ring flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground outline-none transition-colors hover:bg-white/[0.06] hover:text-foreground">
                   {activeLibrary?.name ?? t("allLibraries")}
                   <ChevronDown className="h-4 w-4" />
                 </DropdownMenuTrigger>
@@ -160,7 +160,7 @@ export default function PhotosPage() {
                 type="button"
                 onClick={() => setSelectionMode(true)}
                 aria-label={t("select")}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+                className="focus-ring flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
               >
                 <CheckSquare className="h-5 w-5" />
               </button>
@@ -212,7 +212,7 @@ function SegBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3.5 py-1 text-[13px] font-medium transition-colors ${
+      className={`focus-ring rounded-full px-3.5 py-1 text-[13px] font-medium transition-colors ${
         active
           ? "bg-primary/25 text-foreground"
           : "text-muted-foreground hover:text-foreground"

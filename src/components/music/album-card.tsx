@@ -79,7 +79,8 @@ export function AlbumCard({
       className={`group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03] ${responsive ? "w-full" : ""}`}
       style={responsive ? undefined : { width: 180 }}
     >
-      <Link href={`/music/albums/${id}`}>
+      <Link href={`/music/albums/${id}`} className="focus-ring block rounded-md">
+
         {/* Cover shell — NOT overflow-hidden so tilt + ambient glow can bleed.
             The tilting subtree (cover + play button) is wrapped in TiltCard so
             it all tilts as one object; the play overlay uses no backdrop-blur
@@ -129,7 +130,7 @@ export function AlbumCard({
                     handlePlay();
                   }}
                   aria-label={t("play")}
-                  className="glass-btn pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95"
+                  className="focus-ring glass-btn pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full text-white/90 transition-fluid hover:scale-120 active:scale-95"
                 >
                   <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,3 20,12 6,21" /></svg>
                 </button>

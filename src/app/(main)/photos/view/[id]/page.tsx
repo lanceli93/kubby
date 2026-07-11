@@ -185,13 +185,14 @@ export default function PhotoViewPage({
         <ZoomableImage key={id} id={id} />
       )}
 
-      {/* Top bar: close, file name, info toggle. Always visible (v1). */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-3 bg-gradient-to-b from-black/60 to-transparent px-4 py-3">
+      {/* Top bar: close, file name, info toggle. Always visible (v1). The top
+          padding folds in the notch inset so the buttons clear it on mobile. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-3 bg-gradient-to-b from-black/60 to-transparent px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={close}
           aria-label="Close"
-          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white"
+          className="focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white"
         >
           <X className="h-5 w-5" />
         </button>
@@ -202,7 +203,7 @@ export default function PhotoViewPage({
           type="button"
           onClick={() => setAddOpen(true)}
           aria-label="Add to album"
-          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white"
+          className="focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white"
         >
           <FolderPlus className="h-5 w-5" />
         </button>
@@ -210,7 +211,7 @@ export default function PhotoViewPage({
           type="button"
           onClick={() => setShowInfo((v) => !v)}
           aria-label="Info"
-          className={`pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full drop-shadow transition-colors hover:bg-white/15 hover:text-white ${
+          className={`focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full drop-shadow transition-colors hover:bg-white/15 hover:text-white ${
             showInfo ? "bg-white/15 text-white" : "text-white/80"
           }`}
         >
@@ -224,7 +225,7 @@ export default function PhotoViewPage({
           type="button"
           onClick={() => goTo(prev)}
           aria-label="Previous"
-          className="absolute left-2 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white/70 drop-shadow transition-colors hover:bg-white/15 hover:text-white sm:left-4"
+          className="focus-ring absolute left-2 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white/70 drop-shadow transition-colors hover:bg-white/15 hover:text-white sm:left-4"
         >
           <ChevronLeft className="h-7 w-7" />
         </button>
@@ -234,7 +235,7 @@ export default function PhotoViewPage({
           type="button"
           onClick={() => goTo(next)}
           aria-label="Next"
-          className="absolute right-2 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white/70 drop-shadow transition-colors hover:bg-white/15 hover:text-white sm:right-4"
+          className="focus-ring absolute right-2 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white/70 drop-shadow transition-colors hover:bg-white/15 hover:text-white sm:right-4"
         >
           <ChevronRight className="h-7 w-7" />
         </button>

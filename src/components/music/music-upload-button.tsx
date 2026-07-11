@@ -92,7 +92,7 @@ export function MusicUploadButton({ activeLibraryId }: { activeLibraryId?: strin
   };
 
   const triggerClass =
-    "glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer disabled:opacity-50";
+    "focus-ring glass-btn flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer disabled:opacity-50";
 
   return (
     <>

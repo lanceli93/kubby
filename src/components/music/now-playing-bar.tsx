@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Maximize2,
   Music,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { resolveImageSrc } from "@/lib/image-utils";
@@ -62,9 +63,17 @@ export function NowPlayingBar() {
     setVolume,
     toggleShuffle,
     cycleRepeat,
+    stop,
   } = player;
 
   if (!currentTrack) return null;
+
+  // Close the player: stop playback + clear the queue (this unmounts the bar)
+  // and drop the expanded flag so a future track doesn't reopen the overlay.
+  const closePlayer = () => {
+    setExpanded(false);
+    stop();
+  };
 
   const cover = currentTrack.coverPath;
   const coverBlur = currentTrack.coverBlur;
@@ -76,7 +85,7 @@ export function NowPlayingBar() {
   return (
     <>
       {/* ── Docked bar ── */}
-      <div className="fixed bottom-14 left-0 right-0 z-40 border-t border-white/[0.08] bg-[#0a0a0f]/80 backdrop-blur-2xl md:bottom-0">
+      <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-white/[0.08] bg-[#0a0a0f]/80 backdrop-blur-2xl md:bottom-0">
         {/* Mobile-only thin progress line at the very top of the bar */}
         <div className="absolute inset-x-0 top-0 h-0.5 bg-white/10 md:hidden">
           <div
@@ -90,7 +99,7 @@ export function NowPlayingBar() {
           <button
             onClick={() => setExpanded(true)}
             aria-label={t("nowPlaying")}
-            className="flex min-w-0 flex-1 items-center gap-3 text-left transition-fluid active:scale-95 md:flex-none md:w-64 lg:w-72"
+            className="focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-md text-left transition-fluid active:scale-95 md:flex-none md:w-64 lg:w-72"
           >
             <Cover cover={cover} coverBlur={coverBlur} title={currentTrack.title} size={48} rounded="rounded-md" />
             <div className="min-w-0 flex-1">
@@ -113,7 +122,7 @@ export function NowPlayingBar() {
               <button
                 onClick={toggle}
                 aria-label={isPlaying ? t("pause") : t("play")}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
+                className="focus-ring flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
               >
                 {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
               </button>
@@ -160,7 +169,7 @@ export function NowPlayingBar() {
             <button
               onClick={toggle}
               aria-label={isPlaying ? t("pause") : t("play")}
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-foreground transition-fluid active:scale-95 md:hidden"
+              className="focus-ring flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-foreground transition-fluid active:scale-95 md:hidden"
             >
               {isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="h-6 w-6 translate-x-[1px] fill-current" />}
             </button>
@@ -168,6 +177,15 @@ export function NowPlayingBar() {
             <IconBtn label={t("expand")} onClick={() => setExpanded(true)} className="hidden md:flex">
               <Maximize2 className="h-4 w-4" />
             </IconBtn>
+
+            {/* Close the player — stops playback and dismisses the bar. */}
+            <button
+              onClick={closePlayer}
+              aria-label={t("closePlayer")}
+              className="focus-ring flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 hover:text-foreground active:scale-95"
+            >
+              <X className="h-4 w-4 md:h-[18px] md:w-[18px]" />
+            </button>
           </div>
         </div>
       </div>
@@ -185,12 +203,13 @@ export function NowPlayingBar() {
           )}
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-black/45" />
 
-          {/* Top bar: collapse + label + (mobile) segmented view switch */}
-          <div className="flex flex-shrink-0 items-center justify-between gap-3 px-4 py-4 md:px-8">
+          {/* Top bar: collapse + label + (mobile) segmented view switch. Top
+              padding folds in the notch inset so the collapse button clears it. */}
+          <div className="flex flex-shrink-0 items-center justify-between gap-3 px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-8">
             <button
               onClick={() => setExpanded(false)}
               aria-label={t("collapse")}
-              className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground transition-fluid hover:bg-white/10 active:scale-95"
+              className="focus-ring flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground transition-fluid hover:bg-white/10 active:scale-95"
             >
               <ChevronDown className="h-6 w-6" />
             </button>
@@ -219,7 +238,14 @@ export function NowPlayingBar() {
               {t("nowPlaying")}
             </span>
 
-            <span className="h-10 w-10 flex-shrink-0" aria-hidden />
+            {/* Close the player entirely (stops playback, dismisses the bar). */}
+            <button
+              onClick={closePlayer}
+              aria-label={t("closePlayer")}
+              className="focus-ring flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground transition-fluid hover:bg-white/10 active:scale-95"
+            >
+              <X className="h-6 w-6" />
+            </button>
           </div>
 
           {/* Body — a non-scrolling flex row; each pane scrolls internally so
@@ -275,7 +301,7 @@ export function NowPlayingBar() {
                 <button
                   onClick={toggle}
                   aria-label={isPlaying ? t("pause") : t("play")}
-                  className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
+                  className="focus-ring flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid hover:scale-110 active:scale-95"
                 >
                   {isPlaying ? <Pause className="h-8 w-8 fill-current" /> : <Play className="h-8 w-8 translate-x-[2px] fill-current" />}
                 </button>
@@ -297,7 +323,7 @@ export function NowPlayingBar() {
                 <button
                   onClick={() => setVolume(volume === 0 ? 1 : 0)}
                   aria-label={volume === 0 ? t("volume") : t("mute")}
-                  className="flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 active:scale-95"
+                  className="focus-ring flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 active:scale-95"
                 >
                   <VolIcon className="h-5 w-5" />
                 </button>
@@ -366,8 +392,9 @@ export function NowPlayingBar() {
                 )}
               </div>
 
-              {/* Mobile mini transport so lyrics/queue panes stay controllable. */}
-              <div className="flex flex-shrink-0 items-center gap-3 border-t border-white/[0.06] px-6 py-3 md:hidden">
+              {/* Mobile mini transport so lyrics/queue panes stay controllable.
+                  Bottom padding folds in the home-indicator inset. */}
+              <div className="flex flex-shrink-0 items-center gap-3 border-t border-white/[0.06] px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
                 <span className="w-9 text-right text-[11px] tabular-nums text-muted-foreground">
                   {formatDuration(currentTime)}
                 </span>
@@ -381,7 +408,7 @@ export function NowPlayingBar() {
                 <button
                   onClick={toggle}
                   aria-label={isPlaying ? t("pause") : t("play")}
-                  className="flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid active:scale-95"
+                  className="focus-ring flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-full bg-white text-black transition-fluid active:scale-95"
                 >
                   {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 translate-x-[1px] fill-current" />}
                 </button>
@@ -415,7 +442,7 @@ function Segmented<T extends string>({
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`cursor-pointer rounded-full px-3.5 py-1 text-[13px] font-medium transition-fluid active:scale-95 ${
+          className={`focus-ring cursor-pointer rounded-full px-3.5 py-1 text-[13px] font-medium transition-fluid active:scale-95 ${
             value === opt.value
               ? "bg-white text-black"
               : "text-muted-foreground hover:text-foreground"
@@ -490,7 +517,7 @@ function IconBtn({
     <button
       onClick={onClick}
       aria-label={label}
-      className={`flex ${dim} cursor-pointer items-center justify-center rounded-full transition-fluid hover:bg-white/10 active:scale-95 ${
+      className={`focus-ring flex ${dim} cursor-pointer items-center justify-center rounded-full transition-fluid hover:bg-white/10 active:scale-95 ${
         active ? "text-primary" : "text-muted-foreground hover:text-foreground"
       } ${className ?? ""}`}
     >

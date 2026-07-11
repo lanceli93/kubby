@@ -75,7 +75,7 @@ export function LightboxInfoPanel({
           type="button"
           onClick={onClose}
           aria-label={t("close")}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          className="focus-ring flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
         >
           <X className="h-4 w-4" />
         </button>
@@ -130,7 +130,7 @@ export function LightboxInfoPanel({
         <a
           href={`/api/photos/${id}/file?original=1`}
           download
-          className="flex items-center justify-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+          className="focus-ring flex items-center justify-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
         >
           <Download className="h-4 w-4" />
           {t("downloadOriginal")}

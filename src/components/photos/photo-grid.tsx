@@ -305,6 +305,7 @@ function PhotoTile({
   onOpen: (id: string) => void;
   onToggleSelect?: (id: string) => void;
 }) {
+  const t = useTranslations("photos");
   const [errored, setErrored] = useState(false);
 
   // The tile itself never grows (that would tear the justified row and force a
@@ -317,12 +318,19 @@ function PhotoTile({
     else onOpen(item.id);
   };
 
+  // In selection mode the tile acts as a checkbox (screen readers announce
+  // selected state); otherwise it's a plain button that opens the lightbox.
+  const label = item.fileName || tileDateLabel(item.takenAt, locale);
+
   return (
     <button
       type="button"
       onClick={handleClick}
+      role={selectionMode ? "checkbox" : undefined}
+      aria-checked={selectionMode ? selected : undefined}
+      aria-label={selectionMode ? label : t("openItem", { name: label })}
       style={{ width, height }}
-      className={`group relative shrink-0 cursor-pointer overflow-hidden rounded-[4px] bg-white/[0.06] ring-1 ring-inset transition-[box-shadow] duration-200 ${
+      className={`focus-ring group relative shrink-0 cursor-pointer overflow-hidden rounded-[4px] bg-white/[0.06] ring-1 ring-inset transition-[box-shadow] duration-200 ${
         selected ? "ring-2 ring-primary" : "ring-transparent hover:ring-white/25"
       }`}
     >

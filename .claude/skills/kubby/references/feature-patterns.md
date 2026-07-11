@@ -180,9 +180,9 @@ when it is the player's current track.
 - `providers/music-player-provider.tsx` is a Zustand-free **external store**
   (`useSyncExternalStore`, mirroring `scan-provider.tsx`): module-level `state` +
   `listeners` + `emitChange()` that swaps in a new reference. Actions
-  (`playTrack`/`playAlbum`/`toggle`/`playPauseTrack`/`next`/`prev`/`seek`/`setVolume`/
-  `toggleShuffle`/`cycleRepeat`) are module-level singletons, so components can use
-  them without memoization. `useMusicPlayer()` returns live state + actions +
+  (`playTrack`/`playAlbum`/`toggle`/`stop`/`playPauseTrack`/`next`/`prev`/`seek`/
+  `setVolume`/`toggleShuffle`/`cycleRepeat`) are module-level singletons, so
+  components can use them without memoization. `useMusicPlayer()` returns live state + actions +
   `currentTrack`/`currentTrackId`.
 - **A single persistent `<audio>` lives inside the provider** (hidden, never
   unmounted) and the provider is mounted **unconditionally** in `(main)/layout.tsx`
@@ -192,15 +192,22 @@ when it is the player's current track.
   (`PUT .../user-data {incrementPlay:true}`), guarded by a module `countedTrackId`
   so seeking/pausing never re-counts. Failures are swallowed — a count must never
   interrupt playback.
+- `stop()` action clears the queue + audio `src` so `currentTrack` becomes null
+  and the bar unmounts — this is the "close the player" primitive. The docked bar
+  (right cluster, after volume/expand) and the overlay top bar each expose an `X`
+  close button (`t("closePlayer")`) that calls it and also drops `expanded`.
 - `NowPlayingBar` (`components/music/now-playing-bar.tsx`): fixed glass bar at
-  `bottom-14` on mobile (above BottomTabs) / `md:bottom-0`; click the cover/title to
+  `bottom-[calc(3.5rem+env(safe-area-inset-bottom))]` on mobile (above BottomTabs,
+  tracking its safe-area height) / `md:bottom-0`; click the cover/title to
   expand a full-screen `fixed inset-0` Now Playing overlay with a blurred cover
   backdrop. The overlay is a **non-scrolling flex row** — desktop is two columns
   (player left, a `歌词/播放队列` tabbed panel right, **lyrics open by default**);
   each pane scrolls internally so the cover/transport never move. Mobile uses a top
   segmented `正在播放 / 歌词 / 播放队列` switch (state: `mobileView "cover"|"panel"`
   × `panel "lyrics"|"queue"`) plus a mini transport pinned under the panel. The
-  small pill switcher is the local `Segmented` component.
+  small pill switcher is the local `Segmented` component. Overlay top bar +
+  mobile transport fold the safe-area inset into their padding via calc (not
+  `pt-safe`/`pb-safe` — see the safe-area pitfall under UI Design System).
 
 **Domain integration** (same shared-cache pattern as photos): `useHasMusicLibrary()`
 reads the `["libraries"]` React Query cache (`type === "music"`, no extra request).
@@ -398,6 +405,30 @@ cards `rounded-xl` (12px).
 
 UX: `cursor-pointer` on clickables, `active:scale-95` on action buttons,
 `role="alert"` on errors, `aria-label` on icon buttons.
+
+### Accessibility primitives (`globals.css`)
+
+- **`.focus-ring`** — keyboard-only focus indicator (`:focus-visible` → double
+  `box-shadow`: `--background` gap + `--ring`). Add this class to EVERY custom
+  interactive element; the codebase uses `outline-none` pervasively with no
+  replacement, so without it keyboard users can't see focus. Never shows on
+  mouse/touch, so the look is unchanged during pointer use. Range sliders instead
+  reveal their thumb via `.music-range:focus-visible` — don't double up.
+- **`.pb-safe` / `.pt-safe`** — `padding-{bottom,top}: max(0px, env(safe-area-inset-*))`
+  for fixed bars near the notch / home indicator. **Pitfall: these are unlayered
+  CSS and fully OVERRIDE Tailwind's layered `py-*` on the same box** — on a device
+  with no inset (`env()` → 0) that zeroes the base padding. If the element already
+  needs base padding, DON'T stack `pt-safe` over `py-4`; fold the inset into a
+  calc instead: `pt-[calc(1rem+env(safe-area-inset-top))]` (see the Now Playing
+  overlay top bar + mobile transport, and the photos lightbox top bar). `.pb-safe`
+  is safe on `bottom-tabs` because that box has no competing `py-*`.
+- Selection/row semantics: a multi-select tile toggles `role="checkbox"` +
+  `aria-checked` in selection mode (`PhotoTile`); a clickable row that already
+  nests buttons uses `role="button"` + `tabIndex` + Enter/Space `onKeyDown`
+  (`TrackRow` — a real `<button>` wrapper around nested buttons is invalid HTML).
+  Sub-44px icon buttons get their hit area grown via `p-2.5 -m-2.5` (pad without
+  moving the visible glyph). `sr-only` (Tailwind built-in) gives animated/icon-only
+  affordances a text alternative (e.g. "Now Playing" beside the eq bars).
 
 ### Pitfall: `backdrop-filter` in detail pages
 

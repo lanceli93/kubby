@@ -106,7 +106,7 @@ export default function AlbumDetailPage({
               type="button"
               onClick={exitSelection}
               aria-label={t("close")}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+              className="focus-ring flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -117,7 +117,7 @@ export default function AlbumDetailPage({
               type="button"
               disabled={selectedCount === 0 || removeItems.isPending}
               onClick={() => removeItems.mutate([...selectedIds])}
-              className="flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-white/10 disabled:opacity-40"
+              className="focus-ring flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-white/10 disabled:opacity-40"
             >
               <ImageMinus className="h-4 w-4" />
               {t("removeFromAlbum")}
@@ -129,7 +129,7 @@ export default function AlbumDetailPage({
               type="button"
               onClick={() => router.push("/photos")}
               aria-label={t("close")}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+              className="focus-ring flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
@@ -147,14 +147,14 @@ export default function AlbumDetailPage({
               type="button"
               onClick={() => setSelectionMode(true)}
               aria-label={t("select")}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+              className="focus-ring flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
             >
               <CheckSquare className="h-5 w-5" />
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label={t("albumOptions")}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-white/10 hover:text-foreground"
+                className="focus-ring flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-white/10 hover:text-foreground"
               >
                 <MoreHorizontal className="h-5 w-5" />
               </DropdownMenuTrigger>
@@ -211,7 +211,7 @@ export default function AlbumDetailPage({
               <button
                 type="button"
                 onClick={() => setDeleteOpen(false)}
-                className="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="focus-ring rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t("close")}
               </button>
@@ -219,7 +219,7 @@ export default function AlbumDetailPage({
                 type="button"
                 disabled={deleteAlbum.isPending}
                 onClick={() => deleteAlbum.mutate()}
-                className="rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-40"
+                className="focus-ring rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-40"
               >
                 {t("deleteAlbum")}
               </button>
@@ -286,14 +286,14 @@ function RenameAlbumDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="focus-ring rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {t("close")}
             </button>
             <button
               type="submit"
               disabled={!name.trim() || rename.isPending}
-              className="rounded-lg bg-primary/25 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/35 disabled:opacity-40"
+              className="focus-ring rounded-lg bg-primary/25 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/35 disabled:opacity-40"
             >
               {t("create")}
             </button>

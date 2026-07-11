@@ -60,7 +60,18 @@ export function TrackRow({
   return (
     <div
       onClick={() => onPlay?.()}
-      className="group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.04]"
+      onKeyDown={(e) => {
+        // Enter/Space play the row like a button; preventDefault on Space so the
+        // page doesn't scroll. Nested heart/menu buttons keep their own handling.
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPlay?.();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${title}${artistName ? ` — ${artistName}` : ""} — ${t("play")}`}
+      className="focus-ring group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.04]"
     >
       {/* Left: cover thumb (Songs tab) OR track number that flips to a play
           triangle on hover; when this is the current track show an equalizer. */}
@@ -84,7 +95,10 @@ export function TrackRow({
       ) : (
         <div className="w-6 flex-shrink-0 text-center">
           {isCurrent ? (
-            <PlayingIndicator active={isPlaying} />
+            <>
+              <PlayingIndicator active={isPlaying} />
+              <span className="sr-only">{t("nowPlaying")}</span>
+            </>
           ) : (
             <>
               <span className="text-sm tabular-nums text-muted-foreground group-hover:hidden">
@@ -116,7 +130,9 @@ export function TrackRow({
               onToggleFavorite();
             }}
             aria-label={t("favorite")}
-            className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-white/10 active:scale-95 ${
+            // p-2.5 + -m-2.5 grows the tap target to 44px without shifting layout
+            // or the visible 16px heart.
+            className={`focus-ring -m-2.5 flex items-center justify-center rounded-full p-2.5 transition-colors hover:bg-white/10 active:scale-95 ${
               isFavorite ? "text-red-400" : "text-white/70 opacity-0 group-hover:opacity-100"
             }`}
           >

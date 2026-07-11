@@ -36,7 +36,7 @@ export function BottomTabs() {
       : baseTabs;
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 flex md:hidden h-14 items-center justify-around border-t border-white/[0.06] bg-[var(--header)] backdrop-blur-xl">
+    <nav className="fixed bottom-0 inset-x-0 z-40 flex md:hidden h-[calc(3.5rem+env(safe-area-inset-bottom))] items-center justify-around border-t border-white/[0.06] bg-[var(--header)] pb-safe backdrop-blur-xl">
       {tabs.map((tab) => {
         const isActive =
           tab.href === "/"

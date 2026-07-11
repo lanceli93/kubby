@@ -13,6 +13,29 @@
   display: none;
 }
 
+/* ── Accessibility primitives ─────────────────────────── */
+
+/* Keyboard-only focus ring. Most custom buttons in the app use `outline-none`
+   with no replacement, so keyboard users can't see where they are. Opt in with
+   `focus-ring`: it shows ONLY on :focus-visible (keyboard / programmatic focus),
+   never on mouse/touch, so the look is unchanged during normal pointer use. The
+   double ring (background gap + primary) keeps it legible on any surface. */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px var(--ring);
+}
+
+/* Safe-area padding for fixed bars near the notch / home indicator. `max()`
+   keeps the given base padding on devices without insets (env → 0). */
+.pb-safe {
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(0px, env(safe-area-inset-top));
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -49,7 +49,7 @@ export function AlbumsView({ libraryId }: { libraryId: string | null }) {
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="group flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-white/[0.04] hover:text-foreground"
+          className="focus-ring group flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-white/[0.04] hover:text-foreground"
         >
           <Plus className="h-8 w-8" />
           <span className="text-sm font-medium">{t("newAlbum")}</span>
@@ -83,7 +83,7 @@ function AlbumCard({ album }: { album: Album }) {
   return (
     <Link
       href={`/photos/album/${album.id}`}
-      className="group flex flex-col gap-2"
+      className="focus-ring group flex flex-col gap-2 rounded-xl"
     >
       <div className="relative aspect-square overflow-hidden rounded-xl bg-white/[0.06] ring-1 ring-inset ring-white/[0.06] transition-shadow duration-200 group-hover:ring-white/20">
         {album.coverItemId ? (

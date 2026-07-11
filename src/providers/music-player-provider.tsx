@@ -139,6 +139,24 @@ function toggle() {
   }
 }
 
+// Stop playback entirely and clear the queue. `currentTrack` becomes null, so
+// the NowPlayingBar unmounts itself — this is the "close the player" action.
+function stop() {
+  if (audioEl) {
+    audioEl.pause();
+    audioEl.removeAttribute("src");
+    audioEl.load();
+  }
+  countedTrackId = null;
+  setState({
+    queue: [],
+    index: -1,
+    isPlaying: false,
+    currentTime: 0,
+    duration: 0,
+  });
+}
+
 function playPauseTrack(track: PlayerTrack) {
   // Convenience: toggle if it's already the current track, else start it.
   if (currentTrackOf(state)?.id === track.id) {
@@ -271,6 +289,7 @@ interface MusicPlayerHook extends PlayerState {
   playTrack: (track: PlayerTrack, queue?: PlayerTrack[]) => void;
   playAlbum: (tracks: PlayerTrack[], startIndex?: number) => void;
   toggle: () => void;
+  stop: () => void;
   playPauseTrack: (track: PlayerTrack) => void;
   next: () => void;
   prev: () => void;
@@ -304,6 +323,7 @@ export function useMusicPlayer(): MusicPlayerHook {
     playTrack,
     playAlbum,
     toggle,
+    stop,
     playPauseTrack,
     next,
     prev,
