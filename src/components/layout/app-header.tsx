@@ -63,11 +63,19 @@ export function AppHeader() {
   const isPersonFilmography = pathname === "/movies" && searchParams.get("personId");
   const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
   const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
+  // TV browse route — the dedicated `/tv/browse` grid (peer of `/movies`). Its
+  // library / filmography views get the same solid-header + back-nav + name
+  // banner treatment as the cinema browse page, scoped to the TV domain.
+  const isTvLibraryPage = pathname === "/tv/browse" && searchParams.get("libraryId");
+  const isTvPersonFilmography = pathname === "/tv/browse" && searchParams.get("personId");
   // TV domain — mirrors the Cinema treatment: blended transparent header on the
   // TV home + show/person detail pages (their heroes paint a top scrim), and the
   // episode player hides the header entirely.
   const isTvHome = pathname === "/tv";
-  const isTvShowDetail = /^\/tv\/[^/]+$/.test(pathname);
+  // `/tv/browse` matches `/^\/tv\/[^/]+$/`, so exclude it explicitly — it is the
+  // solid browse route, not a transparent show-detail page. Its own library /
+  // filmography branch below owns the header.
+  const isTvShowDetail = pathname !== "/tv/browse" && /^\/tv\/[^/]+$/.test(pathname);
   const isTvPersonDetail = /^\/tv\/people\/[^/]+$/.test(pathname);
   const isTvPlayerPage = /^\/tv\/episodes\/[^/]+\/play$/.test(pathname);
   // Music album/artist detail — solid-header back-nav (these pages are their own
@@ -88,13 +96,24 @@ export function AppHeader() {
   const { data: library } = useQuery<Library>({
     queryKey: ["library", libraryId],
     queryFn: () => fetch(`/api/libraries/${libraryId}`).then((r) => r.json()),
-    enabled: !!isLibraryPage && !!libraryId,
+    // /api/libraries/{id} is domain-agnostic, so the same query feeds both the
+    // cinema (`/movies`) and TV (`/tv/browse`) library banners.
+    enabled: (!!isLibraryPage || !!isTvLibraryPage) && !!libraryId,
   });
 
   const { data: personData } = useQuery<{ name: string }>({
     queryKey: ["person-header", personId],
     queryFn: () => fetch(`/api/people/${personId}`).then((r) => r.json()),
     enabled: !!isPersonFilmography && !!personId,
+  });
+
+  // TV person name for the `/tv/browse?personId=` filmography banner — hits the
+  // isolated TV people endpoint ONLY (cross-domain reads are a sin: never the
+  // cinema /api/people, whose ids live in a different table).
+  const { data: tvPersonData } = useQuery<{ name: string }>({
+    queryKey: ["tv-person-header", personId],
+    queryFn: () => fetch(`/api/tv/people/${personId}`).then((r) => r.json()),
+    enabled: !!isTvPersonFilmography && !!personId,
   });
 
   const initials =
@@ -128,24 +147,34 @@ export function AppHeader() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        {isLibraryPage || isPersonFilmography ? (
+        {isLibraryPage || isPersonFilmography || isTvLibraryPage || isTvPersonFilmography ? (
           <>
             <Link
-              href={isPersonFilmography ? `/people/${personId}` : "/"}
+              href={
+                isTvPersonFilmography
+                  ? `/tv/people/${personId}`
+                  : isTvLibraryPage
+                    ? "/tv"
+                    : isPersonFilmography
+                      ? `/people/${personId}`
+                      : "/"
+              }
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <Link
-              href="/"
+              href={isTvLibraryPage || isTvPersonFilmography ? "/tv" : "/"}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <House className="h-5 w-5" />
             </Link>
             <span className="text-xl font-semibold text-foreground">
-              {isPersonFilmography
-                ? personData?.name || ""
-                : `${library?.name || ""}${filterLabel ? ` — ${filterLabel}` : ""}`}
+              {isTvPersonFilmography
+                ? tvPersonData?.name || ""
+                : isPersonFilmography
+                  ? personData?.name || ""
+                  : `${library?.name || ""}${filterLabel ? ` — ${filterLabel}` : ""}`}
             </span>
           </>
         ) : needsBackNav ? (

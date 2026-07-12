@@ -7,7 +7,9 @@ import Link from "next/link";
 import { Search, Tag, ChevronRight, Loader2, ChevronDown, Library, Check } from "lucide-react";
 import { MovieCard } from "@/components/movie/movie-card";
 import { PersonCard } from "@/components/people/person-card";
+import { ShowCard } from "@/components/tv/show-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { resolveImageSrc } from "@/lib/image-utils";
 import {
   BookmarkSearchCard,
   type BookmarkSearchResult,
@@ -50,12 +52,65 @@ interface GenreResult {
   previewMovies: { id: string; title: string; posterPath?: string | null; posterBlur?: string | null; year?: number | null; communityRating?: number | null; personalRating?: number | null; videoWidth?: number | null; videoHeight?: number | null }[];
 }
 
+// ── TV domain (isolated) ────────────────────────────────────────
+// TV results are a SEPARATE result set from the cinema arrays above and are
+// rendered in their own sections. These shapes mirror the tv_* API blocks.
+interface TvShowResult {
+  id: string;
+  title: string;
+  year?: number | null;
+  posterPath?: string | null;
+  posterBlur?: string | null;
+}
+
+interface TvEpisodeResult {
+  id: string;
+  showId: string;
+  showTitle: string;
+  seasonNumber: number;
+  episodeNumber: number;
+  title?: string | null;
+  stillPath?: string | null;
+}
+
+interface TvPersonResult {
+  id: string;
+  name: string;
+  type: string;
+  photoPath?: string | null;
+  photoBlur?: string | null;
+}
+
+interface TvBookmarkResult {
+  id: string;
+  timestampSeconds: number;
+  iconType?: string | null;
+  tags?: string[];
+  note?: string | null;
+  thumbnailPath?: string | null;
+  thumbnailAspect?: number | null;
+  createdAt: string;
+  episodeId: string;
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeTitle?: string | null;
+  showId: string;
+  showTitle: string;
+  showPosterPath?: string | null;
+  showYear?: number | null;
+  matchReason: "tag" | "icon" | "note" | "episodeTitle" | "showTitle";
+}
+
 interface SearchResults {
   movies: { items: Movie[]; totalCount: number };
   genres: { items: GenreResult[]; totalCount: number };
   tags: { items: GenreResult[]; totalCount: number };
   people: { items: Person[]; totalCount: number };
   bookmarks: { items: BookmarkSearchResult[]; totalCount: number };
+  tvShows: TvShowResult[];
+  tvEpisodes: TvEpisodeResult[];
+  tvPeople: TvPersonResult[];
+  tvBookmarks: TvBookmarkResult[];
 }
 
 interface Library {
@@ -273,7 +328,21 @@ function SearchContent() {
   const hasTags = results && results.tags?.items?.length > 0;
   const hasPeople = allPeopleItems.length > 0;
   const hasBookmarks = allBookmarkItems.length > 0;
-  const hasResults = hasMovies || hasGenres || hasTags || hasPeople || hasBookmarks;
+
+  // TV sections — separate result set, only surfaced in the "All" view (the
+  // category chips are cinema-domain and TV has no per-category paging).
+  const tvShowItems = results?.tvShows ?? [];
+  const tvEpisodeItems = results?.tvEpisodes ?? [];
+  const tvPeopleItems = results?.tvPeople ?? [];
+  const tvBookmarkItems = results?.tvBookmarks ?? [];
+  const hasTvShows = category === "all" && tvShowItems.length > 0;
+  const hasTvEpisodes = category === "all" && tvEpisodeItems.length > 0;
+  const hasTvPeople = category === "all" && tvPeopleItems.length > 0;
+  const hasTvBookmarks = category === "all" && tvBookmarkItems.length > 0;
+
+  const hasResults =
+    hasMovies || hasGenres || hasTags || hasPeople || hasBookmarks ||
+    hasTvShows || hasTvEpisodes || hasTvPeople || hasTvBookmarks;
 
   // "Has more" checks
   const moviesTotalCount = results?.movies?.totalCount ?? 0;
@@ -799,6 +868,165 @@ function SearchContent() {
                   ))}
                 </div>
                 {category !== "all" && renderLoadMoreButton("bookmarks", hasMoreBookmarks)}
+              </section>
+            )}
+
+            {/* ── TV domain (isolated) ──────────────────────────────
+                Separate result groups from the cinema sections above; each
+                links only into the /tv/* routes. Surfaced in "All" view only. */}
+
+            {/* TV Shows section */}
+            {hasTvShows && (
+              <section>
+                <ScrollRow title={t("tvShows")}>
+                  {tvShowItems.map((show) => (
+                    <ShowCard
+                      key={show.id}
+                      id={show.id}
+                      title={show.title}
+                      year={show.year}
+                      posterPath={show.posterPath}
+                      posterBlur={show.posterBlur}
+                    />
+                  ))}
+                </ScrollRow>
+              </section>
+            )}
+
+            {/* TV Episodes section */}
+            {hasTvEpisodes && (
+              <section>
+                <ScrollRow title={t("episodes")}>
+                  {tvEpisodeItems.map((ep) => (
+                    <Link
+                      key={ep.id}
+                      href={`/tv/episodes/${ep.id}/play`}
+                      className="group flex-shrink-0"
+                    >
+                      <div className="relative w-[280px] aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
+                        {ep.stillPath ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={resolveImageSrc(ep.stillPath, 640)}
+                            alt={ep.title ?? ep.showTitle}
+                            className="h-full w-full object-cover transition-fluid group-hover:scale-105"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-3xl text-white/20">
+                            {ep.showTitle[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-3 pb-2 pt-6">
+                          <span className="text-xs font-medium text-white">
+                            S{ep.seasonNumber}E{ep.episodeNumber}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="mt-1 max-w-[280px] truncate text-sm font-medium text-foreground">
+                        {ep.title ?? `S${ep.seasonNumber}E${ep.episodeNumber}`}
+                      </p>
+                      <p className="max-w-[280px] truncate text-xs text-muted-foreground">
+                        {ep.showTitle}
+                      </p>
+                    </Link>
+                  ))}
+                </ScrollRow>
+              </section>
+            )}
+
+            {/* TV Cast section */}
+            {hasTvPeople && (
+              <section>
+                <ScrollRow title={t("tvCast")}>
+                  {tvPeopleItems.map((person) => (
+                    <PersonCard
+                      key={person.id}
+                      id={person.id}
+                      name={person.name}
+                      role={person.type}
+                      photoPath={person.photoPath}
+                      photoBlur={person.photoBlur}
+                      hrefBase="/tv/people"
+                      readonly
+                      size="md"
+                    />
+                  ))}
+                </ScrollRow>
+              </section>
+            )}
+
+            {/* TV Bookmarks section */}
+            {hasTvBookmarks && (
+              <section>
+                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                  {t("tvBookmarks")}
+                </h2>
+                <ScrollRow>
+                  {tvBookmarkItems.map((bookmark) => {
+                    const imageSrc = bookmark.thumbnailPath
+                      ? resolveImageSrc(bookmark.thumbnailPath, 640)
+                      : bookmark.showPosterPath
+                        ? resolveImageSrc(bookmark.showPosterPath, 360)
+                        : null;
+                    const isPortrait = (bookmark.thumbnailAspect ?? 1.78) < 1;
+                    const cardWidth = isPortrait ? "w-[140px]" : "w-[280px]";
+                    const aspectClass = isPortrait ? "aspect-[2/3]" : "aspect-video";
+                    const h = Math.floor(bookmark.timestampSeconds / 3600);
+                    const m = Math.floor((bookmark.timestampSeconds % 3600) / 60);
+                    const s = Math.floor(bookmark.timestampSeconds % 60);
+                    const ts = `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+                    return (
+                      <Link
+                        key={bookmark.id}
+                        href={`/tv/episodes/${bookmark.episodeId}/play?t=${bookmark.timestampSeconds}`}
+                        className="group flex-shrink-0"
+                      >
+                        <div className={`relative ${cardWidth} ${aspectClass} overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900`}>
+                          {imageSrc ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={imageSrc}
+                              alt={`${bookmark.showTitle} - ${ts}`}
+                              className="h-full w-full object-cover"
+                              draggable={false}
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-3xl text-white/20">
+                              {bookmark.showTitle[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6">
+                            <span className="text-xs font-medium text-white">{ts}</span>
+                          </div>
+                          {bookmark.tags && bookmark.tags.length > 0 && (
+                            <div className="absolute right-2 top-2 flex gap-1">
+                              {bookmark.tags.slice(0, 2).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <p className={`mt-1 truncate text-sm font-medium text-foreground ${isPortrait ? "max-w-[140px]" : "max-w-[280px]"}`}>
+                          {bookmark.showTitle}
+                          <span className="text-muted-foreground">
+                            {" "}S{bookmark.seasonNumber}E{bookmark.episodeNumber}
+                          </span>
+                        </p>
+                        {bookmark.note && (
+                          <p className={`truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[140px]" : "max-w-[280px]"}`}>
+                            {bookmark.note}
+                          </p>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </ScrollRow>
               </section>
             )}
           </div>

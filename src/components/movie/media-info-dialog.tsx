@@ -14,6 +14,11 @@ interface MediaInfoDialogProps {
   movieId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Endpoint base for the media-info fetch — `{apiBase}/{movieId}/media-info`.
+   *  Defaults to the cinema `/api/movies` route so the movie caller is
+   *  unchanged; the TV caller passes `/api/tv/episodes` with an episode id to
+   *  stay inside its own isolated domain. */
+  apiBase?: string;
 }
 
 interface MediaStream {
@@ -185,13 +190,13 @@ function SubtitleStreamInfo({ stream, index, total, t }: { stream: MediaStream; 
   );
 }
 
-export function MediaInfoDialog({ movieId, open, onOpenChange }: MediaInfoDialogProps) {
+export function MediaInfoDialog({ movieId, open, onOpenChange, apiBase = "/api/movies" }: MediaInfoDialogProps) {
   const t = useTranslations("mediaInfoDialog");
 
   const { data, isLoading } = useQuery<MediaInfoData>({
-    queryKey: ["media-info", movieId],
+    queryKey: ["media-info", apiBase, movieId],
     queryFn: async () => {
-      const r = await fetch(`/api/movies/${movieId}/media-info`);
+      const r = await fetch(`${apiBase}/${movieId}/media-info`);
       if (!r.ok) throw new Error("Failed to fetch media info");
       return r.json();
     },

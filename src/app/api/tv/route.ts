@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { db } from "@/lib/db";
-import { tvShows, tvEpisodes, userEpisodeData, userTvShowData } from "@/lib/db/schema";
+import { tvShows, tvEpisodes, tvShowPeople, userEpisodeData, userTvShowData } from "@/lib/db/schema";
 import { eq, desc, asc, like, sql, and, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
@@ -180,6 +180,149 @@ export async function GET(request: NextRequest) {
             r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
             r.fanartMtime
           ),
+        }))
+      );
+    }
+
+    // ── personId filmography — shows this TV person appears in ───────
+    // Isolated TV domain: joins tv_show_people (personId = param) → tv_shows.
+    // Shaped like the standard grid so the same show-card consumers work.
+    const personId = searchParams.get("personId");
+    if (personId) {
+      const filmConditions = [eq(tvShowPeople.personId, personId)];
+      if (libraryId) filmConditions.push(eq(tvShows.mediaLibraryId, libraryId));
+
+      const filmResults = db
+        .select({
+          id: tvShows.id,
+          title: tvShows.title,
+          originalTitle: tvShows.originalTitle,
+          sortName: tvShows.sortName,
+          overview: tvShows.overview,
+          tagline: tvShows.tagline,
+          folderPath: tvShows.folderPath,
+          posterPath: tvShows.posterPath,
+          posterMtime: tvShows.posterMtime,
+          posterBlur: tvShows.posterBlur,
+          fanartPath: tvShows.fanartPath,
+          fanartMtime: tvShows.fanartMtime,
+          communityRating: tvShows.communityRating,
+          officialRating: tvShows.officialRating,
+          premiereDate: tvShows.premiereDate,
+          year: tvShows.year,
+          status: tvShows.status,
+          genres: tvShows.genres,
+          studios: tvShows.studios,
+          country: tvShows.country,
+          tmdbId: tvShows.tmdbId,
+          imdbId: tvShows.imdbId,
+          tvdbId: tvShows.tvdbId,
+          seasonCount: tvShows.seasonCount,
+          episodeCount: tvShows.episodeCount,
+          tags: tvShows.tags,
+          mediaLibraryId: tvShows.mediaLibraryId,
+          dateAdded: tvShows.dateAdded,
+          isFavorite: userTvShowData.isFavorite,
+          personalRating: userTvShowData.personalRating,
+          role: tvShowPeople.role,
+        })
+        .from(tvShowPeople)
+        .innerJoin(tvShows, eq(tvShowPeople.showId, tvShows.id))
+        .leftJoin(
+          userTvShowData,
+          and(
+            eq(userTvShowData.showId, tvShows.id),
+            userId ? eq(userTvShowData.userId, userId) : sql`0`
+          )
+        )
+        .where(and(...filmConditions))
+        .orderBy(desc(tvShows.year), asc(tvShows.title))
+        .all();
+
+      return NextResponse.json(
+        filmResults.map((r) => ({
+          ...r,
+          posterPath: stampPath(
+            r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
+            r.posterMtime
+          ),
+          posterBlur: r.posterBlur,
+          fanartPath: stampPath(
+            r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
+            r.fanartMtime
+          ),
+          isFavorite: r.isFavorite ?? false,
+        }))
+      );
+    }
+
+    // ── filter=favorites — shows the user favorited ──────────────────
+    // Inner-joins user_tv_show_data (isFavorite) for this user; shaped like the
+    // standard grid. Honors library / genre / studio / tag like the grid.
+    if (filter === "favorites" && userId) {
+      const favConditions = [
+        eq(userTvShowData.userId, userId),
+        eq(userTvShowData.isFavorite, true),
+      ];
+      if (libraryId) favConditions.push(eq(tvShows.mediaLibraryId, libraryId));
+      if (search) favConditions.push(like(tvShows.title, `%${search}%`));
+      if (genre) favConditions.push(like(tvShows.genres, `%"${genre}"%`));
+      if (studio) favConditions.push(like(tvShows.studios, `%"${studio}"%`));
+      if (tag) favConditions.push(like(tvShows.tags, `%"${tag}"%`));
+
+      const favResults = db
+        .select({
+          id: tvShows.id,
+          title: tvShows.title,
+          originalTitle: tvShows.originalTitle,
+          sortName: tvShows.sortName,
+          overview: tvShows.overview,
+          tagline: tvShows.tagline,
+          folderPath: tvShows.folderPath,
+          posterPath: tvShows.posterPath,
+          posterMtime: tvShows.posterMtime,
+          posterBlur: tvShows.posterBlur,
+          fanartPath: tvShows.fanartPath,
+          fanartMtime: tvShows.fanartMtime,
+          communityRating: tvShows.communityRating,
+          officialRating: tvShows.officialRating,
+          premiereDate: tvShows.premiereDate,
+          year: tvShows.year,
+          status: tvShows.status,
+          genres: tvShows.genres,
+          studios: tvShows.studios,
+          country: tvShows.country,
+          tmdbId: tvShows.tmdbId,
+          imdbId: tvShows.imdbId,
+          tvdbId: tvShows.tvdbId,
+          seasonCount: tvShows.seasonCount,
+          episodeCount: tvShows.episodeCount,
+          tags: tvShows.tags,
+          mediaLibraryId: tvShows.mediaLibraryId,
+          dateAdded: tvShows.dateAdded,
+          isFavorite: userTvShowData.isFavorite,
+          personalRating: userTvShowData.personalRating,
+        })
+        .from(userTvShowData)
+        .innerJoin(tvShows, eq(userTvShowData.showId, tvShows.id))
+        .where(and(...favConditions))
+        .orderBy(desc(tvShows.dateAdded))
+        .limit(limit)
+        .all();
+
+      return NextResponse.json(
+        favResults.map((r) => ({
+          ...r,
+          posterPath: stampPath(
+            r.posterPath ? path.join(r.folderPath, r.posterPath) : null,
+            r.posterMtime
+          ),
+          posterBlur: r.posterBlur,
+          fanartPath: stampPath(
+            r.fanartPath ? path.join(r.folderPath, r.fanartPath) : null,
+            r.fanartMtime
+          ),
+          isFavorite: r.isFavorite ?? false,
         }))
       );
     }

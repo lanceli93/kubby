@@ -376,7 +376,11 @@
     "allLibraries": "全部媒体库",
     "noResultsForCategory": "未找到与\"{query}\"相关的{category}",
     "loadMore": "加载更多",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "tvShows": "剧集",
+    "episodes": "剧集单集",
+    "tvCast": "剧集演职人员",
+    "tvBookmarks": "剧集片段"
   },
   "person": {
     "born": "出生",
@@ -478,6 +482,11 @@
     "title": "卡片标记设置",
     "movieCardBadges": "电影卡片标记",
     "personCardBadges": "人物卡片标记",
+    "tvShowCardBadges": "剧集卡片标记",
+    "showTvShowRatingBadge": "显示个人评分标记",
+    "showTvShowRatingBadgeDesc": "在剧集卡片缩略图上显示你的个人评分",
+    "showTvResolutionBadge": "显示分辨率标记",
+    "showTvResolutionBadgeDesc": "在剧集卡片缩略图上显示视频分辨率",
     "showMovieRatingBadge": "显示个人评分标记",
     "showMovieRatingBadgeDesc": "在电影卡片缩略图上显示你的个人评分",
     "showResolutionBadge": "显示分辨率标记",
@@ -540,7 +549,9 @@
     "ratingTiersDesc": "只显示这些评级的演员——不选则全部",
     "unrated": "未评级",
     "favoritesOnly": "仅收藏",
-    "peopleCount": "{count} 位"
+    "peopleCount": "{count} 位",
+    "tvWallSection": "剧集墙",
+    "showCount": "{count} 部剧集"
   },
   "peopleHero": {
     "notEnough": "至少为 8 位演员添加头像后，演员海报墙才会点亮",
@@ -553,6 +564,7 @@
   "preferences": {
     "title": "偏好设置",
     "groupCinema": "影院",
+    "groupTv": "剧集",
     "groupGeneral": "通用",
     "heroMosaic": "首页海报墙",
     "cardBadges": "卡片标记",
@@ -747,7 +759,15 @@
     "deleteShow": "删除剧集",
     "confirmDeleteShow": "确定从库中移除此剧集？",
     "deleteLocalFiles": "同时删除本地文件",
-    "deleteLocalFilesWarning": "这将从磁盘永久删除文件。"
+    "deleteLocalFilesWarning": "这将从磁盘永久删除文件。",
+    "shows": "剧集",
+    "people": "演职人员",
+    "filter": "筛选",
+    "showCount": "剧集数",
+    "showCountLabel": "{count} 部剧集",
+    "showsCount": "{count} 部剧集",
+    "peopleCount": "{count} 位",
+    "noPeople": "未找到人员"
   },
   "music": {
     "title": "音乐",

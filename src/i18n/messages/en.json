@@ -376,7 +376,11 @@
     "allLibraries": "All Libraries",
     "noResultsForCategory": "No {category} found for \"{query}\"",
     "loadMore": "Load more",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "tvShows": "TV Shows",
+    "episodes": "Episodes",
+    "tvCast": "TV Cast",
+    "tvBookmarks": "TV Clips"
   },
   "person": {
     "born": "Born",
@@ -478,6 +482,11 @@
     "title": "Card Badge Settings",
     "movieCardBadges": "Movie Card Badges",
     "personCardBadges": "Person Card Badges",
+    "tvShowCardBadges": "TV Show Card Badges",
+    "showTvShowRatingBadge": "Show personal rating badge",
+    "showTvShowRatingBadgeDesc": "Display your personal rating on TV show card thumbnails",
+    "showTvResolutionBadge": "Show resolution badge",
+    "showTvResolutionBadgeDesc": "Display the video resolution on TV show card thumbnails",
     "showMovieRatingBadge": "Show personal rating badge",
     "showMovieRatingBadgeDesc": "Display your personal rating on movie card thumbnails",
     "showResolutionBadge": "Show resolution badge",
@@ -540,7 +549,9 @@
     "ratingTiersDesc": "Only show people in these rating tiers — none selected means all",
     "unrated": "Unrated",
     "favoritesOnly": "Favorites only",
-    "peopleCount": "{count} people"
+    "peopleCount": "{count} people",
+    "tvWallSection": "TV Wall",
+    "showCount": "{count} shows"
   },
   "peopleHero": {
     "notEnough": "Add photos to at least 8 people to light up the people wall",
@@ -553,6 +564,7 @@
   "preferences": {
     "title": "Preferences",
     "groupCinema": "Cinema",
+    "groupTv": "TV",
     "groupGeneral": "General",
     "heroMosaic": "Home Poster Wall",
     "cardBadges": "Card Badges",
@@ -747,7 +759,15 @@
     "deleteShow": "Delete Show",
     "confirmDeleteShow": "Remove this show from your library?",
     "deleteLocalFiles": "Also delete local files",
-    "deleteLocalFilesWarning": "This permanently deletes the files from disk."
+    "deleteLocalFilesWarning": "This permanently deletes the files from disk.",
+    "shows": "Shows",
+    "people": "People",
+    "filter": "Filter",
+    "showCount": "Show Count",
+    "showCountLabel": "{count} shows",
+    "showsCount": "{count} shows",
+    "peopleCount": "{count} people",
+    "noPeople": "No people found"
   },
   "music": {
     "title": "Music",

@@ -48,6 +48,10 @@ export async function GET(request: NextRequest) {
       tags: { items: [], totalCount: 0 },
       people: { items: [], totalCount: 0 },
       bookmarks: { items: [], totalCount: 0 },
+      tvShows: [],
+      tvEpisodes: [],
+      tvPeople: [],
+      tvBookmarks: [],
     });
   }
 
@@ -489,15 +493,240 @@ export async function GET(request: NextRequest) {
     return { items, totalCount };
   }
 
+  // ── TV domain (isolated) ─────────────────────────────────────────
+  // TV search is a SEPARATE result set — its blocks touch ONLY tv_* tables
+  // and are returned under distinct top-level keys so they never merge into
+  // the cinema movies/people/bookmarks arrays. TV has no per-domain library
+  // filter here, so `libraryId` (a cinema filter) is intentionally ignored,
+  // and there is no per-category "load more" (always the "All" cap).
+
+  async function searchTvShows() {
+    const limit = ALL_LIMITS.movies;
+
+    const results = db.all<{
+      id: string;
+      title: string;
+      year: number | null;
+      poster_path: string | null;
+      poster_blur: string | null;
+      folder_path: string;
+      poster_mtime: number | null;
+    }>(sql`
+      SELECT s.id, s.title, s.year, s.poster_path, s.poster_blur, s.folder_path, s.poster_mtime
+      FROM tv_shows s
+      WHERE LOWER(s.title) LIKE LOWER(${searchPattern})
+         OR (s.original_title IS NOT NULL AND LOWER(s.original_title) LIKE LOWER(${searchPattern}))
+      ORDER BY s.community_rating DESC NULLS LAST
+      LIMIT ${limit}
+    `);
+
+    return results.map((r) => ({
+      id: r.id,
+      title: r.title,
+      year: r.year,
+      posterPath: stampPath(
+        r.poster_path ? path.join(r.folder_path, r.poster_path) : null,
+        r.poster_mtime
+      ),
+      posterBlur: r.poster_blur,
+    }));
+  }
+
+  async function searchTvEpisodes() {
+    const limit = ALL_LIMITS.movies;
+
+    const results = db.all<{
+      id: string;
+      show_id: string;
+      show_title: string;
+      season_number: number;
+      episode_number: number;
+      title: string | null;
+      still_path: string | null;
+      still_mtime: number | null;
+      folder_path: string;
+    }>(sql`
+      SELECT e.id, e.show_id, s.title AS show_title, e.season_number, e.episode_number,
+             e.title, e.still_path, e.still_mtime, s.folder_path
+      FROM tv_episodes e
+      JOIN tv_shows s ON e.show_id = s.id
+      WHERE e.title IS NOT NULL AND LOWER(e.title) LIKE LOWER(${searchPattern})
+      ORDER BY s.community_rating DESC NULLS LAST
+      LIMIT ${limit}
+    `);
+
+    return results.map((r) => ({
+      id: r.id,
+      showId: r.show_id,
+      showTitle: r.show_title,
+      seasonNumber: r.season_number,
+      episodeNumber: r.episode_number,
+      title: r.title,
+      stillPath: stampPath(
+        r.still_path ? path.join(r.folder_path, r.still_path) : null,
+        r.still_mtime
+      ),
+    }));
+  }
+
+  async function searchTvPeople() {
+    const limit = ALL_LIMITS.people;
+
+    const results = db.all<{
+      id: string;
+      name: string;
+      type: string;
+      photo_path: string | null;
+      photo_blur: string | null;
+      photo_mtime: number | null;
+    }>(sql`
+      SELECT p.id, p.name, p.type, p.photo_path, p.photo_blur, p.photo_mtime
+      FROM tv_people p
+      INNER JOIN tv_show_people tsp ON tsp.person_id = p.id
+      WHERE LOWER(p.name) LIKE LOWER(${searchPattern})
+      GROUP BY p.id
+      ORDER BY COUNT(DISTINCT tsp.show_id) DESC
+      LIMIT ${limit}
+    `);
+
+    return results.map((r) => ({
+      id: r.id,
+      name: r.name,
+      type: r.type,
+      photoPath: stampPath(r.photo_path ? resolveDataPath(r.photo_path) : null, r.photo_mtime),
+      photoBlur: r.photo_blur,
+    }));
+  }
+
+  async function searchTvBookmarks() {
+    if (!userId) return [];
+    const limit = ALL_LIMITS.bookmarks;
+
+    // Resolve icon IDs that match the search query (by label) — mirrors the
+    // cinema bookmark search (built-in labels + user's custom icon labels).
+    const matchingIconIds = BUILTIN_BOOKMARK_ICONS
+      .filter((icon) => icon.label.toLowerCase().includes(q.toLowerCase()))
+      .map((icon) => icon.id);
+    const customIcons = db.all<{ id: string; label: string }>(sql`
+      SELECT id, label FROM bookmark_icons
+      WHERE user_id = ${userId} AND LOWER(label) LIKE LOWER(${searchPattern})
+    `);
+    const allMatchingIconIds = [...matchingIconIds, ...customIcons.map((c) => c.id)];
+
+    const iconCondition = allMatchingIconIds.length > 0
+      ? sql`OR teb.icon_type IN (${sql.join(allMatchingIconIds.map((id) => sql`${id}`), sql`, `)})`
+      : sql``;
+
+    const results = db.all<{
+      id: string;
+      timestamp_seconds: number;
+      icon_type: string | null;
+      tags: string | null;
+      note: string | null;
+      thumbnail_path: string | null;
+      thumbnail_aspect: number | null;
+      created_at: string;
+      episode_id: string;
+      season_number: number;
+      episode_number: number;
+      episode_title: string | null;
+      show_id: string;
+      show_title: string;
+      show_poster_path: string | null;
+      show_folder_path: string;
+      show_poster_mtime: number | null;
+      show_year: number | null;
+      match_reason: string;
+    }>(sql`
+      SELECT
+        teb.id,
+        teb.timestamp_seconds,
+        teb.icon_type,
+        teb.tags,
+        teb.note,
+        teb.thumbnail_path,
+        teb.thumbnail_aspect,
+        teb.created_at,
+        teb.episode_id,
+        e.season_number,
+        e.episode_number,
+        e.title as episode_title,
+        s.id as show_id,
+        s.title as show_title,
+        s.poster_path as show_poster_path,
+        s.folder_path as show_folder_path,
+        s.poster_mtime as show_poster_mtime,
+        s.year as show_year,
+        CASE
+          WHEN teb.note IS NOT NULL AND LOWER(teb.note) LIKE LOWER(${searchPattern}) THEN 'note'
+          WHEN EXISTS (SELECT 1 FROM json_each(teb.tags) WHERE LOWER(value) LIKE LOWER(${searchPattern})) THEN 'tag'
+          ${allMatchingIconIds.length > 0
+            ? sql`WHEN teb.icon_type IN (${sql.join(allMatchingIconIds.map((id) => sql`${id}`), sql`, `)}) THEN 'icon'`
+            : sql``}
+          WHEN e.title IS NOT NULL AND LOWER(e.title) LIKE LOWER(${searchPattern}) THEN 'episodeTitle'
+          ELSE 'showTitle'
+        END as match_reason
+      FROM tv_episode_bookmarks teb
+      JOIN tv_episodes e ON teb.episode_id = e.id
+      JOIN tv_shows s ON e.show_id = s.id
+      WHERE teb.user_id = ${userId}
+      AND (
+        (teb.note IS NOT NULL AND LOWER(teb.note) LIKE LOWER(${searchPattern}))
+        OR EXISTS (SELECT 1 FROM json_each(teb.tags) WHERE LOWER(value) LIKE LOWER(${searchPattern}))
+        ${iconCondition}
+        OR (e.title IS NOT NULL AND LOWER(e.title) LIKE LOWER(${searchPattern}))
+        OR LOWER(s.title) LIKE LOWER(${searchPattern})
+      )
+      ORDER BY teb.created_at DESC
+      LIMIT ${limit}
+    `);
+
+    return results.map((r) => ({
+      id: r.id,
+      timestampSeconds: r.timestamp_seconds,
+      iconType: r.icon_type,
+      tags: r.tags ? (() => { try { return JSON.parse(r.tags) as string[]; } catch { return []; } })() : [],
+      note: r.note,
+      thumbnailPath: r.thumbnail_path,
+      thumbnailAspect: r.thumbnail_aspect ?? null,
+      createdAt: r.created_at,
+      episodeId: r.episode_id,
+      seasonNumber: r.season_number,
+      episodeNumber: r.episode_number,
+      episodeTitle: r.episode_title,
+      showId: r.show_id,
+      showTitle: r.show_title,
+      showPosterPath: stampPath(
+        r.show_poster_path ? path.join(r.show_folder_path, r.show_poster_path) : null,
+        r.show_poster_mtime
+      ),
+      showYear: r.show_year,
+      matchReason: r.match_reason as "tag" | "icon" | "note" | "episodeTitle" | "showTitle",
+    }));
+  }
+
   // Run queries in parallel
-  const [moviesResult, genresResult, tagsResult, peopleResult, bookmarksResult] =
-    await Promise.all([
-      searchMovies(),
-      searchGenres(),
-      searchTags(),
-      searchPeople(),
-      searchBookmarks(),
-    ]);
+  const [
+    moviesResult,
+    genresResult,
+    tagsResult,
+    peopleResult,
+    bookmarksResult,
+    tvShowsResult,
+    tvEpisodesResult,
+    tvPeopleResult,
+    tvBookmarksResult,
+  ] = await Promise.all([
+    searchMovies(),
+    searchGenres(),
+    searchTags(),
+    searchPeople(),
+    searchBookmarks(),
+    searchTvShows(),
+    searchTvEpisodes(),
+    searchTvPeople(),
+    searchTvBookmarks(),
+  ]);
 
   return NextResponse.json({
     movies: moviesResult,
@@ -505,5 +734,9 @@ export async function GET(request: NextRequest) {
     tags: tagsResult,
     people: peopleResult,
     bookmarks: bookmarksResult,
+    tvShows: tvShowsResult,
+    tvEpisodes: tvEpisodesResult,
+    tvPeople: tvPeopleResult,
+    tvBookmarks: tvBookmarksResult,
   });
 }

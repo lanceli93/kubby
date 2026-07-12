@@ -56,6 +56,9 @@ export async function GET() {
         tvShowDimensionWeights: {},
         heroMosaicConfig: DEFAULT_HERO_MOSAIC_CONFIG,
         peopleMosaicConfig: DEFAULT_PEOPLE_MOSAIC_CONFIG,
+        showTvShowRatingBadge: true,
+        showTvResolutionBadge: true,
+        tvHeroMosaicConfig: DEFAULT_HERO_MOSAIC_CONFIG,
         serverPlatform,
       });
     }
@@ -97,6 +100,9 @@ export async function GET() {
         : {},
       heroMosaicConfig: normalizeHeroMosaicConfig(parseJsonSafe(row.heroMosaicConfig)),
       peopleMosaicConfig: normalizePeopleMosaicConfig(parseJsonSafe(row.peopleMosaicConfig)),
+      showTvShowRatingBadge: row.showTvShowRatingBadge,
+      showTvResolutionBadge: row.showTvResolutionBadge,
+      tvHeroMosaicConfig: normalizeHeroMosaicConfig(parseJsonSafe(row.tvHeroMosaicConfig)),
       serverPlatform,
     });
   } catch (error) {
@@ -213,6 +219,15 @@ export async function PUT(request: NextRequest) {
       peopleMosaicConfig: body.peopleMosaicConfig !== undefined
         ? JSON.stringify(normalizePeopleMosaicConfig(body.peopleMosaicConfig))
         : existing?.peopleMosaicConfig ?? null,
+      showTvShowRatingBadge: body.showTvShowRatingBadge !== undefined
+        ? body.showTvShowRatingBadge
+        : existing?.showTvShowRatingBadge ?? true,
+      showTvResolutionBadge: body.showTvResolutionBadge !== undefined
+        ? body.showTvResolutionBadge
+        : existing?.showTvResolutionBadge ?? true,
+      tvHeroMosaicConfig: body.tvHeroMosaicConfig !== undefined
+        ? JSON.stringify(normalizeHeroMosaicConfig(body.tvHeroMosaicConfig))
+        : existing?.tvHeroMosaicConfig ?? null,
     };
 
     if (existing) {

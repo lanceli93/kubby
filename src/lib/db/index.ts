@@ -619,6 +619,19 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "CREATE INDEX IF NOT EXISTS `idx_teb_ep` ON `tv_episode_bookmarks` (`episode_id`)",
     "ALTER TABLE `user_preferences` ADD `tv_show_rating_dimensions` text",
     "ALTER TABLE `user_preferences` ADD `tv_show_dimension_weights` text",
+    // 0041: TV↔Cinema parity round 2 — isolated TV person data + TV badge/hero prefs
+    `CREATE TABLE IF NOT EXISTS \`user_tv_person_data\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+    \`person_id\` text NOT NULL REFERENCES \`tv_people\`(\`id\`) ON DELETE CASCADE,
+    \`personal_rating\` real,
+    \`dimension_ratings\` text,
+    \`is_favorite\` integer DEFAULT 0
+  )`,
+    "CREATE UNIQUE INDEX IF NOT EXISTS `idx_utpd_user_person` ON `user_tv_person_data` (`user_id`, `person_id`)",
+    "ALTER TABLE `user_preferences` ADD `show_tv_show_rating_badge` integer NOT NULL DEFAULT 1",
+    "ALTER TABLE `user_preferences` ADD `show_tv_resolution_badge` integer NOT NULL DEFAULT 1",
+    "ALTER TABLE `user_preferences` ADD `tv_hero_mosaic_config` text",
   ];
   for (const stmt of pending) {
     try {

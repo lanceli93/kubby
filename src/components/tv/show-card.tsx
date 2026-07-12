@@ -3,10 +3,33 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Tv } from "lucide-react";
+import { Tv, Star } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { TiltCard } from "@/components/ui/tilt-card";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
+
+// Duplicated from movie-card.tsx — the repo idiom is to inline this small helper
+// at each card site rather than share it.
+function getResolutionLabel(width?: number | null, height?: number | null): string | null {
+  const w = width || 0;
+  const h = height || 0;
+  if (w >= 8000) return "8K";
+  if (w >= 7000) return "7K";
+  if (w >= 6000) return "6K";
+  if (w >= 5000) return "5K";
+  if (w >= 3500) return "4K";
+  if (w >= 3000) return "3K";
+  if (w >= 2500) return "2K";
+  if (w >= 1920) return "FHD";
+  if (w >= 1280) return "HD";
+  // Sub-HD: classify by height (the "P" in 576P etc.)
+  if (h >= 576) return "576P";
+  if (h >= 480) return "480P";
+  if (h >= 360) return "360P";
+  if (h > 0 || w > 0) return "240P";
+  return null;
+}
 
 interface ShowCardProps {
   id: string;
@@ -14,6 +37,13 @@ interface ShowCardProps {
   year?: number | null;
   posterPath?: string | null;
   posterBlur?: string | null;
+  /** Personal rating (0–10). When set + the pref is on, shows a gold star badge
+   *  top-right (mirrors the movie card). TV shows have no community fallback. */
+  personalRating?: number | null;
+  /** Resolution hint — TV shows are multi-episode so there's usually no single
+   *  resolution; the badge renders only when a caller supplies these. */
+  videoWidth?: number | null;
+  videoHeight?: number | null;
   /** Shown as a subtitle below the year (e.g. episode count). */
   subtitle?: string;
   responsive?: boolean;
@@ -30,12 +60,18 @@ export function ShowCard({
   year,
   posterPath,
   posterBlur,
+  personalRating,
+  videoWidth,
+  videoHeight,
   subtitle,
   responsive,
   priority,
 }: ShowCardProps) {
   const t = useTranslations("tv");
   const [imgError, setImgError] = useState(false);
+  const { data: prefs } = useUserPreferences();
+  const showRatingBadge = prefs?.showTvShowRatingBadge !== false;
+  const showResBadge = prefs?.showTvResolutionBadge !== false;
 
   return (
     <div
@@ -70,6 +106,28 @@ export function ShowCard({
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-1.5 text-muted-foreground">
                   <Tv className="h-8 w-8" />
+                </div>
+              )}
+
+              {/* Resolution badge — top-left, lifts on tilt. Only when a caller
+                  supplies dimensions (TV shows usually have none). */}
+              {showResBadge && (() => {
+                const res = getResolutionLabel(videoWidth, videoHeight);
+                return res ? (
+                  <div className="tilt-lift absolute left-1.5 top-1.5 z-[4] rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80 shadow-sm" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                    {res}
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Personal rating badge — top-right, lifts on tilt. No community
+                  fallback for shows. */}
+              {showRatingBadge && personalRating != null && personalRating > 0 && (
+                <div className="tilt-lift absolute right-1.5 top-1.5 z-[4] flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                  <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
+                  <span className="text-[11px] font-medium text-[var(--gold)]">
+                    {personalRating.toFixed(1)}
+                  </span>
                 </div>
               )}
 

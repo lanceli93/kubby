@@ -5,9 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, Sparkles, Clock, Tv, MoreVertical, Pencil, ImageIcon, Trash2 } from "lucide-react";
+import { Play, Heart, CheckCircle, Sparkles, Clock, Tv, MoreVertical, Pencil, ImageIcon, Trash2, Info, Monitor, Star } from "lucide-react";
+import { GlassToast } from "@/components/ui/glass-toast";
 import { PersonCard } from "@/components/people/person-card";
 import { BookmarkCard, type CustomIconData } from "@/components/movie/bookmark-card";
+import { ShowCard } from "@/components/tv/show-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { TiltCard } from "@/components/ui/tilt-card";
@@ -31,6 +33,7 @@ import {
 import { TvShowMetadataEditor } from "@/components/tv/tv-show-metadata-editor";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
+import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface EpisodeItem {
@@ -48,6 +51,7 @@ interface EpisodeItem {
   isPlayed: boolean;
   playbackPositionSeconds: number;
   progress: number;
+  personalRating?: number | null;
 }
 
 interface SeasonItem {
@@ -100,6 +104,30 @@ interface ShowBookmark {
   viewState?: { lon: number; lat: number; fov: number } | null;
 }
 
+// Recommended "more like this" show — same-genre row, shaped like ShowCard.
+interface RecommendedShow {
+  id: string;
+  title: string;
+  year?: number | null;
+  posterPath?: string | null;
+  posterBlur?: string | null;
+}
+
+// Minimal media-info shape — we only need the first video/audio stream to
+// derive the technical badges (codec / resolution / audio).
+interface MediaInfoStream {
+  streamType: "video" | "audio" | "subtitle";
+  codec: string | null;
+  width: number | null;
+  height: number | null;
+  channels: number | null;
+}
+
+interface EpisodeMediaInfo {
+  container: string | null;
+  streams: MediaInfoStream[];
+}
+
 function formatRuntime(totalSeconds?: number | null, minutes?: number | null) {
   const secs = totalSeconds || (minutes ? minutes * 60 : 0);
   if (secs <= 0) return null;
@@ -108,6 +136,30 @@ function formatRuntime(totalSeconds?: number | null, minutes?: number | null) {
   if (h > 0) return `${h}h ${m}m`;
   if (m > 0) return `${m}m`;
   return `${secs}s`;
+}
+
+function getResolutionLabel(width?: number | null): string | null {
+  const w = width || 0;
+  if (w >= 8000) return "8K";
+  if (w >= 7000) return "7K";
+  if (w >= 6000) return "6K";
+  if (w >= 5000) return "5K";
+  if (w >= 3500) return "4K";
+  if (w >= 3000) return "3K";
+  if (w >= 2500) return "2K";
+  if (w >= 1920) return "FHD";
+  if (w >= 1280) return "HD";
+  if (w > 0) return "SD";
+  return null;
+}
+
+function formatChannels(channels?: number | null): string | null {
+  if (!channels) return null;
+  if (channels === 8) return "7.1";
+  if (channels === 6) return "5.1";
+  if (channels === 2) return "Stereo";
+  if (channels === 1) return "Mono";
+  return `${channels}ch`;
 }
 
 export default function ShowDetailPage() {
@@ -119,6 +171,7 @@ export default function ShowDetailPage() {
   const tMovies = useTranslations("movies");
   const tMeta = useTranslations("metadata");
   const tCommon = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const { data: prefs } = useUserPreferences();
   const tvShowDimensions = prefs?.tvShowRatingDimensions ?? [];
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
@@ -127,13 +180,102 @@ export default function ShowDetailPage() {
   const [ratingOpen, setRatingOpen] = useState(false);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
+  const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteFiles, setDeleteFiles] = useState(false);
+  const [externalToast, setExternalToast] = useState<string | null>(null);
+  // Per-episode rating dialog — holds the episode being rated (id + its
+  // current personal rating / dimension ratings) so the shared dialog opens
+  // preloaded and saves back to the right episode.
+  const [ratingEpisode, setRatingEpisode] = useState<EpisodeItem | null>(null);
+
+  const SUPPORTED_PLAYERS = ["IINA", "PotPlayer"];
+  const externalPlayerName = SUPPORTED_PLAYERS.includes(prefs?.externalPlayerName || "") ? prefs!.externalPlayerName : null;
+  const externalEnabled = prefs?.externalPlayerEnabled && !!externalPlayerName;
+  const isLocalhost = typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "::1");
+  const externalPlayerMode = (!isLocalhost || (prefs?.externalPlayerMode || "local") === "stream") ? "stream" : "local";
+
+  // Launch the given episode in the configured external player. Mirrors the
+  // movie page's launchExternal but targets the ISOLATED TV episode routes.
+  async function launchExternal(episodeId: string, startSeconds?: number) {
+    if (!externalEnabled) {
+      setExternalToast(tMovies("configureExternalPlayer"));
+      setTimeout(() => setExternalToast(null), 3000);
+      return;
+    }
+
+    if (externalPlayerMode === "stream") {
+      const streamUrl = `${window.location.origin}/api/tv/episodes/${episodeId}/stream`;
+      let protocolUrl = streamUrl;
+      if (externalPlayerName === "IINA") {
+        protocolUrl = `iina://weblink?url=${encodeURIComponent(streamUrl)}${startSeconds ? `&start=${startSeconds}` : ""}`;
+      } else if (externalPlayerName === "PotPlayer") {
+        protocolUrl = `potplayer://${streamUrl}${startSeconds ? ` /seek=${Math.round(startSeconds)}` : ""}`;
+      }
+      console.log("[external-player] protocol URL:", protocolUrl);
+      window.location.href = protocolUrl;
+      setExternalToast(tMovies("launchedIn", { player: externalPlayerName || "" }));
+      setTimeout(() => setExternalToast(null), 3000);
+      return;
+    }
+
+    // Local mode: server-side launch
+    try {
+      const res = await fetch(`/api/tv/episodes/${episodeId}/play-external`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startSeconds }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.cmd) console.log("[external-player] cmd:", data.cmd);
+        setExternalToast(tMovies("launchedIn", { player: externalPlayerName || "" }));
+      } else {
+        console.error("[external-player] error:", data);
+        setExternalToast(tMovies("externalPlayerFailed"));
+      }
+    } catch {
+      setExternalToast(tMovies("externalPlayerFailed"));
+    }
+    setTimeout(() => setExternalToast(null), 3000);
+  }
 
   const { data: show } = useQuery<ShowDetail>({
     queryKey: ["tv-show", showId],
     queryFn: () => fetch(`/api/tv/${showId}`).then((r) => r.json()),
   });
+
+  // First episode across all seasons (ordered) — the source for the technical
+  // badges, MediaInfo dialog, and the "open in external player" menu item when
+  // no specific episode is selected.
+  const firstEpisodeId =
+    show?.seasons?.flatMap((s) => s.episodes).find((e) => e)?.id ?? null;
+  const firstGenre = show?.genres?.[0] ?? null;
+
+  // Technical badges — derived from the first episode's media-info streams.
+  const { data: episodeMediaInfo } = useQuery<EpisodeMediaInfo>({
+    queryKey: ["tv-episode-media-info", firstEpisodeId],
+    queryFn: async () => {
+      const r = await fetch(`/api/tv/episodes/${firstEpisodeId}/media-info`);
+      if (!r.ok) throw new Error("Failed to fetch media info");
+      return r.json();
+    },
+    enabled: !!firstEpisodeId,
+  });
+
+  // "More like this" — same-genre shows, current show excluded client-side
+  // (the /api/tv list route has no exclude param).
+  const { data: recommendedRaw = [] } = useQuery<RecommendedShow[]>({
+    queryKey: ["tv-recommended", showId, firstGenre],
+    queryFn: async () => {
+      const r = await fetch(`/api/tv?genre=${encodeURIComponent(firstGenre!)}&limit=12`);
+      if (!r.ok) throw new Error("Failed to fetch recommended");
+      return r.json();
+    },
+    enabled: !!firstGenre,
+  });
+  const recommended = recommendedRaw.filter((s) => s.id !== showId).slice(0, 12);
 
   const { data: bookmarks = [] } = useQuery<ShowBookmark[]>({
     queryKey: ["tv-show-bookmarks", showId],
@@ -210,6 +352,30 @@ export default function ShowDetailPage() {
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show-bookmarks", showId] }),
   });
+
+  // Cast favoriting — hits the ISOLATED TV person endpoint, never the cinema
+  // /api/people route (tv_people ids must never resolve against cinema tables).
+  const togglePersonFavorite = useMutation({
+    mutationFn: ({ id, current }: { id: string; current: boolean }) =>
+      fetch(`/api/tv/people/${id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !current }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show", showId] }),
+  });
+
+  // Per-episode personal rating — PUTs the episode user-data and refreshes the
+  // show so the saved rating shows on the row.
+  const saveEpisodeRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
+    if (!ratingEpisode) return;
+    await fetch(`/api/tv/episodes/${ratingEpisode.id}/user-data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["tv-show", showId] });
+  };
 
   if (!show) {
     return (
@@ -324,19 +490,58 @@ export default function ShowDetailPage() {
                 )}
               </div>
 
-              {/* Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                {show.seasonCount != null && (
-                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
-                    {t("seasons")}: {show.seasonCount}
-                  </span>
-                )}
-                {show.episodeCount != null && (
-                  <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
-                    {t("episodeCount", { count: show.episodeCount })}
-                  </span>
-                )}
-              </div>
+              {/* Badges — season/episode counts + technical info (codec /
+                  resolution / audio) sourced from the first episode's media-info. */}
+              {(() => {
+                const videoStream = episodeMediaInfo?.streams.find((s) => s.streamType === "video");
+                const audioStream = episodeMediaInfo?.streams.find((s) => s.streamType === "audio");
+                const resolutionLabel = getResolutionLabel(videoStream?.width);
+                const channelsLabel = formatChannels(audioStream?.channels);
+                return (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {show.seasonCount != null && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {t("seasons")}: {show.seasonCount}
+                      </span>
+                    )}
+                    {show.episodeCount != null && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {t("episodeCount", { count: show.episodeCount })}
+                      </span>
+                    )}
+                    {resolutionLabel && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {resolutionLabel}
+                      </span>
+                    )}
+                    {videoStream?.width && videoStream?.height && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {videoStream.width} × {videoStream.height}
+                      </span>
+                    )}
+                    {videoStream?.codec && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {videoStream.codec}
+                      </span>
+                    )}
+                    {audioStream?.codec && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {audioStream.codec}
+                      </span>
+                    )}
+                    {channelsLabel && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {channelsLabel}
+                      </span>
+                    )}
+                    {episodeMediaInfo?.container && (
+                      <span className="glass-badge rounded-md px-2.5 py-1 text-xs font-semibold uppercase text-white/90">
+                        {episodeMediaInfo.container}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Action buttons */}
               <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -348,6 +553,31 @@ export default function ShowDetailPage() {
                   title={t("favorite")}
                 >
                   <Heart className={`h-5 w-5 ${show.userData?.isFavorite ? "fill-red-400" : ""}`} />
+                </button>
+
+                {/* External player toggle — mirrors the movie page; shows a
+                    "configure" toast when no supported player is set. */}
+                <button
+                  onClick={async () => {
+                    if (!externalPlayerName) {
+                      setExternalToast("__configure__");
+                      setTimeout(() => setExternalToast(null), 5000);
+                      return;
+                    }
+                    const newEnabled = !prefs?.externalPlayerEnabled;
+                    await fetch("/api/settings/personal-metadata", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+                  }}
+                  className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all cursor-pointer ${
+                    externalEnabled ? "text-indigo-400" : "text-white/70"
+                  }`}
+                  title={`External player: ${externalEnabled ? "on" : "off"}`}
+                >
+                  <Monitor className="h-5 w-5" />
                 </button>
 
                 {/* Three-dot menu */}
@@ -371,6 +601,18 @@ export default function ShowDetailPage() {
                       <ImageIcon className="h-4 w-4" />
                       {tMeta("editImages")}
                     </DropdownMenuItem>
+                    {firstEpisodeId && (
+                      <DropdownMenuItem onClick={() => setMediaInfoOpen(true)}>
+                        <Info className="h-4 w-4" />
+                        {tMovies("mediaInfo")}
+                      </DropdownMenuItem>
+                    )}
+                    {externalEnabled && firstEpisodeId && (
+                      <DropdownMenuItem onClick={() => launchExternal(firstEpisodeId)}>
+                        <Monitor className="h-4 w-4" />
+                        {tMovies("playExternal", { player: externalPlayerName || "" })}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
                       <Trash2 className="h-4 w-4" />
@@ -500,9 +742,25 @@ export default function ShowDetailPage() {
                             <h3 className="truncate text-sm font-medium text-foreground">
                               {ep.title || t("episode", { number: ep.episodeNumber })}
                             </h3>
+                            {/* Per-episode personal rating — opens the shared
+                                star dialog preloaded with this episode. */}
+                            <button
+                              onClick={() => setRatingEpisode(ep)}
+                              className={`ml-auto flex-shrink-0 inline-flex items-center gap-0.5 text-xs transition-colors cursor-pointer ${
+                                ep.personalRating != null && ep.personalRating > 0
+                                  ? "text-[var(--gold)] hover:opacity-80"
+                                  : "text-white/30 hover:text-[var(--gold)]"
+                              }`}
+                              title={tMovies("setRating")}
+                            >
+                              <Star className={`h-4 w-4 ${ep.personalRating != null && ep.personalRating > 0 ? "fill-[var(--gold)]" : ""}`} />
+                              {ep.personalRating != null && ep.personalRating > 0 && (
+                                <span className="font-semibold">{ep.personalRating.toFixed(1)}</span>
+                              )}
+                            </button>
                             <button
                               onClick={() => toggleEpisodeWatched.mutate({ episodeId: ep.id, isPlayed: !ep.isPlayed })}
-                              className={`ml-auto flex-shrink-0 transition-colors cursor-pointer ${
+                              className={`flex-shrink-0 transition-colors cursor-pointer ${
                                 ep.isPlayed ? "text-green-400" : "text-white/30 hover:text-white/60"
                               }`}
                               title={ep.isPlayed ? t("markUnwatched") : t("markWatched")}
@@ -578,7 +836,7 @@ export default function ShowDetailPage() {
 
           {/* Cast Section */}
           {(show.cast?.length ?? 0) > 0 && (
-            <section className="px-4 md:px-20 mt-8 pb-12">
+            <section className="px-4 md:px-20 mt-8 pb-4">
               <h2 className="text-xl font-semibold text-foreground mb-4">{tMovies("cast")}</h2>
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                 {show.cast.map((person) => (
@@ -589,13 +847,39 @@ export default function ShowDetailPage() {
                     role={person.role}
                     photoPath={person.photoPath}
                     photoBlur={person.photoBlur}
+                    personalRating={person.personalRating}
                     age={person.ageAtRelease}
                     size="movie"
-                    // Stay in the TV domain: link to /tv/people and hide the
-                    // cinema-only edit/delete menu (tv_people ids must never be
-                    // resolved against the cinema people tables).
+                    // Stay in the TV domain: link to /tv/people and keep the
+                    // cinema-only edit/delete menu hidden (readonly) — tv_people
+                    // ids must never resolve against the cinema people tables.
+                    // The favorite heart still renders (onToggleFavorite) and
+                    // PUTs the ISOLATED /api/tv/people endpoint.
                     hrefBase="/tv/people"
                     readonly
+                    isFavorite={!!person.isFavorite}
+                    onToggleFavorite={() => togglePersonFavorite.mutate({ id: person.id, current: !!person.isFavorite })}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* More like this — same-genre shows (current show excluded). */}
+          {recommended.length > 0 && (
+            <section className="flex flex-col gap-4 px-4 md:px-20 pb-12 pt-4">
+              <h2 className="text-xl font-semibold text-foreground">
+                {tMovies("youMayAlsoLike")}
+              </h2>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {recommended.map((s) => (
+                  <ShowCard
+                    key={s.id}
+                    id={s.id}
+                    title={s.title}
+                    year={s.year}
+                    posterPath={s.posterPath}
+                    posterBlur={s.posterBlur}
                   />
                 ))}
               </div>
@@ -630,6 +914,27 @@ export default function ShowDetailPage() {
         dimensionRatings={show.userData?.dimensionRatings}
         dimensionWeights={prefs?.tvShowDimensionWeights}
       />
+
+      {/* Per-episode rating dialog — shares the star dialog; saves back to the
+          episode captured in ratingEpisode. */}
+      <StarRatingDialog
+        open={!!ratingEpisode}
+        onOpenChange={(open) => { if (!open) setRatingEpisode(null); }}
+        value={ratingEpisode?.personalRating ?? null}
+        onSave={saveEpisodeRating}
+        dimensions={tvShowDimensions}
+        dimensionWeights={prefs?.tvShowDimensionWeights}
+      />
+
+      {/* Media info dialog — for the first episode (TV episode media-info). */}
+      {firstEpisodeId && (
+        <MediaInfoDialog
+          movieId={firstEpisodeId}
+          apiBase="/api/tv/episodes"
+          open={mediaInfoOpen}
+          onOpenChange={setMediaInfoOpen}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
@@ -672,6 +977,20 @@ export default function ShowDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* External player toast */}
+      <GlassToast visible={!!externalToast} success={externalToast !== "__configure__"} position="top">
+        {externalToast === "__configure__" ? (
+          <span>
+            {tMovies("configureExternalPlayer")}{" "}
+            <Link href="/preferences/playback" className="underline font-semibold text-primary hover:text-primary/80">
+              {tSettings("playback")}
+            </Link>
+          </span>
+        ) : (
+          externalToast
+        )}
+      </GlassToast>
     </div>
   );
 }

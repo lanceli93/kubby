@@ -10,6 +10,7 @@ import {
   tvPeople,
   userEpisodeData,
   userTvShowData,
+  userTvPersonData,
   mediaLibraries,
   settings,
 } from "@/lib/db/schema";
@@ -125,7 +126,9 @@ export async function GET(
       episodes: episodesBySeason.get(s.id) ?? [],
     }));
 
-    // Cast (actors) ordered by sortOrder.
+    // Cast (actors) ordered by sortOrder. Left-join this user's per-person data
+    // (favorite / rating) from the ISOLATED user_tv_person_data table so cast
+    // cards can show + toggle favorites — never touching the cinema tables.
     const cast = db
       .select({
         id: tvPeople.id,
@@ -136,9 +139,18 @@ export async function GET(
         photoBlur: tvPeople.photoBlur,
         sortOrder: tvShowPeople.sortOrder,
         ageAtRelease: tvShowPeople.ageAtRelease,
+        personalRating: userTvPersonData.personalRating,
+        isFavorite: userTvPersonData.isFavorite,
       })
       .from(tvShowPeople)
       .innerJoin(tvPeople, eq(tvShowPeople.personId, tvPeople.id))
+      .leftJoin(
+        userTvPersonData,
+        and(
+          eq(userTvPersonData.personId, tvPeople.id),
+          userId ? eq(userTvPersonData.userId, userId) : sql`0`
+        )
+      )
       .where(and(eq(tvShowPeople.showId, id), eq(tvPeople.type, "actor")))
       .orderBy(asc(tvShowPeople.sortOrder))
       .all();

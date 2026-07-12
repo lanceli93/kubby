@@ -202,6 +202,9 @@ export const userPreferences = sqliteTable("user_preferences", {
   tvShowDimensionWeights: text("tv_show_dimension_weights"), // JSON object, e.g. '{"Plot":2}'
   heroMosaicConfig: text("hero_mosaic_config"), // JSON HeroMosaicConfig — home hero poster wall settings
   peopleMosaicConfig: text("people_mosaic_config"), // JSON PeopleMosaicConfig — home People hero poster wall settings
+  showTvShowRatingBadge: integer("show_tv_show_rating_badge", { mode: "boolean" }).notNull().default(true),
+  showTvResolutionBadge: integer("show_tv_resolution_badge", { mode: "boolean" }).notNull().default(true),
+  tvHeroMosaicConfig: text("tv_hero_mosaic_config"), // JSON HeroMosaicConfig — TV home poster wall settings
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────
@@ -600,6 +603,18 @@ export const userTvShowData = sqliteTable("user_tv_show_data", {
   lastPlayedAt: text("last_played_at"), // max of episode activity; drives NextUp show ordering
 }, (table) => [
   uniqueIndex("idx_utsd_user_show").on(table.userId, table.showId),
+]);
+
+// ─── User TV Person Data (isolated peer of user_person_data) ───
+export const userTvPersonData = sqliteTable("user_tv_person_data", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  personId: text("person_id").notNull().references(() => tvPeople.id, { onDelete: "cascade" }),
+  personalRating: real("personal_rating"),
+  dimensionRatings: text("dimension_ratings"), // JSON object, e.g. {"样貌": 9.5}
+  isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
+}, (table) => [
+  uniqueIndex("idx_utpd_user_person").on(table.userId, table.personId),
 ]);
 
 // ─── TV Episode Bookmarks (keyed on episode, no discNumber) ────

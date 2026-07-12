@@ -4,10 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, BadgeCheck, SlidersHorizontal, Play, Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useCurrentDomain } from "@/hooks/use-current-domain";
 
 export function PreferencesSidebar() {
   const pathname = usePathname();
   const t = useTranslations("preferences");
+  // The media-preferences group follows the domain the user came from (cookie-
+  // backed on neutral routes like /preferences). Only the group HEADER changes;
+  // the entries point at the same shared pages, which become domain-aware
+  // internally. Cinema/photos/music keep the "Cinema" header (unchanged).
+  const domain = useCurrentDomain();
+  const mediaGroupLabel = domain === "tv" ? t("groupTv") : t("groupCinema");
 
   const cinemaItems = [
     { label: t("heroMosaic"), href: "/preferences/hero-mosaic", icon: LayoutGrid },
@@ -17,7 +24,7 @@ export function PreferencesSidebar() {
   ];
   const generalItems = [{ label: t("language"), href: "/preferences/language", icon: Languages }];
   const sidebarGroups = [
-    { label: t("groupCinema"), items: cinemaItems },
+    { label: mediaGroupLabel, items: cinemaItems },
     { label: t("groupGeneral"), items: generalItems },
   ];
   const sidebarItems = [...cinemaItems, ...generalItems];

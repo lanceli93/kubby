@@ -3,6 +3,52 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-12 — TV↔Cinema full feature-gap closure (parity round 2)
+
+The first TV parity pass left ~12 gaps (re-audited with 3 parallel explorers). The user
+asked to close ALL of them plus the WebGL poster wall. Shipped via the multi-model
+workflow (Fable orchestrator + opus executors, file-disjoint waves; tsc clean +
+cross-domain isolation verified after each wave). Full detail in the kubby skill
+(architecture.md → TV endpoints / `user_tv_person_data`; feature-patterns.md → TV series
+domain).
+
+- **Dedicated browse route (the #1 complaint).** Root cause: TV fused home+browse into
+  one `/tv` route, so clicking a library card only added an in-place `?libraryId=` chip —
+  whereas cinema navigates from `/` to a *distinct* `/movies?libraryId=` (solid header +
+  back + library-name banner). Fix: `/tv` is now a pure hero landing; NEW
+  `src/app/(main)/tv/browse/page.tsx` mirrors `/movies` with **Shows / Favorites /
+  Genres / People** tabs, sort, a filter dropdown (`/api/tv/filters`), and the WebGL
+  poster wall (`PosterWall` got an `hrefBase` prop). `app-header.tsx` gained
+  `isTvLibraryPage`/`isTvPersonFilmography` solid-header banner branches (fixing the
+  `isTvShowDetail` regex that also matched `/tv/browse`); `/api/tv` gained `personId`
+  filmography + `filter=favorites` branches.
+- **TV people sub-domain.** `/tv/people/[id]` now has favorite + multi-dimension rating
+  (reusing cinema `personRatingDimensions` prefs) backed by the NEW isolated
+  `user_tv_person_data` table (migration 0041) + `GET/PUT /api/tv/people/[id]/user-data`;
+  new `/api/tv/people` list + `/api/tv/people/hero-wall`; browse People tab; and cast
+  cards on the show detail page are now favoritable (leftJoin in `/api/tv/[id]` GET).
+- **Global search includes TV.** `/api/search` gained separate `tvShows`/`tvEpisodes`/
+  `tvPeople`/`tvBookmarks` groups (never merged into cinema arrays), rendered in the
+  search page linking into `/tv/*`.
+- **Detail-page extras.** Technical badges + `MediaInfoDialog` (from the first episode's
+  new `/api/tv/episodes/[id]/media-info` (+`/raw`); dialog got an additive `apiBase`
+  prop), external-player launch (`/api/tv/episodes/[id]/play-external`), a "more like
+  this" same-genre row, and per-episode ★ ratings.
+- **Domain-aware Preferences + TV badges + TV home wall.** `preferences-sidebar` labels
+  the media group "TV" via `useCurrentDomain()`; new TV Show Card Badges section
+  (`showTvShowRatingBadge`/`showTvResolutionBadge`) + TV Wall in hero-mosaic
+  (`tvHeroMosaicConfig`, honored by `/api/tv/hero-wall`); `show-card` renders the rating
+  badge. New browse/genres endpoints: `/api/tv/genres`, `/api/tv/filters`.
+- **Schema:** migration 0041 adds `user_tv_person_data` (peer of `user_person_data`, FK →
+  `tv_people`) + `show_tv_show_rating_badge`/`show_tv_resolution_badge`/
+  `tv_hero_mosaic_config` on `user_preferences` (schema.ts + index.ts both updated). Table
+  count 31→32. i18n: new `tv`/`search`/`preferences`/`cardBadges`/`heroMosaic` keys
+  (en+zh parity, still 22 namespaces).
+- **Isolation held:** every new TV route allowlists `tv_*` tables only (grep-verified —
+  cinema-table mentions appear only in isolation-documenting comments); TV people reuse
+  the cinema *person-rating-dimension preference* (user taste, not a domain table) but
+  their favorites/ratings live in the isolated `user_tv_person_data`.
+
 ## 2026-07-12 — TV series domain (fourth domain: 🎬 Cinema → 📺 TV → 📷 Photos → 🎵 Music)
 
 Added a full TV/series domain (美剧 + 动漫) mirroring the movie skeleton but kept as a

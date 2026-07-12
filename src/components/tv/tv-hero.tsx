@@ -13,7 +13,10 @@ import {
   usableWallCount,
   type MosaicMovie,
 } from "@/components/home/hero-mosaic";
-import { DEFAULT_HERO_MOSAIC_CONFIG } from "@/lib/hero-mosaic-config";
+import {
+  type HeroMosaicConfig,
+  DEFAULT_HERO_MOSAIC_CONFIG,
+} from "@/lib/hero-mosaic-config";
 
 // The /tv home hero — a thin TV-domain cousin of HomeHero. It reuses the shared
 // HeroMosaic poster wall (which is domain-agnostic: it just needs MosaicMovie
@@ -42,16 +45,24 @@ interface TvHeroProps {
   /** Richer metadata for the spotlight text block, keyed by show id (from the
    *  recently-added / all-shows queries the page already runs). */
   detailsById?: Map<string, TvHeroShow>;
+  /** TV poster-wall config (columns/style/angle/flow). Defaults to today's
+   *  classic wall so callers without a saved config are unchanged. */
+  mosaicConfig?: HeroMosaicConfig;
 }
 
-export function TvHero({ wallShows, wallPending = false, detailsById }: TvHeroProps) {
+export function TvHero({
+  wallShows,
+  wallPending = false,
+  detailsById,
+  mosaicConfig = DEFAULT_HERO_MOSAIC_CONFIG,
+}: TvHeroProps) {
   const t = useTranslations("tv");
   const router = useRouter();
   const { setBase } = useAmbient();
   const [featured, setFeatured] = useState<MosaicMovie | null>(null);
 
   const wallMode =
-    !wallPending && usableWallCount(wallShows, DEFAULT_HERO_MOSAIC_CONFIG.style) >= 8;
+    !wallPending && usableWallCount(wallShows, mosaicConfig.style) >= 8;
 
   const handleFeature = useCallback((show: MosaicMovie) => {
     setFeatured(show);
@@ -123,7 +134,7 @@ export function TvHero({ wallShows, wallPending = false, detailsById }: TvHeroPr
           <HeroMosaic
             movies={wallShows}
             onFeature={handleFeature}
-            config={DEFAULT_HERO_MOSAIC_CONFIG}
+            config={mosaicConfig}
           />
         </div>
       ) : backdrop ? (

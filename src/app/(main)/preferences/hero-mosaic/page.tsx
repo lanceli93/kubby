@@ -98,6 +98,298 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
+const cardClass =
+  "flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7";
+
+/** The poster-wall config editor — preview + layout + per-library weights +
+ *  filters. Shared by the Movie Wall and the TV Wall (both persist a
+ *  HeroMosaicConfig against a domain-filtered library set). All state lives in
+ *  the parent; this is a pure controlled view so each wall stays independent. */
+function WallEditor({
+  draft,
+  patch,
+  setLibWeight,
+  customWeights,
+  setCustomWeights,
+  libraries,
+  effectiveWeights,
+  weightSum,
+  previewMovies,
+  libraryCountLabel,
+}: {
+  draft: HeroMosaicConfig;
+  patch: (p: Partial<HeroMosaicConfig>) => void;
+  setLibWeight: (id: string, w: number) => void;
+  customWeights: boolean;
+  setCustomWeights: React.Dispatch<React.SetStateAction<boolean>>;
+  libraries: Library[];
+  effectiveWeights: Record<string, number>;
+  weightSum: number;
+  previewMovies: MosaicMovie[];
+  libraryCountLabel: (count: number) => string;
+}) {
+  const t = useTranslations("heroMosaic");
+
+  return (
+    <>
+      {/* Live preview */}
+      <div className={`${cardClass} max-w-[900px]`}>
+        <h2 className="text-lg font-semibold text-foreground">{t("preview")}</h2>
+        <div className="relative aspect-[21/9] overflow-hidden rounded-lg bg-[#0a0a0f]">
+          {previewMovies.length >= 8 ? (
+            <HeroMosaic
+              movies={previewMovies}
+              config={draft}
+              featuredEnabled={false}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
+              {t("previewTooFew")}
+            </div>
+          )}
+          {/* Bottom gradient mimicking the real home hero. */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent" />
+        </div>
+      </div>
+
+      {/* Layout: flow + columns + style + angle */}
+      <div className={cardClass}>
+        <h2 className="text-lg font-semibold text-foreground">{t("layout")}</h2>
+
+        {/* Flow (scroll direction) — client-only re-render, so it stays OUT of
+            the preview queryKey (same as columnCount/angle). */}
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">{t("flow")}</p>
+          <div className="flex flex-wrap gap-2">
+            {FLOW_OPTIONS.map((f) => (
+              <SegButton
+                key={f}
+                active={draft.flow === f}
+                onClick={() => patch({ flow: f })}
+              >
+                {t(f === "vertical" ? "flowVertical" : "flowHorizontal")}
+              </SegButton>
+            ))}
+          </div>
+        </div>
+
+        {/* Column count */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t("columnCount")}</p>
+              <p className="text-xs text-muted-foreground">{t("columnCountDesc")}</p>
+            </div>
+            <span className="font-mono text-sm font-semibold text-foreground">
+              {draft.columnCount}
+            </span>
+          </div>
+          <input
+            type="range"
+            min={8}
+            max={24}
+            step={1}
+            value={draft.columnCount}
+            onChange={(e) => patch({ columnCount: Number(e.target.value) })}
+            className="w-full cursor-pointer accent-primary"
+            style={{ accentColor: "var(--primary)" }}
+          />
+        </div>
+
+        {/* Style */}
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">{t("style")}</p>
+          <div className="flex flex-wrap gap-2">
+            {STYLE_OPTIONS.map((s) => (
+              <SegButton
+                key={s}
+                active={draft.style === s}
+                onClick={() => patch({ style: s })}
+              >
+                {t(
+                  s === "poster"
+                    ? "stylePoster"
+                    : s === "fanart"
+                      ? "styleFanart"
+                      : "styleBoth"
+                )}
+              </SegButton>
+            ))}
+          </div>
+        </div>
+
+        {/* Angle */}
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">{t("angle")}</p>
+          <div className="flex flex-wrap gap-3">
+            {ANGLE_OPTIONS.map((a) => {
+              const active = draft.angle === a;
+              return (
+                <button
+                  key={a}
+                  onClick={() => patch({ angle: a })}
+                  className="flex flex-col items-center gap-1.5 cursor-pointer"
+                >
+                  <div
+                    className={`h-[40px] w-[64px] overflow-hidden rounded-md border transition-fluid ${
+                      active
+                        ? "border-primary/50 ring-2 ring-primary/50"
+                        : "border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <div
+                      className="flex h-full w-full items-center justify-center gap-0.5 [transform-origin:center]"
+                      style={{
+                        transform: MOSAIC_ANGLES[a].replace("1600px", "300px"),
+                      }}
+                    >
+                      <div className="h-6 w-2 rounded-sm bg-white/20" />
+                      <div className="h-6 w-2 rounded-sm bg-white/20" />
+                      <div className="h-6 w-2 rounded-sm bg-white/20" />
+                    </div>
+                  </div>
+                  <span
+                    className={`text-xs ${active ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    {t(
+                      a === "flat"
+                        ? "angleFlat"
+                        : a === "gentle"
+                          ? "angleGentle"
+                          : a === "classic"
+                            ? "angleClassic"
+                            : a === "steep"
+                              ? "angleSteep"
+                              : "angleReverse"
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Library weights */}
+      <div className={cardClass}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">{t("libraryWeights")}</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t("customWeights")}</span>
+            <button
+              onClick={() => setCustomWeights((v) => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
+                customWeights ? "bg-primary" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  customWeights ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">{t("libraryWeightsDesc")}</p>
+
+        <div className="flex flex-col gap-4">
+          {libraries.map((lib) => {
+            const w = draft.libraryWeights[lib.id] ?? 50;
+            const pct =
+              !customWeights || weightSum === 0
+                ? "—"
+                : `${Math.round((w / weightSum) * 100)}%`;
+            return (
+              <div key={lib.id}>
+                <div className="mb-1 flex items-center justify-between">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm font-medium text-foreground">{lib.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {libraryCountLabel(lib.movieCount ?? 0)}
+                    </span>
+                  </div>
+                  <span className="font-mono text-sm text-muted-foreground">{pct}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={w}
+                  disabled={!customWeights}
+                  onChange={(e) => setLibWeight(lib.id, Number(e.target.value))}
+                  className="w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{ accentColor: "var(--primary)" }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className={cardClass}>
+        <h2 className="text-lg font-semibold text-foreground">{t("filters")}</h2>
+
+        {/* Year range */}
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">{t("yearRange")}</p>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              {t("yearFrom")}
+              <input
+                type="number"
+                min={1900}
+                max={2100}
+                placeholder="—"
+                value={draft.yearFrom ?? ""}
+                onChange={(e) =>
+                  patch({
+                    yearFrom: e.target.value === "" ? null : parseInt(e.target.value, 10),
+                  })
+                }
+                className="w-24 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none transition-fluid focus:border-primary/50"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              {t("yearTo")}
+              <input
+                type="number"
+                min={1900}
+                max={2100}
+                placeholder="—"
+                value={draft.yearTo ?? ""}
+                onChange={(e) =>
+                  patch({
+                    yearTo: e.target.value === "" ? null : parseInt(e.target.value, 10),
+                  })
+                }
+                className="w-24 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none transition-fluid focus:border-primary/50"
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Min resolution */}
+        <div>
+          <p className="mb-2 text-sm font-medium text-foreground">{t("minResolution")}</p>
+          <div className="flex flex-wrap gap-2">
+            {RESOLUTION_OPTIONS.map((opt) => (
+              <SegButton
+                key={opt.key}
+                active={draft.minWidth === opt.value}
+                onClick={() => patch({ minWidth: opt.value })}
+              >
+                {opt.value === null ? t("resAny") : opt.key}
+              </SegButton>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function HeroMosaicPage() {
   const t = useTranslations("heroMosaic");
   const tCommon = useTranslations("common");
@@ -117,11 +409,17 @@ export default function HeroMosaicPage() {
   // only offer cinema-domain libraries. Positive allowlist (=== "movie"), never
   // a blacklist, so photo/music libraries can't leak into the mix.
   const libraries = allLibraries.filter((lib) => lib.type === "movie");
+  // The TV Wall is the TV-domain twin — its mix must only offer tvshow
+  // libraries. Same positive allowlist, so cinema/photo/music can't leak in.
+  const tvLibraries = allLibraries.filter((lib) => lib.type === "tvshow");
 
   // Draft config (mirrors card-badges hydration pattern). Custom-mix toggle is
   // separate state: when OFF the sent/saved libraryWeights is {} (default mode).
   const [draft, setDraft] = useState<HeroMosaicConfig>(DEFAULT_HERO_MOSAIC_CONFIG);
   const [customWeights, setCustomWeights] = useState(false);
+  // TV-wall draft — independent config, hydrated alongside the movie draft.
+  const [tvDraft, setTvDraft] = useState<HeroMosaicConfig>(DEFAULT_HERO_MOSAIC_CONFIG);
+  const [tvCustomWeights, setTvCustomWeights] = useState(false);
   // People-wall draft — independent config, hydrated alongside the movie draft.
   const [peopleDraft, setPeopleDraft] = useState<PeopleMosaicConfig>(
     DEFAULT_PEOPLE_MOSAIC_CONFIG
@@ -143,17 +441,26 @@ export default function HeroMosaicPage() {
         Object.keys(prefs.heroMosaicConfig.libraryWeights ?? {}).length > 0
       );
     }
+    if (prefs?.tvHeroMosaicConfig) {
+      setTvDraft(prefs.tvHeroMosaicConfig);
+      setTvCustomWeights(
+        Object.keys(prefs.tvHeroMosaicConfig.libraryWeights ?? {}).length > 0
+      );
+    }
     if (prefs?.peopleMosaicConfig) {
       setPeopleDraft(prefs.peopleMosaicConfig);
     }
   }, [prefs]);
 
   const patch = (p: Partial<HeroMosaicConfig>) => setDraft((d) => ({ ...d, ...p }));
+  const patchTv = (p: Partial<HeroMosaicConfig>) => setTvDraft((d) => ({ ...d, ...p }));
   const patchPeople = (p: Partial<PeopleMosaicConfig>) =>
     setPeopleDraft((d) => ({ ...d, ...p }));
 
   const setLibWeight = (id: string, w: number) =>
     setDraft((d) => ({ ...d, libraryWeights: { ...d.libraryWeights, [id]: w } }));
+  const setTvLibWeight = (id: string, w: number) =>
+    setTvDraft((d) => ({ ...d, libraryWeights: { ...d.libraryWeights, [id]: w } }));
 
   // The weights actually in effect (for preview + save): {} when custom is off.
   const effectiveWeights: Record<string, number> = customWeights
@@ -161,9 +468,15 @@ export default function HeroMosaicPage() {
         libraries.map((lib) => [lib.id, draft.libraryWeights[lib.id] ?? 50])
       )
     : {};
+  const tvEffectiveWeights: Record<string, number> = tvCustomWeights
+    ? Object.fromEntries(
+        tvLibraries.map((lib) => [lib.id, tvDraft.libraryWeights[lib.id] ?? 50])
+      )
+    : {};
 
   // The sum of the (effective) weights, used for the % readout.
   const weightSum = Object.values(effectiveWeights).reduce((s, w) => s + w, 0);
+  const tvWeightSum = Object.values(tvEffectiveWeights).reduce((s, w) => s + w, 0);
 
   // Preview pool — keyed on the DATA-affecting draft fields only (columns/angle
   // re-render the same movies, so they stay OUT of the key). placeholderData
@@ -191,6 +504,19 @@ export default function HeroMosaicPage() {
       params.set("limit", "60");
       return fetch(`/api/movies/hero-wall?${params.toString()}`).then((r) => r.json());
     },
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
+  });
+
+  // TV preview pool — mirrors the movie preview, against /api/tv/hero-wall. That
+  // endpoint returns a plain random draw (no year/resolution/weight filtering —
+  // TV shows carry none per-title), so only `limit` rides the query; style/angle
+  // etc. shape the client-side mosaic layout, not the pool. placeholderData
+  // keeps the previous wall on screen while a new draw refetches.
+  const { data: previewTvMovies = [] } = useQuery<MosaicMovie[]>({
+    queryKey: ["tv-shows", "hero-wall", "preview"],
+    queryFn: () =>
+      fetch("/api/tv/hero-wall?limit=60").then((r) => r.json()),
     placeholderData: (prev) => prev,
     staleTime: 30_000,
   });
@@ -250,13 +576,18 @@ export default function HeroMosaicPage() {
         ...draft,
         libraryWeights: effectiveWeights,
       };
-      // Persist both walls in a single request; the endpoint round-trips each
-      // config independently.
+      const tvConfig: HeroMosaicConfig = {
+        ...tvDraft,
+        libraryWeights: tvEffectiveWeights,
+      };
+      // Persist all three walls in a single request; the endpoint round-trips
+      // each config independently.
       const res = await fetch("/api/settings/personal-metadata", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           heroMosaicConfig: config,
+          tvHeroMosaicConfig: tvConfig,
           peopleMosaicConfig: peopleDraft,
         }),
       });
@@ -264,6 +595,7 @@ export default function HeroMosaicPage() {
         showToast(t("saved"), true);
         queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
         queryClient.invalidateQueries({ queryKey: ["movies", "hero-wall"] });
+        queryClient.invalidateQueries({ queryKey: ["tv-shows", "hero-wall"] });
         queryClient.invalidateQueries({ queryKey: ["people", "hero-wall"] });
       } else {
         showToast(t("failedToSave"), false);
@@ -275,9 +607,6 @@ export default function HeroMosaicPage() {
     }
   };
 
-  const cardClass =
-    "flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7";
-
   return (
     <div className="h-full overflow-y-scroll">
       <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
@@ -286,260 +615,34 @@ export default function HeroMosaicPage() {
         {/* ── Movie Wall section ── */}
         <SectionHeader>{t("movieWallSection")}</SectionHeader>
 
-        {/* Live preview */}
-        <div className={`${cardClass} max-w-[900px]`}>
-          <h2 className="text-lg font-semibold text-foreground">{t("preview")}</h2>
-          <div className="relative aspect-[21/9] overflow-hidden rounded-lg bg-[#0a0a0f]">
-            {previewMovies.length >= 8 ? (
-              <HeroMosaic
-                movies={previewMovies}
-                config={draft}
-                featuredEnabled={false}
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                {t("previewTooFew")}
-              </div>
-            )}
-            {/* Bottom gradient mimicking the real home hero. */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent" />
-          </div>
-        </div>
+        <WallEditor
+          draft={draft}
+          patch={patch}
+          setLibWeight={setLibWeight}
+          customWeights={customWeights}
+          setCustomWeights={setCustomWeights}
+          libraries={libraries}
+          effectiveWeights={effectiveWeights}
+          weightSum={weightSum}
+          previewMovies={previewMovies}
+          libraryCountLabel={(count) => t("movieCount", { count })}
+        />
 
-        {/* Layout: flow + columns + style + angle */}
-        <div className={cardClass}>
-          <h2 className="text-lg font-semibold text-foreground">{t("layout")}</h2>
+        {/* ── TV Wall section ── */}
+        <SectionHeader>{t("tvWallSection")}</SectionHeader>
 
-          {/* Flow (scroll direction) — client-only re-render, so it stays OUT of
-              the preview queryKey (same as columnCount/angle). */}
-          <div>
-            <p className="mb-2 text-sm font-medium text-foreground">{t("flow")}</p>
-            <div className="flex flex-wrap gap-2">
-              {FLOW_OPTIONS.map((f) => (
-                <SegButton
-                  key={f}
-                  active={draft.flow === f}
-                  onClick={() => patch({ flow: f })}
-                >
-                  {t(f === "vertical" ? "flowVertical" : "flowHorizontal")}
-                </SegButton>
-              ))}
-            </div>
-          </div>
-
-          {/* Column count */}
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">{t("columnCount")}</p>
-                <p className="text-xs text-muted-foreground">{t("columnCountDesc")}</p>
-              </div>
-              <span className="font-mono text-sm font-semibold text-foreground">
-                {draft.columnCount}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={8}
-              max={24}
-              step={1}
-              value={draft.columnCount}
-              onChange={(e) => patch({ columnCount: Number(e.target.value) })}
-              className="w-full cursor-pointer accent-primary"
-              style={{ accentColor: "var(--primary)" }}
-            />
-          </div>
-
-          {/* Style */}
-          <div>
-            <p className="mb-2 text-sm font-medium text-foreground">{t("style")}</p>
-            <div className="flex flex-wrap gap-2">
-              {STYLE_OPTIONS.map((s) => (
-                <SegButton
-                  key={s}
-                  active={draft.style === s}
-                  onClick={() => patch({ style: s })}
-                >
-                  {t(
-                    s === "poster"
-                      ? "stylePoster"
-                      : s === "fanart"
-                        ? "styleFanart"
-                        : "styleBoth"
-                  )}
-                </SegButton>
-              ))}
-            </div>
-          </div>
-
-          {/* Angle */}
-          <div>
-            <p className="mb-2 text-sm font-medium text-foreground">{t("angle")}</p>
-            <div className="flex flex-wrap gap-3">
-              {ANGLE_OPTIONS.map((a) => {
-                const active = draft.angle === a;
-                return (
-                  <button
-                    key={a}
-                    onClick={() => patch({ angle: a })}
-                    className="flex flex-col items-center gap-1.5 cursor-pointer"
-                  >
-                    <div
-                      className={`h-[40px] w-[64px] overflow-hidden rounded-md border transition-fluid ${
-                        active
-                          ? "border-primary/50 ring-2 ring-primary/50"
-                          : "border-white/10 hover:border-white/20"
-                      }`}
-                    >
-                      <div
-                        className="flex h-full w-full items-center justify-center gap-0.5 [transform-origin:center]"
-                        style={{
-                          transform: MOSAIC_ANGLES[a].replace("1600px", "300px"),
-                        }}
-                      >
-                        <div className="h-6 w-2 rounded-sm bg-white/20" />
-                        <div className="h-6 w-2 rounded-sm bg-white/20" />
-                        <div className="h-6 w-2 rounded-sm bg-white/20" />
-                      </div>
-                    </div>
-                    <span
-                      className={`text-xs ${active ? "text-foreground" : "text-muted-foreground"}`}
-                    >
-                      {t(
-                        a === "flat"
-                          ? "angleFlat"
-                          : a === "gentle"
-                            ? "angleGentle"
-                            : a === "classic"
-                              ? "angleClassic"
-                              : a === "steep"
-                                ? "angleSteep"
-                                : "angleReverse"
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Library weights */}
-        <div className={cardClass}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">{t("libraryWeights")}</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{t("customWeights")}</span>
-              <button
-                onClick={() => setCustomWeights((v) => !v)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
-                  customWeights ? "bg-primary" : "bg-white/20"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    customWeights ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">{t("libraryWeightsDesc")}</p>
-
-          <div className="flex flex-col gap-4">
-            {libraries.map((lib) => {
-              const w = draft.libraryWeights[lib.id] ?? 50;
-              const pct =
-                !customWeights || weightSum === 0
-                  ? "—"
-                  : `${Math.round((w / weightSum) * 100)}%`;
-              return (
-                <div key={lib.id}>
-                  <div className="mb-1 flex items-center justify-between">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-medium text-foreground">{lib.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {t("movieCount", { count: lib.movieCount ?? 0 })}
-                      </span>
-                    </div>
-                    <span className="font-mono text-sm text-muted-foreground">{pct}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={w}
-                    disabled={!customWeights}
-                    onChange={(e) => setLibWeight(lib.id, Number(e.target.value))}
-                    className="w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-40"
-                    style={{ accentColor: "var(--primary)" }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className={cardClass}>
-          <h2 className="text-lg font-semibold text-foreground">{t("filters")}</h2>
-
-          {/* Year range */}
-          <div>
-            <p className="mb-2 text-sm font-medium text-foreground">{t("yearRange")}</p>
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                {t("yearFrom")}
-                <input
-                  type="number"
-                  min={1900}
-                  max={2100}
-                  placeholder="—"
-                  value={draft.yearFrom ?? ""}
-                  onChange={(e) =>
-                    patch({
-                      yearFrom: e.target.value === "" ? null : parseInt(e.target.value, 10),
-                    })
-                  }
-                  className="w-24 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none transition-fluid focus:border-primary/50"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                {t("yearTo")}
-                <input
-                  type="number"
-                  min={1900}
-                  max={2100}
-                  placeholder="—"
-                  value={draft.yearTo ?? ""}
-                  onChange={(e) =>
-                    patch({
-                      yearTo: e.target.value === "" ? null : parseInt(e.target.value, 10),
-                    })
-                  }
-                  className="w-24 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-foreground outline-none transition-fluid focus:border-primary/50"
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Min resolution */}
-          <div>
-            <p className="mb-2 text-sm font-medium text-foreground">{t("minResolution")}</p>
-            <div className="flex flex-wrap gap-2">
-              {RESOLUTION_OPTIONS.map((opt) => (
-                <SegButton
-                  key={opt.key}
-                  active={draft.minWidth === opt.value}
-                  onClick={() => patch({ minWidth: opt.value })}
-                >
-                  {opt.value === null ? t("resAny") : opt.key}
-                </SegButton>
-              ))}
-            </div>
-          </div>
-        </div>
+        <WallEditor
+          draft={tvDraft}
+          patch={patchTv}
+          setLibWeight={setTvLibWeight}
+          customWeights={tvCustomWeights}
+          setCustomWeights={setTvCustomWeights}
+          libraries={tvLibraries}
+          effectiveWeights={tvEffectiveWeights}
+          weightSum={tvWeightSum}
+          previewMovies={previewTvMovies}
+          libraryCountLabel={(count) => t("showCount", { count })}
+        />
 
         {/* ── People Wall section ── */}
         <SectionHeader>{t("peopleWallSection")}</SectionHeader>

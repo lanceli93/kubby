@@ -23,6 +23,9 @@ export interface UserPreferences {
   tvShowDimensionWeights: Record<string, number>;
   heroMosaicConfig: HeroMosaicConfig;
   peopleMosaicConfig: PeopleMosaicConfig;
+  showTvShowRatingBadge: boolean;
+  showTvResolutionBadge: boolean;
+  tvHeroMosaicConfig: HeroMosaicConfig;
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 

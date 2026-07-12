@@ -192,6 +192,8 @@ export default function CardBadgesPage() {
   const [showResolutionBadge, setShowResolutionBadge] = useState(true);
   const [showPersonBadge, setShowPersonBadge] = useState(true);
   const [showPersonRatingBadge, setShowPersonRatingBadge] = useState(true);
+  const [showTvBadge, setShowTvBadge] = useState(true);
+  const [showTvResolutionBadge, setShowTvResolutionBadge] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{
     text: string;
@@ -211,6 +213,8 @@ export default function CardBadgesPage() {
       setShowResolutionBadge(prefs.showResolutionBadge);
       setShowPersonBadge(prefs.showPersonTierBadge);
       setShowPersonRatingBadge(prefs.showPersonRatingBadge);
+      setShowTvBadge(prefs.showTvShowRatingBadge);
+      setShowTvResolutionBadge(prefs.showTvResolutionBadge);
     }
   }, [prefs]);
 
@@ -225,6 +229,8 @@ export default function CardBadgesPage() {
           showResolutionBadge: showResolutionBadge,
           showPersonTierBadge: showPersonBadge,
           showPersonRatingBadge: showPersonRatingBadge,
+          showTvShowRatingBadge: showTvBadge,
+          showTvResolutionBadge: showTvResolutionBadge,
         }),
       });
       if (res.ok) {
@@ -433,6 +439,108 @@ export default function CardBadgesPage() {
                     className={`font-mono font-black tracking-wider ${getTierColor(tier)}`}
                   >
                     {tier}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </ExpandableRules>
+        </div>
+      </div>
+
+      {/* TV show card badges — mirrors the movie section; reuses the generic
+          poster preview. TV shows carry no single resolution (multi-episode),
+          so the resolution toggle only takes effect where a caller supplies
+          dimensions. */}
+      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("tvShowCardBadges")}
+        </h2>
+
+        {/* TV card previews */}
+        <div className="flex items-center justify-center gap-8 rounded-lg border border-white/[0.06] bg-white/[0.02] py-5">
+          <MovieCardPreview
+            showResolution={showTvResolutionBadge}
+            showRating={showTvBadge}
+            resolutionLabel="4K"
+            ratingValue={9.5}
+          />
+          <MovieCardPreview
+            showResolution={showTvResolutionBadge}
+            showRating={showTvBadge}
+            resolutionLabel="FHD"
+            ratingValue={8.5}
+          />
+        </div>
+
+        {/* Rating badge toggle */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {t("showTvShowRatingBadge")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("showTvShowRatingBadgeDesc")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowTvBadge(!showTvBadge)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
+              showTvBadge ? "bg-primary" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                showTvBadge ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Resolution badge toggle + expandable rules */}
+        <div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {t("showTvResolutionBadge")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("showTvResolutionBadgeDesc")}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowTvResolutionBadge(!showTvResolutionBadge)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-fluid cursor-pointer ${
+                showTvResolutionBadge ? "bg-primary" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  showTvResolutionBadge ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          <ExpandableRules
+            viewLabel={t("viewRules")}
+            hideLabel={t("hideRules")}
+          >
+            <p className="mb-2 text-xs font-medium text-foreground">
+              {t("resolutionRulesTitle")}
+            </p>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-0.5">
+              {RESOLUTION_RULES.map(({ min, unit, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between text-xs text-muted-foreground"
+                >
+                  <span>
+                    {min > 0
+                      ? `${unit === "width" ? t("width") : t("height")} ≥ ${min}px`
+                      : `${t("height")} < 360px`}
+                  </span>
+                  <span className="font-mono font-semibold text-foreground">
+                    {label}
                   </span>
                 </div>
               ))}

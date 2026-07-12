@@ -62,6 +62,10 @@ interface PosterWallProps {
   // True while the parent's progressive fetch is still pulling pages; drives a
   // subtle "loading more" indicator without gating the wall's interactivity.
   loadingMore?: boolean;
+  // Route a focused poster navigates to (default `/movies` — the cinema domain).
+  // The TV browse page passes `/tv` so clicking a poster opens the show detail,
+  // never a `/movies/{tvShowId}` that would resolve against the wrong table.
+  hrefBase?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -433,7 +437,7 @@ const SORT_ICON: Record<SortKey, string> = {
   fileSize: "fileSize",
 };
 
-export function PosterWall({ movies, onClose, initialSort, loadingMore }: PosterWallProps) {
+export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase = "/movies" }: PosterWallProps) {
   const t = useTranslations("movies");
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -442,6 +446,10 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore }: Poster
   onCloseRef.current = onClose;
   const routerRef = useRef(router);
   routerRef.current = router;
+  // Keep the nav base in a ref so the imperative click/keydown handlers (bound
+  // once in the WebGL effect) always read the latest value without re-binding.
+  const hrefBaseRef = useRef(hrefBase);
+  hrefBaseRef.current = hrefBase;
 
   // Sort state lives in React (drives flying reorder + pill highlight).
   const initialKey: SortKey =
@@ -1120,7 +1128,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore }: Poster
         // Do NOT call onClose here: leaving the wall mounted until the route
         // change unmounts the movies page prevents the grid from flashing.
         if (hoveredTile.item.kind === "movie") {
-          routerRef.current.push(`/movies/${hoveredTile.item.movie.id}`);
+          routerRef.current.push(`${hrefBaseRef.current}/${hoveredTile.item.movie.id}`);
         }
       } else {
         // Clicking a side item focuses it.
@@ -1168,7 +1176,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore }: Poster
           const tile = tiles[clampFocusInt(focusFloat)];
           if (tile && tile.item.kind === "movie") {
             // See onClick: keep the wall mounted so the grid never flashes.
-            routerRef.current.push(`/movies/${tile.item.movie.id}`);
+            routerRef.current.push(`${hrefBaseRef.current}/${tile.item.movie.id}`);
           }
           break;
         }

@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { ExternalLink, Tv } from "lucide-react";
+import { ExternalLink, Tv, Star, Heart } from "lucide-react";
 import { ShowCard } from "@/components/tv/show-card";
+import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useTranslations } from "next-intl";
 
-// Isolated TV-domain person page. TV people live in tv_people and are read-only
-// (no user-data / gallery / metadata editor exists for them), so this is a
-// slimmed-down cousin of the cinema /people/[id] page: hero (fanart + photo +
-// bio) plus the shows the person appears in, linking back into the TV domain.
+// Isolated TV-domain person page. TV people live in tv_people; user-data
+// (favorite + personal multi-dimension rating) lives in user_tv_person_data,
+// read/written ONLY via /api/tv/people/* — never the cinema /api/people/*
+// endpoints. A slimmed-down cousin of the cinema /people/[id] page (no gallery
+// / metadata editor): hero (fanart + photo + bio) plus the shows the person
+// appears in, linking back into the TV domain.
 interface TvPersonShow {
   id: string;
   title: string;
@@ -39,6 +44,12 @@ interface TvPersonDetail {
   shows: TvPersonShow[];
 }
 
+interface TvPersonUserData {
+  isFavorite?: boolean;
+  personalRating?: number | null;
+  dimensionRatings?: Record<string, number> | null;
+}
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
@@ -50,13 +61,47 @@ export default function TvPersonDetailPage() {
   const personId = params.id as string;
   const tPerson = useTranslations("person");
   const tMovies = useTranslations("movies");
+  const queryClient = useQueryClient();
+  const { data: prefs } = useUserPreferences();
+  // TV people reuse the cinema PERSON rating dimensions — a person's rating
+  // dimensions are cross-domain user taste, so this is intended, not a leak.
+  const personDimensions = prefs?.personRatingDimensions ?? [];
 
   const [fanartError, setFanartError] = useState(false);
   const [photoError, setPhotoError] = useState(false);
+  const [ratingOpen, setRatingOpen] = useState(false);
 
   const { data: person, isLoading } = useQuery<TvPersonDetail>({
     queryKey: ["tv-person", personId],
     queryFn: () => fetch(`/api/tv/people/${personId}`).then((r) => r.json()),
+  });
+
+  // Favorite / personal rating live in a dedicated TV endpoint, not on the
+  // person payload above.
+  const { data: userData } = useQuery<TvPersonUserData>({
+    queryKey: ["tv-person-user-data", personId],
+    queryFn: () => fetch(`/api/tv/people/${personId}/user-data`).then((r) => r.json()),
+  });
+
+  const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
+    await fetch(`/api/tv/people/${personId}/user-data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["tv-person-user-data", personId] });
+  };
+
+  const toggleFavorite = useMutation({
+    mutationFn: (current: boolean) =>
+      fetch(`/api/tv/people/${personId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: !current }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tv-person-user-data", personId] });
+    },
   });
 
   // Guard against both the loading window and a not-found/error response —
@@ -116,6 +161,40 @@ export default function TvPersonDetailPage() {
                 <span className="glass-badge inline-flex h-7 items-center rounded-md px-3 text-sm capitalize text-white/90">
                   {person.type}
                 </span>
+
+                {/* Personal rating + tier */}
+                {userData?.personalRating != null && userData.personalRating > 0 ? (
+                  <>
+                    <button
+                      onClick={() => setRatingOpen(true)}
+                      className="glass-badge inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
+                      aria-label="Edit rating"
+                    >
+                      <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
+                      {userData.personalRating.toFixed(1)}
+                    </button>
+                    <span className={`glass-badge inline-flex h-7 items-center rounded-md border px-2.5 text-sm font-black tracking-wider ${getTierColor(getTier(userData.personalRating))} ${getTierBorderColor(getTier(userData.personalRating))} ${getTierGlow(getTier(userData.personalRating))}`}>
+                      {getTier(userData.personalRating)}
+                    </span>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setRatingOpen(true)}
+                    className="glass-btn inline-flex h-7 items-center justify-center rounded-lg px-2 text-white/40 transition-all hover:text-[var(--gold)] cursor-pointer"
+                    aria-label="Rate person"
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                  </button>
+                )}
+
+                {/* Favorite button */}
+                <button
+                  onClick={() => toggleFavorite.mutate(!!userData?.isFavorite)}
+                  className="glass-btn inline-flex h-7 w-7 items-center justify-center rounded-xl transition-all cursor-pointer"
+                  aria-label="Toggle favorite"
+                >
+                  <Heart className={`h-3.5 w-3.5 ${userData?.isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
+                </button>
               </div>
 
               {person.overview && (
@@ -203,6 +282,18 @@ export default function TvPersonDetailPage() {
           )}
         </section>
       </div>
+
+      {/* Personal rating dialog — reuses the cinema PERSON dimensions/weights */}
+      <StarRatingDialog
+        open={ratingOpen}
+        onOpenChange={setRatingOpen}
+        value={userData?.personalRating ?? null}
+        onSave={savePersonalRating}
+        dimensions={personDimensions}
+        dimensionRatings={userData?.dimensionRatings}
+        dimensionWeights={prefs?.personDimensionWeights}
+        showTier
+      />
     </div>
   );
 }

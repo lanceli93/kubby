@@ -413,28 +413,57 @@ knowing when extending it:
   uses — omitting it was a real bug (the play page mounts under `(main)/layout.tsx`).
   The TvHero already paints a top scrim + full-bleed top-anchored layout for exactly
   this, so blending needed only the header allowlist, no hero change.
-- **Library/genre/studio/tag filter follows the WHOLE page.** Clicking a TV library
-  card (or a detail-page genre/studio link → `/tv?libraryId=X&genre=Y`) narrows the
-  hero wall, Continue Watching, Recently Added, grid, AND count — every `/tv` query
-  threads the active filter into both its querystring and its `queryKey` (so it
-  refetches), and `/api/tv` + `/api/tv/hero-wall` apply the same WHERE. An in-page
-  "Viewing <lib> · <genre> ✕" glass chip (with a clear-to-`/tv` link) is the "it
-  worked" affordance — TV deliberately keeps the header blended rather than showing
-  the cinema-style header banner.
+- **`/tv` is a hero landing; `/tv/browse` is the browse page (parity-round-2 fix).**
+  The original design fused home+browse into `/tv`, so clicking a library card only
+  added an in-place `?libraryId=` filter chip — which read as "nothing happened"
+  because cinema navigates from home `/` to a *distinct* route `/movies?libraryId=`
+  (solid header + back button + library-name banner). Fix: `/tv` stays a pure hero
+  landing (TvHero + Media Libraries + Continue Watching + Recently Added), and a NEW
+  dedicated `src/app/(main)/tv/browse/page.tsx` mirrors `/movies` — a `Tabs` bar with
+  **Shows / Favorites / Genres / People**, sort dropdown, a filter dropdown fed by
+  `/api/tv/filters`, and the WebGL poster wall (the shared `PosterWall` got an
+  `hrefBase` prop, default `/movies`, so TV passes `/tv`). `LibraryCard hrefBase` on the
+  home now points at `/tv/browse`. **Header gotcha:** `isTvShowDetail = /^\/tv\/[^/]+$/`
+  would ALSO match `/tv/browse`, so it's guarded with `pathname !== "/tv/browse"`; the
+  header gains `isTvLibraryPage`/`isTvPersonFilmography` branches (keyed on
+  `pathname === "/tv/browse"` + `libraryId`/`personId`) that render the SOLID
+  back-arrow-to-`/tv` + library/person-name banner exactly like the cinema library page.
+  The tv-person-name banner query hits `/api/tv/people/{id}` — NEVER the cinema
+  `/api/people/{id}`. `/api/tv` gained `personId` (filmography) and `filter=favorites`
+  branches to back the browse tabs.
 - **Detail-page parity with movies.** The show detail page reuses the cinema building
   blocks, parameterized not forked: `StarRatingDialog` (reads `tvShowRatingDimensions`/
-  `tvShowDimensionWeights` from `useUserPreferences` — the TV prefs already existed
-  end-to-end; only the *consumer* on this page was missing) writing to
-  `PUT /api/tv/{id}/user-data`; a three-dot menu → `TvShowMetadataEditor`
+  `tvShowDimensionWeights` from `useUserPreferences`) writing to
+  `PUT /api/tv/{id}/user-data`, plus a **per-episode** ★ on each episode row →
+  `PUT /api/tv/episodes/{id}/user-data`; a three-dot menu → `TvShowMetadataEditor`
   (`components/tv/`, a fork of the movie editor that drops the single-runtime field and
-  edits `country` as a plain string) + the shared `ImageEditorDialog` (extended with an
-  `entityType="tvshow"` case) + delete-with-confirm. A Bookmarks section lists
-  `GET /api/tv/{id}/bookmarks` (aggregated across episodes) via the shared `BookmarkCard`
-  (generalized with an optional `playHref` so it links to `/tv/episodes/{id}/play?t=`
-  instead of the hardcoded movie route); edit/delete map back to the per-episode
-  bookmark routes. Cast stays `readonly` (no `user_tv_person_data` table). **Show-level
-  Media Info is intentionally omitted** — a show has many episode files, so per-file
-  info lives on the episode player, not the show.
+  edits `country` as a plain string) + the shared `ImageEditorDialog` (`entityType="tvshow"`)
+  + an **external-player** launch item (`POST /api/tv/episodes/{id}/play-external`) +
+  delete-with-confirm. A Bookmarks section lists `GET /api/tv/{id}/bookmarks` via the
+  shared `BookmarkCard` (`playHref`); **technical badges + a `MediaInfoDialog`** now
+  render off the first episode's `GET /api/tv/episodes/{id}/media-info` (the dialog got
+  an additive `apiBase` prop, default `/api/movies`, so TV passes `/api/tv/episodes`);
+  and a **"more like this"** row pulls same-genre shows from `/api/tv?genre=`. **Cast is
+  now favoritable** — the `/api/tv/[id]` GET leftJoins `user_tv_person_data` for per-cast
+  `isFavorite`, and cards toggle via `PUT /api/tv/people/{id}/user-data`. (Show-level
+  Media Info is *per-episode* by nature, hence sourced from an episode, not the show.)
+- **TV people sub-domain reaches parity.** `/tv/people/[id]` went from read-only to a
+  favorite Heart + multi-dimension `StarRatingDialog` (reusing the cinema
+  `personRatingDimensions` prefs — a person's rating dimensions are cross-domain user
+  taste, correctly a *preference* not a domain table), backed by the new isolated
+  `user_tv_person_data` table + `GET/PUT /api/tv/people/[id]/user-data`. The browse
+  People tab lists `/api/tv/people`; a `/api/tv/people/hero-wall` powers its mosaic.
+- **Global search includes TV.** `/api/search` gained SEPARATE `tvShows`/`tvEpisodes`/
+  `tvPeople`/`tvBookmarks` result groups (never merged into the cinema arrays), rendered
+  as their own sections in `search/page.tsx` linking into `/tv/*`.
+- **Domain-aware Preferences.** `preferences-sidebar.tsx` uses `useCurrentDomain()` to
+  label the media group "TV" when in the TV domain (pages are shared + domain-aware);
+  `card-badges` has a TV Show Badges section (`showTvShowRatingBadge`/
+  `showTvResolutionBadge`); `hero-mosaic` has a TV Wall (`tvHeroMosaicConfig`, filtered
+  to `type==="tvshow"`, previewing `/api/tv/hero-wall`, which now honors the config);
+  `show-card.tsx` renders the rating badge when the pref is on + a `personalRating` is
+  supplied. (The resolution badge is coded but TV cards carry no single per-title
+  resolution, so it stays dark until a caller supplies dimensions — it never invents data.)
 
 ## Cross-domain safety (a hard rule)
 
