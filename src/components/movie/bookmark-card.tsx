@@ -35,7 +35,10 @@ export interface CustomIconData {
 
 interface BookmarkCardProps {
   bookmark: BookmarkData;
-  movieId: string;
+  /** Movie id — used to build the default play href. Optional when playHref is supplied. */
+  movieId?: string;
+  /** Explicit play link href. When provided it overrides the default /movies/... href (e.g. for TV episodes). */
+  playHref?: string;
   externalEnabled?: boolean;
   onExternalLaunch?: (disc?: number, startSeconds?: number) => void;
   onDelete?: (bookmarkId: string) => void;
@@ -54,6 +57,7 @@ function formatTimestamp(seconds: number): string {
 export function BookmarkCard({
   bookmark,
   movieId,
+  playHref,
   externalEnabled,
   onExternalLaunch,
   onDelete,
@@ -76,7 +80,7 @@ export function BookmarkCard({
   const vsParam = bookmark.viewState
     ? `&vs=${bookmark.viewState.lon.toFixed(2)},${bookmark.viewState.lat.toFixed(2)},${bookmark.viewState.fov.toFixed(0)}`
     : "&vs=off";
-  const href = `/movies/${movieId}/play?t=${bookmark.timestampSeconds}${discParam}${vsParam}`;
+  const href = playHref ?? `/movies/${movieId}/play?t=${bookmark.timestampSeconds}${discParam}${vsParam}`;
 
   function openEdit() {
     setEditIconType(bookmark.iconType || "bookmark");

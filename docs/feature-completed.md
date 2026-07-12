@@ -52,6 +52,25 @@ TV domain tables; feature-patterns.md → TV series domain).
   allowlist) + Next Up / Recently Added + all-shows grid. (3) Extended the test generator
   to 8 shows (added Game of Thrones / Stranger Things / The Office / Friends / Chernobyl)
   so the wall (≥8 posters) renders; rescanned — 8 shows, cinema `people` still 579.
+- **TV↔movie feature-gap closure (same day)**: audited the TV domain vs cinema (4
+  parallel read-only explorers) then shipped Tier 1 + Tier 2 parity via 4 opus
+  executors (file-disjoint, verified in-browser). (1) **Nav blends** — `/tv`, `/tv/{id}`,
+  `/tv/people/{id}` join the transparent-header allowlist (hero bleeds up, no solid
+  bar); TV detail pages get back/home nav (home → `/tv`); the TV episode player is now
+  hidden by the header early-return (was a real bug). (2) **Whole-page library/genre
+  filter** — clicking a TV library card (or a genre/studio link) narrows the hero wall +
+  Continue Watching + Recently Added + grid + count; `/api/tv` + `/api/tv/hero-wall`
+  gained `genre`/`studio`/`tag` (and next-up gained `libraryId`); an in-page "Viewing … ✕"
+  chip is the affordance. (3) **Detail-page parity** — personal multi-dimension rating
+  editor (`StarRatingDialog` + the pre-existing `tvShowRatingDimensions` prefs, which had
+  no consumer), a three-dot menu (edit metadata via new `TvShowMetadataEditor`, edit
+  images via `ImageEditorDialog` extended with `entityType="tvshow"`, delete-with-confirm),
+  genre/studio filter links, and a Bookmarks section aggregating episode bookmarks
+  (`GET /api/tv/[id]/bookmarks`) through a generalized `BookmarkCard` (`playHref`). New
+  backend: `PUT /api/tv/[id]` (edit + cast into `tv_people` only + NFO writeback),
+  `POST/DELETE /api/tv/[id]/images`. Deferred by design: show-level Media Info (per-file,
+  lives on the player) and cast-favorite (no `user_tv_person_data` table). tsc clean;
+  isolation held (no cinema tables touched from any TV route).
 
 ## 2026-07-11 — Music: split symbol-joined artist names
 

@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { ShowCard } from "@/components/tv/show-card";
@@ -16,7 +17,7 @@ import {
 } from "@/components/home/ambient-field";
 import { type MosaicMovie } from "@/components/home/hero-mosaic";
 import { useTranslations } from "next-intl";
-import { ArrowUpDown, CalendarPlus, ArrowDownAZ, Calendar, Sparkles, Loader2 } from "lucide-react";
+import { ArrowUpDown, CalendarPlus, ArrowDownAZ, Calendar, Sparkles, Loader2, X } from "lucide-react";
 
 interface ShowItem {
   id: string;
@@ -87,6 +88,11 @@ function TvBrowseContent() {
   const queryClient = useQueryClient();
   // libraryId is optional — omitted, the API lists across all TV libraries.
   const libraryId = searchParams.get("libraryId") || "";
+  // Facet filters (genre / studio / tag) — linked from the show detail page.
+  const genre = searchParams.get("genre") || "";
+  const studio = searchParams.get("studio") || "";
+  const tag = searchParams.get("tag") || "";
+  const hasFilter = Boolean(libraryId || genre || studio || tag);
 
   const [sort, setSort] = useState("dateAdded");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -142,27 +148,49 @@ function TvBrowseContent() {
     [uploadCover]
   );
 
+  // Append the active facet filters onto a query string so every band on the
+  // page narrows to the same selection.
+  const appendFilters = useCallback(
+    (params: URLSearchParams) => {
+      if (libraryId) params.set("libraryId", libraryId);
+      if (genre) params.set("genre", genre);
+      if (studio) params.set("studio", studio);
+      if (tag) params.set("tag", tag);
+    },
+    [libraryId, genre, studio, tag]
+  );
+
   // ── Poster wall pool for the animated hero backdrop ──────────────
   const { data: wallShows = [], isPending: wallPending } = useQuery<MosaicMovie[]>({
-    queryKey: ["tv-shows", "hero-wall"],
-    queryFn: () => fetch("/api/tv/hero-wall?limit=60").then((r) => r.json()),
+    queryKey: ["tv-shows", "hero-wall", { libraryId, genre, studio, tag }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("limit", "60");
+      appendFilters(params);
+      return fetch(`/api/tv/hero-wall?${params}`).then((r) => r.json());
+    },
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
 
   // ── Continue Watching / Next Up ──────────────────────────────────
   const { data: nextUp = [] } = useQuery<NextUpItem[]>({
-    queryKey: ["tv-next-up"],
-    queryFn: () => fetch(`/api/tv?filter=next-up`).then((r) => r.json()),
+    queryKey: ["tv-next-up", { libraryId, genre, studio, tag }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("filter", "next-up");
+      appendFilters(params);
+      return fetch(`/api/tv?${params}`).then((r) => r.json());
+    },
   });
 
   // ── Recently Added ───────────────────────────────────────────────
   const { data: recentlyAdded = [] } = useQuery<ShowItem[]>({
-    queryKey: ["tv-recently-added", libraryId],
+    queryKey: ["tv-recently-added", { libraryId, genre, studio, tag }],
     queryFn: () => {
       const params = new URLSearchParams();
       params.set("filter", "recently-added");
-      if (libraryId) params.set("libraryId", libraryId);
+      appendFilters(params);
       return fetch(`/api/tv?${params}`).then((r) => r.json());
     },
   });
@@ -175,10 +203,10 @@ function TvBrowseContent() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery<PaginatedResponse<ShowItem>>({
-    queryKey: ["tv-shows", { libraryId, sort, sortOrder }],
+    queryKey: ["tv-shows", { libraryId, genre, studio, tag, sort, sortOrder }],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams();
-      if (libraryId) params.set("libraryId", libraryId);
+      appendFilters(params);
       params.set("sort", sort);
       params.set("sortOrder", sortOrder);
       params.set("limit", String(PAGE_SIZE));
@@ -217,6 +245,33 @@ function TvBrowseContent() {
               wallPending || wallShows.length > 0 ? "relative z-10 pt-6 md:pt-8" : "pt-6"
             }`}
           >
+            {/* Active filter chip — the whole page is narrowed to this selection */}
+            {hasFilter && (
+              <div className="flex items-center pb-1">
+                <span className="glass-badge inline-flex items-center gap-2 rounded-full py-1.5 pl-3.5 pr-1.5 text-sm text-foreground/90">
+                  <span className="text-muted-foreground">{t("viewing")}</span>
+                  <span className="font-medium">
+                    {[
+                      libraryId ? libraries.find((l) => l.id === libraryId)?.name : null,
+                      genre,
+                      studio,
+                      tag,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                  <Link
+                    href="/tv"
+                    aria-label={t("clearFilter")}
+                    title={t("clearFilter")}
+                    className="focus-ring flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Link>
+                </span>
+              </div>
+            )}
+
             {/* Media Libraries */}
             {libraries.length > 0 ? (
               <section className="pb-2">

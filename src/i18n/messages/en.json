@@ -740,7 +740,14 @@
       "ended": "Ended"
     },
     "noEpisodes": "No episodes found",
-    "favorite": "Favorite"
+    "favorite": "Favorite",
+    "viewing": "Viewing",
+    "clearFilter": "Show all",
+    "bookmarks": "Bookmarks",
+    "deleteShow": "Delete Show",
+    "confirmDeleteShow": "Remove this show from your library?",
+    "deleteLocalFiles": "Also delete local files",
+    "deleteLocalFilesWarning": "This permanently deletes the files from disk."
   },
   "music": {
     "title": "Music",

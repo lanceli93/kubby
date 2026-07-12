@@ -403,6 +403,38 @@ knowing when extending it:
   `[country]` rather than `JSON.parse` (which threw a 500 → white-screen). genres/
   studios/tags ARE JSON arrays. When mirroring a movie route, check each column's
   actual storage shape, don't assume.
+- **Header blends with the hero (not a solid nav bar).** The transparent/`absolute`
+  `pointer-events-none` `AppHeader` treatment (`isTransparent`) that lets the hero
+  bleed up underneath is keyed by pathname; `/tv`, `/tv/{id}`, and `/tv/people/{id}`
+  are in that allowlist (matched with `/^\/tv\/[^/]+$/` etc. so `/tv/people/{id}` and
+  `/tv/episodes/...` don't collide). TV detail pages join `needsBackNav` and their
+  home link is domain-aware (`/tv`, not `/`). The TV episode player is hidden via the
+  same `if (isPlayerPage || isTvPlayerPage) return null` early-return the movie player
+  uses — omitting it was a real bug (the play page mounts under `(main)/layout.tsx`).
+  The TvHero already paints a top scrim + full-bleed top-anchored layout for exactly
+  this, so blending needed only the header allowlist, no hero change.
+- **Library/genre/studio/tag filter follows the WHOLE page.** Clicking a TV library
+  card (or a detail-page genre/studio link → `/tv?libraryId=X&genre=Y`) narrows the
+  hero wall, Continue Watching, Recently Added, grid, AND count — every `/tv` query
+  threads the active filter into both its querystring and its `queryKey` (so it
+  refetches), and `/api/tv` + `/api/tv/hero-wall` apply the same WHERE. An in-page
+  "Viewing <lib> · <genre> ✕" glass chip (with a clear-to-`/tv` link) is the "it
+  worked" affordance — TV deliberately keeps the header blended rather than showing
+  the cinema-style header banner.
+- **Detail-page parity with movies.** The show detail page reuses the cinema building
+  blocks, parameterized not forked: `StarRatingDialog` (reads `tvShowRatingDimensions`/
+  `tvShowDimensionWeights` from `useUserPreferences` — the TV prefs already existed
+  end-to-end; only the *consumer* on this page was missing) writing to
+  `PUT /api/tv/{id}/user-data`; a three-dot menu → `TvShowMetadataEditor`
+  (`components/tv/`, a fork of the movie editor that drops the single-runtime field and
+  edits `country` as a plain string) + the shared `ImageEditorDialog` (extended with an
+  `entityType="tvshow"` case) + delete-with-confirm. A Bookmarks section lists
+  `GET /api/tv/{id}/bookmarks` (aggregated across episodes) via the shared `BookmarkCard`
+  (generalized with an optional `playHref` so it links to `/tv/episodes/{id}/play?t=`
+  instead of the hardcoded movie route); edit/delete map back to the per-episode
+  bookmark routes. Cast stays `readonly` (no `user_tv_person_data` table). **Show-level
+  Media Info is intentionally omitted** — a show has many episode files, so per-file
+  info lives on the episode player, not the show.
 
 ## Cross-domain safety (a hard rule)
 

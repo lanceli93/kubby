@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { db } from "@/lib/db";
 import { tvShows } from "@/lib/db/schema";
-import { and, sql } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
@@ -26,6 +26,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = Math.max(1, Math.min(120, parseInt(searchParams.get("limit") || "60", 10) || 60));
 
+    // Optional filters so the hero mosaic follows the active library / facet.
+    const libraryId = searchParams.get("libraryId");
+    const genre = searchParams.get("genre");
+    const studio = searchParams.get("studio");
+    const tag = searchParams.get("tag");
+
+    const conditions = [
+      sql`(${tvShows.posterPath} IS NOT NULL OR ${tvShows.fanartPath} IS NOT NULL)`,
+    ];
+    if (libraryId) conditions.push(eq(tvShows.mediaLibraryId, libraryId));
+    if (genre) conditions.push(like(tvShows.genres, `%"${genre}"%`));
+    if (studio) conditions.push(like(tvShows.studios, `%"${studio}"%`));
+    if (tag) conditions.push(like(tvShows.tags, `%"${tag}"%`));
+
     const rows = db
       .select({
         id: tvShows.id,
@@ -38,11 +52,7 @@ export async function GET(request: NextRequest) {
         fanartMtime: tvShows.fanartMtime,
       })
       .from(tvShows)
-      .where(
-        and(
-          sql`(${tvShows.posterPath} IS NOT NULL OR ${tvShows.fanartPath} IS NOT NULL)`
-        )
-      )
+      .where(and(...conditions))
       .orderBy(sql`RANDOM()`)
       .limit(limit)
       .all();

@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get("limit");
     const limit = parseInt(limitParam || "100", 10);
     const filter = searchParams.get("filter");
+    const genre = searchParams.get("genre");
+    const studio = searchParams.get("studio");
+    const tag = searchParams.get("tag");
     const offsetParam = searchParams.get("offset");
     const offset = offsetParam !== null ? parseInt(offsetParam, 10) : null;
 
@@ -31,6 +34,14 @@ export async function GET(request: NextRequest) {
     // One NextUp episode per show the user has activity on.
     if (filter === "next-up" && userId) {
       const cwLimit = Math.min(limit, 20);
+
+      // Narrow the resume row to the active filter (library / genre / studio /
+      // tag) so Continue Watching follows the rest of the page.
+      const cwConditions = [eq(userTvShowData.userId, userId)];
+      if (libraryId) cwConditions.push(eq(tvShows.mediaLibraryId, libraryId));
+      if (genre) cwConditions.push(like(tvShows.genres, `%"${genre}"%`));
+      if (studio) cwConditions.push(like(tvShows.studios, `%"${studio}"%`));
+      if (tag) cwConditions.push(like(tvShows.tags, `%"${tag}"%`));
 
       // Candidate shows: those with a userTvShowData row, most recent first.
       const candidateShows = db
@@ -44,7 +55,7 @@ export async function GET(request: NextRequest) {
         })
         .from(userTvShowData)
         .innerJoin(tvShows, eq(userTvShowData.showId, tvShows.id))
-        .where(eq(userTvShowData.userId, userId))
+        .where(and(...cwConditions))
         .orderBy(desc(userTvShowData.lastPlayedAt))
         .limit(cwLimit)
         .all();
@@ -126,7 +137,11 @@ export async function GET(request: NextRequest) {
     // ── filter=recently-added ───────────────────────────────────────
     if (filter === "recently-added") {
       const raLimit = Math.min(limit, 20);
-      const raConditions = libraryId ? [eq(tvShows.mediaLibraryId, libraryId)] : [];
+      const raConditions = [];
+      if (libraryId) raConditions.push(eq(tvShows.mediaLibraryId, libraryId));
+      if (genre) raConditions.push(like(tvShows.genres, `%"${genre}"%`));
+      if (studio) raConditions.push(like(tvShows.studios, `%"${studio}"%`));
+      if (tag) raConditions.push(like(tvShows.tags, `%"${tag}"%`));
 
       let raQuery = db
         .select({
@@ -176,6 +191,17 @@ export async function GET(request: NextRequest) {
     }
     if (search) {
       conditions.push(like(tvShows.title, `%${search}%`));
+    }
+    // genres/studios/tags are JSON text columns — match a quoted value inside
+    // the array, mirroring the movie route.
+    if (genre) {
+      conditions.push(like(tvShows.genres, `%"${genre}"%`));
+    }
+    if (studio) {
+      conditions.push(like(tvShows.studios, `%"${studio}"%`));
+    }
+    if (tag) {
+      conditions.push(like(tvShows.tags, `%"${tag}"%`));
     }
 
     // Sort

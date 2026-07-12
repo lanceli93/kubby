@@ -740,7 +740,14 @@
       "ended": "已完结"
     },
     "noEpisodes": "未找到剧集",
-    "favorite": "收藏"
+    "favorite": "收藏",
+    "viewing": "正在浏览",
+    "clearFilter": "显示全部",
+    "bookmarks": "书签",
+    "deleteShow": "删除剧集",
+    "confirmDeleteShow": "确定从库中移除此剧集？",
+    "deleteLocalFiles": "同时删除本地文件",
+    "deleteLocalFilesWarning": "这将从磁盘永久删除文件。"
   },
   "music": {
     "title": "音乐",

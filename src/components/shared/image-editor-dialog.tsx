@@ -16,7 +16,7 @@ import {
 interface ImageEditorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  entityType: "movie" | "person";
+  entityType: "movie" | "person" | "tvshow";
   entityId: string;
   entityName: string;
 }
@@ -48,10 +48,14 @@ export function ImageEditorDialog({
 
   const apiBase = entityType === "movie"
     ? `/api/movies/${entityId}`
+    : entityType === "tvshow"
+    ? `/api/tv/${entityId}`
     : `/api/people/${entityId}`;
 
   const queryKey = entityType === "movie"
     ? ["movie", entityId]
+    : entityType === "tvshow"
+    ? ["tv-show", entityId]
     : ["person", entityId];
 
   const { data, refetch } = useQuery<MovieData | PersonData>({
@@ -67,9 +71,9 @@ export function ImageEditorDialog({
     }
   }, [open]);
 
-  const posterPath = entityType === "movie"
-    ? (data as MovieData)?.posterPath
-    : (data as PersonData)?.photoPath;
+  const posterPath = entityType === "person"
+    ? (data as PersonData)?.photoPath
+    : (data as MovieData)?.posterPath;
   const fanartPath = data?.fanartPath;
   const fanartSource = entityType === "person"
     ? (data as PersonData)?.fanartSource

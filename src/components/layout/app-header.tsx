@@ -63,6 +63,13 @@ export function AppHeader() {
   const isPersonFilmography = pathname === "/movies" && searchParams.get("personId");
   const isMovieDetail = /^\/movies\/[^/]+$/.test(pathname);
   const isPersonDetail = /^\/people\/[^/]+$/.test(pathname);
+  // TV domain — mirrors the Cinema treatment: blended transparent header on the
+  // TV home + show/person detail pages (their heroes paint a top scrim), and the
+  // episode player hides the header entirely.
+  const isTvHome = pathname === "/tv";
+  const isTvShowDetail = /^\/tv\/[^/]+$/.test(pathname);
+  const isTvPersonDetail = /^\/tv\/people\/[^/]+$/.test(pathname);
+  const isTvPlayerPage = /^\/tv\/episodes\/[^/]+\/play$/.test(pathname);
   // Music album/artist detail — solid-header back-nav (these pages are their own
   // scroll containers with a fanart-free layout, so they stay non-transparent).
   const isMusicDetail = /^\/music\/(albums|artists)\/[^/]+$/.test(pathname);
@@ -70,7 +77,7 @@ export function AppHeader() {
   const isSearchPage = pathname === "/search";
   const isProfilePage = pathname === "/profile";
   const isPreferencesPage = pathname.startsWith("/preferences");
-  const needsBackNav = isMovieDetail || isPersonDetail || isMusicDetail || isSearchPage || isProfilePage || isPreferencesPage;
+  const needsBackNav = isMovieDetail || isPersonDetail || isMusicDetail || isSearchPage || isProfilePage || isPreferencesPage || isTvShowDetail || isTvPersonDetail;
   const libraryId = searchParams.get("libraryId");
   const personId = searchParams.get("personId");
   const filterGenre = searchParams.get("genre");
@@ -98,9 +105,9 @@ export function AppHeader() {
       .toUpperCase()
       .slice(0, 2) || "U";
 
-  if (isPlayerPage) return null;
+  if (isPlayerPage || isTvPlayerPage) return null;
 
-  const isTransparent = isMovieDetail || isPersonDetail || pathname === "/";
+  const isTransparent = isMovieDetail || isPersonDetail || pathname === "/" || isTvHome || isTvShowDetail || isTvPersonDetail;
 
   return (
     <header
@@ -154,7 +161,7 @@ export function AppHeader() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <Link
-              href="/"
+              href={isTvDomain ? "/tv" : "/"}
               className={`transition-colors ${
                 isTransparent
                   ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"

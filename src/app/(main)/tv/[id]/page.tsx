@@ -1,16 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Heart, CheckCircle, Sparkles, Clock, Tv } from "lucide-react";
+import { Play, Heart, CheckCircle, Sparkles, Clock, Tv, MoreVertical, Pencil, ImageIcon, Trash2 } from "lucide-react";
 import { PersonCard } from "@/components/people/person-card";
+import { BookmarkCard, type CustomIconData } from "@/components/movie/bookmark-card";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { useHeroParallax } from "@/hooks/use-hero-parallax";
 import { useTranslations } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { TvShowMetadataEditor } from "@/components/tv/tv-show-metadata-editor";
+import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
+import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 interface EpisodeItem {
   id: string;
@@ -50,6 +71,7 @@ interface ShowDetail {
   genres?: string[];
   studios?: string[];
   country?: string[];
+  mediaLibraryId?: string;
   posterPath?: string | null;
   fanartPath?: string | null;
   seasonCount?: number | null;
@@ -58,6 +80,24 @@ interface ShowDetail {
   cast: { id: string; name: string; role?: string; photoPath?: string | null; photoBlur?: string | null; personalRating?: number | null; isFavorite?: boolean | null; ageAtRelease?: number | null }[];
   directors: { id: string; name: string }[];
   userData: { isFavorite: boolean; personalRating?: number | null; dimensionRatings?: Record<string, number> | null } | null;
+}
+
+// Aggregated show-wide bookmark (one per episode bookmark) from
+// GET /api/tv/[id]/bookmarks — carries the episodeId so per-bookmark
+// edit/delete can target the right per-episode route.
+interface ShowBookmark {
+  id: string;
+  episodeId: string;
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeTitle?: string | null;
+  timestampSeconds: number;
+  iconType?: string;
+  tags?: string[];
+  note?: string;
+  thumbnailPath?: string | null;
+  thumbnailAspect?: number | null;
+  viewState?: { lon: number; lat: number; fov: number } | null;
 }
 
 function formatRuntime(totalSeconds?: number | null, minutes?: number | null) {
@@ -72,17 +112,45 @@ function formatRuntime(totalSeconds?: number | null, minutes?: number | null) {
 
 export default function ShowDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const showId = params.id as string;
   const queryClient = useQueryClient();
   const t = useTranslations("tv");
   const tMovies = useTranslations("movies");
+  const tMeta = useTranslations("metadata");
+  const tCommon = useTranslations("common");
+  const { data: prefs } = useUserPreferences();
+  const tvShowDimensions = prefs?.tvShowRatingDimensions ?? [];
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
   const onImgError = (path: string) => setImgErrors((prev) => new Set(prev).add(path));
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [metadataOpen, setMetadataOpen] = useState(false);
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteFiles, setDeleteFiles] = useState(false);
 
   const { data: show } = useQuery<ShowDetail>({
     queryKey: ["tv-show", showId],
     queryFn: () => fetch(`/api/tv/${showId}`).then((r) => r.json()),
+  });
+
+  const { data: bookmarks = [] } = useQuery<ShowBookmark[]>({
+    queryKey: ["tv-show-bookmarks", showId],
+    queryFn: async () => {
+      const r = await fetch(`/api/tv/${showId}/bookmarks`);
+      if (!r.ok) throw new Error("Failed to fetch bookmarks");
+      return r.json();
+    },
+  });
+
+  const { data: customIcons = [] } = useQuery<CustomIconData[]>({
+    queryKey: ["bookmark-icons"],
+    queryFn: async () => {
+      const r = await fetch("/api/settings/bookmark-icons");
+      if (!r.ok) throw new Error("Failed to fetch bookmark icons");
+      return r.json();
+    },
   });
 
   const { scrollRef, heroRef, fanartRef, posterRef } = useHeroParallax({ ready: !!show });
@@ -105,6 +173,42 @@ export default function ShowDetailPage() {
         body: JSON.stringify({ isPlayed }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show", showId] }),
+  });
+
+  const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
+    await fetch(`/api/tv/${showId}/user-data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+    });
+    queryClient.invalidateQueries({ queryKey: ["tv-show", showId] });
+  };
+
+  const deleteShow = useMutation({
+    mutationFn: (opts?: { deleteFiles?: boolean }) =>
+      fetch(`/api/tv/${showId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
+      router.push("/tv");
+    },
+  });
+
+  // Bookmark edit/delete hit the PER-EPISODE routes; the episodeId comes from
+  // each aggregated bookmark and is captured in the map closure below.
+  const deleteBookmark = useMutation({
+    mutationFn: ({ episodeId, bookmarkId }: { episodeId: string; bookmarkId: string }) =>
+      fetch(`/api/tv/episodes/${episodeId}/bookmarks/${bookmarkId}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show-bookmarks", showId] }),
+  });
+
+  const updateBookmark = useMutation({
+    mutationFn: ({ episodeId, bookmarkId, data }: { episodeId: string; bookmarkId: string; data: { iconType?: string; tags?: string[]; note?: string } }) =>
+      fetch(`/api/tv/episodes/${episodeId}/bookmarks/${bookmarkId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show-bookmarks", showId] }),
   });
 
   if (!show) {
@@ -201,6 +305,23 @@ export default function ShowDetailPage() {
                     </span>
                   </>
                 )}
+                <span className="text-white/40">&middot;</span>
+                {show.userData?.personalRating != null && show.userData.personalRating > 0 ? (
+                  <button
+                    onClick={() => setRatingOpen(true)}
+                    className="font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
+                  >
+                    ★ {show.userData.personalRating.toFixed(1)}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setRatingOpen(true)}
+                    className="text-white/40 transition-colors hover:text-[var(--gold)] cursor-pointer"
+                    title={tMovies("setRating")}
+                  >
+                    ★
+                  </button>
+                )}
               </div>
 
               {/* Badges */}
@@ -228,6 +349,35 @@ export default function ShowDetailPage() {
                 >
                   <Heart className={`h-5 w-5 ${show.userData?.isFavorite ? "fill-red-400" : ""}`} />
                 </button>
+
+                {/* Three-dot menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="glass-btn flex h-11 w-11 items-center justify-center rounded-xl text-white/70 transition-all"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-52 border-white/10 bg-black/70 backdrop-blur-xl"
+                  >
+                    <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
+                      <Pencil className="h-4 w-4" />
+                      {tMeta("editMetadata")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
+                      <ImageIcon className="h-4 w-4" />
+                      {tMeta("editImages")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
+                      <Trash2 className="h-4 w-4" />
+                      {tMeta("deleteMedia")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Overview */}
@@ -242,7 +392,19 @@ export default function ShowDetailPage() {
                 {show.genres && show.genres.length > 0 && (
                   <div>
                     <span className="text-white/50">Genres: </span>
-                    <span className="text-white/90">{show.genres.join(", ")}</span>
+                    <span className="text-white/90">
+                      {show.genres.map((genre, i) => (
+                        <span key={genre}>
+                          {i > 0 && ", "}
+                          <Link
+                            href={`/tv?${show.mediaLibraryId ? `libraryId=${show.mediaLibraryId}&` : ""}genre=${encodeURIComponent(genre)}`}
+                            className="hover:text-white hover:underline transition-colors"
+                          >
+                            {genre}
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
                   </div>
                 )}
                 {show.directors && show.directors.length > 0 && (
@@ -254,7 +416,19 @@ export default function ShowDetailPage() {
                 {show.studios && show.studios.length > 0 && (
                   <div>
                     <span className="text-white/50">Studio: </span>
-                    <span className="text-white/90">{show.studios.join(", ")}</span>
+                    <span className="text-white/90">
+                      {show.studios.map((studio, i) => (
+                        <span key={studio}>
+                          {i > 0 && ", "}
+                          <Link
+                            href={`/tv?${show.mediaLibraryId ? `libraryId=${show.mediaLibraryId}&` : ""}studio=${encodeURIComponent(studio)}`}
+                            className="hover:text-white hover:underline transition-colors"
+                          >
+                            {studio}
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
                   </div>
                 )}
               </div>
@@ -368,6 +542,40 @@ export default function ShowDetailPage() {
             </section>
           )}
 
+          {/* Bookmarks Section — aggregated across all episodes */}
+          {bookmarks.length > 0 && (() => {
+            const landscapeBm = bookmarks.filter((bm) => (bm.thumbnailAspect ?? 1.78) >= 1);
+            const portraitBm = bookmarks.filter((bm) => (bm.thumbnailAspect ?? 1.78) < 1);
+            // Each aggregated bookmark carries its own episodeId; capture it in
+            // the map closure so BookmarkCard's (id) / (id, data) callbacks hit
+            // the correct per-episode route.
+            const renderBm = (bm: ShowBookmark) => (
+              <BookmarkCard
+                key={bm.id}
+                bookmark={bm}
+                playHref={`/tv/episodes/${bm.episodeId}/play?t=${bm.timestampSeconds}${bm.viewState ? `&vs=${bm.viewState.lon.toFixed(2)},${bm.viewState.lat.toFixed(2)},${bm.viewState.fov.toFixed(0)}` : "&vs=off"}`}
+                onUpdate={(id, data) => updateBookmark.mutate({ episodeId: bm.episodeId, bookmarkId: id, data })}
+                onDelete={(id) => deleteBookmark.mutate({ episodeId: bm.episodeId, bookmarkId: id })}
+                customIcons={customIcons}
+                disabledIconIds={prefs?.disabledBookmarkIcons}
+              />
+            );
+            return (
+              <section className="px-4 md:px-20 mt-4 space-y-2">
+                {landscapeBm.length > 0 && (
+                  <ScrollRow title={portraitBm.length > 0 ? `${t("bookmarks")} — ${tMovies("landscape")} (${landscapeBm.length})` : `${t("bookmarks")} (${landscapeBm.length})`}>
+                    {landscapeBm.map(renderBm)}
+                  </ScrollRow>
+                )}
+                {portraitBm.length > 0 && (
+                  <ScrollRow title={landscapeBm.length > 0 ? `${t("bookmarks")} — ${tMovies("portrait")} (${portraitBm.length})` : `${t("bookmarks")} (${portraitBm.length})`}>
+                    {portraitBm.map(renderBm)}
+                  </ScrollRow>
+                )}
+              </section>
+            );
+          })()}
+
           {/* Cast Section */}
           {(show.cast?.length ?? 0) > 0 && (
             <section className="px-4 md:px-20 mt-8 pb-12">
@@ -395,6 +603,75 @@ export default function ShowDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Metadata editor dialog */}
+      <TvShowMetadataEditor
+        showId={showId}
+        open={metadataOpen}
+        onOpenChange={setMetadataOpen}
+      />
+
+      {/* Image editor dialog */}
+      <ImageEditorDialog
+        open={imageEditorOpen}
+        onOpenChange={setImageEditorOpen}
+        entityType="tvshow"
+        entityId={showId}
+        entityName={show.title}
+      />
+
+      {/* Personal rating dialog */}
+      <StarRatingDialog
+        open={ratingOpen}
+        onOpenChange={setRatingOpen}
+        value={show.userData?.personalRating ?? null}
+        onSave={savePersonalRating}
+        dimensions={tvShowDimensions}
+        dimensionRatings={show.userData?.dimensionRatings}
+        dimensionWeights={prefs?.tvShowDimensionWeights}
+      />
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{t("deleteShow")}</DialogTitle>
+            <DialogDescription>{t("confirmDeleteShow")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 px-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deleteFiles}
+                onChange={(e) => setDeleteFiles(e.target.checked)}
+                className="h-4 w-4 rounded border-white/20 accent-destructive"
+              />
+              <span className="text-sm text-foreground">{t("deleteLocalFiles")}</span>
+            </label>
+            {deleteFiles && (
+              <p className="text-xs text-destructive pl-6">{t("deleteLocalFilesWarning")}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              onClick={() => {
+                deleteShow.mutate({ deleteFiles });
+                setDeleteOpen(false);
+                setDeleteFiles(false);
+              }}
+              className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 cursor-pointer"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
