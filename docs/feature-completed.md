@@ -3,6 +3,42 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-13 — Demo Mode (one-click populated install + clear/factory-reset)
+
+A fresh install has no media (all `test-media/`/`data/*` is gitignored), so a
+first-time user saw an empty product. Demo Mode fills all four domains from a
+committed asset bundle.
+
+- **Committed `demo-assets/` bundle** (~58 MB) authored once by
+  `scripts/build-demo-assets.ts` from the dev's local test data: 30 movies + 8
+  shows' NFO/posters/`.stills`, 18 reused photos, 3 synthetic-tone music albums,
+  and only the cast photos referenced by NFOs (520 cinema + 78 TV). One 235 KB
+  `placeholder.mp4` (no per-item videos committed) + a `manifest.json`.
+- **Runtime seeder** `src/lib/demo/seed.ts` materializes the bundle into
+  `{dataDir}/demo/`, copies the placeholder into every movie/episode slot,
+  **rewrites NFO `<thumb>` actor-photo paths** to the runtime metadata dir, then
+  drives the REAL `scanLibrary` per domain (no forked write path). Demo libs run
+  `jellyfinCompat=true` (imports the bundled cast photos), `scraperEnabled=false`,
+  and carry an `is_demo` flag (migration 0042).
+- **Setup wizard** gains a fork after language: manual setup (unchanged) vs
+  "Explore with demo content" → SSE progress screen → credentials screen
+  (`demo`/`demo`). New `POST /api/setup/demo` (seed, SSE) + `DELETE` (clear /
+  `?factoryReset=true`).
+- **Dashboard "Demo Data" panel** (shown only when an `is_demo` lib exists): clear
+  demo libraries (keeps account, reuses the per-library teardown) or factory reset
+  (also removes the demo account → returns to first-run setup). Both key off the
+  `is_demo` allowlist, so a real library added alongside the demo is never touched.
+- Bundled into packaged builds via a `scripts/package.ts` copy step.
+
+Verified end-to-end against an empty `KUBBY_DATA_DIR`: 4 demo libs, 30 movies (all
+with media_streams → playable), 8 shows/14 episodes, 18 photos, 3 albums/12 tracks,
+521 imported cast photos; clear keeps the account, factory reset empties users,
+and a real non-demo library survives clear.
+
+Also shipped a setup-wizard UX review (`docs/setup-wizard-ux-review.md`) — 9
+findings (inverted eye-toggle, hardcoded English validation, inconsistent
+library-type lists across 3 surfaces, no post-setup scan, etc.), not yet fixed.
+
 ## 2026-07-12 — Left-drawer domain switcher (orientation + always-available switching)
 
 The user found it easy to lose track of which of the four domains they were in, and the

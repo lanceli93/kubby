@@ -27,6 +27,9 @@ export const mediaLibraries = sqliteTable("media_libraries", {
   scraperEnabled: integer("scraper_enabled", { mode: "boolean" }).notNull().default(false),
   jellyfinCompat: integer("jellyfin_compat", { mode: "boolean" }).notNull().default(false),
   metadataLanguage: text("metadata_language"),
+  // Marks libraries created by Demo Mode. This is the allowlist the demo
+  // clear / factory-reset paths key on — never a path-prefix guess.
+  isDemo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
   lastScannedAt: text("last_scanned_at"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });

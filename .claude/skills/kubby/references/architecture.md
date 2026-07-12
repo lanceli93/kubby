@@ -197,7 +197,7 @@ pipeline, auth, i18n) is reused, not forked.
 
 **settings**: key (PK), value — global key-value config (e.g., `tmdb_api_key`)
 
-**media_libraries**: id, name, type (movie/tvshow/music/book/**photo**), folder_path, scraper_enabled, jellyfin_compat, metadata_language, last_scanned_at, created_at
+**media_libraries**: id, name, type (movie/tvshow/music/book/**photo**), folder_path, scraper_enabled, jellyfin_compat, metadata_language, **is_demo** (Demo Mode allowlist — migration 0042), last_scanned_at, created_at
 
 **movies**: id, title, original_title, sort_name, overview, tagline, file_path, folder_path, poster_path (relative), fanart_path (relative), nfo_path, community_rating, official_rating, runtime_minutes, premiere_date, year, genres (JSON array), studios (JSON array), country, video_codec, audio_codec, video_width, video_height, audio_channels, container, total_bitrate, file_size, format_name, disc_count, duration_seconds, tmdb_id, imdb_id, media_library_id (FK CASCADE), date_added
 - Indexes: media_library_id, year, date_added

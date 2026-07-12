@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Gladiator</title>
+  <originaltitle>Gladiator</originaltitle>
+  <sorttitle>Gladiator</sorttitle>
+  <plot>After the death of Emperor Marcus Aurelius, his devious son takes power and demotes Maximus, one of Rome&apos;s most capable generals who Marcus preferred. Eventually, Maximus is forced to become a gladiator and battle to the death against other men for the amusement of paying audiences.</plot>
+  <tagline>What we do in life echoes in eternity.</tagline>
+  <rating>8.227</rating>
+  <runtime>155</runtime>
+  <premiered>2000-05-04</premiered>
+  <year>2000</year>
+  <genre>Action</genre>
+  <genre>Drama</genre>
+  <genre>Adventure</genre>
+  <studio>Universal Pictures</studio>
+  <studio>Scott Free Productions</studio>
+  <studio>Red Wagon Entertainment</studio>
+  <studio>Mill Film</studio>
+  <studio>DreamWorks Pictures</studio>
+  <country>United Kingdom</country>
+  <uniqueid type="tmdb">98</uniqueid>
+  <uniqueid type="imdb">tt0172495</uniqueid>
+  <actor>
+    <name>Russell Crowe</name>
+    <role>Maximus</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Russell Crowe\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>934</tmdbid>
+  </actor>
+  <actor>
+    <name>Joaquin Phoenix</name>
+    <role>Commodus</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Joaquin Phoenix\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>73421</tmdbid>
+  </actor>
+  <actor>
+    <name>Connie Nielsen</name>
+    <role>Lucilla</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Connie Nielsen\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>935</tmdbid>
+  </actor>
+  <actor>
+    <name>Oliver Reed</name>
+    <role>Proximo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\O\Oliver Reed\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>936</tmdbid>
+  </actor>
+  <actor>
+    <name>Richard Harris</name>
+    <role>Marcus Aurelius</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Richard Harris\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>194</tmdbid>
+  </actor>
+  <actor>
+    <name>Derek Jacobi</name>
+    <role>Gracchus</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Derek Jacobi\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>937</tmdbid>
+  </actor>
+  <actor>
+    <name>Djimon Hounsou</name>
+    <role>Juba</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Djimon Hounsou\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>938</tmdbid>
+  </actor>
+  <actor>
+    <name>David Schofield</name>
+    <role>Falco</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Schofield\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>939</tmdbid>
+  </actor>
+  <actor>
+    <name>John Shrapnel</name>
+    <role>Gaius</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Shrapnel\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>940</tmdbid>
+  </actor>
+  <actor>
+    <name>Tomas Arana</name>
+    <role>Quintus</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tomas Arana\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>941</tmdbid>
+  </actor>
+  <actor>
+    <name>Ralf Moeller</name>
+    <role>Hagen</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ralf Moeller\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>942</tmdbid>
+  </actor>
+  <actor>
+    <name>Spencer Treat Clark</name>
+    <role>Lucius</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Spencer Treat Clark\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>4012</tmdbid>
+  </actor>
+  <actor>
+    <name>David Hemmings</name>
+    <role>Cassius</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Hemmings\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>15196</tmdbid>
+  </actor>
+  <actor>
+    <name>Tommy Flanagan</name>
+    <role>Cicero</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tommy Flanagan\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>2478</tmdbid>
+  </actor>
+  <actor>
+    <name>Sven-Ole Thorsen</name>
+    <role>Tiger</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sven-Ole Thorsen\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>20761</tmdbid>
+  </actor>
+  <actor>
+    <name>Omid Djalili</name>
+    <role>Slave Trader</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\O\Omid Djalili\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>41379</tmdbid>
+  </actor>
+  <actor>
+    <name>Nicholas McGaughey</name>
+    <role>Praetorian Officer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\N\Nicholas McGaughey\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>80368</tmdbid>
+  </actor>
+  <actor>
+    <name>Chris Kell</name>
+    <role>Scribe</role>
+    <order>17</order>
+    <tmdbid>3785463</tmdbid>
+  </actor>
+  <actor>
+    <name>Tony Curran</name>
+    <role>Assassin #1</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tony Curran\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>2220</tmdbid>
+  </actor>
+  <actor>
+    <name>Mark Lewis</name>
+    <role>Assassin #2</role>
+    <order>19</order>
+    <tmdbid>27408</tmdbid>
+  </actor>
+  <director>Ridley Scott</director>
+  <tag>gladiator</tag>
+  <tag>rome, italy</tag>
+  <tag>arena</tag>
+  <tag>senate</tag>
+  <tag>roman empire</tag>
+  <tag>parent child relationship</tag>
+  <tag>emperor</tag>
+  <tag>slavery</tag>
+  <tag>ancient rome</tag>
+  <tag>revenge</tag>
+  <tag>battlefield</tag>
+  <tag>slave auction</tag>
+  <tag>historical fiction</tag>
+  <tag>ancient world</tag>
+  <tag>period drama</tag>
+  <tag>combat</tag>
+  <tag>chariot</tag>
+  <tag>philosopher</tag>
+  <tag>grim</tag>
+  <tag>barbarian horde</tag>
+  <tag>2nd century</tag>
+  <tag>successor</tag>
+  <tag>commodus</tag>
+  <tag>maximus</tag>
+  <tag>antiquity</tag>
+  <tag>gladiador</tag>
+</movie>

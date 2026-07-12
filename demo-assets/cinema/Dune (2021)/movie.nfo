@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Dune</title>
+  <originaltitle>Dune</originaltitle>
+  <sorttitle>Dune</sorttitle>
+  <plot>Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and his people. As malevolent forces explode into conflict over the planet&apos;s exclusive supply of the most precious resource in existence-a commodity capable of unlocking humanity&apos;s greatest potential-only those who can conquer their fear will survive.</plot>
+  <tagline>It begins.</tagline>
+  <rating>7.781</rating>
+  <runtime>155</runtime>
+  <premiered>2021-09-15</premiered>
+  <year>2021</year>
+  <genre>Science Fiction</genre>
+  <genre>Adventure</genre>
+  <studio>Legendary Pictures</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">438631</uniqueid>
+  <uniqueid type="imdb">tt1160419</uniqueid>
+  <actor>
+    <name>Timothée Chalamet</name>
+    <role>Paul Atreides</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Timothée Chalamet\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>1190668</tmdbid>
+  </actor>
+  <actor>
+    <name>Rebecca Ferguson</name>
+    <role>Lady Jessica Atreides</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rebecca Ferguson\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>933238</tmdbid>
+  </actor>
+  <actor>
+    <name>Oscar Isaac</name>
+    <role>Duke Leto Atreides</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\O\Oscar Isaac\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>25072</tmdbid>
+  </actor>
+  <actor>
+    <name>Jason Momoa</name>
+    <role>Duncan Idaho</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jason Momoa\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>117642</tmdbid>
+  </actor>
+  <actor>
+    <name>Stellan Skarsgård</name>
+    <role>Baron Vladimir Harkonnen</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Stellan Skarsgård\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>1640</tmdbid>
+  </actor>
+  <actor>
+    <name>Stephen McKinley Henderson</name>
+    <role>Thufir Hawat</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Stephen McKinley Henderson\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>196179</tmdbid>
+  </actor>
+  <actor>
+    <name>Josh Brolin</name>
+    <role>Gurney Halleck</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Josh Brolin\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>16851</tmdbid>
+  </actor>
+  <actor>
+    <name>Javier Bardem</name>
+    <role>Stilgar</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Javier Bardem\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>3810</tmdbid>
+  </actor>
+  <actor>
+    <name>Sharon Duncan-Brewster</name>
+    <role>Dr. Liet Kynes</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sharon Duncan-Brewster\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>195666</tmdbid>
+  </actor>
+  <actor>
+    <name>Chang Chen</name>
+    <role>Dr. Wellington Yueh</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Chang Chen\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>1622</tmdbid>
+  </actor>
+  <actor>
+    <name>Dave Bautista</name>
+    <role>Beast Rabban Harkonnen</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dave Bautista\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>543530</tmdbid>
+  </actor>
+  <actor>
+    <name>David Dastmalchian</name>
+    <role>Piter de Vries</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Dastmalchian\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>83854</tmdbid>
+  </actor>
+  <actor>
+    <name>Zendaya</name>
+    <role>Chani</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Z\Zendaya\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>505710</tmdbid>
+  </actor>
+  <actor>
+    <name>Charlotte Rampling</name>
+    <role>Reverend Mother Mohiam</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Charlotte Rampling\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>44079</tmdbid>
+  </actor>
+  <actor>
+    <name>Babs Olusanmokun</name>
+    <role>Jamis</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Babs Olusanmokun\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>205923</tmdbid>
+  </actor>
+  <actor>
+    <name>Benjamin Clementine</name>
+    <role>Herald of the Change</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Benjamin Clementine\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>3185383</tmdbid>
+  </actor>
+  <actor>
+    <name>Souad Faress</name>
+    <role>Bene Gesserit Sister</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Souad Faress\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>261927</tmdbid>
+  </actor>
+  <actor>
+    <name>Golda Rosheuvel</name>
+    <role>Shadout Mapes</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Golda Rosheuvel\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>1856875</tmdbid>
+  </actor>
+  <actor>
+    <name>Roger Yuan</name>
+    <role>Lieutenant Lanville</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Roger Yuan\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>2974</tmdbid>
+  </actor>
+  <actor>
+    <name>Seun Shote</name>
+    <role>Arrakeen Residency Gardener</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Seun Shote\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>2411333</tmdbid>
+  </actor>
+  <director>Denis Villeneuve</director>
+  <tag>empire</tag>
+  <tag>future</tag>
+  <tag>army</tag>
+  <tag>based on novel or book</tag>
+  <tag>prophecy</tag>
+  <tag>dystopia</tag>
+  <tag>emperor</tag>
+  <tag>sand</tag>
+  <tag>spice</tag>
+  <tag>chosen one</tag>
+  <tag>hallucinogen</tag>
+  <tag>treason</tag>
+  <tag>baron</tag>
+  <tag>revenge</tag>
+  <tag>premonition</tag>
+  <tag>betrayal</tag>
+  <tag>space</tag>
+  <tag>water shortage</tag>
+  <tag>creature</tag>
+  <tag>desert</tag>
+  <tag>knife fight</tag>
+  <tag>destiny</tag>
+  <tag>giant worm</tag>
+  <tag>space opera</tag>
+  <tag>sand dune</tag>
+  <tag>messiah</tag>
+  <tag>complex</tag>
+  <tag>mother son relationship</tag>
+  <tag>giant creature</tag>
+  <tag>dune</tag>
+  <tag>best picture nominee</tag>
+  <tag>oscar winner</tag>
+</movie>

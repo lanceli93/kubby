@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Django Unchained</title>
+  <originaltitle>Django Unchained</originaltitle>
+  <sorttitle>Django Unchained</sorttitle>
+  <plot>With the help of a German bounty hunter, a freed slave sets out to rescue his wife from a brutal Mississippi plantation owner.</plot>
+  <tagline>Life, liberty, and the pursuit of vengeance.</tagline>
+  <rating>8.2</rating>
+  <runtime>165</runtime>
+  <premiered>2012-12-25</premiered>
+  <year>2012</year>
+  <genre>Drama</genre>
+  <genre>Western</genre>
+  <studio>The Weinstein Company</studio>
+  <studio>Columbia Pictures</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">68718</uniqueid>
+  <uniqueid type="imdb">tt1853728</uniqueid>
+  <actor>
+    <name>Jamie Foxx</name>
+    <role>Django Freeman</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jamie Foxx\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>134</tmdbid>
+  </actor>
+  <actor>
+    <name>Christoph Waltz</name>
+    <role>Dr. King Schultz</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Christoph Waltz\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>27319</tmdbid>
+  </actor>
+  <actor>
+    <name>Leonardo DiCaprio</name>
+    <role>Calvin J. Candie</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Leonardo DiCaprio\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>6193</tmdbid>
+  </actor>
+  <actor>
+    <name>Kerry Washington</name>
+    <role>Broomhilda von Shaft</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kerry Washington\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>11703</tmdbid>
+  </actor>
+  <actor>
+    <name>Samuel L. Jackson</name>
+    <role>Stephen</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Samuel L. Jackson\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>2231</tmdbid>
+  </actor>
+  <actor>
+    <name>Walton Goggins</name>
+    <role>Billy Crash</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\W\Walton Goggins\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>27740</tmdbid>
+  </actor>
+  <actor>
+    <name>Dennis Christopher</name>
+    <role>Leonide Moguy</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dennis Christopher\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>27770</tmdbid>
+  </actor>
+  <actor>
+    <name>James Remar</name>
+    <role>Butch Pooch / Ace Speck</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\James Remar\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>1736</tmdbid>
+  </actor>
+  <actor>
+    <name>David Steen</name>
+    <role>Mr. Stonesipher</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Steen\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1067187</tmdbid>
+  </actor>
+  <actor>
+    <name>Dana Gourrier</name>
+    <role>Cora</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dana Gourrier\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>1133063</tmdbid>
+  </actor>
+  <actor>
+    <name>Nichole Galicia</name>
+    <role>Sheba</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\N\Nichole Galicia\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1037108</tmdbid>
+  </actor>
+  <actor>
+    <name>Laura Cayouette</name>
+    <role>Lara Lee Candie-Fitzwilly</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Laura Cayouette\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>565498</tmdbid>
+  </actor>
+  <actor>
+    <name>Ato Essandoh</name>
+    <role>D&apos;Artagnan</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Ato Essandoh\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>5377</tmdbid>
+  </actor>
+  <actor>
+    <name>Sammi Rotibi</name>
+    <role>Rodney</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sammi Rotibi\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>19300</tmdbid>
+  </actor>
+  <actor>
+    <name>Clay Donahue Fontenot</name>
+    <role>Big Fred&apos;s Opponent</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Clay Donahue Fontenot\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1291797</tmdbid>
+  </actor>
+  <actor>
+    <name>Escalante Lundy</name>
+    <role>Big Fred</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Escalante Lundy\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>1129647</tmdbid>
+  </actor>
+  <actor>
+    <name>Miriam F. Glover</name>
+    <role>Betina</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Miriam F. Glover\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>1291798</tmdbid>
+  </actor>
+  <actor>
+    <name>Don Johnson</name>
+    <role>Spencer &quot;Big Daddy&quot; Bennett</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Don Johnson\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>25129</tmdbid>
+  </actor>
+  <actor>
+    <name>Franco Nero</name>
+    <role>Amerigo Vessepi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Franco Nero\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>22383</tmdbid>
+  </actor>
+  <actor>
+    <name>James Russo</name>
+    <role>Dicky Speck</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\James Russo\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>785</tmdbid>
+  </actor>
+  <director>Quentin Tarantino</director>
+  <tag>rescue</tag>
+  <tag>friendship</tag>
+  <tag>bounty hunter</tag>
+  <tag>ku klux klan</tag>
+  <tag>texas</tag>
+  <tag>slavery</tag>
+  <tag>plantation</tag>
+  <tag>revenge</tag>
+  <tag>racism</tag>
+  <tag>slave trade</tag>
+  <tag>black slave</tag>
+  <tag>19th century</tag>
+  <tag>white supremacy</tag>
+  <tag>anxious</tag>
+  <tag>deep south</tag>
+  <tag>old west</tag>
+  <tag>mississippi</tag>
+</movie>

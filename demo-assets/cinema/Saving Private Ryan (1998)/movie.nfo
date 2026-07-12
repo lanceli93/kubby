@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Saving Private Ryan</title>
+  <originaltitle>Saving Private Ryan</originaltitle>
+  <sorttitle>Saving Private Ryan</sorttitle>
+  <plot>As U.S. troops storm the beaches of Normandy, three brothers lie dead on the battlefield, with a fourth trapped behind enemy lines. Ranger captain John Miller and seven men are tasked with penetrating German-held territory and bringing the boy home.</plot>
+  <tagline>The mission is a man.</tagline>
+  <rating>8.228</rating>
+  <runtime>169</runtime>
+  <premiered>1998-07-24</premiered>
+  <year>1998</year>
+  <genre>War</genre>
+  <genre>Drama</genre>
+  <genre>History</genre>
+  <studio>DreamWorks Pictures</studio>
+  <studio>Paramount Pictures</studio>
+  <studio>Amblin Entertainment</studio>
+  <studio>Mutual Film Company</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">857</uniqueid>
+  <uniqueid type="imdb">tt0120815</uniqueid>
+  <actor>
+    <name>Tom Hanks</name>
+    <role>Captain Miller</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Hanks\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>31</tmdbid>
+  </actor>
+  <actor>
+    <name>Tom Sizemore</name>
+    <role>Sergeant Horvath</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Sizemore\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>3197</tmdbid>
+  </actor>
+  <actor>
+    <name>Edward Burns</name>
+    <role>Private Reiben</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Edward Burns\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>12833</tmdbid>
+  </actor>
+  <actor>
+    <name>Barry Pepper</name>
+    <role>Private Jackson</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Barry Pepper\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>12834</tmdbid>
+  </actor>
+  <actor>
+    <name>Adam Goldberg</name>
+    <role>Private Mellish</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Adam Goldberg\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>6163</tmdbid>
+  </actor>
+  <actor>
+    <name>Vin Diesel</name>
+    <role>Private Caparzo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\V\Vin Diesel\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>12835</tmdbid>
+  </actor>
+  <actor>
+    <name>Giovanni Ribisi</name>
+    <role>T/4 Medic Wade</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Giovanni Ribisi\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>1771</tmdbid>
+  </actor>
+  <actor>
+    <name>Jeremy Davies</name>
+    <role>Corporal Upham</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jeremy Davies\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>4654</tmdbid>
+  </actor>
+  <actor>
+    <name>Matt Damon</name>
+    <role>Private Ryan</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Matt Damon\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1892</tmdbid>
+  </actor>
+  <actor>
+    <name>Ted Danson</name>
+    <role>Captain Hamill</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Ted Danson\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>12836</tmdbid>
+  </actor>
+  <actor>
+    <name>Paul Giamatti</name>
+    <role>Sergeant Hill</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Paul Giamatti\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>13242</tmdbid>
+  </actor>
+  <actor>
+    <name>Dennis Farina</name>
+    <role>Lieutenant Colonel Anderson</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dennis Farina\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>1117</tmdbid>
+  </actor>
+  <actor>
+    <name>Joerg Stadler</name>
+    <role>Steamboat Willie</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Joerg Stadler\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>12838</tmdbid>
+  </actor>
+  <actor>
+    <name>Max Martini</name>
+    <role>Corporal Henderson</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Max Martini\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>94864</tmdbid>
+  </actor>
+  <actor>
+    <name>Dylan Bruno</name>
+    <role>Toynbe</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dylan Bruno\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>52476</tmdbid>
+  </actor>
+  <actor>
+    <name>Daniel Cerqueira</name>
+    <role>Weller</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Daniel Cerqueira\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>75071</tmdbid>
+  </actor>
+  <actor>
+    <name>Demetri Goritsas</name>
+    <role>Parker</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Demetri Goritsas\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>20471</tmdbid>
+  </actor>
+  <actor>
+    <name>Ian Porter</name>
+    <role>Trask</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\I\Ian Porter\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>59085</tmdbid>
+  </actor>
+  <actor>
+    <name>Gary Sefton</name>
+    <role>Rice</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Gary Sefton\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>218321</tmdbid>
+  </actor>
+  <actor>
+    <name>Julian Spencer</name>
+    <role>Garrity</role>
+    <order>19</order>
+    <tmdbid>141358</tmdbid>
+  </actor>
+  <director>Steven Spielberg</director>
+  <tag>dying and death</tag>
+  <tag>self sacrifice</tag>
+  <tag>bravery</tag>
+  <tag>world war ii</tag>
+  <tag>duty</tag>
+  <tag>normandy, france</tag>
+  <tag>troops</tag>
+  <tag>waffen ss</tag>
+  <tag>omaha beach</tag>
+  <tag>rescue mission</tag>
+  <tag>cowardice</tag>
+  <tag>us army</tag>
+  <tag>based on true story</tag>
+  <tag>d-day</tag>
+  <tag>military</tag>
+  <tag>german soldier</tag>
+  <tag>military operation</tag>
+  <tag>1940s</tag>
+  <tag>bloody deaths</tag>
+  <tag>u.s. army soldier</tag>
+  <tag>u.s. army ranger</tag>
+  <tag>massive casualties</tag>
+</movie>

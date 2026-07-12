@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Schindler&apos;s List</title>
+  <originaltitle>Schindler&apos;s List</originaltitle>
+  <sorttitle>Schindler&apos;s List</sorttitle>
+  <plot>The true story of how businessman Oskar Schindler saved over a thousand Jewish lives from the Nazis while they worked as slaves in his factory during World War II.</plot>
+  <tagline>Whoever saves one life, saves the world entire.</tagline>
+  <rating>8.57</rating>
+  <runtime>195</runtime>
+  <premiered>1993-12-15</premiered>
+  <year>1993</year>
+  <genre>Drama</genre>
+  <genre>History</genre>
+  <genre>War</genre>
+  <studio>Amblin Entertainment</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">424</uniqueid>
+  <uniqueid type="imdb">tt0108052</uniqueid>
+  <actor>
+    <name>Liam Neeson</name>
+    <role>Oskar Schindler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Liam Neeson\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>3896</tmdbid>
+  </actor>
+  <actor>
+    <name>Ben Kingsley</name>
+    <role>Itzhak Stern</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Ben Kingsley\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>2282</tmdbid>
+  </actor>
+  <actor>
+    <name>Ralph Fiennes</name>
+    <role>Amon Goeth</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ralph Fiennes\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>5469</tmdbid>
+  </actor>
+  <actor>
+    <name>Caroline Goodall</name>
+    <role>Emilie Schindler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Caroline Goodall\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>6692</tmdbid>
+  </actor>
+  <actor>
+    <name>Jonathan Sagall</name>
+    <role>Poldek Pfefferberg</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jonathan Sagall\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>6693</tmdbid>
+  </actor>
+  <actor>
+    <name>Embeth Davidtz</name>
+    <role>Helen Hirsch</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Embeth Davidtz\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>6368</tmdbid>
+  </actor>
+  <actor>
+    <name>Małgorzata Gebel</name>
+    <role>Viktoria Klonowska</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Małgorzata Gebel\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>6694</tmdbid>
+  </actor>
+  <actor>
+    <name>Shmuel Levy</name>
+    <role>Wilek Chilowicz</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Shmuel Levy\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>6695</tmdbid>
+  </actor>
+  <actor>
+    <name>Mark Ivanir</name>
+    <role>Marcel Goldberg</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mark Ivanir\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>6696</tmdbid>
+  </actor>
+  <actor>
+    <name>Béatrice Macola</name>
+    <role>Ingrid</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Béatrice Macola\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>6697</tmdbid>
+  </actor>
+  <actor>
+    <name>Andrzej Seweryn</name>
+    <role>Julian Scherner</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Andrzej Seweryn\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>2829</tmdbid>
+  </actor>
+  <actor>
+    <name>Friedrich von Thun</name>
+    <role>Rolf Czurda</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Friedrich von Thun\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>6698</tmdbid>
+  </actor>
+  <actor>
+    <name>Krzysztof Luft</name>
+    <role>Herman Toffel</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Krzysztof Luft\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>6699</tmdbid>
+  </actor>
+  <actor>
+    <name>Harry Nehring</name>
+    <role>Leo John</role>
+    <order>13</order>
+    <tmdbid>6700</tmdbid>
+  </actor>
+  <actor>
+    <name>Norbert Weisser</name>
+    <role>Albert Hujar</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\N\Norbert Weisser\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>6701</tmdbid>
+  </actor>
+  <actor>
+    <name>Adi Nitzan</name>
+    <role>Mila Pfefferberg</role>
+    <order>15</order>
+    <tmdbid>6702</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Schneider</name>
+    <role>Juda Dresner</role>
+    <order>16</order>
+    <tmdbid>1115699</tmdbid>
+  </actor>
+  <actor>
+    <name>Miri Fabian</name>
+    <role>Chaja Dresner</role>
+    <order>17</order>
+    <tmdbid>6704</tmdbid>
+  </actor>
+  <actor>
+    <name>Anna Mucha</name>
+    <role>Danka Dresner</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Anna Mucha\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>6705</tmdbid>
+  </actor>
+  <actor>
+    <name>Albert Misak</name>
+    <role>Mordecai Wulkan</role>
+    <order>19</order>
+    <tmdbid>6706</tmdbid>
+  </actor>
+  <director>Steven Spielberg</director>
+  <tag>factory</tag>
+  <tag>hero</tag>
+  <tag>nazi</tag>
+  <tag>concentration camp</tag>
+  <tag>ss (nazi schutzstaffel)</tag>
+  <tag>holocaust (shoah)</tag>
+  <tag>world war ii</tag>
+  <tag>ghetto</tag>
+  <tag>jew persecution</tag>
+  <tag>kraków, poland</tag>
+  <tag>defense industry</tag>
+  <tag>auschwitz-birkenau concentration camp</tag>
+  <tag>biography</tag>
+  <tag>based on true story</tag>
+  <tag>industrialist</tag>
+  <tag>historical fiction</tag>
+  <tag>black and white</tag>
+  <tag>train</tag>
+  <tag>period drama</tag>
+  <tag>poland</tag>
+  <tag>evil</tag>
+  <tag>historical drama</tag>
+  <tag>disheartening</tag>
+</movie>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>Friends</title>
+  <originaltitle>Friends</originaltitle>
+  <sorttitle>Friends</sorttitle>
+  <plot>Six young people from New York City, on their own and struggling to survive in the real world, find the companionship, comfort and support they get from each other to be the perfect antidote to the pressures of life.</plot>
+  <tagline>I&apos;ll be there for you.</tagline>
+  <rating>8.416</rating>
+  <premiered>1994-09-22</premiered>
+  <year>1994</year>
+  <status>Ended</status>
+  <genre>Comedy</genre>
+  <studio>Warner Bros. Television</studio>
+  <studio>Bright/Kauffman/Crane Productions</studio>
+  <country>US</country>
+  <uniqueid type="tmdb">1668</uniqueid>
+  <uniqueid type="imdb">tt0108778</uniqueid>
+  <uniqueid type="tvdb">79168</uniqueid>
+  <actor>
+    <name>Jennifer Aniston</name>
+    <role>Rachel Green</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Jennifer Aniston\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>4491</tmdbid>
+  </actor>
+  <actor>
+    <name>Courteney Cox</name>
+    <role>Monica Geller</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\C\Courteney Cox\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>14405</tmdbid>
+  </actor>
+  <actor>
+    <name>Lisa Kudrow</name>
+    <role>Phoebe Buffay</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\L\Lisa Kudrow\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>14406</tmdbid>
+  </actor>
+  <actor>
+    <name>Matt LeBlanc</name>
+    <role>Joey Tribbiani</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Matt LeBlanc\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>14407</tmdbid>
+  </actor>
+  <actor>
+    <name>Matthew Perry</name>
+    <role>Chandler Bing</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Matthew Perry\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>14408</tmdbid>
+  </actor>
+  <actor>
+    <name>David Schwimmer</name>
+    <role>Ross Geller</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\D\David Schwimmer\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>14409</tmdbid>
+  </actor>
+  <tag>new york city</tag>
+  <tag>roommates</tag>
+  <tag>friendship</tag>
+  <tag>cafe</tag>
+  <tag>apartment building</tag>
+  <tag>group of friends</tag>
+  <tag>manhattan, new york city</tag>
+  <tag>sitcom</tag>
+  <tag>young adult</tag>
+  <tag>searching for love</tag>
+  <tag>apartment</tag>
+  <tag>best friends</tag>
+</tvshow>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>The Grand Budapest Hotel</title>
+  <originaltitle>The Grand Budapest Hotel</originaltitle>
+  <sorttitle>The Grand Budapest Hotel</sorttitle>
+  <plot>The Grand Budapest Hotel tells of a legendary concierge at a famous European hotel between the wars and his friendship with a young employee who becomes his trusted protégé. The story involves the theft and recovery of a priceless Renaissance painting, the battle for an enormous family fortune and the slow and then sudden upheavals that transformed Europe during the first half of the 20th century.</plot>
+  <tagline>A murder case of Madam D. with enormous wealth and the most outrageous events surrounding her sudden death!</tagline>
+  <rating>8.027</rating>
+  <runtime>100</runtime>
+  <premiered>2014-02-26</premiered>
+  <year>2014</year>
+  <genre>Comedy</genre>
+  <genre>Drama</genre>
+  <studio>Fox Searchlight Pictures</studio>
+  <studio>Studio Babelsberg</studio>
+  <studio>Indian Paintbrush</studio>
+  <studio>TSG Entertainment</studio>
+  <studio>American Empirical Pictures</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">120467</uniqueid>
+  <uniqueid type="imdb">tt2278388</uniqueid>
+  <actor>
+    <name>Ralph Fiennes</name>
+    <role>M. Gustave</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ralph Fiennes\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>5469</tmdbid>
+  </actor>
+  <actor>
+    <name>F. Murray Abraham</name>
+    <role>Mr. Moustafa</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\F. Murray Abraham\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>1164</tmdbid>
+  </actor>
+  <actor>
+    <name>Mathieu Amalric</name>
+    <role>Serge X.</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mathieu Amalric\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>8789</tmdbid>
+  </actor>
+  <actor>
+    <name>Adrien Brody</name>
+    <role>Dmitri</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Adrien Brody\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>3490</tmdbid>
+  </actor>
+  <actor>
+    <name>Willem Dafoe</name>
+    <role>Jopling</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\W\Willem Dafoe\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>5293</tmdbid>
+  </actor>
+  <actor>
+    <name>Jeff Goldblum</name>
+    <role>Deputy Kovacs</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jeff Goldblum\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>4785</tmdbid>
+  </actor>
+  <actor>
+    <name>Harvey Keitel</name>
+    <role>Ludwig</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Harvey Keitel\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>1037</tmdbid>
+  </actor>
+  <actor>
+    <name>Jude Law</name>
+    <role>Young Author</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jude Law\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>9642</tmdbid>
+  </actor>
+  <actor>
+    <name>Bill Murray</name>
+    <role>M. Ivan</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bill Murray\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1532</tmdbid>
+  </actor>
+  <actor>
+    <name>Edward Norton</name>
+    <role>Henckels</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Edward Norton\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>819</tmdbid>
+  </actor>
+  <actor>
+    <name>Saoirse Ronan</name>
+    <role>Agatha</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Saoirse Ronan\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>36592</tmdbid>
+  </actor>
+  <actor>
+    <name>Jason Schwartzman</name>
+    <role>M. Jean</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jason Schwartzman\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>17881</tmdbid>
+  </actor>
+  <actor>
+    <name>Léa Seydoux</name>
+    <role>Clotilde</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Léa Seydoux\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>121529</tmdbid>
+  </actor>
+  <actor>
+    <name>Tilda Swinton</name>
+    <role>Madame D.</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tilda Swinton\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>3063</tmdbid>
+  </actor>
+  <actor>
+    <name>Tom Wilkinson</name>
+    <role>Author</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Wilkinson\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>207</tmdbid>
+  </actor>
+  <actor>
+    <name>Owen Wilson</name>
+    <role>M. Chuck</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\O\Owen Wilson\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>887</tmdbid>
+  </actor>
+  <actor>
+    <name>Tony Revolori</name>
+    <role>Zero</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tony Revolori\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>1291350</tmdbid>
+  </actor>
+  <actor>
+    <name>Larry Pine</name>
+    <role>Mr. Mosher</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Larry Pine\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>19511</tmdbid>
+  </actor>
+  <actor>
+    <name>Giselda Volodi</name>
+    <role>Serge&apos;s Sister</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Giselda Volodi\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>76340</tmdbid>
+  </actor>
+  <actor>
+    <name>Florian Lukas</name>
+    <role>Pinky</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Florian Lukas\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>4795</tmdbid>
+  </actor>
+  <director>Wes Anderson</director>
+  <tag>hotel</tag>
+  <tag>painting</tag>
+  <tag>wartime</tag>
+  <tag>eastern europe</tag>
+  <tag>author</tag>
+  <tag>gunfight</tag>
+  <tag>theft</tag>
+  <tag>period drama</tag>
+  <tag>bellhop  </tag>
+  <tag>mentor protégé relationship</tag>
+  <tag>european</tag>
+  <tag>hotel lobby</tag>
+  <tag>renaissance painting</tag>
+  <tag>1960s</tag>
+  <tag>1930s</tag>
+  <tag>hilarious</tag>
+</movie>

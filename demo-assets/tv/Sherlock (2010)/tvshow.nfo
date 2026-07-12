@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>Sherlock</title>
+  <originaltitle>Sherlock</originaltitle>
+  <sorttitle>Sherlock</sorttitle>
+  <plot>A modern update finds the famous sleuth and his doctor partner solving crime in 21st century London.</plot>
+  <tagline>A new sleuth for the 21st century.</tagline>
+  <rating>8.507</rating>
+  <premiered>2010-07-25</premiered>
+  <year>2010</year>
+  <status>Ended</status>
+  <genre>Crime</genre>
+  <genre>Drama</genre>
+  <genre>Mystery</genre>
+  <studio>Hartswood Films</studio>
+  <studio>BBC Cymru Wales</studio>
+  <studio>Masterpiece</studio>
+  <country>GB</country>
+  <uniqueid type="tmdb">19885</uniqueid>
+  <uniqueid type="imdb">tt1475582</uniqueid>
+  <uniqueid type="tvdb">176941</uniqueid>
+  <actor>
+    <name>Benedict Cumberbatch</name>
+    <role>Sherlock Holmes</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\B\Benedict Cumberbatch\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>71580</tmdbid>
+  </actor>
+  <actor>
+    <name>Martin Freeman</name>
+    <role>John Watson</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Martin Freeman\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>7060</tmdbid>
+  </actor>
+  <tag>london, england</tag>
+  <tag>detective</tag>
+  <tag>based on novel or book</tag>
+  <tag>workaholic</tag>
+  <tag>investigation</tag>
+  <tag>friendship</tag>
+  <tag>police</tag>
+  <tag>genius</tag>
+  <tag>murder</tag>
+  <tag>whodunit</tag>
+  <tag>doctor</tag>
+  <tag>private detective</tag>
+  <tag>murder mystery</tag>
+  <tag>police procedural</tag>
+  <tag>sherlock holmes</tag>
+  <tag>army medic</tag>
+  <tag>cerebral</tag>
+  <tag>suspenseful</tag>
+  <tag>tense</tag>
+  <tag>deduction</tag>
+  <tag>ambiguous</tag>
+  <tag>amused</tag>
+  <tag>urgent</tag>
+  <tag>sharp</tag>
+  <tag>tortured genius</tag>
+</tvshow>

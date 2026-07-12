@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Whiplash</title>
+  <originaltitle>Whiplash</originaltitle>
+  <sorttitle>Whiplash</sorttitle>
+  <plot>Under the direction of a ruthless instructor, a talented young drummer begins to pursue perfection at any cost, even his humanity.</plot>
+  <tagline>The road to greatness can take you to the edge.</tagline>
+  <rating>8.376</rating>
+  <runtime>107</runtime>
+  <premiered>2014-10-10</premiered>
+  <year>2014</year>
+  <genre>Drama</genre>
+  <genre>Music</genre>
+  <genre>Thriller</genre>
+  <studio>Bold Films</studio>
+  <studio>Blumhouse Productions</studio>
+  <studio>Right of Way Films</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">244786</uniqueid>
+  <uniqueid type="imdb">tt2582802</uniqueid>
+  <actor>
+    <name>Miles Teller</name>
+    <role>Andrew</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Miles Teller\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>996701</tmdbid>
+  </actor>
+  <actor>
+    <name>J.K. Simmons</name>
+    <role>Fletcher</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\J.K. Simmons\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>18999</tmdbid>
+  </actor>
+  <actor>
+    <name>Paul Reiser</name>
+    <role>Jim</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Paul Reiser\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>781</tmdbid>
+  </actor>
+  <actor>
+    <name>Melissa Benoist</name>
+    <role>Nicole</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Melissa Benoist\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>129104</tmdbid>
+  </actor>
+  <actor>
+    <name>Austin Stowell</name>
+    <role>Ryan</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Austin Stowell\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>970216</tmdbid>
+  </actor>
+  <actor>
+    <name>Nate Lang</name>
+    <role>Carl</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\N\Nate Lang\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1451540</tmdbid>
+  </actor>
+  <actor>
+    <name>Chris Mulkey</name>
+    <role>Uncle Frank</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Chris Mulkey\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>15824</tmdbid>
+  </actor>
+  <actor>
+    <name>Damon Gupton</name>
+    <role>Mr. Kramer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Damon Gupton\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>53454</tmdbid>
+  </actor>
+  <actor>
+    <name>Suanne Spoke</name>
+    <role>Aunt Emma</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Suanne Spoke\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1212459</tmdbid>
+  </actor>
+  <actor>
+    <name>Max Kasch</name>
+    <role>Dorm Neighbor</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Max Kasch\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>52939</tmdbid>
+  </actor>
+  <actor>
+    <name>Charlie Ian</name>
+    <role>Dustin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Charlie Ian\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1451542</tmdbid>
+  </actor>
+  <actor>
+    <name>Jayson Blair</name>
+    <role>Travis</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jayson Blair\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>223012</tmdbid>
+  </actor>
+  <actor>
+    <name>Kofi Siriboe</name>
+    <role>Bassist (Nassau)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kofi Siriboe\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>1451543</tmdbid>
+  </actor>
+  <actor>
+    <name>Kavita Patil</name>
+    <role>Assistant - Sophie</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kavita Patil\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>159366</tmdbid>
+  </actor>
+  <actor>
+    <name>C.J. Vana</name>
+    <role>Metz</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\C.J. Vana\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1451545</tmdbid>
+  </actor>
+  <actor>
+    <name>Tarik Lowe</name>
+    <role>Pianist (Studio Band)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tarik Lowe\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>171766</tmdbid>
+  </actor>
+  <actor>
+    <name>Tyler Kimball</name>
+    <role>Saxophonist #2 (Studio Band)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tyler Kimball\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>1398714</tmdbid>
+  </actor>
+  <actor>
+    <name>Rogelio Douglas Jr.</name>
+    <role>Trumpeter #1 (Studio Band)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rogelio Douglas Jr\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>1503721</tmdbid>
+  </actor>
+  <actor>
+    <name>Adrian Burks</name>
+    <role>Trumpeter #2 (Studio Band)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Adrian Burks\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>1503834</tmdbid>
+  </actor>
+  <actor>
+    <name>Calvin C. Winbush</name>
+    <role>Saxophonist (Studio Band)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Calvin C. Winbush\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>1145677</tmdbid>
+  </actor>
+  <director>Damien Chazelle</director>
+  <tag>new york city</tag>
+  <tag>jazz</tag>
+  <tag>musician</tag>
+  <tag>obsession</tag>
+  <tag>music teacher</tag>
+  <tag>conservatory</tag>
+  <tag>drums</tag>
+  <tag>montage</tag>
+  <tag>perfectionist</tag>
+  <tag>public humiliation</tag>
+  <tag>jazz band</tag>
+  <tag>young adult</tag>
+  <tag>music school</tag>
+  <tag>verbal abuse</tag>
+  <tag>emotional abuse</tag>
+  <tag>based on short film</tag>
+  <tag>psychological drama</tag>
+  <tag>drummer</tag>
+</movie>

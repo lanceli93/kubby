@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "placeholder": "placeholder.mp4",
+  "libraries": {
+    "cinema": "Demo Movies",
+    "tv": "Demo TV Shows",
+    "photos": "Demo Photos",
+    "music": "Demo Music"
+  },
+  "tvEpisodes": {
+    "Attack on Titan (2013)": [
+      {
+        "season": "Season 01",
+        "base": "Attack on Titan S01E01"
+      },
+      {
+        "season": "Season 01",
+        "base": "Attack on Titan S01E02"
+      }
+    ],
+    "Breaking Bad (2008)": [
+      {
+        "season": "Season 01",
+        "base": "Breaking Bad S01E01"
+      },
+      {
+        "season": "Season 01",
+        "base": "Breaking Bad S01E02"
+      },
+      {
+        "season": "Season 01",
+        "base": "Breaking Bad S01E03"
+      },
+      {
+        "season": "Season 02",
+        "base": "Breaking Bad S02E01"
+      }
+    ],
+    "Chernobyl (2019)": [
+      {
+        "season": "Season 01",
+        "base": "Chernobyl S01E01"
+      }
+    ],
+    "Friends (1994)": [
+      {
+        "season": "Season 01",
+        "base": "Friends S01E01"
+      }
+    ],
+    "Game of Thrones (2011)": [
+      {
+        "season": "Season 01",
+        "base": "Game of Thrones S01E01"
+      }
+    ],
+    "Sherlock (2010)": [
+      {
+        "season": "Season 01",
+        "base": "Sherlock S01E01"
+      },
+      {
+        "season": "Season 01",
+        "base": "Sherlock S01E02"
+      },
+      {
+        "season": "Specials",
+        "base": "Sherlock S00E01"
+      }
+    ],
+    "Stranger Things (2016)": [
+      {
+        "season": "Season 01",
+        "base": "Stranger Things S01E01"
+      }
+    ],
+    "The Office (2005)": [
+      {
+        "season": "Season 01",
+        "base": "The Office S01E01"
+      }
+    ]
+  }
+}

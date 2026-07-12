@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>Attack on Titan</title>
+  <originaltitle>進撃の巨人</originaltitle>
+  <sorttitle>Attack on Titan</sorttitle>
+  <plot>100 years ago, the last remnants of humanity were forced to retreat behind the towering walls of a fortified city to escape the massive, man-eating Titans that roamed the land outside their fortress. Only the members of the Scouting Legion dared to stray beyond the safety of the walls – but even those brave warriors seldom returned alive. Those within the city clung to the illusion of a peaceful existence until the day that dream was shattered, and their slim chance at survival was reduced to one horrifying choice: kill – or be devoured!</plot>
+  <tagline>Home was a pen. Humanity, cattle.</tagline>
+  <rating>8.683</rating>
+  <premiered>2013-04-07</premiered>
+  <year>2013</year>
+  <status>Ended</status>
+  <genre>Animation</genre>
+  <genre>Sci-Fi &amp; Fantasy</genre>
+  <genre>Action &amp; Adventure</genre>
+  <studio>Production I.G</studio>
+  <studio>MAPPA</studio>
+  <studio>WIT STUDIO</studio>
+  <studio>Pony Canyon</studio>
+  <studio>Kodansha</studio>
+  <studio>dentsu</studio>
+  <studio>MBS</studio>
+  <studio>Pony Canyon Enterprise</studio>
+  <country>JP</country>
+  <uniqueid type="tmdb">1429</uniqueid>
+  <uniqueid type="imdb">tt2560140</uniqueid>
+  <uniqueid type="tvdb">267440</uniqueid>
+  <actor>
+    <name>Marina Inoue</name>
+    <role>Armin Arlert (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Marina Inoue\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>90135</tmdbid>
+  </actor>
+  <actor>
+    <name>Hiro Shimono</name>
+    <role>Connie Springer (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\H\Hiro Shimono\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>119145</tmdbid>
+  </actor>
+  <actor>
+    <name>Yuki Kaji</name>
+    <role>Eren Yeager (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\Y\Yuki Kaji\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>149894</tmdbid>
+  </actor>
+  <actor>
+    <name>Natsuki Hanae</name>
+    <role>Falco Grice (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\N\Natsuki Hanae\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>1256603</tmdbid>
+  </actor>
+  <actor>
+    <name>Ayane Sakura</name>
+    <role>Gabi Braun (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\A\Ayane Sakura\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>992869</tmdbid>
+  </actor>
+  <actor>
+    <name>Kisho Taniyama</name>
+    <role>Jean Kirstein (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\K\Kisho Taniyama\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>553959</tmdbid>
+  </actor>
+  <actor>
+    <name>Yui Ishikawa</name>
+    <role>Mikasa Ackerman (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\Y\Yui Ishikawa\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>1224288</tmdbid>
+  </actor>
+  <actor>
+    <name>Yoshimasa Hosoya</name>
+    <role>Reiner Braun (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\Y\Yoshimasa Hosoya\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>1253008</tmdbid>
+  </actor>
+  <actor>
+    <name>Takehito Koyasu</name>
+    <role>Zeke (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\T\Takehito Koyasu\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>84508</tmdbid>
+  </actor>
+  <tag>fascism</tag>
+  <tag>dystopia</tag>
+  <tag>politics</tag>
+  <tag>revenge</tag>
+  <tag>gore</tag>
+  <tag>survival</tag>
+  <tag>tragedy</tag>
+  <tag>giant monster</tag>
+  <tag>based on manga</tag>
+  <tag>super power</tag>
+  <tag>political intrigue </tag>
+  <tag>family tragedy</tag>
+  <tag>military</tag>
+  <tag>dark fantasy</tag>
+  <tag>shounen</tag>
+  <tag>anime</tag>
+  <tag>war</tag>
+  <tag>suspense</tag>
+  <tag>mystery</tag>
+</tvshow>

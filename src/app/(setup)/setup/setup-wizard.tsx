@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { setLocale } from "@/i18n/locale";
-import { Eye, EyeOff, FolderOpen, Check, X, Plus, Folder } from "lucide-react";
+import { Eye, EyeOff, FolderOpen, Check, X, Plus, Folder, Sparkles, Settings2, Loader2 } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
 import {
   Dialog,
@@ -26,6 +26,15 @@ export function SetupWizard() {
   const [step, setStep] = useState(1);
   const [slideDir, setSlideDir] = useState<"right" | "left">("right");
   const [selectedLocale, setSelectedLocale] = useState("en");
+
+  // Setup path fork: "wizard" = manual 4-step flow, "choose" = fork screen,
+  // "seeding" = demo SSE progress, "ready" = demo credentials
+  const [screen, setScreen] = useState<"wizard" | "choose" | "seeding" | "ready">("wizard");
+  const [demoConfirmOpen, setDemoConfirmOpen] = useState(false);
+  const [demoPhase, setDemoPhase] = useState<"prepare" | "cinema" | "tv" | "photos" | "music" | "done">("prepare");
+  const [demoCurrent, setDemoCurrent] = useState(0);
+  const [demoTotal, setDemoTotal] = useState(0);
+  const [demoCreds, setDemoCreds] = useState<{ username: string; password: string }>({ username: "demo", password: "demo" });
 
   // Step 2: Admin
   const [username, setUsername] = useState("");
@@ -58,7 +67,68 @@ export function SetupWizard() {
 
   function handleLanguageNext() {
     setSlideDir("right");
+    setScreen("choose");
+  }
+
+  function handleChooseManual() {
+    setSlideDir("right");
+    setScreen("wizard");
     setStep(2);
+  }
+
+  const demoPhaseLabel: Record<typeof demoPhase, string> = {
+    prepare: t("demoPhasePrepare"),
+    cinema: t("demoPhaseCinema"),
+    tv: t("demoPhaseTv"),
+    photos: t("demoPhasePhotos"),
+    music: t("demoPhaseMusic"),
+    done: t("demoPhaseMusic"),
+  };
+
+  async function handleStartDemo() {
+    setDemoConfirmOpen(false);
+    setError("");
+    setDemoPhase("prepare");
+    setDemoCurrent(0);
+    setDemoTotal(0);
+    setSlideDir("right");
+    setScreen("seeding");
+    try {
+      const res = await fetch("/api/setup/demo", { method: "POST" });
+      if (!res.ok || !res.body) {
+        setError("Something went wrong");
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop() || "";
+        for (const part of parts) {
+          const line = part.replace(/^data: /, "").trim();
+          if (!line) continue;
+          const evt = JSON.parse(line);
+          if (evt.error) {
+            setError(evt.error);
+            return;
+          }
+          if (evt.done) {
+            setDemoCreds({ username: evt.username, password: evt.password });
+            setScreen("ready");
+            return;
+          }
+          if (evt.phase) setDemoPhase(evt.phase);
+          if (typeof evt.current === "number") setDemoCurrent(evt.current);
+          if (typeof evt.total === "number") setDemoTotal(evt.total);
+        }
+      }
+    } catch {
+      setError("Something went wrong");
+    }
   }
 
   function handleAdminNext() {
@@ -169,7 +239,7 @@ export function SetupWizard() {
   return (
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
       {/* Step 1: Language Selection */}
-      {step === 1 && (
+      {screen === "wizard" && step === 1 && (
         <div key="step1" className={`flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
@@ -218,7 +288,7 @@ export function SetupWizard() {
       )}
 
       {/* Step 2: Create Admin */}
-      {step === 2 && (
+      {screen === "wizard" && step === 2 && (
         <div key="step2" className={`flex w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
@@ -317,7 +387,7 @@ export function SetupWizard() {
       )}
 
       {/* Step 3: Add Media Library */}
-      {step === 3 && (
+      {screen === "wizard" && step === 3 && (
         <div key="step3" className={`flex max-h-[90vh] w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="shrink-0 brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="shrink-0 text-xl font-semibold text-foreground">
@@ -544,7 +614,7 @@ export function SetupWizard() {
       )}
 
       {/* Step 4: Complete */}
-      {step === 4 && (
+      {screen === "wizard" && step === 4 && (
         <div key="step4" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
 
@@ -567,6 +637,157 @@ export function SetupWizard() {
           </button>
 
           <ProgressSteps current={4} />
+        </div>
+      )}
+
+      {/* Fork: Choose setup path */}
+      {screen === "choose" && (
+        <div key="choose" className={`flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+          <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
+          <h2 className="text-xl font-semibold text-foreground">
+            {t("chooseSetupTitle")}
+          </h2>
+
+          <div className="flex w-full flex-col gap-4">
+            {/* Manual setup */}
+            <button
+              onClick={handleChooseManual}
+              className="flex w-full items-start gap-4 rounded-xl border-2 border-primary/50 bg-[#0f0f1a] p-5 text-left transition-fluid hover:border-primary/70 cursor-pointer"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Settings2 className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[15px] font-semibold text-foreground">{t("manualSetupTitle")}</span>
+                <span className="text-[13px] leading-relaxed text-muted-foreground">{t("manualSetupDesc")}</span>
+              </div>
+            </button>
+
+            {/* Demo setup */}
+            <button
+              onClick={() => setDemoConfirmOpen(true)}
+              className="flex w-full items-start gap-4 rounded-xl border-2 border-white/[0.06] bg-[#0f0f1a] p-5 text-left transition-fluid hover:border-white/[0.12] cursor-pointer"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-muted-foreground">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[15px] font-semibold text-foreground">{t("demoSetupTitle")}</span>
+                <span className="text-[13px] leading-relaxed text-muted-foreground">{t("demoSetupDesc")}</span>
+              </div>
+            </button>
+          </div>
+
+          <button
+            onClick={() => { setSlideDir("left"); setScreen("wizard"); setStep(1); }}
+            className="text-[13px] text-muted-foreground hover:text-foreground transition-fluid cursor-pointer"
+          >
+            {tc("back")}
+          </button>
+
+          {/* Demo confirmation dialog */}
+          <Dialog open={demoConfirmOpen} onOpenChange={setDemoConfirmOpen}>
+            <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>{t("demoConfirmTitle")}</DialogTitle>
+                <DialogDescription>{t("demoConfirmDesc")}</DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <button
+                  type="button"
+                  onClick={() => setDemoConfirmOpen(false)}
+                  className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {tc("cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStartDemo}
+                  className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  {t("startDemo")}
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+
+      {/* Demo seeding progress */}
+      {screen === "seeding" && (
+        <div key="seeding" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
+          <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
+
+          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary/10">
+            <Loader2 className="h-9 w-9 animate-spin text-primary" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-foreground">
+            {t("demoSeedingTitle")}
+          </h2>
+          <p className="text-center text-sm text-muted-foreground">
+            {demoPhaseLabel[demoPhase]}
+          </p>
+
+          {demoTotal > 0 && (
+            <div className="flex w-full flex-col gap-2">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#222238]">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.round((demoCurrent / demoTotal) * 100))}%` }}
+                />
+              </div>
+              <span className="text-center text-xs text-[#555568]">{demoCurrent} / {demoTotal}</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex w-full flex-col items-center gap-4">
+              <p className="text-sm text-destructive" role="alert">{error}</p>
+              <button
+                onClick={() => { setSlideDir("left"); setError(""); setScreen("choose"); }}
+                className="flex h-11 w-full items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+              >
+                {tc("back")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Demo ready */}
+      {screen === "ready" && (
+        <div key="ready" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
+          <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
+
+          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-green-500/10">
+            <Check className="h-9 w-9 text-green-500" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-foreground">
+            {t("demoReadyTitle")}
+          </h2>
+          <p className="w-[320px] text-center text-sm text-muted-foreground">
+            {t("demoReadyDesc")}
+          </p>
+
+          <div className="flex w-full flex-col gap-2.5">
+            <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <span className="text-[13px] font-medium text-muted-foreground">{t("demoUsername")}</span>
+              <span className="rounded-md bg-white/[0.06] px-2.5 py-1 font-mono text-sm text-foreground">{demoCreds.username}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
+              <span className="text-[13px] font-medium text-muted-foreground">{t("demoPassword")}</span>
+              <span className="rounded-md bg-white/[0.06] px-2.5 py-1 font-mono text-sm text-foreground">{demoCreds.password}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push("/login")}
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
+          >
+            {t("goToSignIn")}
+          </button>
         </div>
       )}
     </div>

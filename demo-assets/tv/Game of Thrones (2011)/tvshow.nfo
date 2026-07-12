@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>Game of Thrones</title>
+  <originaltitle>Game of Thrones</originaltitle>
+  <sorttitle>Game of Thrones</sorttitle>
+  <plot>Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war. All while a very ancient evil awakens in the farthest north. Amidst the war, a neglected military order of misfits, the Night&apos;s Watch, is all that stands between the realms of men and icy horrors beyond.</plot>
+  <tagline>Winter is coming.</tagline>
+  <rating>8.465</rating>
+  <premiered>2011-04-17</premiered>
+  <year>2011</year>
+  <status>Ended</status>
+  <genre>Sci-Fi &amp; Fantasy</genre>
+  <genre>Drama</genre>
+  <genre>Action &amp; Adventure</genre>
+  <studio>Revolution Sun Studios</studio>
+  <studio>Television 360</studio>
+  <studio>Generator Entertainment</studio>
+  <studio>Bighead Littlehead</studio>
+  <studio>Grok! Television</studio>
+  <studio>HBO</studio>
+  <country>US</country>
+  <uniqueid type="tmdb">1399</uniqueid>
+  <uniqueid type="imdb">tt0944947</uniqueid>
+  <uniqueid type="tvdb">121361</uniqueid>
+  <actor>
+    <name>Peter Dinklage</name>
+    <role>Tyrion &apos;The Halfman&apos; Lannister</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\P\Peter Dinklage\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>22970</tmdbid>
+  </actor>
+  <actor>
+    <name>Kit Harington</name>
+    <role>Jon Snow</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\K\Kit Harington\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>239019</tmdbid>
+  </actor>
+  <actor>
+    <name>Nikolaj Coster-Waldau</name>
+    <role>Sir Jaime &apos;Kingslayer&apos; Lannister</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\N\Nikolaj Coster-Waldau\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>12795</tmdbid>
+  </actor>
+  <actor>
+    <name>Lena Headey</name>
+    <role>Cersei Lannister</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\L\Lena Headey\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>17286</tmdbid>
+  </actor>
+  <actor>
+    <name>Emilia Clarke</name>
+    <role>Daenerys Targaryen</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\E\Emilia Clarke\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1223786</tmdbid>
+  </actor>
+  <actor>
+    <name>Liam Cunningham</name>
+    <role>Davos Seaworth</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\L\Liam Cunningham\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>15498</tmdbid>
+  </actor>
+  <actor>
+    <name>Maisie Williams</name>
+    <role>Arya Stark</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Maisie Williams\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1181313</tmdbid>
+  </actor>
+  <actor>
+    <name>Isaac Hempstead Wright</name>
+    <role>Brandon &apos;Bran&apos; Stark</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\I\Isaac Hempstead Wright\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>239020</tmdbid>
+  </actor>
+  <actor>
+    <name>Sophie Turner</name>
+    <role>Sansa Stark</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\S\Sophie Turner\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>1001657</tmdbid>
+  </actor>
+  <actor>
+    <name>John Bradley</name>
+    <role>Samwell &apos;Sam&apos; Tarly</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\John Bradley\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>1010135</tmdbid>
+  </actor>
+  <actor>
+    <name>Rory McCann</name>
+    <role>Sandor &apos;The Hound&apos; Clegane</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\R\Rory McCann\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>3075</tmdbid>
+  </actor>
+  <actor>
+    <name>Joe Dempsie</name>
+    <role>Gendry</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Joe Dempsie\photo.jpg</thumb>
+    <order>20</order>
+    <tmdbid>570296</tmdbid>
+  </actor>
+  <actor>
+    <name>Gwendoline Christie</name>
+    <role>Brienne of Tarth</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\G\Gwendoline Christie\photo.jpg</thumb>
+    <order>24</order>
+    <tmdbid>1011904</tmdbid>
+  </actor>
+  <actor>
+    <name>Jacob Anderson</name>
+    <role>Grey Worm</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Jacob Anderson\photo.jpg</thumb>
+    <order>26</order>
+    <tmdbid>964792</tmdbid>
+  </actor>
+  <tag>based on novel or book</tag>
+  <tag>kingdom</tag>
+  <tag>dragon</tag>
+  <tag>king</tag>
+  <tag>intrigue</tag>
+  <tag>fantasy world</tag>
+</tvshow>

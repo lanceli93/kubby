@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>The Dark Knight</title>
+  <originaltitle>The Dark Knight</originaltitle>
+  <sorttitle>The Dark Knight</sorttitle>
+  <plot>Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations that plague the streets. The partnership proves to be effective, but they soon find themselves prey to a reign of chaos unleashed by a rising criminal mastermind known to the terrified citizens of Gotham as the Joker.</plot>
+  <tagline>Welcome to a world without rules.</tagline>
+  <rating>8.532</rating>
+  <runtime>152</runtime>
+  <premiered>2008-07-16</premiered>
+  <year>2008</year>
+  <genre>Action</genre>
+  <genre>Crime</genre>
+  <genre>Thriller</genre>
+  <studio>Warner Bros. Pictures</studio>
+  <studio>Legendary Pictures</studio>
+  <studio>Syncopy</studio>
+  <studio>DC</studio>
+  <country>United Kingdom</country>
+  <uniqueid type="tmdb">155</uniqueid>
+  <uniqueid type="imdb">tt0468569</uniqueid>
+  <actor>
+    <name>Christian Bale</name>
+    <role>Bruce Wayne</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Christian Bale\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>3894</tmdbid>
+  </actor>
+  <actor>
+    <name>Heath Ledger</name>
+    <role>Joker</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Heath Ledger\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>1810</tmdbid>
+  </actor>
+  <actor>
+    <name>Aaron Eckhart</name>
+    <role>Harvey Dent</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Aaron Eckhart\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>6383</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Caine</name>
+    <role>Alfred</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michael Caine\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>3895</tmdbid>
+  </actor>
+  <actor>
+    <name>Maggie Gyllenhaal</name>
+    <role>Rachel</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Maggie Gyllenhaal\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>1579</tmdbid>
+  </actor>
+  <actor>
+    <name>Gary Oldman</name>
+    <role>Gordon</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Gary Oldman\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>64</tmdbid>
+  </actor>
+  <actor>
+    <name>Morgan Freeman</name>
+    <role>Lucius Fox</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Morgan Freeman\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>192</tmdbid>
+  </actor>
+  <actor>
+    <name>Monique Gabriela Curnen</name>
+    <role>Ramirez</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Monique Gabriela Curnen\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>53651</tmdbid>
+  </actor>
+  <actor>
+    <name>Ron Dean</name>
+    <role>Wuertz</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ron Dean\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>57597</tmdbid>
+  </actor>
+  <actor>
+    <name>Cillian Murphy</name>
+    <role>Scarecrow</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Cillian Murphy\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>2037</tmdbid>
+  </actor>
+  <actor>
+    <name>Chin Han</name>
+    <role>Lau</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Chin Han\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>101015</tmdbid>
+  </actor>
+  <actor>
+    <name>Nestor Carbonell</name>
+    <role>Mayor</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\N\Nestor Carbonell\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>21316</tmdbid>
+  </actor>
+  <actor>
+    <name>Eric Roberts</name>
+    <role>Maroni</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Eric Roberts\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>21315</tmdbid>
+  </actor>
+  <actor>
+    <name>Ritchie Coster</name>
+    <role>Chechen</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ritchie Coster\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>13939</tmdbid>
+  </actor>
+  <actor>
+    <name>Anthony Michael Hall</name>
+    <role>Engel</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Anthony Michael Hall\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1904</tmdbid>
+  </actor>
+  <actor>
+    <name>Keith Szarabajka</name>
+    <role>Stephens</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Keith Szarabajka\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>87957</tmdbid>
+  </actor>
+  <actor>
+    <name>Colin McFarlane</name>
+    <role>Loeb</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Colin McFarlane\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>128386</tmdbid>
+  </actor>
+  <actor>
+    <name>Joshua Harto</name>
+    <role>Reese</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Joshua Harto\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>34544</tmdbid>
+  </actor>
+  <actor>
+    <name>Melinda McGraw</name>
+    <role>Barbara Gordon</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Melinda McGraw\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>58692</tmdbid>
+  </actor>
+  <actor>
+    <name>Nathan Gamble</name>
+    <role>James Gordon</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\N\Nathan Gamble\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>18052</tmdbid>
+  </actor>
+  <director>Christopher Nolan</director>
+  <tag>sadism</tag>
+  <tag>chaos</tag>
+  <tag>secret identity</tag>
+  <tag>crime fighter</tag>
+  <tag>superhero</tag>
+  <tag>anti hero</tag>
+  <tag>scarecrow</tag>
+  <tag>based on comic</tag>
+  <tag>vigilante</tag>
+  <tag>organized crime</tag>
+  <tag>tragic hero</tag>
+  <tag>anti villain</tag>
+  <tag>criminal mastermind</tag>
+  <tag>district attorney</tag>
+  <tag>super power</tag>
+  <tag>super villain</tag>
+  <tag>neo-noir</tag>
+  <tag>bold</tag>
+</movie>

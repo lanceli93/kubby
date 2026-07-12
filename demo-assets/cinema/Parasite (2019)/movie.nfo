@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Parasite</title>
+  <originaltitle>기생충</originaltitle>
+  <sorttitle>Parasite</sorttitle>
+  <plot>All unemployed, Ki-taek&apos;s family takes peculiar interest in the wealthy and glamorous Parks for their livelihood until they get entangled in an unexpected incident.</plot>
+  <tagline>Act like you own the place.</tagline>
+  <rating>8.492</rating>
+  <runtime>133</runtime>
+  <premiered>2019-05-30</premiered>
+  <year>2019</year>
+  <genre>Comedy</genre>
+  <genre>Thriller</genre>
+  <genre>Drama</genre>
+  <studio>Barunson E&amp;A</studio>
+  <country>South Korea</country>
+  <uniqueid type="tmdb">496243</uniqueid>
+  <uniqueid type="imdb">tt6751668</uniqueid>
+  <actor>
+    <name>Song Kang-ho</name>
+    <role>Kim Ki-taek</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Song Kang-ho\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>20738</tmdbid>
+  </actor>
+  <actor>
+    <name>Lee Sun-kyun</name>
+    <role>Park Dong-ik</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lee Sun-kyun\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>115290</tmdbid>
+  </actor>
+  <actor>
+    <name>Cho Yeo-jeong</name>
+    <role>Yeon-kyo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Cho Yeo-jeong\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>556435</tmdbid>
+  </actor>
+  <actor>
+    <name>Choi Woo-shik</name>
+    <role>Ki-woo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Choi Woo-shik\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>1255881</tmdbid>
+  </actor>
+  <actor>
+    <name>Park So-dam</name>
+    <role>Ki-jung</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Park So-dam\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>1442583</tmdbid>
+  </actor>
+  <actor>
+    <name>Lee Jung-eun</name>
+    <role>Moon-gwang</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lee Jung-eun\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1572354</tmdbid>
+  </actor>
+  <actor>
+    <name>Jang Hye-jin</name>
+    <role>Chung-sook</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jang Hye-jin\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>2158882</tmdbid>
+  </actor>
+  <actor>
+    <name>Park Myung-hoon</name>
+    <role>Geun-se</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Park Myung-hoon\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>1694435</tmdbid>
+  </actor>
+  <actor>
+    <name>Jung Zi-so</name>
+    <role>Da-hye</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jung Zi-so\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1418762</tmdbid>
+  </actor>
+  <actor>
+    <name>Jung Hyeon-jun</name>
+    <role>Da-song</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jung Hyeon-jun\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>2306987</tmdbid>
+  </actor>
+  <actor>
+    <name>Park Keun-rok</name>
+    <role>Driver Yoon</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Park Keun-rok\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1709230</tmdbid>
+  </actor>
+  <actor>
+    <name>Jung Yi-seo</name>
+    <role>Pizza Manager</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jung Yi-seo\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>2326809</tmdbid>
+  </actor>
+  <actor>
+    <name>Cho Jae-myung</name>
+    <role>Pizza Man</role>
+    <order>12</order>
+    <tmdbid>2478772</tmdbid>
+  </actor>
+  <actor>
+    <name>Jeong Ik-han</name>
+    <role>Neighbor</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jeong Ik-han\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>2326615</tmdbid>
+  </actor>
+  <actor>
+    <name>Kim Kyu-baek</name>
+    <role>Drunk 1</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kim Kyu-baek\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>2478781</tmdbid>
+  </actor>
+  <actor>
+    <name>Lee Dong-yong</name>
+    <role>Drunk 2</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lee Dong-yong\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>2159392</tmdbid>
+  </actor>
+  <actor>
+    <name>Ahn Seong-bong</name>
+    <role>Street Man</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Ahn Seong-bong\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>2379047</tmdbid>
+  </actor>
+  <actor>
+    <name>Yoon Young-woo</name>
+    <role>Benz Dealer</role>
+    <order>17</order>
+    <tmdbid>2499966</tmdbid>
+  </actor>
+  <actor>
+    <name>Park Jae-wook</name>
+    <role>VR Specialist</role>
+    <order>18</order>
+    <tmdbid>1419705</tmdbid>
+  </actor>
+  <actor>
+    <name>Jeon Eun-mi</name>
+    <role>Mart Cashier</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jeon Eun-mi\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>2538209</tmdbid>
+  </actor>
+  <director>Bong Joon Ho</director>
+  <tag>dark comedy</tag>
+  <tag>con artist</tag>
+  <tag>social commentary</tag>
+  <tag>working class</tag>
+  <tag>infiltration</tag>
+  <tag>psychological thriller</tag>
+  <tag>class differences</tag>
+  <tag>family</tag>
+  <tag>unemployed</tag>
+  <tag>domestic worker</tag>
+  <tag>wealthy family</tag>
+  <tag>south korea</tag>
+  <tag>introspective</tag>
+  <tag>caste violence</tag>
+  <tag>seoul, south korea</tag>
+  <tag>anti-capitalist</tag>
+  <tag>oscar winner</tag>
+</movie>

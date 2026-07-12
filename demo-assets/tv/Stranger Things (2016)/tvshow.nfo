@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>Stranger Things</title>
+  <originaltitle>Stranger Things</originaltitle>
+  <sorttitle>Stranger Things</sorttitle>
+  <plot>When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl.</plot>
+  <tagline>It only gets stranger...</tagline>
+  <rating>8.56</rating>
+  <premiered>2016-07-15</premiered>
+  <year>2016</year>
+  <status>Ended</status>
+  <genre>Action &amp; Adventure</genre>
+  <genre>Mystery</genre>
+  <genre>Sci-Fi &amp; Fantasy</genre>
+  <studio>21 Laps Entertainment</studio>
+  <studio>Monkey Massacre Productions</studio>
+  <studio>Upside Down Pictures</studio>
+  <country>US</country>
+  <uniqueid type="tmdb">66732</uniqueid>
+  <uniqueid type="imdb">tt4574334</uniqueid>
+  <uniqueid type="tvdb">305288</uniqueid>
+  <actor>
+    <name>Winona Ryder</name>
+    <role>Joyce Byers</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\W\Winona Ryder\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>1920</tmdbid>
+  </actor>
+  <actor>
+    <name>David Harbour</name>
+    <role>Jim Hopper</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\D\David Harbour\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>35029</tmdbid>
+  </actor>
+  <actor>
+    <name>Millie Bobby Brown</name>
+    <role>Eleven / Jane Hopper</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Millie Bobby Brown\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>1356210</tmdbid>
+  </actor>
+  <actor>
+    <name>Finn Wolfhard</name>
+    <role>Mike Wheeler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\F\Finn Wolfhard\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>1442069</tmdbid>
+  </actor>
+  <actor>
+    <name>Gaten Matarazzo</name>
+    <role>Dustin Henderson</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\G\Gaten Matarazzo\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>1653291</tmdbid>
+  </actor>
+  <actor>
+    <name>Caleb McLaughlin</name>
+    <role>Lucas Sinclair</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\C\Caleb McLaughlin\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>1474123</tmdbid>
+  </actor>
+  <actor>
+    <name>Noah Schnapp</name>
+    <role>Will Byers</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\N\Noah Schnapp\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>1393177</tmdbid>
+  </actor>
+  <actor>
+    <name>Sadie Sink</name>
+    <role>Max Mayfield</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\S\Sadie Sink\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1590797</tmdbid>
+  </actor>
+  <actor>
+    <name>Natalia Dyer</name>
+    <role>Nancy Wheeler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\N\Natalia Dyer\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>1039011</tmdbid>
+  </actor>
+  <actor>
+    <name>Charlie Heaton</name>
+    <role>Jonathan Byers</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\C\Charlie Heaton\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1448222</tmdbid>
+  </actor>
+  <actor>
+    <name>Joe Keery</name>
+    <role>Steve Harrington</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Joe Keery\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>1467219</tmdbid>
+  </actor>
+  <actor>
+    <name>Maya Hawke</name>
+    <role>Robin Buckley</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Maya Hawke\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>1903874</tmdbid>
+  </actor>
+  <actor>
+    <name>Brett Gelman</name>
+    <role>Murray</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\B\Brett Gelman\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>224197</tmdbid>
+  </actor>
+  <actor>
+    <name>Priah Ferguson</name>
+    <role>Erica Sinclair</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\P\Priah Ferguson\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>2029806</tmdbid>
+  </actor>
+  <actor>
+    <name>Cara Buono</name>
+    <role>Karen Wheeler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\C\Cara Buono\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>20047</tmdbid>
+  </actor>
+  <actor>
+    <name>Jamie Campbell Bower</name>
+    <role>Vecna</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Jamie Campbell Bower\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>83356</tmdbid>
+  </actor>
+  <actor>
+    <name>Nell Fisher</name>
+    <role>Holly Wheeler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\N\Nell Fisher\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>3128782</tmdbid>
+  </actor>
+  <actor>
+    <name>Linda Hamilton</name>
+    <role>Dr. Kay</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\L\Linda Hamilton\photo.jpg</thumb>
+    <order>21</order>
+    <tmdbid>2713</tmdbid>
+  </actor>
+  <tag>monster</tag>
+  <tag>small town</tag>
+  <tag>indiana, usa</tag>
+  <tag>experiment</tag>
+  <tag>halloween</tag>
+  <tag>friendship</tag>
+  <tag>supernatural</tag>
+  <tag>coming of age</tag>
+  <tag>parallel world</tag>
+  <tag>super power</tag>
+  <tag>government conspiracy</tag>
+  <tag>teen drama</tag>
+  <tag>1980s</tag>
+  <tag>supernatural horror</tag>
+  <tag>teen horror</tag>
+  <tag>horror</tag>
+  <tag>depressing</tag>
+</tvshow>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Fight Club</title>
+  <originaltitle>Fight Club</originaltitle>
+  <sorttitle>Fight Club</sorttitle>
+  <plot>A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground &quot;fight clubs&quot; forming in every town, until an eccentric gets in the way and ignites an out-of-control spiral toward oblivion.</plot>
+  <tagline>Mischief. Mayhem. Soap.</tagline>
+  <rating>8.438</rating>
+  <runtime>139</runtime>
+  <premiered>1999-10-15</premiered>
+  <year>1999</year>
+  <genre>Drama</genre>
+  <genre>Thriller</genre>
+  <studio>Fox 2000 Pictures</studio>
+  <studio>Regency Enterprises</studio>
+  <studio>Linson Entertainment</studio>
+  <studio>20th Century Fox</studio>
+  <studio>Taurus Film</studio>
+  <country>Germany</country>
+  <uniqueid type="tmdb">550</uniqueid>
+  <uniqueid type="imdb">tt0137523</uniqueid>
+  <actor>
+    <name>Edward Norton</name>
+    <role>Narrator</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Edward Norton\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>819</tmdbid>
+  </actor>
+  <actor>
+    <name>Brad Pitt</name>
+    <role>Tyler Durden</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Brad Pitt\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>287</tmdbid>
+  </actor>
+  <actor>
+    <name>Helena Bonham Carter</name>
+    <role>Marla Singer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Helena Bonham Carter\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>1283</tmdbid>
+  </actor>
+  <actor>
+    <name>Meat Loaf</name>
+    <role>Robert Paulson</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Meat Loaf\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>7470</tmdbid>
+  </actor>
+  <actor>
+    <name>Jared Leto</name>
+    <role>Angel Face</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jared Leto\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>7499</tmdbid>
+  </actor>
+  <actor>
+    <name>Zach Grenier</name>
+    <role>Richard Chesler (Regional Manager)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Z\Zach Grenier\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>7471</tmdbid>
+  </actor>
+  <actor>
+    <name>Holt McCallany</name>
+    <role>The Mechanic</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Holt McCallany\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>7497</tmdbid>
+  </actor>
+  <actor>
+    <name>Eion Bailey</name>
+    <role>Ricky</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Eion Bailey\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>7498</tmdbid>
+  </actor>
+  <actor>
+    <name>Richmond Arquette</name>
+    <role>Intern at Hospital</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Richmond Arquette\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>7472</tmdbid>
+  </actor>
+  <actor>
+    <name>David Andrews</name>
+    <role>Thomas at Remaining Men Together</role>
+    <order>9</order>
+    <tmdbid>7219</tmdbid>
+  </actor>
+  <actor>
+    <name>George Maguire</name>
+    <role>Group Leader at Remaining Men Together</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\George Maguire\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1129738</tmdbid>
+  </actor>
+  <actor>
+    <name>Eugenie Bondurant</name>
+    <role>Weeping Woman - Onward and Upward</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Eugenie Bondurant\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>1317693</tmdbid>
+  </actor>
+  <actor>
+    <name>Christina Cabot</name>
+    <role>Group Leader - Partners in Positivity</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Christina Cabot\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>68277</tmdbid>
+  </actor>
+  <actor>
+    <name>Sydney &apos;Big Dawg&apos; Colston</name>
+    <role>Speaker - Free and Clear</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sydney &apos;Big Dawg&apos; Colston\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>202080</tmdbid>
+  </actor>
+  <actor>
+    <name>Rachel Singer</name>
+    <role>Chloe</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rachel Singer\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>7473</tmdbid>
+  </actor>
+  <actor>
+    <name>Christie Cronenweth</name>
+    <role>Airline Check-In Attendant</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Christie Cronenweth\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>1172435</tmdbid>
+  </actor>
+  <actor>
+    <name>Tim DeZarn</name>
+    <role>Federated Motor Co. - Inspector Bird</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tim DeZarn\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>956719</tmdbid>
+  </actor>
+  <actor>
+    <name>Ezra Buzzington</name>
+    <role>Federated Motor Co. - Inspector Dent</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Ezra Buzzington\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>59285</tmdbid>
+  </actor>
+  <actor>
+    <name>Dierdre Downing-Jackson</name>
+    <role>Business Woman on Plane</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dierdre Downing-Jackson\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>1705289</tmdbid>
+  </actor>
+  <actor>
+    <name>Bob Stephenson</name>
+    <role>Airport Security Officer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bob Stephenson\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>17449</tmdbid>
+  </actor>
+  <director>David Fincher</director>
+  <tag>dual identity</tag>
+  <tag>rage and hate</tag>
+  <tag>based on novel or book</tag>
+  <tag>nihilism</tag>
+  <tag>fight</tag>
+  <tag>support group</tag>
+  <tag>dystopia</tag>
+  <tag>insomnia</tag>
+  <tag>alter ego</tag>
+  <tag>breaking the fourth wall</tag>
+  <tag>split personality</tag>
+  <tag>quitting a job</tag>
+  <tag>dissociative identity disorder</tag>
+  <tag>self destructiveness</tag>
+</movie>

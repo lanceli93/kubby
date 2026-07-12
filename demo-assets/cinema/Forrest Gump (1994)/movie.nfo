@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Forrest Gump</title>
+  <originaltitle>Forrest Gump</originaltitle>
+  <sorttitle>Forrest Gump</sorttitle>
+  <plot>A man with a low IQ has accomplished great things in his life and been present during significant historic events—in each case, far exceeding what anyone imagined he could do. But despite all he has achieved, his one true love eludes him.</plot>
+  <tagline>The world will never be the same once you&apos;ve seen it through the eyes of Forrest Gump.</tagline>
+  <rating>8.464</rating>
+  <runtime>142</runtime>
+  <premiered>1994-06-23</premiered>
+  <year>1994</year>
+  <genre>Comedy</genre>
+  <genre>Drama</genre>
+  <genre>Romance</genre>
+  <studio>Paramount Pictures</studio>
+  <studio>The Steve Tisch Company</studio>
+  <studio>Wendy Finerman Productions</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">13</uniqueid>
+  <uniqueid type="imdb">tt0109830</uniqueid>
+  <actor>
+    <name>Tom Hanks</name>
+    <role>Forrest Gump</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Hanks\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>31</tmdbid>
+  </actor>
+  <actor>
+    <name>Robin Wright</name>
+    <role>Jenny Curran</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Robin Wright\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>32</tmdbid>
+  </actor>
+  <actor>
+    <name>Gary Sinise</name>
+    <role>Lieutenant Dan Taylor</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Gary Sinise\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>33</tmdbid>
+  </actor>
+  <actor>
+    <name>Sally Field</name>
+    <role>Mrs. Gump</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sally Field\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>35</tmdbid>
+  </actor>
+  <actor>
+    <name>Mykelti Williamson</name>
+    <role>Bubba Blue</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mykelti Williamson\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>34</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Conner Humphreys</name>
+    <role>Young Forrest Gump</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michael Conner Humphreys\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>37821</tmdbid>
+  </actor>
+  <actor>
+    <name>Hanna Hall</name>
+    <role>Young Jenny Curran</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Hanna Hall\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>204997</tmdbid>
+  </actor>
+  <actor>
+    <name>Haley Joel Osment</name>
+    <role>Forrest Junior</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Haley Joel Osment\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>9640</tmdbid>
+  </actor>
+  <actor>
+    <name>Siobhan Fallon Hogan</name>
+    <role>School Bus Driver</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Siobhan Fallon Hogan\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>6751</tmdbid>
+  </actor>
+  <actor>
+    <name>Rebecca Williams</name>
+    <role>Nurse at Park Bench</role>
+    <order>9</order>
+    <tmdbid>3817610</tmdbid>
+  </actor>
+  <actor>
+    <name>Bob Penny</name>
+    <role>Crony</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bob Penny\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>196855</tmdbid>
+  </actor>
+  <actor>
+    <name>Harold G. Herthum</name>
+    <role>Doctor</role>
+    <order>11</order>
+    <tmdbid>3052237</tmdbid>
+  </actor>
+  <actor>
+    <name>George Kelly</name>
+    <role>Barber</role>
+    <order>12</order>
+    <tmdbid>951881</tmdbid>
+  </actor>
+  <actor>
+    <name>John Randall</name>
+    <role>Crony</role>
+    <order>13</order>
+    <tmdbid>3817629</tmdbid>
+  </actor>
+  <actor>
+    <name>Sam Anderson</name>
+    <role>Principal Hancock</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sam Anderson\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>36221</tmdbid>
+  </actor>
+  <actor>
+    <name>Margo Moorer</name>
+    <role>Louise</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Margo Moorer\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>1215432</tmdbid>
+  </actor>
+  <actor>
+    <name>Ione M. Telech</name>
+    <role>Elderly Woman</role>
+    <order>16</order>
+    <tmdbid>3817635</tmdbid>
+  </actor>
+  <actor>
+    <name>Christine Seabrook</name>
+    <role>Elderly Woman&apos;s Daughter</role>
+    <order>17</order>
+    <tmdbid>3817637</tmdbid>
+  </actor>
+  <actor>
+    <name>John Worsham</name>
+    <role>Southern Gentleman / Landowner</role>
+    <order>18</order>
+    <tmdbid>946856</tmdbid>
+  </actor>
+  <actor>
+    <name>Peter Dobson</name>
+    <role>Young Elvis Presley</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Peter Dobson\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>37822</tmdbid>
+  </actor>
+  <director>Robert Zemeckis</director>
+  <tag>new year&apos;s eve</tag>
+  <tag>vietnam war</tag>
+  <tag>vietnam veteran</tag>
+  <tag>mentally disabled</tag>
+  <tag>friendship</tag>
+  <tag>usa president</tag>
+  <tag>washington dc, usa</tag>
+  <tag>post-traumatic stress disorder (ptsd)</tag>
+  <tag>waitress</tag>
+  <tag>based on novel or book</tag>
+  <tag>hippie</tag>
+  <tag>single parent</tag>
+  <tag>parent child relationship</tag>
+  <tag>optimism</tag>
+  <tag>1970s</tag>
+  <tag>drug addiction</tag>
+  <tag>autism</tag>
+  <tag>alabama</tag>
+  <tag>black panther party</tag>
+  <tag>bus stop</tag>
+  <tag>family relationships</tag>
+  <tag>chameleon</tag>
+  <tag>single mother</tag>
+  <tag>military</tag>
+  <tag>anti war protest</tag>
+  <tag>1960s</tag>
+  <tag>college american football</tag>
+  <tag>mother son relationship</tag>
+  <tag>america</tag>
+  <tag>hilarious</tag>
+  <tag>feel-good</tag>
+</movie>

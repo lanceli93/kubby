@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Avatar: The Way of Water</title>
+  <originaltitle>Avatar: The Way of Water</originaltitle>
+  <sorttitle>Avatar: The Way of Water</sorttitle>
+  <plot>Set more than a decade after the events of the first film, learn the story of the Sully family (Jake, Neytiri, and their kids), the trouble that follows them, the lengths they go to keep each other safe, the battles they fight to stay alive, and the tragedies they endure.</plot>
+  <tagline>Return to Pandora.</tagline>
+  <rating>7.594</rating>
+  <runtime>192</runtime>
+  <premiered>2022-12-14</premiered>
+  <year>2022</year>
+  <genre>Action</genre>
+  <genre>Adventure</genre>
+  <genre>Science Fiction</genre>
+  <studio>20th Century Studios</studio>
+  <studio>Lightstorm Entertainment</studio>
+  <studio>TSG Entertainment</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">76600</uniqueid>
+  <uniqueid type="imdb">tt1630029</uniqueid>
+  <actor>
+    <name>Sam Worthington</name>
+    <role>Jake Sully</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sam Worthington\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>65731</tmdbid>
+  </actor>
+  <actor>
+    <name>Zoe Saldaña</name>
+    <role>Neytiri</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Z\Zoe Saldaña\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>8691</tmdbid>
+  </actor>
+  <actor>
+    <name>Sigourney Weaver</name>
+    <role>Kiri</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sigourney Weaver\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>10205</tmdbid>
+  </actor>
+  <actor>
+    <name>Stephen Lang</name>
+    <role>Colonel Miles Quaritch</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Stephen Lang\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>32747</tmdbid>
+  </actor>
+  <actor>
+    <name>Kate Winslet</name>
+    <role>Ronal</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kate Winslet\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>204</tmdbid>
+  </actor>
+  <actor>
+    <name>Cliff Curtis</name>
+    <role>Tonowari</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Cliff Curtis\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>7248</tmdbid>
+  </actor>
+  <actor>
+    <name>Joel David Moore</name>
+    <role>Norm Spellman</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Joel David Moore\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>59231</tmdbid>
+  </actor>
+  <actor>
+    <name>CCH Pounder</name>
+    <role>Mo&apos;at</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\CCH Pounder\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>30485</tmdbid>
+  </actor>
+  <actor>
+    <name>Edie Falco</name>
+    <role>General Frances Ardmore</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Edie Falco\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>36190</tmdbid>
+  </actor>
+  <actor>
+    <name>Jemaine Clement</name>
+    <role>Dr. Ian Garvin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jemaine Clement\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>55936</tmdbid>
+  </actor>
+  <actor>
+    <name>Giovanni Ribisi</name>
+    <role>Parker Selfridge</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Giovanni Ribisi\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1771</tmdbid>
+  </actor>
+  <actor>
+    <name>Britain Dalton</name>
+    <role>Lo&apos;ak</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Britain Dalton\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>1663672</tmdbid>
+  </actor>
+  <actor>
+    <name>Jamie Flatters</name>
+    <role>Neteyam</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jamie Flatters\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>1729393</tmdbid>
+  </actor>
+  <actor>
+    <name>Trinity Jo-Li Bliss</name>
+    <role>Tuktirey &apos;Tuk&apos;</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Trinity Jo-Li Bliss\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>1895788</tmdbid>
+  </actor>
+  <actor>
+    <name>Jack Champion</name>
+    <role>Miles &apos;Spider&apos; Socorro</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jack Champion\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1895760</tmdbid>
+  </actor>
+  <actor>
+    <name>Brendan Cowell</name>
+    <role>Mick Scoresby</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Brendan Cowell\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>129527</tmdbid>
+  </actor>
+  <actor>
+    <name>Bailey Bass</name>
+    <role>Tsireya</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bailey Bass\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>1140237</tmdbid>
+  </actor>
+  <actor>
+    <name>Filip Geljo</name>
+    <role>Aonung</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Filip Geljo\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>1632658</tmdbid>
+  </actor>
+  <actor>
+    <name>Duane Evans Jr.</name>
+    <role>Rotxo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Duane Evans Jr\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>1615098</tmdbid>
+  </actor>
+  <actor>
+    <name>Dileep Rao</name>
+    <role>Dr. Max Patel</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dileep Rao\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>95697</tmdbid>
+  </actor>
+  <director>James Cameron</director>
+  <tag>dying and death</tag>
+  <tag>loss of loved one</tag>
+  <tag>alien life-form</tag>
+  <tag>resurrection</tag>
+  <tag>dysfunctional family</tag>
+  <tag>sequel</tag>
+  <tag>alien planet</tag>
+  <tag>distant future</tag>
+  <tag>transhumanism</tag>
+  <tag>adopted child</tag>
+  <tag>rebirth</tag>
+  <tag>motion capture</tag>
+  <tag>family dynamics</tag>
+  <tag>adopted son</tag>
+  <tag>stronger villain</tag>
+  <tag>complex</tag>
+  <tag>war</tag>
+  <tag>intense</tag>
+  <tag>bold</tag>
+  <tag>complicated</tag>
+  <tag>demeaning</tag>
+  <tag>exhilarated</tag>
+</movie>

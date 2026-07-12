@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>GoodFellas</title>
+  <originaltitle>GoodFellas</originaltitle>
+  <sorttitle>GoodFellas</sorttitle>
+  <plot>The true story of Henry Hill, a half-Irish, half-Sicilian Brooklyn kid who is adopted by neighbourhood gangsters at an early age and climbs the ranks of a Mafia family under the guidance of Jimmy Conway.</plot>
+  <tagline>Three decades of life in the mafia.</tagline>
+  <rating>8.454</rating>
+  <runtime>145</runtime>
+  <premiered>1990-09-12</premiered>
+  <year>1990</year>
+  <genre>Drama</genre>
+  <genre>Crime</genre>
+  <studio>Winkler Films</studio>
+  <studio>Warner Bros. Pictures</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">769</uniqueid>
+  <uniqueid type="imdb">tt0099685</uniqueid>
+  <actor>
+    <name>Robert De Niro</name>
+    <role>James Conway</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Robert De Niro\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>380</tmdbid>
+  </actor>
+  <actor>
+    <name>Ray Liotta</name>
+    <role>Henry Hill</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ray Liotta\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>11477</tmdbid>
+  </actor>
+  <actor>
+    <name>Joe Pesci</name>
+    <role>Tommy DeVito</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Joe Pesci\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>4517</tmdbid>
+  </actor>
+  <actor>
+    <name>Lorraine Bracco</name>
+    <role>Karen Hill</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lorraine Bracco\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>11478</tmdbid>
+  </actor>
+  <actor>
+    <name>Paul Sorvino</name>
+    <role>Paul Cicero</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Paul Sorvino\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>7004</tmdbid>
+  </actor>
+  <actor>
+    <name>Frank Sivero</name>
+    <role>Frankie Carbone</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Frank Sivero\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>11480</tmdbid>
+  </actor>
+  <actor>
+    <name>Tony Darrow</name>
+    <role>Sonny Bunz</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tony Darrow\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>11482</tmdbid>
+  </actor>
+  <actor>
+    <name>Mike Starr</name>
+    <role>Frenchy</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mike Starr\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>5170</tmdbid>
+  </actor>
+  <actor>
+    <name>Frank Vincent</name>
+    <role>Billy Batts</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Frank Vincent\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>7164</tmdbid>
+  </actor>
+  <actor>
+    <name>Chuck Low</name>
+    <role>Morris Kessler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Chuck Low\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>11479</tmdbid>
+  </actor>
+  <actor>
+    <name>Frank DiLeo</name>
+    <role>Tuddy Cicero</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Frank DiLeo\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>11481</tmdbid>
+  </actor>
+  <actor>
+    <name>Henny Youngman</name>
+    <role>Henny Youngman</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Henny Youngman\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>99939</tmdbid>
+  </actor>
+  <actor>
+    <name>Gina Mastrogiacomo</name>
+    <role>Janice Rossi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Gina Mastrogiacomo\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>11485</tmdbid>
+  </actor>
+  <actor>
+    <name>Catherine Scorsese</name>
+    <role>Tommy&apos;s Mother</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Catherine Scorsese\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>11483</tmdbid>
+  </actor>
+  <actor>
+    <name>Charles Scorsese</name>
+    <role>Vinnie</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Charles Scorsese\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1006721</tmdbid>
+  </actor>
+  <actor>
+    <name>Suzanne Shepherd</name>
+    <role>Karen&apos;s Mother</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Suzanne Shepherd\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>11484</tmdbid>
+  </actor>
+  <actor>
+    <name>Debi Mazar</name>
+    <role>Sandy</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Debi Mazar\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>5578</tmdbid>
+  </actor>
+  <actor>
+    <name>Margo Winkler</name>
+    <role>Belle Kessler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Margo Winkler\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>1079544</tmdbid>
+  </actor>
+  <actor>
+    <name>Welker White</name>
+    <role>Lois Byrd</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\W\Welker White\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>93620</tmdbid>
+  </actor>
+  <actor>
+    <name>Jerry Vale</name>
+    <role>Jerry Vale</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jerry Vale\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>1212532</tmdbid>
+  </actor>
+  <director>Martin Scorsese</director>
+  <tag>prison</tag>
+  <tag>florida</tag>
+  <tag>new york city</tag>
+  <tag>based on novel or book</tag>
+  <tag>gangster</tag>
+  <tag>mass murder</tag>
+  <tag>drug trafficking</tag>
+  <tag>1970s</tag>
+  <tag>irish-american</tag>
+  <tag>gore</tag>
+  <tag>biography</tag>
+  <tag>based on true story</tag>
+  <tag>murder</tag>
+  <tag>organized crime</tag>
+  <tag>mafia</tag>
+  <tag>brooklyn, new york city</tag>
+  <tag>crime epic</tag>
+  <tag>tampa, florida</tag>
+</movie>

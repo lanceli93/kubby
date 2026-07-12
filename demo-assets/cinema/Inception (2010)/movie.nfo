@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Inception</title>
+  <originaltitle>Inception</originaltitle>
+  <sorttitle>Inception</sorttitle>
+  <plot>Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: &quot;inception&quot;, the implantation of another person&apos;s idea into a target&apos;s subconscious.</plot>
+  <tagline>Your mind is the scene of the crime.</tagline>
+  <rating>8.372</rating>
+  <runtime>148</runtime>
+  <premiered>2010-07-15</premiered>
+  <year>2010</year>
+  <genre>Action</genre>
+  <genre>Science Fiction</genre>
+  <genre>Adventure</genre>
+  <studio>Legendary Pictures</studio>
+  <studio>Syncopy</studio>
+  <studio>Warner Bros. Pictures</studio>
+  <country>United Kingdom</country>
+  <uniqueid type="tmdb">27205</uniqueid>
+  <uniqueid type="imdb">tt1375666</uniqueid>
+  <actor>
+    <name>Leonardo DiCaprio</name>
+    <role>Dom Cobb</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Leonardo DiCaprio\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>6193</tmdbid>
+  </actor>
+  <actor>
+    <name>Joseph Gordon-Levitt</name>
+    <role>Arthur</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Joseph Gordon-Levitt\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>24045</tmdbid>
+  </actor>
+  <actor>
+    <name>Ken Watanabe</name>
+    <role>Saito</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Ken Watanabe\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>3899</tmdbid>
+  </actor>
+  <actor>
+    <name>Tom Hardy</name>
+    <role>Eames</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Hardy\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>2524</tmdbid>
+  </actor>
+  <actor>
+    <name>Elliot Page</name>
+    <role>Ariadne</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Elliot Page\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>27578</tmdbid>
+  </actor>
+  <actor>
+    <name>Dileep Rao</name>
+    <role>Yusuf</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dileep Rao\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>95697</tmdbid>
+  </actor>
+  <actor>
+    <name>Cillian Murphy</name>
+    <role>Robert Fischer, Jr.</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Cillian Murphy\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>2037</tmdbid>
+  </actor>
+  <actor>
+    <name>Tom Berenger</name>
+    <role>Peter Browning</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Berenger\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>13022</tmdbid>
+  </actor>
+  <actor>
+    <name>Marion Cotillard</name>
+    <role>Mal Cobb</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Marion Cotillard\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>8293</tmdbid>
+  </actor>
+  <actor>
+    <name>Pete Postlethwaite</name>
+    <role>Maurice Fischer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Pete Postlethwaite\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>4935</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Caine</name>
+    <role>Stephen Miles</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michael Caine\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>3895</tmdbid>
+  </actor>
+  <actor>
+    <name>Lukas Haas</name>
+    <role>Nash</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lukas Haas\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>526</tmdbid>
+  </actor>
+  <actor>
+    <name>Talulah Riley</name>
+    <role>Blonde</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Talulah Riley\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>66441</tmdbid>
+  </actor>
+  <actor>
+    <name>Tohoru Masamune</name>
+    <role>Japanese Security Guard</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tohoru Masamune\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>173212</tmdbid>
+  </actor>
+  <actor>
+    <name>Taylor Geare</name>
+    <role>Phillipa (5 years)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Taylor Geare\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>967376</tmdbid>
+  </actor>
+  <actor>
+    <name>Claire Geare</name>
+    <role>Phillipa (3 years)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Claire Geare\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>973135</tmdbid>
+  </actor>
+  <actor>
+    <name>Johnathan Geare</name>
+    <role>James (3 years)</role>
+    <order>16</order>
+    <tmdbid>1677266</tmdbid>
+  </actor>
+  <actor>
+    <name>Yuji Okumoto</name>
+    <role>Saito&apos;s Attendant</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Y\Yuji Okumoto\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>56120</tmdbid>
+  </actor>
+  <actor>
+    <name>Earl Cameron</name>
+    <role>Elderly Bald Man</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Earl Cameron\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>2246</tmdbid>
+  </actor>
+  <actor>
+    <name>Ryan Hayward</name>
+    <role>Lawyer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ryan Hayward\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>1677267</tmdbid>
+  </actor>
+  <director>Christopher Nolan</director>
+  <tag>mission</tag>
+  <tag>dreams</tag>
+  <tag>kidnapping</tag>
+  <tag>spy</tag>
+  <tag>allegory</tag>
+  <tag>intellectual</tag>
+  <tag>manipulation</tag>
+  <tag>heist</tag>
+  <tag>memory</tag>
+  <tag>dream world</tag>
+  <tag>subconscious</tag>
+  <tag>admiring</tag>
+  <tag>high concept</tag>
+  <tag>dream</tag>
+</movie>

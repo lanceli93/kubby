@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>La La Land</title>
+  <originaltitle>La La Land</originaltitle>
+  <sorttitle>La La Land</sorttitle>
+  <plot>Mia, an aspiring actress, serves lattes to movie stars in between auditions and Sebastian, a jazz musician, scrapes by playing cocktail party gigs in dingy bars, but as success mounts they are faced with decisions that begin to fray the fragile fabric of their love affair, and the dreams they worked so hard to maintain in each other threaten to rip them apart.</plot>
+  <tagline>Here&apos;s to the fools who dream.</tagline>
+  <rating>7.9</rating>
+  <runtime>129</runtime>
+  <premiered>2016-12-01</premiered>
+  <year>2016</year>
+  <genre>Comedy</genre>
+  <genre>Drama</genre>
+  <genre>Romance</genre>
+  <studio>Summit Entertainment</studio>
+  <studio>Gilbert Films</studio>
+  <studio>Impostor Pictures</studio>
+  <studio>Marc Platt Productions</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">313369</uniqueid>
+  <uniqueid type="imdb">tt3783958</uniqueid>
+  <actor>
+    <name>Ryan Gosling</name>
+    <role>Sebastian</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ryan Gosling\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>30614</tmdbid>
+  </actor>
+  <actor>
+    <name>Emma Stone</name>
+    <role>Mia</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Emma Stone\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>54693</tmdbid>
+  </actor>
+  <actor>
+    <name>John Legend</name>
+    <role>Keith</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Legend\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>113461</tmdbid>
+  </actor>
+  <actor>
+    <name>Rosemarie DeWitt</name>
+    <role>Laura</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rosemarie DeWitt\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>14892</tmdbid>
+  </actor>
+  <actor>
+    <name>Finn Wittrock</name>
+    <role>Greg</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Finn Wittrock\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>168877</tmdbid>
+  </actor>
+  <actor>
+    <name>Callie Hernandez</name>
+    <role>Tracy</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Callie Hernandez\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1486488</tmdbid>
+  </actor>
+  <actor>
+    <name>Sonoya Mizuno</name>
+    <role>Caitlin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sonoya Mizuno\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>1457238</tmdbid>
+  </actor>
+  <actor>
+    <name>Jessica Rothe</name>
+    <role>Alexis</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jessica Rothe\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>1427680</tmdbid>
+  </actor>
+  <actor>
+    <name>Tom Everett Scott</name>
+    <role>David</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Everett Scott\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>16857</tmdbid>
+  </actor>
+  <actor>
+    <name>Josh Pence</name>
+    <role>Josh</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Josh Pence\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>928532</tmdbid>
+  </actor>
+  <actor>
+    <name>J.K. Simmons</name>
+    <role>Bill</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\J.K. Simmons\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>18999</tmdbid>
+  </actor>
+  <actor>
+    <name>Amiée Conn</name>
+    <role>Famous Actress</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Amiée Conn\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>1123299</tmdbid>
+  </actor>
+  <actor>
+    <name>Terry Walters</name>
+    <role>Linda (Coffee Shop Manager)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Terry Walters\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>142263</tmdbid>
+  </actor>
+  <actor>
+    <name>Thom Shelton</name>
+    <role>Coffee Spiller</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Thom Shelton\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>1697098</tmdbid>
+  </actor>
+  <actor>
+    <name>Cinda Adams</name>
+    <role>Casting Director (First Audition)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Cinda Adams\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1324161</tmdbid>
+  </actor>
+  <actor>
+    <name>Claudine Claudio</name>
+    <role>Karen (Waitress)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Claudine Claudio\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>156985</tmdbid>
+  </actor>
+  <actor>
+    <name>Jason Fuchs</name>
+    <role>Carlo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jason Fuchs\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>131947</tmdbid>
+  </actor>
+  <actor>
+    <name>D.A. Wallach</name>
+    <role>80&apos;s singer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\D.A. Wallach\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>1475215</tmdbid>
+  </actor>
+  <actor>
+    <name>Trevor Lissauer</name>
+    <role>Valet</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Trevor Lissauer\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>181763</tmdbid>
+  </actor>
+  <actor>
+    <name>Olivia Hamilton</name>
+    <role>Bree (Gluten Free Girl)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\O\Olivia Hamilton\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>1634328</tmdbid>
+  </actor>
+  <director>Damien Chazelle</director>
+  <tag>dancing</tag>
+  <tag>dance</tag>
+  <tag>jazz</tag>
+  <tag>melancholy</tag>
+  <tag>musical</tag>
+  <tag>ambition</tag>
+  <tag>casting</tag>
+  <tag>coffee shop</tag>
+  <tag>jazz club</tag>
+  <tag>traffic jam</tag>
+  <tag>hollywood</tag>
+  <tag>los angeles, california</tag>
+  <tag>pianist</tag>
+  <tag>pier</tag>
+  <tag>audition</tag>
+  <tag>valentine&apos;s day</tag>
+  <tag>planetarium</tag>
+  <tag>aspiring actor</tag>
+  <tag>movie set</tag>
+  <tag>sunset</tag>
+  <tag>one-woman show</tag>
+  <tag>pool party</tag>
+  <tag>white savior</tag>
+  <tag>complex</tag>
+  <tag>griffith observatory</tag>
+  <tag>bold</tag>
+  <tag>exuberant</tag>
+  <tag>romantic comedy</tag>
+</movie>

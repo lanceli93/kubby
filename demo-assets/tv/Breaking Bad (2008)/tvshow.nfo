@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>Breaking Bad</title>
+  <originaltitle>Breaking Bad</originaltitle>
+  <sorttitle>Breaking Bad</sorttitle>
+  <plot>Walter White, a New Mexico chemistry teacher, is diagnosed with Stage III cancer and given a prognosis of only two years left to live. He becomes filled with a sense of fearlessness and an unrelenting desire to secure his family&apos;s financial future at any cost as he enters the dangerous world of drugs and crime.</plot>
+  <tagline>Change the equation.</tagline>
+  <rating>8.948</rating>
+  <premiered>2008-01-20</premiered>
+  <year>2008</year>
+  <status>Ended</status>
+  <genre>Drama</genre>
+  <genre>Crime</genre>
+  <studio>Sony Pictures Television</studio>
+  <studio>High Bridge Productions</studio>
+  <studio>Gran Via Productions</studio>
+  <country>US</country>
+  <uniqueid type="tmdb">1396</uniqueid>
+  <uniqueid type="imdb">tt0903747</uniqueid>
+  <uniqueid type="tvdb">81189</uniqueid>
+  <actor>
+    <name>Bryan Cranston</name>
+    <role>Walter White</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\B\Bryan Cranston\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>17419</tmdbid>
+  </actor>
+  <actor>
+    <name>Aaron Paul</name>
+    <role>Jesse Pinkman</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\A\Aaron Paul\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>84497</tmdbid>
+  </actor>
+  <actor>
+    <name>Anna Gunn</name>
+    <role>Skyler White</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\A\Anna Gunn\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>134531</tmdbid>
+  </actor>
+  <actor>
+    <name>RJ Mitte</name>
+    <role>Walter White Jr.</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\R\RJ Mitte\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>209674</tmdbid>
+  </actor>
+  <actor>
+    <name>Dean Norris</name>
+    <role>Hank Schrader</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\D\Dean Norris\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>14329</tmdbid>
+  </actor>
+  <actor>
+    <name>Betsy Brandt</name>
+    <role>Marie Schrader</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\B\Betsy Brandt\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1217934</tmdbid>
+  </actor>
+  <actor>
+    <name>Bob Odenkirk</name>
+    <role>Saul Goodman</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\B\Bob Odenkirk\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>59410</tmdbid>
+  </actor>
+  <actor>
+    <name>Jonathan Banks</name>
+    <role>Mike Ehrmantraut</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Jonathan Banks\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>783</tmdbid>
+  </actor>
+  <tag>new mexico</tag>
+  <tag>drug dealer</tag>
+  <tag>narcissism</tag>
+  <tag>psychopath</tag>
+  <tag>terminal illness</tag>
+  <tag>outlaw</tag>
+  <tag>dark comedy</tag>
+  <tag>cancer</tag>
+  <tag>tragedy</tag>
+  <tag>drugs</tag>
+  <tag>criminal</tag>
+  <tag>meth lab</tag>
+  <tag>drug lord</tag>
+  <tag>high school teacher</tag>
+  <tag>dea agent</tag>
+  <tag>neo-western</tag>
+  <tag>albuquerque, new mexico</tag>
+  <tag>criminal lawyer</tag>
+  <tag>fall from grace</tag>
+  <tag>cartel</tag>
+  <tag>mexican cartel</tag>
+  <tag>male egos</tag>
+  <tag>crystal meth</tag>
+  <tag>dark</tag>
+  <tag>methamphetamine</tag>
+  <tag>dramatic</tag>
+  <tag>thriller</tag>
+  <tag>exhilarated</tag>
+  <tag>violent</tag>
+  <tag>tortured genius</tag>
+</tvshow>

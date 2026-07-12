@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Interstellar</title>
+  <originaltitle>Interstellar</originaltitle>
+  <sorttitle>Interstellar</sorttitle>
+  <plot>The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.</plot>
+  <tagline>Mankind was born on Earth. It was never meant to die here.</tagline>
+  <rating>8.48</rating>
+  <runtime>169</runtime>
+  <premiered>2014-11-05</premiered>
+  <year>2014</year>
+  <genre>Adventure</genre>
+  <genre>Drama</genre>
+  <genre>Science Fiction</genre>
+  <studio>Legendary Pictures</studio>
+  <studio>Syncopy</studio>
+  <studio>Lynda Obst Productions</studio>
+  <country>United Kingdom</country>
+  <uniqueid type="tmdb">157336</uniqueid>
+  <uniqueid type="imdb">tt0816692</uniqueid>
+  <actor>
+    <name>Matthew McConaughey</name>
+    <role>Cooper</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Matthew McConaughey\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>10297</tmdbid>
+  </actor>
+  <actor>
+    <name>Anne Hathaway</name>
+    <role>Brand</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Anne Hathaway\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>1813</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Caine</name>
+    <role>Professor Brand</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michael Caine\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>3895</tmdbid>
+  </actor>
+  <actor>
+    <name>Jessica Chastain</name>
+    <role>Murph</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jessica Chastain\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>83002</tmdbid>
+  </actor>
+  <actor>
+    <name>Casey Affleck</name>
+    <role>Tom</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Casey Affleck\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>1893</tmdbid>
+  </actor>
+  <actor>
+    <name>Wes Bentley</name>
+    <role>Doyle</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\W\Wes Bentley\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>8210</tmdbid>
+  </actor>
+  <actor>
+    <name>Topher Grace</name>
+    <role>Getty</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Topher Grace\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>17052</tmdbid>
+  </actor>
+  <actor>
+    <name>Mackenzie Foy</name>
+    <role>Murph (10 Yrs.)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mackenzie Foy\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>851784</tmdbid>
+  </actor>
+  <actor>
+    <name>Ellen Burstyn</name>
+    <role>Murph (older)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Ellen Burstyn\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>9560</tmdbid>
+  </actor>
+  <actor>
+    <name>John Lithgow</name>
+    <role>Donald</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Lithgow\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>12074</tmdbid>
+  </actor>
+  <actor>
+    <name>Bill Irwin</name>
+    <role>TARS (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bill Irwin\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>58549</tmdbid>
+  </actor>
+  <actor>
+    <name>David Gyasi</name>
+    <role>Romilly</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Gyasi\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>55411</tmdbid>
+  </actor>
+  <actor>
+    <name>Timothée Chalamet</name>
+    <role>Tom (15 Yrs.)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Timothée Chalamet\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>1190668</tmdbid>
+  </actor>
+  <actor>
+    <name>Matt Damon</name>
+    <role>Mann</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Matt Damon\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>1892</tmdbid>
+  </actor>
+  <actor>
+    <name>Josh Stewart</name>
+    <role>CASE (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Josh Stewart\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>40039</tmdbid>
+  </actor>
+  <actor>
+    <name>Leah Cairns</name>
+    <role>Lois</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Leah Cairns\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>32202</tmdbid>
+  </actor>
+  <actor>
+    <name>Liam Dickinson</name>
+    <role>Coop</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Liam Dickinson\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>1452481</tmdbid>
+  </actor>
+  <actor>
+    <name>Francis X. McCarthy</name>
+    <role>Boots</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Francis X. McCarthy\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>100650</tmdbid>
+  </actor>
+  <actor>
+    <name>William Devane</name>
+    <role>Williams</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\W\William Devane\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>21416</tmdbid>
+  </actor>
+  <actor>
+    <name>Andrew Borba</name>
+    <role>Smith</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Andrew Borba\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>167720</tmdbid>
+  </actor>
+  <director>Christopher Nolan</director>
+  <tag>spacecraft</tag>
+  <tag>race against time</tag>
+  <tag>artificial intelligence (a.i.)</tag>
+  <tag>nasa</tag>
+  <tag>time warp</tag>
+  <tag>dystopia</tag>
+  <tag>expedition</tag>
+  <tag>time travel</tag>
+  <tag>space travel</tag>
+  <tag>wormhole</tag>
+  <tag>famine</tag>
+  <tag>hibernation</tag>
+  <tag>black hole</tag>
+  <tag>quantum mechanics</tag>
+  <tag>family relationships</tag>
+  <tag>space</tag>
+  <tag>planet</tag>
+  <tag>astronaut</tag>
+  <tag>scientist</tag>
+  <tag>single father</tag>
+  <tag>space station</tag>
+  <tag>gravity</tag>
+  <tag>space adventure</tag>
+  <tag>time-manipulation</tag>
+  <tag>cryonics</tag>
+  <tag>complex</tag>
+  <tag>father daughter relationship</tag>
+  <tag>2060s</tag>
+  <tag>admiring</tag>
+</movie>

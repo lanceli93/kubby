@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Blade Runner 2049</title>
+  <originaltitle>Blade Runner 2049</originaltitle>
+  <sorttitle>Blade Runner 2049</sorttitle>
+  <plot>Thirty years after the events of the first film, a new blade runner, LAPD Officer K, unearths a long-buried secret that has the potential to plunge what&apos;s left of society into chaos. K&apos;s discovery leads him on a quest to find Rick Deckard, a former LAPD blade runner who has been missing for 30 years.</plot>
+  <tagline>The key to the future is finally unearthed.</tagline>
+  <rating>7.596</rating>
+  <runtime>164</runtime>
+  <premiered>2017-10-04</premiered>
+  <year>2017</year>
+  <genre>Science Fiction</genre>
+  <genre>Drama</genre>
+  <studio>Alcon Entertainment</studio>
+  <studio>Columbia Pictures</studio>
+  <studio>Scott Free Productions</studio>
+  <studio>Bud Yorkin Productions</studio>
+  <studio>Torridon Films</studio>
+  <studio>16:14 Entertainment</studio>
+  <country>Canada</country>
+  <uniqueid type="tmdb">335984</uniqueid>
+  <uniqueid type="imdb">tt1856101</uniqueid>
+  <actor>
+    <name>Ryan Gosling</name>
+    <role>&apos;K&apos;</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ryan Gosling\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>30614</tmdbid>
+  </actor>
+  <actor>
+    <name>Harrison Ford</name>
+    <role>Rick Deckard</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Harrison Ford\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>3</tmdbid>
+  </actor>
+  <actor>
+    <name>Ana de Armas</name>
+    <role>Joi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Ana de Armas\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>224513</tmdbid>
+  </actor>
+  <actor>
+    <name>Dave Bautista</name>
+    <role>Sapper Morton</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dave Bautista\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>543530</tmdbid>
+  </actor>
+  <actor>
+    <name>Robin Wright</name>
+    <role>Lieutenant Joshi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Robin Wright\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>32</tmdbid>
+  </actor>
+  <actor>
+    <name>Sylvia Hoeks</name>
+    <role>Luv</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sylvia Hoeks\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>104632</tmdbid>
+  </actor>
+  <actor>
+    <name>Mackenzie Davis</name>
+    <role>Mariette</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mackenzie Davis\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>1110405</tmdbid>
+  </actor>
+  <actor>
+    <name>Jared Leto</name>
+    <role>Niander Wallace</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jared Leto\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>7499</tmdbid>
+  </actor>
+  <actor>
+    <name>Carla Juri</name>
+    <role>Dr. Ana Stelline</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Carla Juri\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1013973</tmdbid>
+  </actor>
+  <actor>
+    <name>Hiam Abbass</name>
+    <role>Freysa</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Hiam Abbass\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>765</tmdbid>
+  </actor>
+  <actor>
+    <name>Lennie James</name>
+    <role>Mister Cotton</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lennie James\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>1120</tmdbid>
+  </actor>
+  <actor>
+    <name>David Dastmalchian</name>
+    <role>Coco</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Dastmalchian\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>83854</tmdbid>
+  </actor>
+  <actor>
+    <name>Sean Young</name>
+    <role>Rachael</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sean Young\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>586</tmdbid>
+  </actor>
+  <actor>
+    <name>Edward James Olmos</name>
+    <role>Gaff</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Edward James Olmos\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>587</tmdbid>
+  </actor>
+  <actor>
+    <name>Barkhad Abdi</name>
+    <role>Doc Badger</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Barkhad Abdi\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1261694</tmdbid>
+  </actor>
+  <actor>
+    <name>Wood Harris</name>
+    <role>Nandez</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\W\Wood Harris\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>65829</tmdbid>
+  </actor>
+  <actor>
+    <name>Tómas Lemarquis</name>
+    <role>File Clerk</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tómas Lemarquis\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>18818</tmdbid>
+  </actor>
+  <actor>
+    <name>Sallie Harmsen</name>
+    <role>Replicant</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sallie Harmsen\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>544096</tmdbid>
+  </actor>
+  <actor>
+    <name>Loren Peta</name>
+    <role>Rachael Double</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Loren Peta\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>1901526</tmdbid>
+  </actor>
+  <actor>
+    <name>Mark Arnold</name>
+    <role>Interviewer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mark Arnold\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>119893</tmdbid>
+  </actor>
+  <director>Denis Villeneuve</director>
+  <tag>future</tag>
+  <tag>android</tag>
+  <tag>bounty hunter</tag>
+  <tag>artificial intelligence (a.i.)</tag>
+  <tag>dystopia</tag>
+  <tag>sequel</tag>
+  <tag>cyberpunk</tag>
+  <tag>transhumanism</tag>
+  <tag>los angeles, california</tag>
+  <tag>las vegas</tag>
+  <tag>tech noir</tag>
+  <tag>cyber thriller</tag>
+  <tag>humanoid robot</tag>
+  <tag>blade runner</tag>
+  <tag>2040s</tag>
+  <tag>serious</tag>
+  <tag>slow burn</tag>
+  <tag>direct</tag>
+  <tag>informative</tag>
+  <tag>oscar winner</tag>
+</movie>

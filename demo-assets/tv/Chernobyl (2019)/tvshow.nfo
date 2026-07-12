@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>Chernobyl</title>
+  <originaltitle>Chernobyl</originaltitle>
+  <sorttitle>Chernobyl</sorttitle>
+  <plot>The true story of one of the worst man-made catastrophes in history: the catastrophic nuclear accident at Chernobyl. A tale of the brave men and women who sacrificed to save Europe from unimaginable disaster.</plot>
+  <tagline>What is the cost of lies?</tagline>
+  <rating>8.718</rating>
+  <premiered>2019-05-06</premiered>
+  <year>2019</year>
+  <status>Ended</status>
+  <genre>Drama</genre>
+  <studio>SISTER</studio>
+  <studio>The Mighty Mint</studio>
+  <studio>Word Games</studio>
+  <studio>HBO</studio>
+  <country>US</country>
+  <uniqueid type="tmdb">87108</uniqueid>
+  <uniqueid type="imdb">tt7366338</uniqueid>
+  <uniqueid type="tvdb">360893</uniqueid>
+  <actor>
+    <name>Jared Harris</name>
+    <role>Valery Legasov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Jared Harris\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>15440</tmdbid>
+  </actor>
+  <actor>
+    <name>Stellan Skarsgård</name>
+    <role>Boris Shcherbina</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\S\Stellan Skarsgård\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>1640</tmdbid>
+  </actor>
+  <actor>
+    <name>Emily Watson</name>
+    <role>Ulana Khomyuk</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\E\Emily Watson\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>1639</tmdbid>
+  </actor>
+  <actor>
+    <name>Paul Ritter</name>
+    <role>Anatoly Dyatlov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\P\Paul Ritter\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>52888</tmdbid>
+  </actor>
+  <actor>
+    <name>Jessie Buckley</name>
+    <role>Lyudmilla Ignatenko</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Jessie Buckley\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>1498158</tmdbid>
+  </actor>
+  <actor>
+    <name>Adam Nagaitis</name>
+    <role>Vasily Ignatenko</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\A\Adam Nagaitis\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1435230</tmdbid>
+  </actor>
+  <actor>
+    <name>Sam Troughton</name>
+    <role>Alexandr Akimov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\S\Sam Troughton\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>5421</tmdbid>
+  </actor>
+  <actor>
+    <name>Robert Emms</name>
+    <role>Leonid Toptunov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\R\Robert Emms\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>589652</tmdbid>
+  </actor>
+  <actor>
+    <name>Con O&apos;Neill</name>
+    <role>Viktor Bryukhanov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\C\Con O&apos;Neill\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>96279</tmdbid>
+  </actor>
+  <actor>
+    <name>Adrian Rawlins</name>
+    <role>Nikolai Fomin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\A\Adrian Rawlins\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>1643</tmdbid>
+  </actor>
+  <actor>
+    <name>Alan Williams</name>
+    <role>KGB Chairman Charkov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\A\Alan Williams\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>122589</tmdbid>
+  </actor>
+  <actor>
+    <name>David Dencik</name>
+    <role>Mikhail Gorbachev</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\D\David Dencik\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>93236</tmdbid>
+  </actor>
+  <actor>
+    <name>Mark Lewis Jones</name>
+    <role>General Pikalov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Mark Lewis Jones\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>185460</tmdbid>
+  </actor>
+  <actor>
+    <name>Ralph Ineson</name>
+    <role>General Tarakanov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\R\Ralph Ineson\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>202032</tmdbid>
+  </actor>
+  <actor>
+    <name>Barry Keoghan</name>
+    <role>Pavel</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\B\Barry Keoghan\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1290466</tmdbid>
+  </actor>
+  <actor>
+    <name>Alex Ferns</name>
+    <role>Glukhov</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\A\Alex Ferns\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>60416</tmdbid>
+  </actor>
+  <actor>
+    <name>Fares Fares</name>
+    <role>Bacho</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\F\Fares Fares\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>57012</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael McElhatton</name>
+    <role>Prosecutor Andrei Stepashin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\M\Michael McElhatton\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>73288</tmdbid>
+  </actor>
+  <tag>based on true story</tag>
+  <tag>disaster</tag>
+  <tag>miniseries</tag>
+  <tag>nuclear catastrophe</tag>
+  <tag>1980s</tag>
+  <tag>chernobyl, ukraine</tag>
+</tvshow>

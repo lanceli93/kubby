@@ -632,6 +632,9 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `user_preferences` ADD `show_tv_show_rating_badge` integer NOT NULL DEFAULT 1",
     "ALTER TABLE `user_preferences` ADD `show_tv_resolution_badge` integer NOT NULL DEFAULT 1",
     "ALTER TABLE `user_preferences` ADD `tv_hero_mosaic_config` text",
+    // 0042: Demo Mode — flag libraries seeded by the demo, so clear/reset can
+    // allowlist them without guessing from the folder path.
+    "ALTER TABLE `media_libraries` ADD `is_demo` integer NOT NULL DEFAULT 0",
   ];
   for (const stmt of pending) {
     try {

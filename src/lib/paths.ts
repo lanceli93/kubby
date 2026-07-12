@@ -19,6 +19,25 @@ export function getDbPath(): string {
   return path.join(getDataDir(), "kubby.db");
 }
 
+/**
+ * Read-only bundle of demo media shipped inside the repo / packaged build
+ * (committed under `demo-assets/`). `scripts/package.ts` copies this next to
+ * `server.js`, so `process.cwd()/demo-assets` resolves in both dev and prod.
+ * Override with KUBBY_DEMO_ASSETS_DIR (e.g. tests / non-standard layouts).
+ */
+export function getDemoAssetsDir(): string {
+  return process.env.KUBBY_DEMO_ASSETS_DIR || path.join(process.cwd(), "demo-assets");
+}
+
+/**
+ * Writable location where demo assets are materialized at seed time (the bundle
+ * dir may be read-only, and the placeholder video is copied into each item
+ * folder here). Lives under the data dir so factory-reset can wipe it wholesale.
+ */
+export function getDemoDir(): string {
+  return path.join(getDataDir(), "demo");
+}
+
 export function getMetadataDir(): string {
   return path.join(getDataDir(), "metadata");
 }

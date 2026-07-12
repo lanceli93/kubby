@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Spirited Away</title>
+  <originaltitle>千と千尋の神隠し</originaltitle>
+  <sorttitle>Spirited Away</sorttitle>
+  <plot>A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had to free her family.</plot>
+  <tagline>Beyond the tunnel was a mysterious town.</tagline>
+  <rating>8.534</rating>
+  <runtime>125</runtime>
+  <premiered>2001-07-20</premiered>
+  <year>2001</year>
+  <genre>Animation</genre>
+  <genre>Family</genre>
+  <genre>Fantasy</genre>
+  <studio>Studio Ghibli</studio>
+  <studio>Tokuma Shoten</studio>
+  <studio>Nippon Television Network Corporation</studio>
+  <studio>Mitsubishi</studio>
+  <studio>dentsu</studio>
+  <studio>TFC</studio>
+  <country>Japan</country>
+  <uniqueid type="tmdb">129</uniqueid>
+  <uniqueid type="imdb">tt0245429</uniqueid>
+  <actor>
+    <name>Rumi Hiiragi</name>
+    <role>Chihiro (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rumi Hiiragi\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>19587</tmdbid>
+  </actor>
+  <actor>
+    <name>Miyu Irino</name>
+    <role>Haku (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Miyu Irino\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>19588</tmdbid>
+  </actor>
+  <actor>
+    <name>Mari Natsuki</name>
+    <role>Yubaba / Zeniba (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mari Natsuki\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>19589</tmdbid>
+  </actor>
+  <actor>
+    <name>Takashi Naito</name>
+    <role>Father (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Takashi Naito\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>19590</tmdbid>
+  </actor>
+  <actor>
+    <name>Yasuko Sawaguchi</name>
+    <role>Mother (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Y\Yasuko Sawaguchi\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>19591</tmdbid>
+  </actor>
+  <actor>
+    <name>Tatsuya Gashûin</name>
+    <role>Aogaeru (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tatsuya Gashûin\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>19592</tmdbid>
+  </actor>
+  <actor>
+    <name>Ryunosuke Kamiki</name>
+    <role>Boh (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ryunosuke Kamiki\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>225730</tmdbid>
+  </actor>
+  <actor>
+    <name>Yumi Tamai</name>
+    <role>Rin (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Y\Yumi Tamai\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>19594</tmdbid>
+  </actor>
+  <actor>
+    <name>Yo Oizumi</name>
+    <role>Bandai Frog (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Y\Yo Oizumi\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>40450</tmdbid>
+  </actor>
+  <actor>
+    <name>Koba Hayashi</name>
+    <role>River Spirit (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Koba Hayashi\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>554423</tmdbid>
+  </actor>
+  <actor>
+    <name>Tsunehiko Kamijô</name>
+    <role>Chichiyaku (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tsunehiko Kamijô\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>20334</tmdbid>
+  </actor>
+  <actor>
+    <name>Takehiko Ono</name>
+    <role>Aniyaku (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Takehiko Ono\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>544088</tmdbid>
+  </actor>
+  <actor>
+    <name>Bunta Sugawara</name>
+    <role>Kamaji (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bunta Sugawara\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>119243</tmdbid>
+  </actor>
+  <actor>
+    <name>Shigeru Wakita</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Shigeru Wakita\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>1530058</tmdbid>
+  </actor>
+  <actor>
+    <name>Shirou Saitou</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Shirou Saitou\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>1243817</tmdbid>
+  </actor>
+  <actor>
+    <name>Michiko Yamamoto</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michiko Yamamoto\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>1608518</tmdbid>
+  </actor>
+  <actor>
+    <name>Keiko Tsukamoto</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Keiko Tsukamoto\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>2844828</tmdbid>
+  </actor>
+  <actor>
+    <name>Akio Nakamura</name>
+    <role>Kaonashi (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Akio Nakamura\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>554612</tmdbid>
+  </actor>
+  <actor>
+    <name>Shinji Tokumaru</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Shinji Tokumaru\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>2856717</tmdbid>
+  </actor>
+  <actor>
+    <name>Kaori Yamagata</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kaori Yamagata\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>554367</tmdbid>
+  </actor>
+  <director>Hayao Miyazaki</director>
+  <tag>witch</tag>
+  <tag>parent child relationship</tag>
+  <tag>darkness</tag>
+  <tag>bath house</tag>
+  <tag>magic</tag>
+  <tag>spirit</tag>
+  <tag>parallel world</tag>
+  <tag>amusement park</tag>
+  <tag>youkai</tag>
+  <tag>japanese mythology</tag>
+  <tag>anime</tag>
+</movie>

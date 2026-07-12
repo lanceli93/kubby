@@ -14,6 +14,7 @@ every task.
 - [Music library + global player](#music-library--global-player)
 - [TV series domain (shows/seasons/episodes)](#tv-series-domain-showsseasonsepisodes)
 - [Cross-domain safety (a hard rule)](#cross-domain-safety-a-hard-rule)
+- [Demo Mode (seed + clear/factory-reset)](#demo-mode-seed--clearfactory-reset)
 - [Backend review checklist](#backend-review-checklist)
 - [GlassToast](#glasstoast)
 - [Metadata Browser](#metadata-browser)
@@ -561,6 +562,44 @@ its delete path owns removing them.**
   vice versa. Verified at runtime: a TV scan left cinema `people` count unchanged. When
   a domain has an isolated copy of a shared concept, give it a parallel gated sweep —
   do not widen the existing sweep.
+
+## Demo Mode (seed + clear/factory-reset)
+
+Fills all four domains on a fresh install so the product isn't a blank slate.
+
+- **Assets are committed, not runtime-scanned in place.** `test-media/`,
+  `test-tv-media/`, and `data/*` are ALL gitignored — a fresh machine has none of
+  them. So demo content lives in a committed `demo-assets/` dir (un-ignored; ~58 MB),
+  authored ONCE by `scripts/build-demo-assets.ts` (dev-only) from the dev's local test
+  data. `scripts/package.ts` copies `demo-assets/` next to `server.js` so packaged
+  installs seed offline. `getDemoAssetsDir()` / `getDemoDir()` in `src/lib/paths.ts`.
+- **One placeholder video, copied per item.** The bundle ships NO per-item videos —
+  just one ~235 KB `placeholder.mp4`. The seeder (`src/lib/demo/seed.ts`) copies it
+  into every movie/episode slot at seed time (movie slot = `<movieDir>.mp4`; TV slots
+  come from `manifest.json.tvEpisodes` since no episode videos are committed). Keeps
+  git small; the placeholder is H.264/AAC so it direct-plays.
+- **Seeder reuses the REAL scanner — never forks the write path.** It materializes
+  `demo-assets/<domain>` → `{dataDir}/demo/<domain>`, then calls `scanLibrary(id)` per
+  domain. Demo libs are created `jellyfinCompat=true` (so the scanner imports the
+  bundled `<actor><thumb>` cast photos), `scraperEnabled=false`, `isDemo=true`.
+- **NFO `<thumb>` paths MUST be rewritten at seed time.** Committed NFOs carry the dev
+  machine's absolute actor-photo paths (`…\metadata\people\…`). The seeder rewrites the
+  `…metadata/(people|tv-people)/…` tail onto THIS install's `getMetadataDir()` (after
+  copying those photos there) — otherwise the scanner's jellyfin-compat photo import
+  (`scanner/index.ts` `library.jellyfinCompat && fs.existsSync(actor.thumb)`) silently
+  finds nothing.
+- **Music is synthetic + license-safe.** `build-demo-assets.ts` generates ffmpeg sine
+  tones (AAC/m4a) with embedded title/artist/album/track tags + a folder `cover.jpg`
+  reusing MOVIE posters — no copyrighted audio or album art.
+- **`is_demo` is the teardown allowlist (migration 0042).** `DELETE /api/setup/demo`
+  selects libraries `WHERE is_demo = true` and reuses the per-library
+  `DELETE /api/libraries/[id]` teardown (FK cascade + per-domain on-disk cleanup +
+  orphan people/artist sweep — see Cross-domain safety), then `rm -rf {dataDir}/demo/`.
+  `?factoryReset=true` also deletes the demo user (→ `count(users)===0` returns the app
+  to the setup wizard). A real library added alongside the demo is never touched —
+  verified. `POST /api/setup/demo` creates the `demo`/`demo` admin + seeds via SSE
+  (guarded by the same first-run `count(users)===0` check as normal setup); the setup
+  wizard forks to it after language selection.
 
 ## Backend review checklist
 

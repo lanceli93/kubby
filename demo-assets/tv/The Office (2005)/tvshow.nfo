@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<tvshow>
+  <title>The Office</title>
+  <originaltitle>The Office</originaltitle>
+  <sorttitle>The Office</sorttitle>
+  <plot>The everyday lives of office employees in the Scranton, Pennsylvania branch of the fictional Dunder Mifflin Paper Company.</plot>
+  <tagline>A comedy for anyone whose boss is an idiot.</tagline>
+  <rating>8.589</rating>
+  <premiered>2005-03-24</premiered>
+  <year>2005</year>
+  <status>Ended</status>
+  <genre>Comedy</genre>
+  <studio>Universal Television</studio>
+  <studio>Deedle-Dee Productions</studio>
+  <studio>Reveille Productions</studio>
+  <studio>Shine America</studio>
+  <studio>Universal Media Studios</studio>
+  <country>US</country>
+  <uniqueid type="tmdb">2316</uniqueid>
+  <uniqueid type="imdb">tt0386676</uniqueid>
+  <uniqueid type="tvdb">73244</uniqueid>
+  <actor>
+    <name>Rainn Wilson</name>
+    <role>Dwight Schrute</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\R\Rainn Wilson\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>11678</tmdbid>
+  </actor>
+  <actor>
+    <name>John Krasinski</name>
+    <role>Jim Halpert</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\John Krasinski\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>17697</tmdbid>
+  </actor>
+  <actor>
+    <name>Jenna Fischer</name>
+    <role>Pam Beesly</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\J\Jenna Fischer\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>51856</tmdbid>
+  </actor>
+  <actor>
+    <name>Ed Helms</name>
+    <role>Andy Bernard</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\tv-people\E\Ed Helms\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>27105</tmdbid>
+  </actor>
+  <tag>office</tag>
+  <tag>work</tag>
+  <tag>boss</tag>
+  <tag>remake</tag>
+  <tag>mockumentary</tag>
+  <tag>employer employee relationship</tag>
+  <tag>sitcom</tag>
+  <tag>employment</tag>
+  <tag>workplace comedy</tag>
+</tvshow>

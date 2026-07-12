@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Pulp Fiction</title>
+  <originaltitle>Pulp Fiction</originaltitle>
+  <sorttitle>Pulp Fiction</sorttitle>
+  <plot>A burger-loving hit man, his philosophical partner, a drug-addled gangster&apos;s moll and a washed-up boxer converge in this sprawling, comedic crime caper. Their adventures unfurl in three stories that ingeniously trip back and forth in time.</plot>
+  <tagline>You won’t know the facts until you’ve seen the fiction.</tagline>
+  <rating>8.482</rating>
+  <runtime>154</runtime>
+  <premiered>1994-09-10</premiered>
+  <year>1994</year>
+  <genre>Thriller</genre>
+  <genre>Crime</genre>
+  <genre>Comedy</genre>
+  <studio>Miramax</studio>
+  <studio>A Band Apart</studio>
+  <studio>Jersey Films</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">680</uniqueid>
+  <uniqueid type="imdb">tt0110912</uniqueid>
+  <actor>
+    <name>John Travolta</name>
+    <role>Vincent Vega</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Travolta\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>8891</tmdbid>
+  </actor>
+  <actor>
+    <name>Samuel L. Jackson</name>
+    <role>Jules Winnfield</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Samuel L. Jackson\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>2231</tmdbid>
+  </actor>
+  <actor>
+    <name>Uma Thurman</name>
+    <role>Mia Wallace</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\U\Uma Thurman\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>139</tmdbid>
+  </actor>
+  <actor>
+    <name>Bruce Willis</name>
+    <role>Butch Coolidge</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bruce Willis\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>62</tmdbid>
+  </actor>
+  <actor>
+    <name>Ving Rhames</name>
+    <role>Marsellus Wallace</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\V\Ving Rhames\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>10182</tmdbid>
+  </actor>
+  <actor>
+    <name>Harvey Keitel</name>
+    <role>The Wolf</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Harvey Keitel\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1037</tmdbid>
+  </actor>
+  <actor>
+    <name>Eric Stoltz</name>
+    <role>Lance</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Eric Stoltz\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>7036</tmdbid>
+  </actor>
+  <actor>
+    <name>Tim Roth</name>
+    <role>Pumpkin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tim Roth\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>3129</tmdbid>
+  </actor>
+  <actor>
+    <name>Amanda Plummer</name>
+    <role>Honey Bunny</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Amanda Plummer\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>99</tmdbid>
+  </actor>
+  <actor>
+    <name>Maria de Medeiros</name>
+    <role>Fabienne</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Maria de Medeiros\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>2319</tmdbid>
+  </actor>
+  <actor>
+    <name>Quentin Tarantino</name>
+    <role>Jimmie Dimmick</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Q\Quentin Tarantino\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>138</tmdbid>
+  </actor>
+  <actor>
+    <name>Christopher Walken</name>
+    <role>Captain Koons</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Christopher Walken\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>4690</tmdbid>
+  </actor>
+  <actor>
+    <name>Rosanna Arquette</name>
+    <role>Jody</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rosanna Arquette\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>2165</tmdbid>
+  </actor>
+  <actor>
+    <name>Peter Greene</name>
+    <role>Zed</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Peter Greene\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>11803</tmdbid>
+  </actor>
+  <actor>
+    <name>Duane Whitaker</name>
+    <role>Maynard</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Duane Whitaker\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>11804</tmdbid>
+  </actor>
+  <actor>
+    <name>Angela Jones</name>
+    <role>Esmarelda Villalobos</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Angela Jones\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>71836</tmdbid>
+  </actor>
+  <actor>
+    <name>Phil LaMarr</name>
+    <role>Marvin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Phil LaMarr\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>31549</tmdbid>
+  </actor>
+  <actor>
+    <name>Steve Buscemi</name>
+    <role>Buddy Holly</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Steve Buscemi\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>884</tmdbid>
+  </actor>
+  <actor>
+    <name>Bronagh Gallagher</name>
+    <role>Trudi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bronagh Gallagher\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>33399</tmdbid>
+  </actor>
+  <actor>
+    <name>Laura Lovelace</name>
+    <role>Waitress</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Laura Lovelace\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>11807</tmdbid>
+  </actor>
+  <director>Quentin Tarantino</director>
+  <tag>drug dealer</tag>
+  <tag>drug crime</tag>
+  <tag>gangster</tag>
+  <tag>dark comedy</tag>
+  <tag>stolen money</tag>
+  <tag>crime boss</tag>
+  <tag>redemption</tag>
+  <tag>los angeles, california</tag>
+  <tag>theft</tag>
+  <tag>nonlinear timeline</tag>
+  <tag>multiple storylines</tag>
+  <tag>neo-noir</tag>
+</movie>

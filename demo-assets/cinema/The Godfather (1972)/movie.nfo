@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>The Godfather</title>
+  <originaltitle>The Godfather</originaltitle>
+  <sorttitle>The Godfather</sorttitle>
+  <plot>Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family. When organized crime family patriarch, Vito Corleone barely survives an attempt on his life, his youngest son, Michael steps in to take care of the would-be killers, launching a campaign of bloody revenge.</plot>
+  <tagline>An offer you can&apos;t refuse.</tagline>
+  <rating>8.687</rating>
+  <runtime>175</runtime>
+  <premiered>1972-03-14</premiered>
+  <year>1972</year>
+  <genre>Drama</genre>
+  <genre>Crime</genre>
+  <studio>Paramount Pictures</studio>
+  <studio>Alfran Productions</studio>
+  <studio>Albert S. Ruddy Productions</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">238</uniqueid>
+  <uniqueid type="imdb">tt0068646</uniqueid>
+  <actor>
+    <name>Marlon Brando</name>
+    <role>Don Vito Corleone</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Marlon Brando\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>3084</tmdbid>
+  </actor>
+  <actor>
+    <name>Al Pacino</name>
+    <role>Michael Corleone</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Al Pacino\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>1158</tmdbid>
+  </actor>
+  <actor>
+    <name>James Caan</name>
+    <role>Sonny Corleone</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\James Caan\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>3085</tmdbid>
+  </actor>
+  <actor>
+    <name>Robert Duvall</name>
+    <role>Tom Hagen</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Robert Duvall\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>3087</tmdbid>
+  </actor>
+  <actor>
+    <name>Richard S. Castellano</name>
+    <role>Clemenza</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Richard S. Castellano\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>3086</tmdbid>
+  </actor>
+  <actor>
+    <name>Diane Keaton</name>
+    <role>Kay Adams</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Diane Keaton\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>3092</tmdbid>
+  </actor>
+  <actor>
+    <name>Talia Shire</name>
+    <role>Connie Corleone Rizzi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Talia Shire\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>3094</tmdbid>
+  </actor>
+  <actor>
+    <name>Gianni Russo</name>
+    <role>Carlo Rizzi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Gianni Russo\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>3095</tmdbid>
+  </actor>
+  <actor>
+    <name>Sterling Hayden</name>
+    <role>Captain McCluskey</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sterling Hayden\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>3088</tmdbid>
+  </actor>
+  <actor>
+    <name>John Marley</name>
+    <role>Jack Woltz</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Marley\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>3142</tmdbid>
+  </actor>
+  <actor>
+    <name>Richard Conte</name>
+    <role>Barzini</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Richard Conte\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>3090</tmdbid>
+  </actor>
+  <actor>
+    <name>Al Lettieri</name>
+    <role>Sollozzo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Al Lettieri\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>3091</tmdbid>
+  </actor>
+  <actor>
+    <name>Abe Vigoda</name>
+    <role>Sal Tessio</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Abe Vigoda\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>3093</tmdbid>
+  </actor>
+  <actor>
+    <name>John Cazale</name>
+    <role>Fredo Corleone</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Cazale\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>3096</tmdbid>
+  </actor>
+  <actor>
+    <name>Rudy Bond</name>
+    <role>Cuneo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rudy Bond\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>3143</tmdbid>
+  </actor>
+  <actor>
+    <name>Al Martino</name>
+    <role>Johnny Fontane</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Al Martino\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>3144</tmdbid>
+  </actor>
+  <actor>
+    <name>Morgana King</name>
+    <role>Mama Corleone</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Morgana King\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>933716</tmdbid>
+  </actor>
+  <actor>
+    <name>Lenny Montana</name>
+    <role>Luca Brasi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lenny Montana\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>106811</tmdbid>
+  </actor>
+  <actor>
+    <name>John Martino</name>
+    <role>Paulie Gatto</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Martino\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>99724</tmdbid>
+  </actor>
+  <actor>
+    <name>Salvatore Corsitto</name>
+    <role>Bonasera</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Salvatore Corsitto\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>1195877</tmdbid>
+  </actor>
+  <director>Francis Ford Coppola</director>
+  <tag>based on novel or book</tag>
+  <tag>loss of loved one</tag>
+  <tag>love at first sight</tag>
+  <tag>italy</tag>
+  <tag>gangster</tag>
+  <tag>symbolism</tag>
+  <tag>patriarch</tag>
+  <tag>europe</tag>
+  <tag>organized crime</tag>
+  <tag>mafia</tag>
+  <tag>religion</tag>
+  <tag>revenge motive</tag>
+  <tag>crime family</tag>
+  <tag>sicilian mafia</tag>
+  <tag>religious hypocrisy</tag>
+  <tag>gun violence</tag>
+  <tag>rise to power</tag>
+  <tag>gang violence</tag>
+  <tag>1940s</tag>
+  <tag>1950s</tag>
+  <tag>mafia war</tag>
+  <tag>intense</tag>
+  <tag>distressing</tag>
+  <tag>oscar winner</tag>
+</movie>
