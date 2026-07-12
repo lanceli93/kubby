@@ -93,7 +93,9 @@
     "profile": "个人资料",
     "photos": "照片",
     "cinema": "影院",
-    "music": "音乐"
+    "music": "音乐",
+    "tv": "剧集",
+    "allTv": "全部剧集"
   },
   "home": {
     "continueWatching": "继续观看",
@@ -208,6 +210,7 @@
     "libraryTypeMovie": "电影",
     "libraryTypePhoto": "照片",
     "libraryTypeMusic": "音乐",
+    "libraryTypeTv": "电视剧",
     "addUser": "添加用户",
     "metadataProviders": "元数据提供者",
     "tmdbApiKey": "TMDB API 密钥",
@@ -563,6 +566,8 @@
     "movieRatingDimensionsDesc": "定义自定义维度（如剧情、特效）进行多维度电影评分。综合评分为各维度加权平均值。",
     "personRatingDimensions": "人物评分维度",
     "personRatingDimensionsDesc": "定义自定义维度（如样貌、演技）进行多维度人物评分。综合评分为各维度加权平均值。",
+    "tvShowRatingDimensions": "电视剧评分维度",
+    "tvShowRatingDimensionsDesc": "定义自定义维度（如剧情、演技）进行多维度电视剧评分。综合评分为各维度加权平均值。",
     "addDimensionPlaceholder": "输入后按回车添加",
     "dimName": "名称",
     "dimWeight": "权重",
@@ -608,7 +613,8 @@
     "deleteDimensionNoData": "删除「{name}」？暂无评分使用此维度。",
     "deleteDimensionLoading": "正在检查使用情况...",
     "movies": "电影",
-    "people": "人物"
+    "people": "人物",
+    "tvShows": "电视剧"
   },
   "mediaInfoDialog": {
     "title": "媒体信息",
@@ -708,6 +714,33 @@
     "deleteAlbumConfirm": "仅删除相册本身,照片不会被删除。",
     "albumOptions": "相册选项",
     "albumEmpty": "相册为空——从时间线里添加照片"
+  },
+  "tv": {
+    "title": "剧集",
+    "continueWatching": "继续观看",
+    "nextUp": "接下来",
+    "recentlyAdded": "最近添加",
+    "allShows": "全部剧集",
+    "seasons": "季",
+    "season": "第 {number} 季",
+    "specials": "特别篇",
+    "episode": "第 {number} 集",
+    "episodes": "剧集",
+    "episodeCount": "{count} 集",
+    "watched": "已观看",
+    "unwatched": "未观看",
+    "markWatched": "标记为已观看",
+    "markUnwatched": "标记为未观看",
+    "playEpisode": "播放",
+    "resumeEpisode": "继续播放",
+    "nextEpisode": "下一集",
+    "autoPlayNext": "自动播放下一集",
+    "showStatus": {
+      "continuing": "连载中",
+      "ended": "已完结"
+    },
+    "noEpisodes": "未找到剧集",
+    "favorite": "收藏"
   },
   "music": {
     "title": "音乐",

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid, Images, Music } from "lucide-react";
+import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid, Images, Music, Tv } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCurrentDomain } from "@/hooks/use-current-domain";
@@ -41,6 +41,8 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
       ? [{ href: "/photos", label: tNav("allPhotos"), icon: Images, matchPrefix: true }]
       : domain === "music"
       ? [{ href: "/music", label: tNav("allMusic"), icon: Music, matchPrefix: true }]
+      : domain === "tv"
+      ? [{ href: "/tv", label: tNav("allTv"), icon: Tv, matchPrefix: true }]
       : [{ href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true }];
 
   const metadataItems = [

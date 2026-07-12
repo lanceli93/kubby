@@ -8,7 +8,7 @@ interface LibraryTypeOnly {
   type: string;
 }
 
-function writeCookie(domain: "cinema" | "photos" | "music") {
+function writeCookie(domain: "cinema" | "photos" | "music" | "tv") {
   document.cookie = `kubby-domain=${domain}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
 }
 
@@ -39,7 +39,8 @@ export function DomainCookieSync() {
     if (Array.isArray(libraries)) {
       const hasPhoto = libraries.some((lib) => lib.type === "photo");
       const hasMusic = libraries.some((lib) => lib.type === "music");
-      // No photo/music library exists — that domain isn't reachable, so never
+      const hasTv = libraries.some((lib) => lib.type === "tvshow");
+      // No photo/music/tv library exists — that domain isn't reachable, so never
       // leave a matching cookie that would redirect the root there.
       if (!hasPhoto && document.cookie.includes("kubby-domain=photos")) {
         writeCookie("cinema");
@@ -49,11 +50,16 @@ export function DomainCookieSync() {
         writeCookie("cinema");
         return;
       }
+      if (!hasTv && document.cookie.includes("kubby-domain=tv")) {
+        writeCookie("cinema");
+        return;
+      }
     }
 
-    let domain: "cinema" | "photos" | "music" | null = null;
+    let domain: "cinema" | "photos" | "music" | "tv" | null = null;
     if (pathname.startsWith("/photos")) domain = "photos";
     else if (pathname.startsWith("/music")) domain = "music";
+    else if (pathname.startsWith("/tv")) domain = "tv";
     else if (pathname === "/" || pathname.startsWith("/movies")) domain = "cinema";
 
     if (!domain) return;

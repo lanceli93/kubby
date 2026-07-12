@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import os from "os";
 import { db } from "@/lib/db";
-import { userPreferences, userMovieData, userPersonData } from "@/lib/db/schema";
+import { userPreferences, userMovieData, userPersonData, userTvShowData } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { DEFAULT_HERO_MOSAIC_CONFIG, normalizeHeroMosaicConfig } from "@/lib/hero-mosaic-config";
@@ -38,6 +38,7 @@ export async function GET() {
       return NextResponse.json({
         movieRatingDimensions: [],
         personRatingDimensions: [],
+        tvShowRatingDimensions: [],
         showMovieRatingBadge: true,
         showPersonTierBadge: true,
         showPersonRatingBadge: true,
@@ -52,6 +53,7 @@ export async function GET() {
         player360Mode: false,
         movieDimensionWeights: {},
         personDimensionWeights: {},
+        tvShowDimensionWeights: {},
         heroMosaicConfig: DEFAULT_HERO_MOSAIC_CONFIG,
         peopleMosaicConfig: DEFAULT_PEOPLE_MOSAIC_CONFIG,
         serverPlatform,
@@ -64,6 +66,9 @@ export async function GET() {
         : [],
       personRatingDimensions: row.personRatingDimensions
         ? JSON.parse(row.personRatingDimensions)
+        : [],
+      tvShowRatingDimensions: row.tvShowRatingDimensions
+        ? JSON.parse(row.tvShowRatingDimensions)
         : [],
       showMovieRatingBadge: row.showMovieRatingBadge,
       showPersonTierBadge: row.showPersonTierBadge,
@@ -86,6 +91,9 @@ export async function GET() {
         : {},
       personDimensionWeights: row.personDimensionWeights
         ? JSON.parse(row.personDimensionWeights)
+        : {},
+      tvShowDimensionWeights: row.tvShowDimensionWeights
+        ? JSON.parse(row.tvShowDimensionWeights)
         : {},
       heroMosaicConfig: normalizeHeroMosaicConfig(parseJsonSafe(row.heroMosaicConfig)),
       peopleMosaicConfig: normalizePeopleMosaicConfig(parseJsonSafe(row.peopleMosaicConfig)),
@@ -115,17 +123,26 @@ export async function PUT(request: NextRequest) {
     if (body.personRatingDimensions && !Array.isArray(body.personRatingDimensions)) {
       return NextResponse.json({ error: "personRatingDimensions must be an array" }, { status: 400 });
     }
+    if (body.tvShowRatingDimensions && !Array.isArray(body.tvShowRatingDimensions)) {
+      return NextResponse.json({ error: "tvShowRatingDimensions must be an array" }, { status: 400 });
+    }
     if (body.movieRatingDimensions?.length > 10) {
       return NextResponse.json({ error: "Maximum 10 movie rating dimensions" }, { status: 400 });
     }
     if (body.personRatingDimensions?.length > 10) {
       return NextResponse.json({ error: "Maximum 10 person rating dimensions" }, { status: 400 });
     }
+    if (body.tvShowRatingDimensions?.length > 10) {
+      return NextResponse.json({ error: "Maximum 10 TV show rating dimensions" }, { status: 400 });
+    }
     const MAX_DIM_LENGTH = 20;
     if (body.movieRatingDimensions?.some((d: string) => typeof d !== "string" || d.length > MAX_DIM_LENGTH)) {
       return NextResponse.json({ error: `Dimension name must be at most ${MAX_DIM_LENGTH} characters` }, { status: 400 });
     }
     if (body.personRatingDimensions?.some((d: string) => typeof d !== "string" || d.length > MAX_DIM_LENGTH)) {
+      return NextResponse.json({ error: `Dimension name must be at most ${MAX_DIM_LENGTH} characters` }, { status: 400 });
+    }
+    if (body.tvShowRatingDimensions?.some((d: string) => typeof d !== "string" || d.length > MAX_DIM_LENGTH)) {
       return NextResponse.json({ error: `Dimension name must be at most ${MAX_DIM_LENGTH} characters` }, { status: 400 });
     }
 
@@ -142,6 +159,9 @@ export async function PUT(request: NextRequest) {
       personRatingDimensions: body.personRatingDimensions !== undefined
         ? JSON.stringify(body.personRatingDimensions)
         : existing?.personRatingDimensions ?? "[]",
+      tvShowRatingDimensions: body.tvShowRatingDimensions !== undefined
+        ? JSON.stringify(body.tvShowRatingDimensions)
+        : existing?.tvShowRatingDimensions ?? "[]",
       showMovieRatingBadge: body.showMovieRatingBadge !== undefined
         ? body.showMovieRatingBadge
         : existing?.showMovieRatingBadge ?? true,
@@ -184,6 +204,9 @@ export async function PUT(request: NextRequest) {
       personDimensionWeights: body.personDimensionWeights !== undefined
         ? JSON.stringify(body.personDimensionWeights)
         : existing?.personDimensionWeights ?? "{}",
+      tvShowDimensionWeights: body.tvShowDimensionWeights !== undefined
+        ? JSON.stringify(body.tvShowDimensionWeights)
+        : existing?.tvShowDimensionWeights ?? "{}",
       heroMosaicConfig: body.heroMosaicConfig !== undefined
         ? JSON.stringify(normalizeHeroMosaicConfig(body.heroMosaicConfig))
         : existing?.heroMosaicConfig ?? null,
@@ -208,7 +231,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Handle dimension renames: read-modify-write JSON keys in rating data
-    const renames = body.renamedDimensions as { movie?: Record<string, string>; person?: Record<string, string> } | undefined;
+    const renames = body.renamedDimensions as { movie?: Record<string, string>; person?: Record<string, string>; tvshow?: Record<string, string> } | undefined;
     if (renames) {
       if (renames.movie && Object.keys(renames.movie).length > 0) {
         const rows = db.select({ id: userMovieData.id, dimensionRatings: userMovieData.dimensionRatings })
@@ -258,13 +281,39 @@ export async function PUT(request: NextRequest) {
           }
         }
       }
+      if (renames.tvshow && Object.keys(renames.tvshow).length > 0) {
+        const rows = db.select({ id: userTvShowData.id, dimensionRatings: userTvShowData.dimensionRatings })
+          .from(userTvShowData)
+          .where(eq(userTvShowData.userId, userId))
+          .all();
+        for (const row of rows) {
+          if (!row.dimensionRatings) continue;
+          const ratings = JSON.parse(row.dimensionRatings) as Record<string, number>;
+          let changed = false;
+          for (const [oldName, newName] of Object.entries(renames.tvshow!)) {
+            if (oldName in ratings && oldName !== newName) {
+              ratings[newName] = ratings[oldName];
+              delete ratings[oldName];
+              changed = true;
+            }
+          }
+          if (changed) {
+            db.update(userTvShowData)
+              .set({ dimensionRatings: JSON.stringify(ratings) })
+              .where(eq(userTvShowData.id, row.id))
+              .run();
+          }
+        }
+      }
     }
 
     // Recalculate personalRating using current weights + dimensions
     const movieDims: string[] = body.movieRatingDimensions ?? (existing?.movieRatingDimensions ? JSON.parse(existing.movieRatingDimensions) : []);
     const personDims: string[] = body.personRatingDimensions ?? (existing?.personRatingDimensions ? JSON.parse(existing.personRatingDimensions) : []);
+    const tvShowDims: string[] = body.tvShowRatingDimensions ?? (existing?.tvShowRatingDimensions ? JSON.parse(existing.tvShowRatingDimensions) : []);
     const movieWeights: Record<string, number> = body.movieDimensionWeights ?? (existing?.movieDimensionWeights ? JSON.parse(existing.movieDimensionWeights) : {});
     const personWeights: Record<string, number> = body.personDimensionWeights ?? (existing?.personDimensionWeights ? JSON.parse(existing.personDimensionWeights) : {});
+    const tvShowWeights: Record<string, number> = body.tvShowDimensionWeights ?? (existing?.tvShowDimensionWeights ? JSON.parse(existing.tvShowDimensionWeights) : {});
 
     if (movieDims.length > 0) {
       const rows = db.select({ id: userMovieData.id, dimensionRatings: userMovieData.dimensionRatings })
@@ -311,6 +360,30 @@ export async function PUT(request: NextRequest) {
         db.update(userPersonData)
           .set({ personalRating: avg })
           .where(eq(userPersonData.id, row.id))
+          .run();
+      }
+    }
+    if (tvShowDims.length > 0) {
+      const rows = db.select({ id: userTvShowData.id, dimensionRatings: userTvShowData.dimensionRatings })
+        .from(userTvShowData)
+        .where(eq(userTvShowData.userId, userId))
+        .all();
+      for (const row of rows) {
+        if (!row.dimensionRatings) continue;
+        const ratings = JSON.parse(row.dimensionRatings) as Record<string, number>;
+        let weightedSum = 0, weightSum = 0;
+        for (const dim of tvShowDims) {
+          const val = ratings[dim];
+          if (val != null && val > 0) {
+            const w = tvShowWeights[dim] ?? 1;
+            weightedSum += val * w;
+            weightSum += w;
+          }
+        }
+        const avg = weightSum > 0 ? Math.round((weightedSum / weightSum) * 10) / 10 : null;
+        db.update(userTvShowData)
+          .set({ personalRating: avg })
+          .where(eq(userTvShowData.id, row.id))
           .run();
       }
     }

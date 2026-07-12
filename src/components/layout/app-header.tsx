@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Search, ArrowLeft, House, Menu, User, ChevronDown, Check, Clapperboard, Images, Music } from "lucide-react";
+import { Search, ArrowLeft, House, Menu, User, ChevronDown, Check, Clapperboard, Images, Music, Tv } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
 import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
+import { useHasTvLibrary } from "@/hooks/use-has-tv-library";
 
 function KubbyLogo({ className }: { className?: string }) {
   return (
@@ -53,8 +54,10 @@ export function AppHeader() {
   const tNav = useTranslations("nav");
   const hasPhotoLibrary = useHasPhotoLibrary();
   const hasMusicLibrary = useHasMusicLibrary();
+  const hasTvLibrary = useHasTvLibrary();
   const isPhotoDomain = pathname.startsWith("/photos");
   const isMusicDomain = pathname.startsWith("/music");
+  const isTvDomain = pathname.startsWith("/tv");
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
   const isPersonFilmography = pathname === "/movies" && searchParams.get("personId");
@@ -163,7 +166,7 @@ export function AppHeader() {
           </>
         ) : (
           <>
-            {hasPhotoLibrary || hasMusicLibrary ? (
+            {hasPhotoLibrary || hasMusicLibrary || hasTvLibrary ? (
               // Domain switcher lives on the brand as a low-frequency dropdown,
               // so the header keeps a single row of primary navigation instead
               // of two competing pill groups (see the home Tabs island).
@@ -191,9 +194,18 @@ export function AppHeader() {
                     <Link href="/" className="cursor-pointer">
                       <Clapperboard className="h-4 w-4" />
                       <span className="flex-1">{tNav("cinema")}</span>
-                      {!isPhotoDomain && !isMusicDomain && <Check className="h-4 w-4 text-primary" />}
+                      {!isPhotoDomain && !isMusicDomain && !isTvDomain && <Check className="h-4 w-4 text-primary" />}
                     </Link>
                   </DropdownMenuItem>
+                  {hasTvLibrary && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/tv" className="cursor-pointer">
+                        <Tv className="h-4 w-4" />
+                        <span className="flex-1">{tNav("tv")}</span>
+                        {isTvDomain && <Check className="h-4 w-4 text-primary" />}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {hasPhotoLibrary && (
                     <DropdownMenuItem asChild>
                       <Link href="/photos" className="cursor-pointer">

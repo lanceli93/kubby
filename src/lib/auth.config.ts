@@ -40,7 +40,8 @@ export const authConfig: NextAuthConfig = {
 
       const publicPaths = ["/login", "/register", "/api/users", "/api/auth", "/setup", "/api/setup", "/api/filesystem"];
       const isPublic = publicPaths.some((p) => pathname.startsWith(p))
-        || /^\/api\/movies\/[^/]+\/stream\/?$/.test(pathname);
+        || /^\/api\/movies\/[^/]+\/stream\/?$/.test(pathname)
+        || /^\/api\/tv\/episodes\/[^/]+\/stream\/?$/.test(pathname);
 
       if (isPublic) return true;
       if (!isLoggedIn) return false;
@@ -66,6 +67,7 @@ export const authConfig: NextAuthConfig = {
         const dom = request.cookies.get("kubby-domain")?.value;
         if (dom === "photos") return Response.redirect(new URL("/photos", nextUrl));
         if (dom === "music") return Response.redirect(new URL("/music", nextUrl));
+        if (dom === "tv") return Response.redirect(new URL("/tv", nextUrl));
       }
 
       return true;

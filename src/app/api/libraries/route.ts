@@ -27,6 +27,7 @@ export async function GET() {
           CASE "media_libraries"."type"
             WHEN 'photo' THEN (SELECT COUNT(*) FROM photo_items WHERE library_id = "media_libraries"."id")
             WHEN 'music' THEN (SELECT COUNT(*) FROM music_tracks WHERE library_id = "media_libraries"."id")
+            WHEN 'tvshow' THEN (SELECT COUNT(*) FROM tv_episodes WHERE show_id IN (SELECT id FROM tv_shows WHERE media_library_id = "media_libraries"."id"))
             ELSE (SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")
           END
         )`,

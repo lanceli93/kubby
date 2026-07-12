@@ -23,6 +23,7 @@ async function fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<Respo
 export const TMDB_POSTER_SIZE = "w500";
 export const TMDB_BACKDROP_SIZE = "original";
 export const TMDB_PROFILE_SIZE = "w185";
+export const TMDB_STILL_SIZE = "w300";
 
 export interface TmdbCastMember {
   id: number;
@@ -144,6 +145,100 @@ export async function getMovieDetails(
   if (language) url += `&language=${encodeURIComponent(language)}`;
   const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error(`TMDb details error: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// ─── TV Search & Details ───────────────────────────────────────
+
+export interface TmdbTvSearchResult {
+  id: number;
+  name: string;
+  first_air_date: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+}
+
+export interface TmdbTvDetails {
+  id: number;
+  name: string;
+  original_name: string;
+  overview: string;
+  tagline: string;
+  vote_average: number;
+  first_air_date: string;
+  status: string;
+  number_of_seasons: number;
+  number_of_episodes: number;
+  episode_run_time: number[];
+  genres: { id: number; name: string }[];
+  production_companies: { id: number; name: string }[];
+  origin_country: string[];
+  poster_path: string | null;
+  backdrop_path: string | null;
+  credits: TmdbCredits;
+  keywords: { results: { id: number; name: string }[] };
+  external_ids: { imdb_id: string | null; tvdb_id: number | null };
+}
+
+export interface TmdbTvEpisode {
+  episode_number: number;
+  season_number: number;
+  name: string;
+  overview: string;
+  air_date: string | null;
+  still_path: string | null;
+  vote_average: number;
+  runtime: number | null;
+}
+
+export interface TmdbTvSeasonDetails {
+  id: number;
+  season_number: number;
+  name: string;
+  overview: string;
+  poster_path: string | null;
+  air_date: string | null;
+  episodes: TmdbTvEpisode[];
+}
+
+export async function searchTv(
+  query: string,
+  year: number | undefined,
+  apiKey: string,
+  language?: string
+): Promise<TmdbTvSearchResult[]> {
+  let url = `${TMDB_BASE_URL}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+  if (year) url += `&first_air_date_year=${year}`;
+  if (language) url += `&language=${encodeURIComponent(language)}`;
+  const res = await fetchWithRetry(url);
+  if (!res.ok) throw new Error(`TMDb TV search error: ${res.status} ${res.statusText}`);
+  const data = await res.json();
+  return data.results ?? [];
+}
+
+export async function getTvDetails(
+  tmdbId: number,
+  apiKey: string,
+  language?: string
+): Promise<TmdbTvDetails> {
+  let url = `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${apiKey}&append_to_response=credits,keywords,external_ids`;
+  if (language) url += `&language=${encodeURIComponent(language)}`;
+  const res = await fetchWithRetry(url);
+  if (!res.ok) throw new Error(`TMDb TV details error: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export async function getTvSeasonDetails(
+  tmdbId: number,
+  seasonNumber: number,
+  apiKey: string,
+  language?: string
+): Promise<TmdbTvSeasonDetails> {
+  let url = `${TMDB_BASE_URL}/tv/${tmdbId}/season/${seasonNumber}?api_key=${apiKey}`;
+  if (language) url += `&language=${encodeURIComponent(language)}`;
+  const res = await fetchWithRetry(url);
+  if (!res.ok) throw new Error(`TMDb TV season error: ${res.status} ${res.statusText}`);
   return res.json();
 }
 

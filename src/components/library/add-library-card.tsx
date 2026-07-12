@@ -137,7 +137,7 @@ export function AddLibraryCard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="movie">Movie</SelectItem>
-                  <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
+                  <SelectItem value="tvshow">TV Shows</SelectItem>
                   <SelectItem value="music">Music</SelectItem>
                 </SelectContent>
               </Select>
@@ -214,7 +214,7 @@ export function AddLibraryCard() {
                 setFolderPaths([...folderPaths, p]);
               }}
             />
-            {type !== "photo" && type !== "music" && (
+            {(type === "movie" || type === "tvshow") && (
               <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">

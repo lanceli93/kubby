@@ -4,13 +4,15 @@ import { useEffect, useCallback, useRef } from "react";
 
 interface UseProgressSaveOptions {
   movieId: string;
+  /** API base path for the user-data route, e.g. `/api/movies/${movieId}`. */
+  basePath: string;
   currentDisc: number;
   isPlaying: boolean;
   getRealTime: () => number;
 }
 
-function fireProgressSave(movieId: string, seconds: number, disc?: number) {
-  fetch(`/api/movies/${movieId}/user-data`, {
+function fireProgressSave(basePath: string, seconds: number, disc?: number) {
+  fetch(`${basePath}/user-data`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -20,7 +22,7 @@ function fireProgressSave(movieId: string, seconds: number, disc?: number) {
   }).catch(() => {});
 }
 
-export function useProgressSave({ movieId, currentDisc, isPlaying, getRealTime }: UseProgressSaveOptions) {
+export function useProgressSave({ basePath, currentDisc, isPlaying, getRealTime }: UseProgressSaveOptions) {
   const isPlayingRef = useRef(isPlaying);
   const currentDiscRef = useRef(currentDisc);
   isPlayingRef.current = isPlaying;
@@ -29,15 +31,15 @@ export function useProgressSave({ movieId, currentDisc, isPlaying, getRealTime }
   useEffect(() => {
     const interval = setInterval(() => {
       if (isPlayingRef.current) {
-        fireProgressSave(movieId, getRealTime(), currentDiscRef.current);
+        fireProgressSave(basePath, getRealTime(), currentDiscRef.current);
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [movieId, getRealTime]);
+  }, [basePath, getRealTime]);
 
   const mutate = useCallback(
-    (data: { seconds: number; disc?: number }) => fireProgressSave(movieId, data.seconds, data.disc),
-    [movieId],
+    (data: { seconds: number; disc?: number }) => fireProgressSave(basePath, data.seconds, data.disc),
+    [basePath],
   );
 
   return { mutate };

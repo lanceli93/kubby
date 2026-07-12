@@ -14,6 +14,7 @@ import { generateBlurDataURL, getFileMtime } from "@/lib/blur-utils";
 import { getPeopleMetadataDir, toRelativeDataPath } from "@/lib/paths";
 import { scanPhotoLibrary } from "./photo-scanner";
 import { scanMusicLibrary } from "./music-scanner";
+import { scanTvShowLibrary } from "./tv-scanner";
 
 const VIDEO_EXTENSIONS = [".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v", ".ts", ".rmvb", ".rm"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
@@ -276,6 +277,11 @@ async function runScan(
   // Music libraries use a dedicated scanner (audio tags, albums, artists).
   if (library.type === "music") {
     return scanMusicLibrary(library, onProgress);
+  }
+
+  // TV libraries use a dedicated scanner (shows → seasons → episodes).
+  if (library.type === "tvshow") {
+    return scanTvShowLibrary(library, onProgress);
   }
 
   const folderPaths = parseFolderPaths(library.folderPath);

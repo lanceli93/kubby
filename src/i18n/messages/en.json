@@ -93,7 +93,9 @@
     "profile": "Profile",
     "photos": "Photos",
     "cinema": "Cinema",
-    "music": "Music"
+    "music": "Music",
+    "tv": "TV",
+    "allTv": "All TV"
   },
   "home": {
     "continueWatching": "Continue Watching",
@@ -208,6 +210,7 @@
     "libraryTypeMovie": "Movies",
     "libraryTypePhoto": "Photos",
     "libraryTypeMusic": "Music",
+    "libraryTypeTv": "TV Shows",
     "addUser": "Add User",
     "metadataProviders": "Metadata Providers",
     "tmdbApiKey": "TMDB API Key",
@@ -563,6 +566,8 @@
     "movieRatingDimensionsDesc": "Define custom dimensions (e.g., Plot, VFX) for multi-dimensional movie ratings. The overall rating is a weighted average.",
     "personRatingDimensions": "Person Rating Dimensions",
     "personRatingDimensionsDesc": "Define custom dimensions (e.g., Appearance, Acting) for multi-dimensional person ratings. The overall rating is a weighted average.",
+    "tvShowRatingDimensions": "TV Show Rating Dimensions",
+    "tvShowRatingDimensionsDesc": "Define custom dimensions (e.g., Plot, Acting) for multi-dimensional TV show ratings. The overall rating is a weighted average.",
     "addDimensionPlaceholder": "Type and press Enter to add",
     "dimName": "Name",
     "dimWeight": "Weight",
@@ -608,7 +613,8 @@
     "deleteDimensionNoData": "Delete \"{name}\"? No ratings use this dimension yet.",
     "deleteDimensionLoading": "Checking usage...",
     "movies": "movies",
-    "people": "people"
+    "people": "people",
+    "tvShows": "TV shows"
   },
   "mediaInfoDialog": {
     "title": "Media Info",
@@ -708,6 +714,33 @@
     "deleteAlbumConfirm": "This only removes the album. The photos themselves are kept.",
     "albumOptions": "Album options",
     "albumEmpty": "This album is empty — add photos from the timeline"
+  },
+  "tv": {
+    "title": "TV Shows",
+    "continueWatching": "Continue Watching",
+    "nextUp": "Next Up",
+    "recentlyAdded": "Recently Added",
+    "allShows": "All Shows",
+    "seasons": "Seasons",
+    "season": "Season {number}",
+    "specials": "Specials",
+    "episode": "Episode {number}",
+    "episodes": "Episodes",
+    "episodeCount": "{count} episodes",
+    "watched": "Watched",
+    "unwatched": "Unwatched",
+    "markWatched": "Mark as watched",
+    "markUnwatched": "Mark as unwatched",
+    "playEpisode": "Play",
+    "resumeEpisode": "Resume",
+    "nextEpisode": "Next episode",
+    "autoPlayNext": "Auto-play next",
+    "showStatus": {
+      "continuing": "Continuing",
+      "ended": "Ended"
+    },
+    "noEpisodes": "No episodes found",
+    "favorite": "Favorite"
   },
   "music": {
     "title": "Music",

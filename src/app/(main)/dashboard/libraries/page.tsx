@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
-import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X, Film, Images, Music, MoreVertical, Pencil, HardDriveDownload } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Folder, AlertCircle, X, Film, Images, Music, Tv, MoreVertical, Pencil, HardDriveDownload } from "lucide-react";
 import { FolderPicker } from "@/components/library/folder-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -215,6 +215,8 @@ export default function LibrariesPage() {
                   <Images className="h-6 w-6 text-primary" />
                 ) : lib.type === "music" ? (
                   <Music className="h-6 w-6 text-primary" />
+                ) : lib.type === "tvshow" ? (
+                  <Tv className="h-6 w-6 text-primary" />
                 ) : (
                   <Folder className="h-6 w-6 text-primary" />
                 )}
@@ -293,7 +295,7 @@ export default function LibrariesPage() {
         <div className="mt-2 text-center">
           <p className="truncate text-sm font-semibold text-foreground">{lib.name}</p>
           <p className="text-xs text-muted-foreground capitalize">
-            {lib.type === "movie" ? t("libraryTypeMovie") : lib.type === "photo" ? t("libraryTypePhoto") : lib.type === "music" ? t("libraryTypeMusic") : lib.type} · {lib.movieCount ?? 0}
+            {lib.type === "movie" ? t("libraryTypeMovie") : lib.type === "photo" ? t("libraryTypePhoto") : lib.type === "music" ? t("libraryTypeMusic") : lib.type === "tvshow" ? t("libraryTypeTv") : lib.type} · {lib.movieCount ?? 0}
           </p>
         </div>
       </div>
@@ -304,6 +306,7 @@ export default function LibrariesPage() {
   // 4th domain later can't silently reuse another section's icon/label.
   const KNOWN_TYPE_SECTIONS: { type: string; label: string; icon: typeof Film }[] = [
     { type: "movie", label: t("libraryTypeMovie"), icon: Film },
+    { type: "tvshow", label: t("libraryTypeTv"), icon: Tv },
     { type: "photo", label: t("libraryTypePhoto"), icon: Images },
     { type: "music", label: t("libraryTypeMusic"), icon: Music },
   ];
@@ -374,9 +377,9 @@ export default function LibrariesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="movie">Movie</SelectItem>
+                      <SelectItem value="tvshow">{t("libraryTypeTv")}</SelectItem>
                       <SelectItem value="photo">{t("libraryTypePhoto")}</SelectItem>
                       <SelectItem value="music">{t("libraryTypeMusic")}</SelectItem>
-                      <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -452,7 +455,7 @@ export default function LibrariesPage() {
                     setFolderPaths([...folderPaths, p]);
                   }}
                 />
-                {type === "movie" && (
+                {(type === "movie" || type === "tvshow") && (
                   <>
                 {/* Metadata downloaders section */}
                 <div className="flex flex-col gap-2">
@@ -565,7 +568,7 @@ export default function LibrariesPage() {
                 )}
 
                 {/* Scraper error alert */}
-                {type === "movie" && scraperError && (
+                {(type === "movie" || type === "tvshow") && scraperError && (
                   <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                     <div className="flex-1">
@@ -738,7 +741,7 @@ export default function LibrariesPage() {
                 }}
               />
             </div>
-            {editType === "movie" && (
+            {(editType === "movie" || editType === "tvshow") && (
               <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">
@@ -886,12 +889,14 @@ export default function LibrariesPage() {
                 ? "All photos and videos in it will be removed from the library (source files on disk are untouched)."
                 : deleteLibType === "music"
                   ? "All albums, artists and tracks in it will be removed from the library (source files on disk are untouched)."
-                  : "All movies in it will be removed."}
+                  : deleteLibType === "tvshow"
+                    ? "All shows, seasons and episodes in it will be removed from the library (source files on disk are untouched)."
+                    : "All movies in it will be removed."}
             </DialogDescription>
           </DialogHeader>
-          {/* Orphan-actor cleanup and NFO deletion are movie-domain concepts —
-              only show them for movie libraries. */}
-          {deleteLibType === "movie" && (
+          {/* Orphan-actor cleanup: a per-domain concept backed by an isolated
+              sweep (movie people vs. tv people). NFO deletion is movie-only. */}
+          {(deleteLibType === "movie" || deleteLibType === "tvshow") && (
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2.5 px-1 cursor-pointer">
                 <input
@@ -900,17 +905,23 @@ export default function LibrariesPage() {
                   onChange={(e) => setDeleteCleanupOrphans(e.target.checked)}
                   className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
                 />
-                <span className="text-sm text-muted-foreground">Clean up actors no longer associated with any movie</span>
+                <span className="text-sm text-muted-foreground">
+                  {deleteLibType === "tvshow"
+                    ? "Clean up people no longer associated with any TV show"
+                    : "Clean up actors no longer associated with any movie"}
+                </span>
               </label>
-              <label className="flex items-center gap-2.5 px-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={deleteNfo}
-                  onChange={(e) => setDeleteNfo(e.target.checked)}
-                  className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
-                />
-                <span className="text-sm text-muted-foreground">Delete NFO files from media folders (allows re-scraping)</span>
-              </label>
+              {deleteLibType === "movie" && (
+                <label className="flex items-center gap-2.5 px-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={deleteNfo}
+                    onChange={(e) => setDeleteNfo(e.target.checked)}
+                    className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
+                  />
+                  <span className="text-sm text-muted-foreground">Delete NFO files from media folders (allows re-scraping)</span>
+                </label>
+              )}
             </div>
           )}
           <DialogFooter>
@@ -924,13 +935,15 @@ export default function LibrariesPage() {
             <button
               type="button"
               onClick={() => {
-                // The cleanup options are movie-only; never send them for other
-                // domains (cleanupOrphans scans actors globally, not per-library).
+                // cleanupOrphans is a per-domain sweep (movie people vs. tv
+                // people) — only movie/tvshow libraries have one. Never send it
+                // for photo/music. deleteNfo remains movie-only.
                 const isMovie = deleteLibType === "movie";
+                const hasOrphanSweep = isMovie || deleteLibType === "tvshow";
                 if (deleteLibId)
                   deleteLibrary.mutate({
                     id: deleteLibId,
-                    cleanupOrphans: isMovie && deleteCleanupOrphans,
+                    cleanupOrphans: hasOrphanSweep && deleteCleanupOrphans,
                     deleteNfo: isMovie && deleteNfo,
                   });
                 setDeleteOpen(false);

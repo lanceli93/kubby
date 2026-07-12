@@ -5,6 +5,8 @@ import Hls from "hls.js";
 
 export interface UsePlaybackSessionOptions {
   movieId: string;
+  /** API base path for stream/decide/keyframes routes, e.g. `/api/movies/${movieId}`. */
+  basePath: string;
   currentDisc: number;
   isMultiDisc: boolean;
   selectedMaxWidth: number;
@@ -42,6 +44,7 @@ export interface UsePlaybackSessionReturn {
 
 export function usePlaybackSession({
   movieId,
+  basePath,
   currentDisc,
   isMultiDisc,
   selectedMaxWidth,
@@ -334,7 +337,7 @@ export function usePlaybackSession({
       }
       const qs = qp.toString();
 
-      const res = await fetch(`/api/movies/${movieId}/stream/decide?${qs}`);
+      const res = await fetch(`${basePath}/stream/decide?${qs}`);
       const data = await res.json();
 
       if (data.sessionId && videoRef.current) {
@@ -363,7 +366,7 @@ export function usePlaybackSession({
         clearFreezeFrame();
       }
     },
-    [movieId, currentDisc, isMultiDisc, getRealTime],
+    [movieId, basePath, currentDisc, isMultiDisc, getRealTime],
   );
 
   // Decide-then-play effect
@@ -413,7 +416,7 @@ export function usePlaybackSession({
     }
     const queryStr = queryParams.toString();
 
-    fetch(`/api/movies/${movieId}/stream/decide${queryStr ? `?${queryStr}` : ""}`)
+    fetch(`${basePath}/stream/decide${queryStr ? `?${queryStr}` : ""}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) {
@@ -466,7 +469,7 @@ export function usePlaybackSession({
           keyframesRef.current = null;
           if ((data.videoWidth ?? 0) >= 3840) {
             const discQs = isMultiDisc ? `?disc=${currentDisc}` : "";
-            fetch(`/api/movies/${movieId}/keyframes${discQs}`)
+            fetch(`${basePath}/keyframes${discQs}`)
               .then((r) => (r.ok ? r.json() : null))
               .then((kf) => {
                 if (!cancelled && kf?.keyframes?.length) {
@@ -542,8 +545,8 @@ export function usePlaybackSession({
         clearFreezeFrame();
         if (cancelled) return;
         const directUrl = isMultiDisc
-          ? `/api/movies/${movieId}/stream?disc=${currentDisc}`
-          : `/api/movies/${movieId}/stream`;
+          ? `${basePath}/stream?disc=${currentDisc}`
+          : `${basePath}/stream`;
         video.src = directUrl;
         setPlaybackMode("direct");
       });
@@ -554,7 +557,7 @@ export function usePlaybackSession({
     // selectedMaxWidth is intentionally excluded — resolution changes are
     // handled by changeResolution(), not by re-running this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movieId, currentDisc, startAt, ready]);
+  }, [movieId, basePath, currentDisc, startAt, ready]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -2,12 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import fsPromises from "fs/promises";
 import { db } from "@/lib/db";
-import { mediaLibraries, movies, people, moviePeople } from "@/lib/db/schema";
+import { mediaLibraries, movies, people, moviePeople, tvPeople, tvShowPeople } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { parseFolderPaths, serializeFolderPaths } from "@/lib/folder-paths";
 import { getPersonDir } from "@/lib/person-utils";
-import { getPhotoThumbsDir, getMusicArtDir } from "@/lib/paths";
+import { getPhotoThumbsDir, getMusicArtDir, getTvPeopleMetadataDir, resolveDataPath } from "@/lib/paths";
+import { sanitizePersonName } from "@/lib/tmdb";
 import { pruneOrphanArtists } from "@/lib/music/mutations";
+
+// Resolve a tv_people row's on-disk photo directory. Mirrors getPersonDir for
+// the cinema `people` table, but rooted at metadata/tv-people/ so the TV sweep
+// never touches cinema person dirs. (tv_people is isolated from cinema people.)
+function getTvPersonDir(person: { photoPath: string | null; name: string }): string {
+  if (person.photoPath) {
+    return nodePath.dirname(resolveDataPath(person.photoPath));
+  }
+  const sanitized = sanitizePersonName(person.name);
+  const firstLetter = sanitized.charAt(0).toUpperCase() || "_";
+  return nodePath.join(getTvPeopleMetadataDir(), firstLetter, sanitized);
+}
 
 // GET /api/libraries/[id]
 export async function GET(
@@ -31,6 +44,7 @@ export async function GET(
           CASE "media_libraries"."type"
             WHEN 'photo' THEN (SELECT COUNT(*) FROM photo_items WHERE library_id = "media_libraries"."id")
             WHEN 'music' THEN (SELECT COUNT(*) FROM music_tracks WHERE library_id = "media_libraries"."id")
+            WHEN 'tvshow' THEN (SELECT COUNT(*) FROM tv_episodes WHERE show_id IN (SELECT id FROM tv_shows WHERE media_library_id = "media_libraries"."id"))
             ELSE (SELECT COUNT(*) FROM movies WHERE media_library_id = "media_libraries"."id")
           END
         )`,
@@ -205,6 +219,38 @@ export async function DELETE(
       if (orphans.length > 0) {
         db.run(
           sql`DELETE FROM ${people} WHERE ${people.id} NOT IN (SELECT DISTINCT ${moviePeople.personId} FROM ${moviePeople})`
+        );
+      }
+    }
+
+    // Clean up orphan TV people (no remaining tvShowPeople associations).
+    // tv_people is ISOLATED from cinema people — this branch touches ONLY the
+    // TV tables and must never run for a non-tvshow library. Mirrors the movie
+    // sweep above against the parallel TV tables.
+    if (cleanupOrphans && lib.type === "tvshow") {
+      // Find TV people with no show associations (orphans)
+      const orphans = db
+        .select({ id: tvPeople.id, name: tvPeople.name, photoPath: tvPeople.photoPath })
+        .from(tvPeople)
+        .where(
+          sql`${tvPeople.id} NOT IN (SELECT DISTINCT ${tvShowPeople.personId} FROM ${tvShowPeople})`
+        )
+        .all();
+
+      // Delete orphan photo directories (under metadata/tv-people/)
+      for (const orphan of orphans) {
+        const personDir = getTvPersonDir(orphan);
+        try {
+          await fsPromises.rm(personDir, { recursive: true, force: true });
+        } catch {
+          // ignore fs errors
+        }
+      }
+
+      // Delete orphan DB records
+      if (orphans.length > 0) {
+        db.run(
+          sql`DELETE FROM ${tvPeople} WHERE ${tvPeople.id} NOT IN (SELECT DISTINCT ${tvShowPeople.personId} FROM ${tvShowPeople})`
         );
       }
     }

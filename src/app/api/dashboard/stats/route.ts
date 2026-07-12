@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { movies, movieDiscs, mediaLibraries, users, photoItems, musicTracks } from "@/lib/db/schema";
+import { movies, movieDiscs, mediaLibraries, users, photoItems, musicTracks, tvEpisodes, tvShows } from "@/lib/db/schema";
 import { count, sum, eq } from "drizzle-orm";
 
 function formatBytes(bytes: number): string {
@@ -60,6 +60,17 @@ export async function GET() {
       .select({ libraryId: musicTracks.libraryId, totalBytes: sum(musicTracks.fileSize), items: count() })
       .from(musicTracks)
       .groupBy(musicTracks.libraryId)
+      .all()) {
+      bump(row.libraryId, Number(row.totalBytes) || 0, row.items);
+    }
+
+    // Episodes (TV domain). tv_episodes keys on showId, so join to tv_shows to
+    // reach the library; count episodes as the per-library item total.
+    for (const row of db
+      .select({ libraryId: tvShows.mediaLibraryId, totalBytes: sum(tvEpisodes.fileSize), items: count() })
+      .from(tvEpisodes)
+      .innerJoin(tvShows, eq(tvEpisodes.showId, tvShows.id))
+      .groupBy(tvShows.mediaLibraryId)
       .all()) {
       bump(row.libraryId, Number(row.totalBytes) || 0, row.items);
     }

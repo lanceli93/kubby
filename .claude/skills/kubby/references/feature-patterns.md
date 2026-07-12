@@ -12,6 +12,7 @@ every task.
 - [Movie poster card hover](#movie-poster-card-hover)
 - [Photos timeline + albums + lightbox](#photos-timeline--albums--lightbox)
 - [Music library + global player](#music-library--global-player)
+- [TV series domain (shows/seasons/episodes)](#tv-series-domain-showsseasonsepisodes)
 - [Cross-domain safety (a hard rule)](#cross-domain-safety-a-hard-rule)
 - [Backend review checklist](#backend-review-checklist)
 - [GlassToast](#glasstoast)
@@ -176,11 +177,11 @@ safety below). The API stays untouched — the cache is shared with nav /
 
 ## Music library + global player
 
-The third domain (after cinema + photos), built to the same domain-separation rules
-— its own tables, scanner branch, `/api/music/*` routes, and `/music` homepage; no
-forking of the movie path. See architecture.md → Domains / Music Scanner / Audio
-Playback for the data model, scan, and streaming internals; this section is the
-UI + client-state wiring.
+The third domain (after cinema + photos; TV was the fourth), built to the same
+domain-separation rules — its own tables, scanner branch, `/api/music/*` routes, and
+`/music` homepage; no forking of the movie path. See architecture.md → Domains /
+Music Scanner / Audio Playback for the data model, scan, and streaming internals;
+this section is the UI + client-state wiring.
 
 **Shell** (`app/(main)/music/page.tsx`): `Tabs` (Albums / Artists / Songs) mirroring
 the movies-page tab shell, plus a top `ScrollRow` band of recent albums. Each tab is
@@ -339,9 +340,53 @@ the Now Playing overlay (see `NowPlayingBar` above).
     scrollbars + top/bottom fade masks (`.music-lyrics-scroll` in globals.css), and
     big top/bottom padding so first/last lines can reach the centre.
 
+## TV series domain (shows/seasons/episodes)
+
+The fourth domain. Unlike photos/music (which dropped scraper/NFO/player), TV is the
+closest sibling to cinema — it **mirrors the movie skeleton** but stays a separate
+domain with isolated cast. Built from the movie/music patterns; the pieces worth
+knowing when extending it:
+
+- **Three-tier data + scanner** (`scanner/tv-scanner.ts`, dispatched from
+  `scanner/index.ts` by `type === "tvshow"`). `parseEpisodeFilename` handles `SxxExx`
+  (+ multi-episode `S01E01-E03` → `episode_number_end`), `1x05`, and cross-checks the
+  parent `Season NN` / `Specials` (→ season 0) folder. **Guards** (learned from
+  Jellyfin): reject a season number in 200–1927 or > 2500 (year misreads) and never
+  read a `1920x1080`-style resolution token as SxxExx. `scrapeTvShow`
+  (`scraper/index.ts`) does search→details→per-season `getTvSeasonDetails`, downloading
+  show poster/fanart, `season{NN}-poster.jpg`, and per-episode stills into `.stills/`.
+  Upsert keys: show by `folder_path`, episode by `file_path`. Cleanup is FK-safe order
+  (episodes → empty seasons → empty shows).
+- **Isolated cast.** `getOrCreateTvPerson` writes ONLY `tv_people`/`tv_show_people`
+  (photos under `metadata/tv-people/`). The cinema `people` table is never touched, so
+  the movie orphan-people sweep and TV orphan sweep are independent (see Cross-domain
+  safety). This was an explicit product decision (no shared actors across domains).
+- **Shared player via `basePath`.** Rather than fork the 699-line movie play page,
+  `usePlaybackSession`/`useProgressSave` take a `basePath` option; the TV play page
+  (`app/(main)/tv/episodes/[id]/play/page.tsx`) passes `/api/tv/episodes/{id}` and the
+  movie page passes `/api/movies/{id}`. The decide/stream/keyframes/frame/bookmarks
+  routes under `/api/tv/episodes/[id]/*` are copies of the movie routes with the disc
+  logic dropped (episodes are single-file, `discNumber` always 1) and the iOS-HEVC
+  decide block reading `tv_media_streams` by `episode_id`. **The raw episode stream
+  path must be in the `auth.config.ts` public allowlist** (`/^\/api\/tv\/episodes\/[^/]+\/stream\/?$/`)
+  so the `<video>` element can load it, mirroring the movie stream exception — decide
+  and everything else stay authenticated.
+- **Next Up / progress.** Progress is per-episode (`user_episode_data`); the show-level
+  `user_tv_show_data.last_played_at` is bumped on every episode progress PUT and drives
+  `GET /api/tv?filter=next-up`, which returns one episode per active show (in-progress
+  episode, else first unwatched by (season, episode) order). Season/show unwatched
+  counts are computed live in the detail route, never stored. Auto-play-next on the
+  player fetches `/api/tv/{showId}`, flattens episodes by (season, episode), and pushes
+  the next one on `ended` (guarded to fire once).
+- **Gotcha found in verification:** `tv_shows.country` is stored as a **plain string**
+  (`origin_country[0]`, e.g. `"US"`), not JSON — the detail route wraps it as
+  `[country]` rather than `JSON.parse` (which threw a 500 → white-screen). genres/
+  studios/tags ARE JSON arrays. When mirroring a movie route, check each column's
+  actual storage shape, don't assume.
+
 ## Cross-domain safety (a hard rule)
 
-**Cross-domain operations are a cardinal sin.** Cinema / Photos / Music share ONE
+**Cross-domain operations are a cardinal sin.** Cinema / TV / Photos / Music share ONE
 `media_libraries` table (distinguished by `type`) and the `["libraries"]` cache, so
 it's easy for code scoped to one domain to accidentally read, display, or *delete*
 another domain's data. Three real bugs shipped from exactly this and were fixed —
@@ -356,8 +401,9 @@ learn from them:
   it everywhere.
 - **Per-domain counts must pick the right table.** `GET /api/libraries[/:id]`
   counted `movies` unconditionally, so photo/music libraries always showed `· 0`.
-  Count per `type` via a `CASE` (movies / photo_items / music_tracks). The field is
-  still aliased `movieCount` for consumers, but the query is domain-aware.
+  Count per `type` via a `CASE` (movies / photo_items / music_tracks / tv_episodes —
+  the tvshow branch counts episodes under the library's shows). The field is still
+  aliased `movieCount` for consumers, but the query is domain-aware.
 - **Delete must clean up ONLY its own domain, and ALL of it.** `DELETE
   /api/libraries/[id]` (a) read `lib.type` *before* the cascade wipes rows, then
   gated NFO-deletion and orphan-people cleanup behind `type === "movie"` — the
@@ -382,6 +428,13 @@ its delete path owns removing them.**
   `pruneOrphanArtists()` (from `music/mutations.ts`) *after* the cascade, mirroring
   the movie branch's orphan-people cleanup. Any future global/shared table needs
   the same explicit sweep in each domain's delete path.
+- **TV has its OWN orphan-people sweep, kept fully separate.** The `type === "tvshow"`
+  delete branch (`api/libraries/[id]/route.ts`) prunes orphan `tv_people` (no remaining
+  `tv_show_people`) + their `metadata/tv-people/` dirs — it queries ONLY the TV tables
+  and is gated on `tvshow`, so deleting a TV library never touches cinema `people` and
+  vice versa. Verified at runtime: a TV scan left cinema `people` count unchanged. When
+  a domain has an isolated copy of a shared concept, give it a parallel gated sweep —
+  do not widen the existing sweep.
 
 ## Backend review checklist
 

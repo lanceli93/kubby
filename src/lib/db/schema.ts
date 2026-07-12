@@ -198,6 +198,8 @@ export const userPreferences = sqliteTable("user_preferences", {
   player360Mode: integer("player_360_mode", { mode: "boolean" }).notNull().default(false),
   movieDimensionWeights: text("movie_dimension_weights"), // JSON object, e.g. '{"Plot":2,"VFX":1}'
   personDimensionWeights: text("person_dimension_weights"), // JSON object, e.g. '{"Appearance":2}'
+  tvShowRatingDimensions: text("tv_show_rating_dimensions"), // JSON array, e.g. '["剧情","演技"]'
+  tvShowDimensionWeights: text("tv_show_dimension_weights"), // JSON object, e.g. '{"Plot":2}'
   heroMosaicConfig: text("hero_mosaic_config"), // JSON HeroMosaicConfig — home hero poster wall settings
   peopleMosaicConfig: text("people_mosaic_config"), // JSON PeopleMosaicConfig — home People hero poster wall settings
 });
@@ -403,4 +405,217 @@ export const userTrackData = sqliteTable("user_track_data", {
   lastPlayedAt: text("last_played_at"),
 }, (table) => [
   uniqueIndex("idx_utd_user_track").on(table.userId, table.trackId),
+]);
+
+// ─── TV Shows (tvshow domain) ──────────────────────────────────
+export const tvShows = sqliteTable("tv_shows", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  originalTitle: text("original_title"),
+  sortName: text("sort_name"),
+  overview: text("overview"),
+  tagline: text("tagline"),
+  folderPath: text("folder_path").notNull(), // upsert key
+  posterPath: text("poster_path"),
+  fanartPath: text("fanart_path"),
+  nfoPath: text("nfo_path"),
+  posterMtime: real("poster_mtime"),
+  fanartMtime: real("fanart_mtime"),
+  posterBlur: text("poster_blur"), // tiny base64 data URL for blur placeholder
+  communityRating: real("community_rating"),
+  officialRating: text("official_rating"),
+  premiereDate: text("premiere_date"),
+  year: integer("year"),
+  status: text("status"), // "Continuing" | "Ended"
+  genres: text("genres"), // JSON array string
+  studios: text("studios"), // JSON array string
+  country: text("country"), // JSON array string
+  tmdbId: text("tmdb_id"),
+  imdbId: text("imdb_id"),
+  tvdbId: text("tvdb_id"),
+  seasonCount: integer("season_count"), // denormalized, refreshed at scan
+  episodeCount: integer("episode_count"), // denormalized, refreshed at scan
+  tags: text("tags"), // JSON array string
+  mediaLibraryId: text("media_library_id").notNull().references(() => mediaLibraries.id, { onDelete: "cascade" }),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_tv_shows_library").on(table.mediaLibraryId),
+  index("idx_tv_shows_year").on(table.year),
+  index("idx_tv_shows_date_added").on(table.dateAdded),
+]);
+
+// ─── TV Seasons ────────────────────────────────────────────────
+export const tvSeasons = sqliteTable("tv_seasons", {
+  id: text("id").primaryKey(),
+  showId: text("show_id").notNull().references(() => tvShows.id, { onDelete: "cascade" }),
+  seasonNumber: integer("season_number").notNull(), // 0 = Specials
+  title: text("title"),
+  overview: text("overview"),
+  posterPath: text("poster_path"),
+  posterMtime: real("poster_mtime"),
+  posterBlur: text("poster_blur"), // tiny base64 data URL for blur placeholder
+  premiereDate: text("premiere_date"),
+  year: integer("year"),
+  tmdbId: text("tmdb_id"),
+  episodeCount: integer("episode_count"),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_tv_seasons_show").on(table.showId),
+  uniqueIndex("idx_tv_seasons_show_num").on(table.showId, table.seasonNumber),
+]);
+
+// ─── TV Episodes ───────────────────────────────────────────────
+export const tvEpisodes = sqliteTable("tv_episodes", {
+  id: text("id").primaryKey(),
+  showId: text("show_id").notNull().references(() => tvShows.id, { onDelete: "cascade" }), // redundant direct FK for cheap joins
+  seasonId: text("season_id").notNull().references(() => tvSeasons.id, { onDelete: "cascade" }),
+  seasonNumber: integer("season_number").notNull(), // denormalized
+  episodeNumber: integer("episode_number").notNull(), // denormalized
+  episodeNumberEnd: integer("episode_number_end"), // multi-episode single file; null = single
+  absoluteNumber: integer("absolute_number"), // anime, nullable, not parsed in v1
+  title: text("title"),
+  overview: text("overview"),
+  filePath: text("file_path").notNull().unique(), // upsert key
+  nfoPath: text("nfo_path"),
+  stillPath: text("still_path"),
+  stillMtime: real("still_mtime"),
+  stillBlur: text("still_blur"), // tiny base64 data URL for blur placeholder
+  airDate: text("air_date"),
+  communityRating: real("community_rating"),
+  runtimeSeconds: integer("runtime_seconds"),
+  runtimeMinutes: integer("runtime_minutes"),
+  videoCodec: text("video_codec"),
+  audioCodec: text("audio_codec"),
+  videoWidth: integer("video_width"),
+  videoHeight: integer("video_height"),
+  audioChannels: integer("audio_channels"),
+  container: text("container"),
+  totalBitrate: integer("total_bitrate"),
+  fileSize: integer("file_size"),
+  formatName: text("format_name"),
+  dateModified: integer("date_modified"), // file mtime in ms, for incremental scan diffing
+  tmdbId: text("tmdb_id"),
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_tv_ep_show").on(table.showId),
+  index("idx_tv_ep_season").on(table.seasonId),
+  uniqueIndex("idx_tv_ep_season_num").on(table.seasonId, table.episodeNumber),
+  index("idx_tv_ep_date_added").on(table.dateAdded),
+]);
+
+// ─── TV People (isolated from cinema people) ───────────────────
+export const tvPeople = sqliteTable("tv_people", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type", { enum: ["actor", "director", "writer", "producer"] }).notNull(),
+  photoPath: text("photo_path"),
+  photoMtime: real("photo_mtime"),
+  photoBlur: text("photo_blur"), // tiny base64 data URL for blur placeholder
+  fanartPath: text("fanart_path"), // own fanart (not show fallback)
+  height: integer("height"), // cm
+  weight: integer("weight"), // kg
+  measurements: text("measurements"), // e.g. "88-60-90"
+  cupSize: text("cup_size"), // e.g. "C"
+  whr: real("whr"), // waist-to-hip ratio, auto-calculated from measurements
+  tmdbId: text("tmdb_id"),
+  overview: text("overview"),
+  birthDate: text("birth_date"),
+  birthYear: integer("birth_year"),
+  placeOfBirth: text("place_of_birth"),
+  deathDate: text("death_date"),
+  imdbId: text("imdb_id"),
+  tags: text("tags"), // JSON array string
+  dateAdded: text("date_added").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_tv_people_name").on(table.name),
+]);
+
+// ─── TV Show-People (M:N) ──────────────────────────────────────
+export const tvShowPeople = sqliteTable("tv_show_people", {
+  id: text("id").primaryKey(),
+  showId: text("show_id").notNull().references(() => tvShows.id, { onDelete: "cascade" }),
+  personId: text("person_id").notNull().references(() => tvPeople.id, { onDelete: "cascade" }),
+  role: text("role"),
+  sortOrder: integer("sort_order"),
+  ageAtRelease: integer("age_at_release"),
+}, (table) => [
+  index("idx_tsp_show").on(table.showId),
+  index("idx_tsp_person").on(table.personId),
+]);
+
+// ─── TV Media Streams (keyed on episode, no discNumber) ────────
+export const tvMediaStreams = sqliteTable("tv_media_streams", {
+  id: text("id").primaryKey(),
+  episodeId: text("episode_id").notNull().references(() => tvEpisodes.id, { onDelete: "cascade" }),
+  streamIndex: integer("stream_index").notNull(),
+  streamType: text("stream_type", { enum: ["video", "audio", "subtitle"] }).notNull(),
+  codec: text("codec"),
+  profile: text("profile"),
+  bitrate: integer("bitrate"),
+  language: text("language"),
+  title: text("title"),
+  isDefault: integer("is_default", { mode: "boolean" }),
+  isForced: integer("is_forced", { mode: "boolean" }),
+  // Video-specific
+  width: integer("width"),
+  height: integer("height"),
+  bitDepth: integer("bit_depth"),
+  frameRate: text("frame_rate"),
+  hdrType: text("hdr_type"),
+  pixFmt: text("pix_fmt"),
+  level: integer("level"),
+  hasBFrames: integer("has_b_frames"),
+  // Audio-specific
+  channels: integer("channels"),
+  channelLayout: text("channel_layout"),
+  sampleRate: integer("sample_rate"),
+}, (table) => [
+  index("idx_tms_ep").on(table.episodeId),
+  index("idx_tms_ep_type").on(table.episodeId, table.streamType),
+]);
+
+// ─── User Episode Data ─────────────────────────────────────────
+export const userEpisodeData = sqliteTable("user_episode_data", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  episodeId: text("episode_id").notNull().references(() => tvEpisodes.id, { onDelete: "cascade" }),
+  playbackPositionSeconds: integer("playback_position_seconds").default(0),
+  playCount: integer("play_count").default(0),
+  isPlayed: integer("is_played", { mode: "boolean" }).default(false),
+  personalRating: real("personal_rating"),
+  lastPlayedAt: text("last_played_at"),
+  vrLayout: text("vr_layout"), // "mono" | "ou" | "sbs" — VR stereo packing for 360° playback
+}, (table) => [
+  uniqueIndex("idx_ued_user_ep").on(table.userId, table.episodeId),
+]);
+
+// ─── User TV Show Data ─────────────────────────────────────────
+export const userTvShowData = sqliteTable("user_tv_show_data", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  showId: text("show_id").notNull().references(() => tvShows.id, { onDelete: "cascade" }),
+  isFavorite: integer("is_favorite", { mode: "boolean" }).default(false),
+  personalRating: real("personal_rating"),
+  dimensionRatings: text("dimension_ratings"), // JSON object, e.g. {"剧情": 9.5, "演技": 8.0}
+  lastPlayedAt: text("last_played_at"), // max of episode activity; drives NextUp show ordering
+}, (table) => [
+  uniqueIndex("idx_utsd_user_show").on(table.userId, table.showId),
+]);
+
+// ─── TV Episode Bookmarks (keyed on episode, no discNumber) ────
+export const tvEpisodeBookmarks = sqliteTable("tv_episode_bookmarks", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  episodeId: text("episode_id").notNull().references(() => tvEpisodes.id, { onDelete: "cascade" }),
+  timestampSeconds: integer("timestamp_seconds").notNull(),
+  iconType: text("icon_type").default("bookmark"),
+  tags: text("tags"),
+  note: text("note"),
+  thumbnailPath: text("thumbnail_path"),
+  thumbnailAspect: real("thumbnail_aspect"), // width/height ratio (e.g. 1.78 = 16:9, 0.56 = 9:16)
+  viewState: text("view_state"), // JSON: {lon, lat, fov} for 360° bookmarks
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_teb_user_ep").on(table.userId, table.episodeId),
+  index("idx_teb_ep").on(table.episodeId),
 ]);

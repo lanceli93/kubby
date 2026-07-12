@@ -14,30 +14,36 @@ user_invocable: true
 Self-hosted media server built with Next.js. Dark cinema theme (shared across all
 domains). Multi-domain: **🎬 Cinema** (Jellyfin-compatible movie libraries — NFO +
 folder structure, TMDB scraping, HLS transcoding, multi-dimension ratings),
-**📷 Photos** (photo + video timeline library — EXIF, virtual-scroll grid, lightbox,
-inline video playback), and **🎵 Music** (album/artist/song library — `music-metadata`
-tag scan, embedded/folder cover art, HTTP-Range audio streaming with ffmpeg→mp3
-fallback, an always-mounted global player).
+**📺 TV** (series/anime libraries — three-tier shows→seasons→episodes, SxxExx +
+`Season NN`/`Specials` folder parsing, TMDB `/tv` scrape, per-episode progress + Next
+Up, shared player), **📷 Photos** (photo + video timeline library — EXIF,
+virtual-scroll grid, lightbox, inline video playback), and **🎵 Music**
+(album/artist/song library — `music-metadata` tag scan, embedded/folder cover art,
+HTTP-Range audio streaming with ffmpeg→mp3 fallback, an always-mounted global player).
 
 ## Domain separation
 
 Each media domain owns independent tables / scanner branch / API routes / homepage,
 but shares infra: library management, image serving, the playback pipeline
 (`playback-decider` + `transcode-manager`), auth, and i18n. A domain switcher lives
-as a dropdown on the Kubby brand in `AppHeader` (rendered when a photo OR music
-library exists — `useHasPhotoLibrary()` / `useHasMusicLibrary()`). `DomainCookieSync`
-persists the last domain (`cinema`/`photos`/`music`) in a `kubby-domain` cookie so
-the root can jump to the right homepage; it self-heals a stale `photos`/`music`
-cookie when no library of that type exists (the Edge proxy redirect can't query the
-DB). **When adding a domain, follow this separation — do not fork the movie code
-path.** Music was the third domain built this way (albums/artists/songs + a global
-`NowPlayingBar` mounted in `(main)/layout.tsx`).
+as a dropdown on the Kubby brand in `AppHeader` (rendered when a photo OR music OR TV
+library exists — `useHasPhotoLibrary()` / `useHasMusicLibrary()` / `useHasTvLibrary()`;
+order Cinema → TV → Photos → Music). `DomainCookieSync` persists the last domain
+(`cinema`/`tv`/`photos`/`music`) in a `kubby-domain` cookie so the root can jump to the
+right homepage; it self-heals a stale `tv`/`photos`/`music` cookie when no library of
+that type exists (the Edge proxy redirect can't query the DB). **When adding a domain,
+follow this separation — do not fork the movie code path.** TV was the fourth domain
+built this way: it mirrors the movie skeleton (tables/API/user-data) but keeps its own
+isolated cast tables (`tv_people`, never cinema `people`) and reuses the video player
+via a `basePath` option on `usePlaybackSession`/`useProgressSave` (`/api/tv/episodes/{id}`
+vs `/api/movies/{id}`) rather than forking it. Unlike photos/music, **TV keeps
+scraper/NFO** (`<tvshow>`/`<episodedetails>` + TMDB `/tv`).
 
 **Cross-domain operations are a cardinal sin.** All domains share one
 `media_libraries` table (by `type`) + the `["libraries"]` cache, so it's easy to
 read/show/delete another domain's data by accident. Rules: allowlist the current
 domain (`type === "movie"`, never a `!== "photo"` blocklist that rots when a domain
-is added); count per-domain tables (movies/photo_items/music_tracks); and gate every
+is added); count per-domain tables (movies/photo_items/music_tracks/tv_episodes); and gate every
 destructive/global side-effect on the library's own `type` server-side, cleaning up
 that domain's `metadata/…/{libraryId}/` artifacts on delete. Full detail +
 the three real bugs this came from: `references/feature-patterns.md` → Cross-domain
@@ -170,7 +176,7 @@ manual edits. Release flow: push `v0.x.y` tag → CI extracts version → passes
 
 | File | When to read |
 |------|-------------|
-| `references/architecture.md` | Project structure, DB schema (22 tables), API endpoints, scanner (movie + photo + music branches), playback internals (video HLS + audio direct/transcode), theme, i18n, data dirs, mobile responsive. Read when implementing features or fixing bugs that touch these. |
+| `references/architecture.md` | Project structure, DB schema (31 tables), API endpoints, scanner (movie + tv + photo + music branches), playback internals (video HLS + audio direct/transcode), theme, i18n, data dirs, mobile responsive. Read when implementing features or fixing bugs that touch these. |
 | `references/feature-patterns.md` | How a specific feature is built — 360° player, player controls, navigation, domain switcher, photos timeline/albums/lightbox, music library + global player, GlassToast, metadata browser/editor, people body metadata, dimension management, UI design system. Read the one section matching your task. |
 | `references/release-workflow.md` | Packaging, testing builds, creating and publishing releases. |
 | `references/readme-media-capture.md` | (Re)generating README screenshots + animated demos: ffmpeg ddagrab recording, mp4→animated-WebP, chrome-devtools MCP screenshots, seeding demo data (ratings/bookmarks/gallery) via API, prod-build-on-8665 setup. Read when updating `docs/screenshots/`. |

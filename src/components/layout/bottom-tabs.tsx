@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Film, Images, Music, Search, Settings } from "lucide-react";
+import { House, Film, Images, Music, Tv, Search, Settings } from "lucide-react";
 import { useCurrentDomain } from "@/hooks/use-current-domain";
 
 const homeTab = { label: "Home", href: "/", icon: House };
@@ -11,6 +11,7 @@ const preferencesTab = { label: "Preferences", href: "/preferences", icon: Setti
 
 const mediaTabByDomain = {
   cinema: { label: "Movies", href: "/movies", icon: Film },
+  tv: { label: "TV", href: "/tv", icon: Tv },
   photos: { label: "Photos", href: "/photos", icon: Images },
   music: { label: "Music", href: "/music", icon: Music },
 };
@@ -21,6 +22,7 @@ export function BottomTabs() {
 
   // Hide on player pages / immersive full-screen viewers
   if (/^\/movies\/[^/]+\/play$/.test(pathname)) return null;
+  if (/^\/tv\/episodes\/[^/]+\/play$/.test(pathname)) return null;
   if (/^\/photos\/view\/[^/]+$/.test(pathname)) return null;
 
   // Tab order: Home, <current domain's media tab>, Search, Preferences.

@@ -16,6 +16,9 @@ interface CustomIcon {
   dotColor?: string;
 }
 
+// The three rating-dimension sets share one set of add/edit/delete helpers.
+type DimType = "movie" | "person" | "tvshow";
+
 const DOT_COLOR_OPTIONS = [
   { value: "#ffffff", label: "White" },
   { value: "#60a5fa", label: "Blue" },
@@ -45,6 +48,7 @@ export default function PersonalMetadataPage() {
 
   const [movieDims, setMovieDims] = useState<string[]>([]);
   const [personDims, setPersonDims] = useState<string[]>([]);
+  const [tvShowDims, setTvShowDims] = useState<string[]>([]);
   const [disabledIcons, setDisabledIcons] = useState<Set<string>>(new Set());
   const [subtleMarkers, setSubtleMarkers] = useState(false);
   const [qbIconType, setQbIconType] = useState("bookmark");
@@ -53,6 +57,7 @@ export default function PersonalMetadataPage() {
   const [qbTagInput, setQbTagInput] = useState("");
   const [movieInput, setMovieInput] = useState("");
   const [personInput, setPersonInput] = useState("");
+  const [tvShowInput, setTvShowInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -60,12 +65,14 @@ export default function PersonalMetadataPage() {
   // Dimension management state
   const [movieRenames, setMovieRenames] = useState<Record<string, string>>({});
   const [personRenames, setPersonRenames] = useState<Record<string, string>>({});
-  const [editingDim, setEditingDim] = useState<{ type: "movie" | "person"; index: number } | null>(null);
+  const [tvShowRenames, setTvShowRenames] = useState<Record<string, string>>({});
+  const [editingDim, setEditingDim] = useState<{ type: DimType; index: number } | null>(null);
   const [editValue, setEditValue] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
-  const [deletingDim, setDeletingDim] = useState<{ type: "movie" | "person"; index: number; name: string; count: number | null } | null>(null);
+  const [deletingDim, setDeletingDim] = useState<{ type: DimType; index: number; name: string; count: number | null } | null>(null);
   const [movieWeights, setMovieWeights] = useState<Record<string, number>>({});
   const [personWeights, setPersonWeights] = useState<Record<string, number>>({});
+  const [tvShowWeights, setTvShowWeights] = useState<Record<string, number>>({});
 
   // Custom icon upload state
   const [iconLabel, setIconLabel] = useState("");
@@ -83,6 +90,7 @@ export default function PersonalMetadataPage() {
     if (prefs) {
       setMovieDims(prefs.movieRatingDimensions || []);
       setPersonDims(prefs.personRatingDimensions || []);
+      setTvShowDims(prefs.tvShowRatingDimensions || []);
       setDisabledIcons(new Set(prefs.disabledBookmarkIcons || []));
       setSubtleMarkers(prefs.subtleBookmarkMarkers ?? false);
       const tpl = prefs.quickBookmarkTemplate;
@@ -91,16 +99,28 @@ export default function PersonalMetadataPage() {
       setQbNote(tpl?.note || "");
       setMovieWeights(prefs.movieDimensionWeights || {});
       setPersonWeights(prefs.personDimensionWeights || {});
+      setTvShowWeights(prefs.tvShowDimensionWeights || {});
     }
   }, [prefs]);
 
   const MAX_DIM_LENGTH = 20;
 
-  const handleAddDim = (type: "movie" | "person") => {
-    const input = type === "movie" ? movieInput : personInput;
-    const dims = type === "movie" ? movieDims : personDims;
-    const setDims = type === "movie" ? setMovieDims : setPersonDims;
-    const setInput = type === "movie" ? setMovieInput : setPersonInput;
+  // Per-type accessors keep the add/edit/delete logic identical across the
+  // three dimension sets. Read current state each call so we never close over
+  // stale values.
+  const dimsFor = (type: DimType) => (type === "movie" ? movieDims : type === "tvshow" ? tvShowDims : personDims);
+  const setDimsFor = (type: DimType) => (type === "movie" ? setMovieDims : type === "tvshow" ? setTvShowDims : setPersonDims);
+  const inputFor = (type: DimType) => (type === "movie" ? movieInput : type === "tvshow" ? tvShowInput : personInput);
+  const setInputFor = (type: DimType) => (type === "movie" ? setMovieInput : type === "tvshow" ? setTvShowInput : setPersonInput);
+  const setWeightsFor = (type: DimType) => (type === "movie" ? setMovieWeights : type === "tvshow" ? setTvShowWeights : setPersonWeights);
+  const setRenamesFor = (type: DimType) => (type === "movie" ? setMovieRenames : type === "tvshow" ? setTvShowRenames : setPersonRenames);
+  const renamesFor = (type: DimType) => (type === "movie" ? movieRenames : type === "tvshow" ? tvShowRenames : personRenames);
+
+  const handleAddDim = (type: DimType) => {
+    const input = inputFor(type);
+    const dims = dimsFor(type);
+    const setDims = setDimsFor(type);
+    const setInput = setInputFor(type);
     if (!input.trim() || dims.length >= 10) return;
     const trimmed = input.trim().slice(0, MAX_DIM_LENGTH);
     if (!dims.includes(trimmed)) {
@@ -109,8 +129,8 @@ export default function PersonalMetadataPage() {
     setInput("");
   };
 
-  const handleMoveDim = (type: "movie" | "person", index: number, direction: -1 | 1) => {
-    const setDims = type === "movie" ? setMovieDims : setPersonDims;
+  const handleMoveDim = (type: DimType, index: number, direction: -1 | 1) => {
+    const setDims = setDimsFor(type);
     setDims((prev) => {
       const next = [...prev];
       const target = index + direction;
@@ -120,8 +140,8 @@ export default function PersonalMetadataPage() {
     });
   };
 
-  const startEdit = (type: "movie" | "person", index: number) => {
-    const dims = type === "movie" ? movieDims : personDims;
+  const startEdit = (type: DimType, index: number) => {
+    const dims = dimsFor(type);
     setEditingDim({ type, index });
     setEditValue(dims[index]);
     setTimeout(() => editInputRef.current?.focus(), 0);
@@ -130,15 +150,15 @@ export default function PersonalMetadataPage() {
   const commitEdit = () => {
     if (!editingDim) return;
     const { type, index } = editingDim;
-    const dims = type === "movie" ? movieDims : personDims;
-    const setDims = type === "movie" ? setMovieDims : setPersonDims;
-    const setRenames = type === "movie" ? setMovieRenames : setPersonRenames;
+    const dims = dimsFor(type);
+    const setDims = setDimsFor(type);
+    const setRenames = setRenamesFor(type);
     const trimmed = editValue.trim().slice(0, MAX_DIM_LENGTH);
     const oldName = dims[index];
     if (trimmed && trimmed !== oldName && !dims.includes(trimmed)) {
       setDims((prev) => prev.map((d, i) => (i === index ? trimmed : d)));
       // Rename weight key
-      const setWeights = type === "movie" ? setMovieWeights : setPersonWeights;
+      const setWeights = setWeightsFor(type);
       setWeights((prev) => {
         if (!(oldName in prev)) return prev;
         const updated = { ...prev, [trimmed]: prev[oldName] };
@@ -161,11 +181,11 @@ export default function PersonalMetadataPage() {
     setEditValue("");
   };
 
-  const startDelete = async (type: "movie" | "person", index: number) => {
-    const dims = type === "movie" ? movieDims : personDims;
+  const startDelete = async (type: DimType, index: number) => {
+    const dims = dimsFor(type);
     const name = dims[index];
     // If this dimension was renamed (unsaved), query by the original name in DB
-    const renameMap = type === "movie" ? movieRenames : personRenames;
+    const renameMap = renamesFor(type);
     const originalName = Object.entries(renameMap).find(([, v]) => v === name)?.[0] ?? name;
     setDeletingDim({ type, index, name, count: null });
     try {
@@ -180,9 +200,9 @@ export default function PersonalMetadataPage() {
   const confirmDelete = () => {
     if (!deletingDim) return;
     const { type, index } = deletingDim;
-    const dims = type === "movie" ? movieDims : personDims;
-    const setDims = type === "movie" ? setMovieDims : setPersonDims;
-    const setWeights = type === "movie" ? setMovieWeights : setPersonWeights;
+    const dims = dimsFor(type);
+    const setDims = setDimsFor(type);
+    const setWeights = setWeightsFor(type);
     const name = dims[index];
     setDims((prev) => prev.filter((_, i) => i !== index));
     setWeights((prev) => {
@@ -197,15 +217,17 @@ export default function PersonalMetadataPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const hasRenames = Object.keys(movieRenames).length > 0 || Object.keys(personRenames).length > 0;
+      const hasRenames = Object.keys(movieRenames).length > 0 || Object.keys(personRenames).length > 0 || Object.keys(tvShowRenames).length > 0;
       const res = await fetch("/api/settings/personal-metadata", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           movieRatingDimensions: movieDims,
           personRatingDimensions: personDims,
+          tvShowRatingDimensions: tvShowDims,
           movieDimensionWeights: movieWeights,
           personDimensionWeights: personWeights,
+          tvShowDimensionWeights: tvShowWeights,
           disabledBookmarkIcons: Array.from(disabledIcons),
           subtleBookmarkMarkers: subtleMarkers,
           quickBookmarkTemplate: (qbIconType !== "bookmark" || qbTags.length > 0 || qbNote)
@@ -215,6 +237,7 @@ export default function PersonalMetadataPage() {
             renamedDimensions: {
               ...(Object.keys(movieRenames).length > 0 && { movie: movieRenames }),
               ...(Object.keys(personRenames).length > 0 && { person: personRenames }),
+              ...(Object.keys(tvShowRenames).length > 0 && { tvshow: tvShowRenames }),
             },
           }),
         }),
@@ -223,6 +246,7 @@ export default function PersonalMetadataPage() {
         showToast(t("saved"), true);
         setMovieRenames({});
         setPersonRenames({});
+        setTvShowRenames({});
         queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
       } else {
         showToast(t("failedToSave"), false);
@@ -547,6 +571,131 @@ export default function PersonalMetadataPage() {
         )}
       </div>
 
+      {/* TV Show Rating Dimensions */}
+      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("tvShowRatingDimensions")}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {t("tvShowRatingDimensionsDesc")}
+        </p>
+        {tvShowDims.length > 0 && (
+          <div className="flex flex-col gap-1">
+            {/* Column headers */}
+            <div className="flex items-center gap-2 px-3 pb-1">
+              <span className="w-5" />
+              <span className="flex-1 text-[11px] text-muted-foreground/50">{t("dimName")}</span>
+              <span className="w-[5.5rem] text-center text-[11px] text-muted-foreground/50">{t("dimWeight")}</span>
+              <span className="w-[6.5rem]" />
+            </div>
+            {tvShowDims.map((dim, i) => (
+              <div
+                key={`tvshow-${i}`}
+                className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 transition-fluid hover:bg-white/[0.07]"
+              >
+                <span className="w-5 text-center text-xs tabular-nums text-muted-foreground/50">{i + 1}</span>
+                {editingDim?.type === "tvshow" && editingDim.index === i ? (
+                  <input
+                    ref={editInputRef}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitEdit();
+                      if (e.key === "Escape") { setEditingDim(null); setEditValue(""); }
+                    }}
+                    onBlur={commitEdit}
+                    maxLength={MAX_DIM_LENGTH}
+                    className="h-7 flex-1 rounded-md border border-primary/50 bg-white/[0.05] px-2 text-sm text-foreground outline-none focus:border-primary"
+                  />
+                ) : (
+                  <span className="flex-1 text-sm text-foreground">{dim}</span>
+                )}
+                {/* Weight control */}
+                <div className="flex items-center gap-0.5 rounded-md bg-white/[0.06] px-1 py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setTvShowWeights((prev) => ({ ...prev, [dim]: Math.round(Math.max(0.1, (prev[dim] ?? 1) - 0.1) * 10) / 10 }))}
+                    disabled={(tvShowWeights[dim] ?? 1) <= 0.1}
+                    className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className={`min-w-[2rem] text-center text-xs tabular-nums ${(tvShowWeights[dim] ?? 1) !== 1 ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                    x{(tvShowWeights[dim] ?? 1).toFixed(1)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setTvShowWeights((prev) => ({ ...prev, [dim]: Math.round(Math.min(3, (prev[dim] ?? 1) + 0.1) * 10) / 10 }))}
+                    disabled={(tvShowWeights[dim] ?? 1) >= 3}
+                    className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleMoveDim("tvshow", i, -1)}
+                    disabled={i === 0}
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    aria-label="Move up"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveDim("tvshow", i, 1)}
+                    disabled={i === tvShowDims.length - 1}
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground disabled:opacity-20 cursor-pointer transition-fluid"
+                    aria-label="Move down"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit("tvshow", i)}
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-white/10 hover:text-foreground cursor-pointer transition-fluid"
+                    aria-label="Rename"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startDelete("tvshow", i)}
+                    className="rounded p-1 text-muted-foreground/50 hover:bg-red-500/20 hover:text-red-400 cursor-pointer transition-fluid"
+                    aria-label="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={tvShowInput}
+            onChange={(e) => setTvShowInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddDim("tvshow"); } }}
+            placeholder={t("addDimensionPlaceholder")}
+            maxLength={MAX_DIM_LENGTH}
+            disabled={tvShowDims.length >= 10}
+            className="h-9 flex-1 rounded-md border border-white/[0.06] bg-white/[0.05] px-3 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={() => handleAddDim("tvshow")}
+            disabled={tvShowDims.length >= 10 || !tvShowInput.trim()}
+            className="flex h-9 items-center gap-1.5 rounded-lg bg-white/10 px-3 text-sm text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground active:scale-95 cursor-pointer disabled:opacity-30"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        {tvShowDims.length >= 10 && (
+          <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
+        )}
+      </div>
+
       {/* Delete Dimension Confirmation */}
       {deletingDim && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -556,7 +705,7 @@ export default function PersonalMetadataPage() {
               {deletingDim.count === null
                 ? t("deleteDimensionLoading")
                 : deletingDim.count > 0
-                  ? t("deleteDimensionConfirm", { name: deletingDim.name, count: deletingDim.count, type: deletingDim.type === "movie" ? t("movies") : t("people") })
+                  ? t("deleteDimensionConfirm", { name: deletingDim.name, count: deletingDim.count, type: deletingDim.type === "movie" ? t("movies") : deletingDim.type === "tvshow" ? t("tvShows") : t("people") })
                   : t("deleteDimensionNoData", { name: deletingDim.name })}
             </p>
             <div className="mt-4 flex justify-end gap-2">

@@ -5,6 +5,7 @@ import type { PeopleMosaicConfig } from "@/lib/people-mosaic-config";
 export interface UserPreferences {
   movieRatingDimensions: string[];
   personRatingDimensions: string[];
+  tvShowRatingDimensions: string[];
   showMovieRatingBadge: boolean;
   showPersonTierBadge: boolean;
   showPersonRatingBadge: boolean;
@@ -19,6 +20,7 @@ export interface UserPreferences {
   player360Mode: boolean;
   movieDimensionWeights: Record<string, number>;
   personDimensionWeights: Record<string, number>;
+  tvShowDimensionWeights: Record<string, number>;
   heroMosaicConfig: HeroMosaicConfig;
   peopleMosaicConfig: PeopleMosaicConfig;
   serverPlatform: string; // "darwin" | "win32" | "linux"

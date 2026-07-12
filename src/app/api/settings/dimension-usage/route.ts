@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { userMovieData, userPersonData } from "@/lib/db/schema";
+import { userMovieData, userPersonData, userTvShowData } from "@/lib/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
-// GET /api/settings/dimension-usage?type=movie|person&name=xxx
+// GET /api/settings/dimension-usage?type=movie|person|tvshow&name=xxx
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const name = searchParams.get("name");
 
-    if (!type || !name || !["movie", "person"].includes(type)) {
+    if (!type || !name || !["movie", "person", "tvshow"].includes(type)) {
       return NextResponse.json({ error: "Missing type or name" }, { status: 400 });
     }
 
     const jsonPath = `$."${name}"`;
-    const table = type === "movie" ? userMovieData : userPersonData;
-    const userIdCol = type === "movie" ? userMovieData.userId : userPersonData.userId;
-    const ratingsCol = type === "movie" ? userMovieData.dimensionRatings : userPersonData.dimensionRatings;
+    const table = type === "movie" ? userMovieData : type === "tvshow" ? userTvShowData : userPersonData;
+    const userIdCol = type === "movie" ? userMovieData.userId : type === "tvshow" ? userTvShowData.userId : userPersonData.userId;
+    const ratingsCol = type === "movie" ? userMovieData.dimensionRatings : type === "tvshow" ? userTvShowData.dimensionRatings : userPersonData.dimensionRatings;
 
     const result = db
       .select({ count: sql<number>`count(*)` })

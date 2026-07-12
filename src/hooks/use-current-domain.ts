@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 
-export type MediaDomain = "cinema" | "photos" | "music";
+export type MediaDomain = "cinema" | "photos" | "music" | "tv";
 
 // Domain owned by the current route, or null for neutral pages (search,
 // profile, preferences, dashboard) that don't belong to any domain.
@@ -11,6 +11,7 @@ export type MediaDomain = "cinema" | "photos" | "music";
 function domainFromPath(pathname: string): MediaDomain | null {
   if (pathname.startsWith("/photos")) return "photos";
   if (pathname.startsWith("/music")) return "music";
+  if (pathname.startsWith("/tv")) return "tv";
   if (
     pathname === "/" ||
     pathname.startsWith("/movies") ||
@@ -31,7 +32,7 @@ function subscribe() {
 
 function readCookieDomain(): MediaDomain {
   const m = document.cookie.match(
-    /(?:^|;\s*)kubby-domain=(cinema|photos|music)/
+    /(?:^|;\s*)kubby-domain=(cinema|photos|music|tv)/
   );
   return (m?.[1] as MediaDomain) ?? "cinema";
 }

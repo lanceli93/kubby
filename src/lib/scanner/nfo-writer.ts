@@ -147,6 +147,104 @@ export function writeFullNfo(nfoPath: string, data: NfoMovieData): void {
   fs.writeFileSync(nfoPath, xml, "utf-8");
 }
 
+export interface NfoTvShowData {
+  title: string;
+  originalTitle?: string;
+  sortTitle?: string;
+  overview?: string; // → <plot>
+  tagline?: string;
+  rating?: number; // → <rating>
+  mpaa?: string;
+  premiered?: string;
+  year?: number;
+  status?: string;
+  genres?: string[];
+  studios?: string[];
+  country?: string;
+  tmdbId?: string;
+  imdbId?: string;
+  tvdbId?: string;
+  actors?: NfoActorEntry[];
+  tags?: string[];
+}
+
+/**
+ * Generate a complete Kodi/Jellyfin-compatible tvshow.nfo from TMDB data.
+ */
+export function writeTvShowNfo(nfoPath: string, data: NfoTvShowData): void {
+  const dir = path.dirname(nfoPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  let xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<tvshow>\n`;
+  xml += `  <title>${escapeXml(data.title)}</title>\n`;
+  if (data.originalTitle) xml += `  <originaltitle>${escapeXml(data.originalTitle)}</originaltitle>\n`;
+  xml += `  <sorttitle>${escapeXml(data.sortTitle || data.title)}</sorttitle>\n`;
+  if (data.overview) xml += `  <plot>${escapeXml(data.overview)}</plot>\n`;
+  if (data.tagline) xml += `  <tagline>${escapeXml(data.tagline)}</tagline>\n`;
+  if (data.rating != null) xml += `  <rating>${data.rating}</rating>\n`;
+  if (data.mpaa) xml += `  <mpaa>${escapeXml(data.mpaa)}</mpaa>\n`;
+  if (data.premiered) xml += `  <premiered>${escapeXml(data.premiered)}</premiered>\n`;
+  if (data.year != null) xml += `  <year>${data.year}</year>\n`;
+  if (data.status) xml += `  <status>${escapeXml(data.status)}</status>\n`;
+  for (const genre of data.genres ?? []) {
+    xml += `  <genre>${escapeXml(genre)}</genre>\n`;
+  }
+  for (const studio of data.studios ?? []) {
+    xml += `  <studio>${escapeXml(studio)}</studio>\n`;
+  }
+  if (data.country) xml += `  <country>${escapeXml(data.country)}</country>\n`;
+  if (data.tmdbId) xml += `  <uniqueid type="tmdb">${escapeXml(data.tmdbId)}</uniqueid>\n`;
+  if (data.imdbId) xml += `  <uniqueid type="imdb">${escapeXml(data.imdbId)}</uniqueid>\n`;
+  if (data.tvdbId) xml += `  <uniqueid type="tvdb">${escapeXml(data.tvdbId)}</uniqueid>\n`;
+  for (const actor of data.actors ?? []) {
+    xml += `  <actor>\n`;
+    xml += `    <name>${escapeXml(actor.name)}</name>\n`;
+    xml += `    <role>${escapeXml(actor.role)}</role>\n`;
+    if (actor.thumb) xml += `    <thumb>${escapeXml(actor.thumb)}</thumb>\n`;
+    xml += `    <order>${actor.order}</order>\n`;
+    if (actor.tmdbId != null) xml += `    <tmdbid>${actor.tmdbId}</tmdbid>\n`;
+    xml += `  </actor>\n`;
+  }
+  for (const tag of data.tags ?? []) {
+    xml += `  <tag>${escapeXml(tag)}</tag>\n`;
+  }
+  xml += `</tvshow>\n`;
+
+  fs.writeFileSync(nfoPath, xml, "utf-8");
+}
+
+export interface NfoEpisodeData {
+  title: string;
+  overview?: string; // → <plot>
+  season?: number;
+  episode?: number;
+  aired?: string;
+  rating?: number;
+  runtime?: number;
+  tmdbId?: string;
+}
+
+/**
+ * Generate a Kodi/Jellyfin-compatible episode .nfo from TMDB data.
+ */
+export function writeEpisodeNfo(nfoPath: string, data: NfoEpisodeData): void {
+  const dir = path.dirname(nfoPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  let xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<episodedetails>\n`;
+  xml += `  <title>${escapeXml(data.title)}</title>\n`;
+  if (data.season != null) xml += `  <season>${data.season}</season>\n`;
+  if (data.episode != null) xml += `  <episode>${data.episode}</episode>\n`;
+  if (data.aired) xml += `  <aired>${escapeXml(data.aired)}</aired>\n`;
+  if (data.overview) xml += `  <plot>${escapeXml(data.overview)}</plot>\n`;
+  if (data.rating != null) xml += `  <rating>${data.rating}</rating>\n`;
+  if (data.runtime != null) xml += `  <runtime>${data.runtime}</runtime>\n`;
+  if (data.tmdbId) xml += `  <uniqueid type="tmdb">${escapeXml(data.tmdbId)}</uniqueid>\n`;
+  xml += `</episodedetails>\n`;
+
+  fs.writeFileSync(nfoPath, xml, "utf-8");
+}
+
 function escapeXml(str: string): string {
   return str
     .replace(/&/g, "&amp;")

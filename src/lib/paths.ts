@@ -27,6 +27,10 @@ export function getPeopleMetadataDir(): string {
   return path.join(getMetadataDir(), "people");
 }
 
+export function getTvPeopleMetadataDir(): string {
+  return path.join(getMetadataDir(), "tv-people");
+}
+
 export function getBookmarksDir(): string {
   return path.join(getMetadataDir(), "bookmarks");
 }

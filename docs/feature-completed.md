@@ -3,6 +3,45 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-12 — TV series domain (fourth domain: 🎬 Cinema → 📺 TV → 📷 Photos → 🎵 Music)
+
+Added a full TV/series domain (美剧 + 动漫) mirroring the movie skeleton but kept as a
+separate, isolated domain. Built via the multi-model workflow (Fable orchestrator +
+opus executors, 12 tasks). Full detail in the kubby skill (architecture.md → Domains /
+TV domain tables; feature-patterns.md → TV series domain).
+
+- **Data model (9 tables, migration 0040)**: `tv_shows` → `tv_seasons` → `tv_episodes`
+  (redundant `show_id` for cheap joins; season 0 = Specials; `episode_number_end` for
+  multi-episode files; `absolute_number` reserved for anime, not parsed in v1),
+  `tv_media_streams`, isolated `tv_people`/`tv_show_people`, `user_episode_data`
+  (per-episode progress), `user_tv_show_data` (show favorite/rating + Next Up ordering),
+  `tv_episode_bookmarks`. Both `schema.ts` and the `db/index.ts` pending array updated.
+- **Scanner** (`scanner/tv-scanner.ts`): three-level `Show (Year)/Season NN/Show SxxExx`
+  parse with year-misread + resolution-token guards, `scrapeTvShow` (TMDB `/tv` →
+  per-season episode metadata + stills), `<tvshow>`/`<episodedetails>` NFO parse/write,
+  per-episode ffprobe, incremental skip, FK-safe cleanup.
+- **Reused, not forked**: the transcode pipeline is domain-agnostic; the video player is
+  shared by adding a `basePath` option to `usePlaybackSession`/`useProgressSave`
+  (`/api/tv/episodes/{id}` vs `/api/movies/{id}`) — the movie player behaves identically.
+- **API** `/api/tv/*` (+ `/api/tv/episodes/*`): list/next-up/recently-added, show detail
+  with season-grouped episodes + live-aggregated watch state, episode stream/decide
+  (iOS-HEVC block preserved)/keyframes/frame/bookmarks/user-data. Raw episode stream
+  added to the `auth.config.ts` public allowlist.
+- **Pages** `/tv`: home (Next Up + Recently Added + all-shows grid), show detail (hero +
+  season selector + episode list + favorite + cast), episode player (shared player +
+  auto-play-next). Domain wired into all 7 switch points (header dropdown, sidebar,
+  bottom tabs, cookie sync, root redirect, `useCurrentDomain`, `useHasTvLibrary`),
+  library allowlist (count CASE, stats, tvshow-only orphan-people sweep), TV rating
+  dimensions, and i18n (`nav.tv` + new `tv` namespace, en/zh).
+- **Cross-domain isolation held**: TV cast lives in `tv_people` (`metadata/tv-people/`),
+  never cinema `people`; TV library delete has its own gated orphan sweep.
+- **Verified end-to-end in-browser** (chrome-devtools, real TMDB): generated a synthetic
+  test library (Breaking Bad / Attack on Titan / Sherlock incl. Specials), scanned 3
+  shows / 9 episodes / 19 cast — cinema `people` count unchanged (579); `/tv`, show
+  detail, and episode playback (S01E01 mkv → REMUX, correct burned-in decide label) all
+  render/play. Found + fixed one runtime bug tsc missed: `tv_shows.country` is a plain
+  string, not JSON (detail route was `JSON.parse`-ing it → 500). tsc clean throughout.
+
 ## 2026-07-11 — Music: split symbol-joined artist names
 
 Scanner used to treat a collaboration tag ("周杰伦&林迈可") as ONE artist, which

@@ -350,7 +350,7 @@ export function SetupWizard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="movie">Movie</SelectItem>
-                  <SelectItem value="tvshow" disabled>TV Shows (coming soon)</SelectItem>
+                  <SelectItem value="tvshow">TV Shows</SelectItem>
                   <SelectItem value="music" disabled>Music (coming soon)</SelectItem>
                 </SelectContent>
               </Select>

@@ -182,6 +182,7 @@ export default function PlayerPage() {
   // Playback session hook
   const session = usePlaybackSession({
     movieId,
+    basePath: `/api/movies/${movieId}`,
     currentDisc,
     isMultiDisc,
     selectedMaxWidth,
@@ -193,6 +194,7 @@ export default function PlayerPage() {
   // Progress save hook
   const saveProgress = useProgressSave({
     movieId,
+    basePath: `/api/movies/${movieId}`,
     currentDisc,
     isPlaying: session.isPlaying,
     getRealTime: session.getRealTime,
