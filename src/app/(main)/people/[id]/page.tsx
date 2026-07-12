@@ -141,7 +141,10 @@ export default function PersonDetailPage() {
     },
   });
 
-  if (!person) {
+  // The API returns { error } (no `name`) for a missing person — a truthy
+  // object that would slip past a bare `!person` guard and then crash on
+  // `person.name[0]`. Require a real name before rendering.
+  if (!person || !person.name) {
     return (
       <div className="flex h-96 items-center justify-center text-muted-foreground">
         Loading...

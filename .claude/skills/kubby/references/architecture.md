@@ -319,6 +319,8 @@ users ──1:N──> tv_episode_bookmarks ──N:1──> tv_episodes
 - `GET /api/movies/genres` — Genre list by library
 - `GET /api/movies/hero-wall` — Home hero mosaic pool (reads/overrides `hero_mosaic_config`)
 - `GET /api/people/hero-wall` — Home People-tab mosaic pool (reads/overrides `people_mosaic_config`; flattens photo+fanart+gallery entries)
+- `GET /api/tv/hero-wall` — `/tv` home hero mosaic pool (random-samples shows with a poster/fanart; no saved config — cinema-only concept)
+- `GET /api/tv/people/[id]` — Isolated TV person detail (queries `tv_people`/`tv_show_people` ONLY, never cinema `people`); read-only, returns bio + shows-appeared-in. Page at `/tv/people/[id]`
 - `GET/DELETE /api/movies/[id]` — Detail (with cast/directors/userData) / Delete
 - `GET /api/movies/[id]/stream` — Video stream (HTTP 206 Range)
 - `GET /api/movies/[id]/stream/decide` — Playback decision (direct/remux/transcode)

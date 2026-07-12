@@ -1,12 +1,20 @@
 "use client";
 
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { ShowCard } from "@/components/tv/show-card";
 import { NextUpCard } from "@/components/tv/next-up-card";
+import { TvHero, type TvHeroShow } from "@/components/tv/tv-hero";
+import { LibraryCard } from "@/components/library/library-card";
+import { AddLibraryCard } from "@/components/library/add-library-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import {
+  AmbientProvider,
+  AmbientField,
+} from "@/components/home/ambient-field";
+import { type MosaicMovie } from "@/components/home/hero-mosaic";
 import { useTranslations } from "next-intl";
 import { ArrowUpDown, CalendarPlus, ArrowDownAZ, Calendar, Sparkles, Loader2 } from "lucide-react";
 
@@ -14,8 +22,12 @@ interface ShowItem {
   id: string;
   title: string;
   year?: number | null;
+  overview?: string | null;
+  status?: string | null;
+  communityRating?: number | null;
   posterPath?: string | null;
   posterBlur?: string | null;
+  fanartPath?: string | null;
   seasonCount?: number | null;
   episodeCount?: number | null;
 }
@@ -33,6 +45,20 @@ interface NextUpItem {
   playbackPositionSeconds: number;
   runtimeSeconds: number;
   progress: number;
+}
+
+interface Library {
+  id: string;
+  name: string;
+  type: string;
+  folderPaths?: string[];
+  scraperEnabled?: boolean;
+  jellyfinCompat?: boolean;
+  metadataLanguage?: string | null;
+  movieCount?: number;
+  coverImage?: string | null;
+  hasCustomCover?: boolean;
+  lastScannedAt?: string | null;
 }
 
 interface PaginatedResponse<T> {
@@ -56,7 +82,9 @@ export default function TvBrowsePage() {
 function TvBrowseContent() {
   const searchParams = useSearchParams();
   const t = useTranslations("tv");
+  const tHome = useTranslations("home");
   const tMovies = useTranslations("movies");
+  const queryClient = useQueryClient();
   // libraryId is optional — omitted, the API lists across all TV libraries.
   const libraryId = searchParams.get("libraryId") || "";
 
@@ -69,6 +97,58 @@ function TvBrowseContent() {
     { value: "year", label: tMovies("year"), icon: Calendar },
     { value: "rating", label: tMovies("rating"), icon: Sparkles },
   ];
+
+  // ── Media libraries (TV only — positive allowlist, never a blocklist) ──
+  const { data: allLibraries = [] } = useQuery<Library[]>({
+    queryKey: ["libraries"],
+    queryFn: () => fetch("/api/libraries").then((r) => r.json()),
+  });
+  const libraries = allLibraries.filter((lib) => lib.type === "tvshow");
+
+  const deleteLibrary = useMutation({
+    mutationFn: (id: string) => fetch(`/api/libraries/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
+    },
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingLibraryIdRef = useRef<string | null>(null);
+  const uploadCover = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return fetch(`/api/libraries/${id}/cover`, { method: "POST", body: formData });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["libraries"] }),
+  });
+  const removeCover = useMutation({
+    mutationFn: (id: string) => fetch(`/api/libraries/${id}/cover`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["libraries"] }),
+  });
+  const handleEditImage = useCallback((id: string) => {
+    pendingLibraryIdRef.current = id;
+    fileInputRef.current?.click();
+  }, []);
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      const id = pendingLibraryIdRef.current;
+      if (file && id) uploadCover.mutate({ id, file });
+      pendingLibraryIdRef.current = null;
+      e.target.value = "";
+    },
+    [uploadCover]
+  );
+
+  // ── Poster wall pool for the animated hero backdrop ──────────────
+  const { data: wallShows = [], isPending: wallPending } = useQuery<MosaicMovie[]>({
+    queryKey: ["tv-shows", "hero-wall"],
+    queryFn: () => fetch("/api/tv/hero-wall?limit=60").then((r) => r.json()),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
 
   // ── Continue Watching / Next Up ──────────────────────────────────
   const { data: nextUp = [] } = useQuery<NextUpItem[]>({
@@ -114,96 +194,154 @@ function TvBrowseContent() {
   const totalCount = showsData?.pages[0]?.totalCount ?? 0;
   const { sentinelRef } = useInfiniteScroll({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
+  // Richer metadata for the hero spotlight text block, keyed by show id — drawn
+  // from the recently-added + all-shows queries the page already runs.
+  const detailsById = new Map<string, TvHeroShow>();
+  for (const s of [...recentlyAdded, ...shows]) {
+    if (!detailsById.has(s.id)) detailsById.set(s.id, s);
+  }
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-scroll px-4 md:px-12">
-        <div className="animate-fade-in-up">
-          {/* Continue Watching / Next Up band */}
-          {nextUp.length > 0 && (
-            <section className="pt-6">
-              <ScrollRow title={t("continueWatching")}>
-                {nextUp.map((item) => (
-                  <NextUpCard
-                    key={item.episodeId}
-                    showTitle={item.showTitle}
-                    episodeId={item.episodeId}
-                    seasonNumber={item.seasonNumber}
-                    episodeNumber={item.episodeNumber}
-                    episodeTitle={item.episodeTitle}
-                    stillPath={item.stillPath}
-                    stillBlur={item.stillBlur}
-                    showPosterPath={item.showPosterPath}
-                    progress={item.progress}
-                  />
-                ))}
-              </ScrollRow>
-            </section>
+    <AmbientProvider>
+      <div className="relative flex h-full flex-col">
+        <AmbientField />
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+
+        <div className="flex-1 overflow-y-scroll scrollbar-hide">
+          {(wallPending || wallShows.length > 0) && (
+            <TvHero wallShows={wallShows} wallPending={wallPending} detailsById={detailsById} />
           )}
 
-          {/* Recently Added band */}
-          {recentlyAdded.length > 0 && (
-            <section className="pt-6">
-              <ScrollRow title={t("recentlyAdded")}>
-                {recentlyAdded.map((show) => (
-                  <ShowCard
-                    key={show.id}
-                    id={show.id}
-                    title={show.title}
-                    year={show.year}
-                    posterPath={show.posterPath}
-                    posterBlur={show.posterBlur}
-                  />
-                ))}
-              </ScrollRow>
-            </section>
-          )}
+          <div
+            className={`animate-fade-in-up px-4 md:px-12 ${
+              wallPending || wallShows.length > 0 ? "relative z-10 pt-6 md:pt-8" : "pt-6"
+            }`}
+          >
+            {/* Media Libraries */}
+            {libraries.length > 0 ? (
+              <section className="pb-2">
+                <ScrollRow title={tHome("mediaLibraries")}>
+                  {libraries.map((lib) => (
+                    <LibraryCard
+                      key={lib.id}
+                      id={lib.id}
+                      name={lib.name}
+                      type={lib.type}
+                      folderPaths={lib.folderPaths}
+                      scraperEnabled={lib.scraperEnabled}
+                      jellyfinCompat={lib.jellyfinCompat}
+                      metadataLanguage={lib.metadataLanguage}
+                      coverImage={lib.coverImage}
+                      hasCustomCover={lib.hasCustomCover}
+                      lastScannedAt={lib.lastScannedAt}
+                      hrefBase="/tv"
+                      countLabel={lib.movieCount != null ? t("episodeCount", { count: lib.movieCount }) : undefined}
+                      onScanComplete={() => {
+                        queryClient.invalidateQueries({ queryKey: ["libraries"] });
+                        queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
+                      }}
+                      onEditComplete={() => queryClient.invalidateQueries({ queryKey: ["libraries"] })}
+                      onDelete={() => deleteLibrary.mutate(lib.id)}
+                      onEditImage={() => handleEditImage(lib.id)}
+                      onRemoveImage={() => removeCover.mutate(lib.id)}
+                    />
+                  ))}
+                </ScrollRow>
+              </section>
+            ) : (
+              <section className="pb-2">
+                <ScrollRow title={tHome("mediaLibraries")}>
+                  <AddLibraryCard />
+                </ScrollRow>
+              </section>
+            )}
 
-          {/* All Shows grid — left-aligned so the first column lines up with the
-              bands + heading above it; minmax columns stretch to fill the row. */}
-          <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,minmax(150px,180px))] md:gap-x-4 md:gap-y-6">
-            <div className="col-span-full relative py-[18px] flex items-center justify-center">
-              <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
-                {t("allShows")} · {totalCount || shows.length}
-              </span>
-              <SortDropdown
-                options={sortOptions}
-                sort={sort}
-                sortOrder={sortOrder}
-                onSortChange={setSort}
-                onOrderChange={setSortOrder}
-              />
+            {/* Continue Watching / Next Up band */}
+            {nextUp.length > 0 && (
+              <section className="pt-4">
+                <ScrollRow title={t("continueWatching")}>
+                  {nextUp.map((item) => (
+                    <NextUpCard
+                      key={item.episodeId}
+                      showTitle={item.showTitle}
+                      episodeId={item.episodeId}
+                      seasonNumber={item.seasonNumber}
+                      episodeNumber={item.episodeNumber}
+                      episodeTitle={item.episodeTitle}
+                      stillPath={item.stillPath}
+                      stillBlur={item.stillBlur}
+                      showPosterPath={item.showPosterPath}
+                      progress={item.progress}
+                    />
+                  ))}
+                </ScrollRow>
+              </section>
+            )}
+
+            {/* Recently Added band */}
+            {recentlyAdded.length > 0 && (
+              <section className="pt-4">
+                <ScrollRow title={t("recentlyAdded")}>
+                  {recentlyAdded.map((show) => (
+                    <ShowCard
+                      key={show.id}
+                      id={show.id}
+                      title={show.title}
+                      year={show.year}
+                      posterPath={show.posterPath}
+                      posterBlur={show.posterBlur}
+                    />
+                  ))}
+                </ScrollRow>
+              </section>
+            )}
+
+            {/* All Shows grid */}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,minmax(150px,180px))] md:gap-x-4 md:gap-y-6">
+              <div className="col-span-full relative py-[18px] flex items-center justify-center">
+                <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
+                  {t("allShows")} · {totalCount || shows.length}
+                </span>
+                <SortDropdown
+                  options={sortOptions}
+                  sort={sort}
+                  sortOrder={sortOrder}
+                  onSortChange={setSort}
+                  onOrderChange={setSortOrder}
+                />
+              </div>
+
+              {shows.map((show, index) => (
+                <ShowCard
+                  key={show.id}
+                  id={show.id}
+                  title={show.title}
+                  year={show.year}
+                  posterPath={show.posterPath}
+                  posterBlur={show.posterBlur}
+                  subtitle={show.episodeCount ? t("episodeCount", { count: show.episodeCount }) : undefined}
+                  responsive
+                  priority={index < 10}
+                />
+              ))}
+
+              <div ref={sentinelRef} className="col-span-full" style={{ height: 1 }} />
+              {isFetchingNextPage && (
+                <div className="col-span-full flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              )}
+
+              {!isLoading && shows.length === 0 && (
+                <div className="col-span-full flex h-64 items-center justify-center text-muted-foreground">
+                  {t("noEpisodes")}
+                </div>
+              )}
             </div>
-
-            {shows.map((show, index) => (
-              <ShowCard
-                key={show.id}
-                id={show.id}
-                title={show.title}
-                year={show.year}
-                posterPath={show.posterPath}
-                posterBlur={show.posterBlur}
-                subtitle={show.episodeCount ? t("episodeCount", { count: show.episodeCount }) : undefined}
-                responsive
-                priority={index < 10}
-              />
-            ))}
-
-            <div ref={sentinelRef} className="col-span-full" style={{ height: 1 }} />
-            {isFetchingNextPage && (
-              <div className="col-span-full flex justify-center py-6">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            )}
-
-            {!isLoading && shows.length === 0 && (
-              <div className="col-span-full flex h-64 items-center justify-center text-muted-foreground">
-                {t("noEpisodes")}
-              </div>
-            )}
           </div>
         </div>
       </div>
-    </div>
+    </AmbientProvider>
   );
 }
 

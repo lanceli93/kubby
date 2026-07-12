@@ -41,6 +41,17 @@ TV domain tables; feature-patterns.md → TV series domain).
   detail, and episode playback (S01E01 mkv → REMUX, correct burned-in decide label) all
   render/play. Found + fixed one runtime bug tsc missed: `tv_shows.country` is a plain
   string, not JSON (detail route was `JSON.parse`-ing it → 500). tsc clean throughout.
+- **Follow-up (same day)**: (1) fixed a cross-domain crash — TV cast rendered via
+  `PersonCard`'s default `/people/{id}` href, so clicking an actor hit the cinema
+  `/api/people` (404 `{error}`) and the person page crashed on `person.name[0]`. Added an
+  isolated `/tv/people/[id]` page + `/api/tv/people/[id]` route (queries `tv_people` only,
+  read-only), parameterized `PersonCard` with `hrefBase`/`readonly`, and hardened both
+  person pages to require `person.name`. (2) Rebuilt the `/tv` home to mirror the cinema
+  home — animated `HeroMosaic` poster wall (`<TvHero>` + `/api/tv/hero-wall`) + Media
+  Libraries row (`LibraryCard` parameterized with `hrefBase`/`countLabel`, TV-only
+  allowlist) + Next Up / Recently Added + all-shows grid. (3) Extended the test generator
+  to 8 shows (added Game of Thrones / Stranger Things / The Office / Friends / Chernobyl)
+  so the wall (≥8 posters) renders; rescanned — 8 shows, cinema `people` still 579.
 
 ## 2026-07-11 — Music: split symbol-joined artist names
 

@@ -378,6 +378,26 @@ knowing when extending it:
   counts are computed live in the detail route, never stored. Auto-play-next on the
   player fetches `/api/tv/{showId}`, flattens episodes by (season, episode), and pushes
   the next one on `ended` (guarded to fire once).
+- **Home page mirrors the cinema home** (`app/(main)/tv/page.tsx`): an animated poster
+  wall (`<TvHero>` wrapping the shared, domain-agnostic `HeroMosaic` — pool from
+  `GET /api/tv/hero-wall`, which random-samples shows with a poster/fanart; wall needs
+  ≥8 usable shows or it falls back to a single backdrop), a **Media Libraries** row, the
+  Next Up + Recently Added bands, and the all-shows grid. Reused shared components are
+  parameterized rather than forked so they can't leak cinema URLs: `LibraryCard` takes
+  `hrefBase` (TV passes `/tv`, default `/movies`) + `countLabel` (episode count); the row
+  uses a positive `type === "tvshow"` allowlist off the shared `["libraries"]` cache.
+  `TvHero` has no carousel/disc/runtime logic (resume happens per-episode via Next Up).
+- **Isolated person page** (`app/(main)/tv/people/[id]/page.tsx` + `GET /api/tv/people/[id]`).
+  TV cast are `tv_people` rows; they must NOT resolve against the cinema `people` table.
+  `PersonCard` takes `hrefBase` (TV passes `/tv/people`) + `readonly` (hides the
+  edit/edit-images/delete menu, whose dialogs hit cinema `/api/people/*`). The TV person
+  route is read-only (no user-data/gallery/metadata-editor tables exist for tv_people) —
+  it returns the bio + the shows the person appears in, linking back to `/tv/{showId}`.
+  **The bug this fixed:** the cast rendered via `PersonCard` with the default
+  `/people/{id}` href, so clicking a TV actor hit `/api/people/{tvId}` → 404 `{error}`;
+  the cinema person page's `if (!person)` guard treated that truthy error object as valid
+  and crashed on `person.name[0]`. Both person pages now require `person.name` before
+  rendering (an `{error}` body has none). See Cross-domain safety.
 - **Gotcha found in verification:** `tv_shows.country` is stored as a **plain string**
   (`origin_country[0]`, e.g. `"US"`), not JSON — the detail route wraps it as
   `[country]` rather than `JSON.parse` (which threw a 500 → white-screen). genres/
@@ -399,6 +419,16 @@ learn from them:
   **Always use a positive allowlist (`type === "movie"`), never a blocklist.** A new
   domain must be invisible to old domains by default, not by remembering to exclude
   it everywhere.
+- **Shared UI components must not hardcode one domain's routes.** `PersonCard` linked
+  to `/people/{id}` and `LibraryCard` to `/movies?libraryId=` — reusing either in the TV
+  domain sent a `tv_people`/`tvshow` id into a cinema route. A `tv_people` id hitting
+  `/api/people/{id}` returned 404 `{error}`, which the cinema person page's `if (!person)`
+  guard mistook for a valid person and crashed on `person.name[0]`. Fix: parameterize the
+  shared card with an `hrefBase` (+ `readonly` to hide cinema-only edit/delete menus whose
+  dialogs call `/api/people/*`), give TV its own `/tv/people/[id]` page + `/api/tv/people/[id]`
+  route, and make both person pages require `person.name` before rendering (an `{error}`
+  body has none). **When reusing a card across domains, thread the target route in as a
+  prop — never let it default to the domain that happened to build it first.**
 - **Per-domain counts must pick the right table.** `GET /api/libraries[/:id]`
   counted `movies` unconditionally, so photo/music libraries always showed `· 0`.
   Count per `type` via a `CASE` (movies / photo_items / music_tracks / tv_episodes —

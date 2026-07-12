@@ -381,10 +381,13 @@ export default function ShowDetailPage() {
                     role={person.role}
                     photoPath={person.photoPath}
                     photoBlur={person.photoBlur}
-                    personalRating={person.personalRating}
-                    isFavorite={!!person.isFavorite}
                     age={person.ageAtRelease}
                     size="movie"
+                    // Stay in the TV domain: link to /tv/people and hide the
+                    // cinema-only edit/delete menu (tv_people ids must never be
+                    // resolved against the cinema people tables).
+                    hrefBase="/tv/people"
+                    readonly
                   />
                 ))}
               </div>

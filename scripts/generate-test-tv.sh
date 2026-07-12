@@ -123,6 +123,37 @@ render_ep "Sherlock (2010)/Specials" "Sherlock S00E01.mkv" 1280 720 \
   "Sherlock S00E01   mkv / h264 / aac   ->  REMUX (Specials)" \
   "${H264_AAC[@]}"
 
+# =============================================================
+# Extra shows — one direct-play episode each, purely to populate
+# the poster mosaic wall on the /tv home (the wall needs ≥8 shows
+# with posters). All TMDB-hittable so the scrape path downloads a
+# real poster/fanart for each.
+# =============================================================
+echo "== Game of Thrones (2011) =="
+render_ep "Game of Thrones (2011)/Season 01" "Game of Thrones S01E01.mp4" 1280 720 \
+  "Game of Thrones S01E01   mp4 / h264 / aac   ->  DIRECT" \
+  "${H264_AAC[@]}"
+
+echo "== Stranger Things (2016) =="
+render_ep "Stranger Things (2016)/Season 01" "Stranger Things S01E01.mp4" 1280 720 \
+  "Stranger Things S01E01   mp4 / h264 / aac   ->  DIRECT" \
+  "${H264_AAC[@]}"
+
+echo "== The Office (2005) =="
+render_ep "The Office (2005)/Season 01" "The Office S01E01.mp4" 1280 720 \
+  "The Office S01E01   mp4 / h264 / aac   ->  DIRECT" \
+  "${H264_AAC[@]}"
+
+echo "== Friends (1994) =="
+render_ep "Friends (1994)/Season 01" "Friends S01E01.mp4" 1280 720 \
+  "Friends S01E01   mp4 / h264 / aac   ->  DIRECT" \
+  "${H264_AAC[@]}"
+
+echo "== Chernobyl (2019) =="
+render_ep "Chernobyl (2019)/Season 01" "Chernobyl S01E01.mp4" 1280 720 \
+  "Chernobyl S01E01   mp4 / h264 / aac   ->  DIRECT" \
+  "${H264_AAC[@]}"
+
 echo ""
 echo "=== DONE. Synthetic TV timer matrix generated under $OUT ==="
 echo "NO NFO/poster/fanart written → first scan MUST reach TMDB (CN: proxy env)."

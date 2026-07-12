@@ -39,6 +39,14 @@ interface PersonCardProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   onDelete?: (deleteFiles: boolean) => void;
+  /** Route the card links to (default `/people` — the cinema domain). TV cast
+   *  passes `/tv/people` so it stays inside its own domain and never resolves a
+   *  tv_people id against the cinema people table. */
+  hrefBase?: string;
+  /** Suppress the edit/edit-images/delete menu + rating/tier badges. The menu's
+   *  dialogs (PersonMetadataEditor / ImageEditorDialog) hit the cinema
+   *  /api/people endpoints, so a TV person card (read-only) must hide it. */
+  readonly?: boolean;
 }
 
 const sizeConfig = {
@@ -60,6 +68,8 @@ export function PersonCard({
   isFavorite,
   onToggleFavorite,
   onDelete,
+  hrefBase = "/people",
+  readonly = false,
 }: PersonCardProps) {
   const { width, height } = sizeConfig[size];
   const t = useTranslations("person");
@@ -78,7 +88,7 @@ export function PersonCard({
   return (
     <div className={`group flex-shrink-0 transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`} style={{ width }}>
     <Link
-      href={`/people/${id}`}
+      href={`${hrefBase}/${id}`}
     >
       {/* Photo shell — NOT overflow-hidden so tilt + ambient glow can bleed.
           The tilting subtree (image + badges + hover bar) is wrapped in
@@ -135,7 +145,10 @@ export function PersonCard({
 
             {/* Hover overlay bar — gradient scrim (not backdrop-blur, which
                 doesn't render inside preserve-3d), sits on the photo plane so
-                it tilts with the card. */}
+                it tilts with the card. A readonly card (TV cast) with no
+                favorite handler renders no bar at all — its ⋯ menu edits the
+                cinema people tables, which must not touch a tv_people id. */}
+            {(onToggleFavorite || !readonly) && (
             <div className={`absolute inset-x-0 bottom-0 flex items-center ${onToggleFavorite ? "justify-between" : "justify-end"} px-3 pt-6 pb-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
               {onToggleFavorite && (
                 <button
@@ -149,6 +162,7 @@ export function PersonCard({
                   <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
                 </button>
               )}
+              {!readonly && (
               <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -204,7 +218,9 @@ export function PersonCard({
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+              )}
             </div>
+            )}
           </div>
         </TiltCard>
       </div>

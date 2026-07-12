@@ -45,9 +45,16 @@ interface LibraryCardProps {
   onDelete?: (options: { cleanupOrphans: boolean; deleteNfo: boolean }) => void;
   onEditImage?: () => void;
   onRemoveImage?: () => void;
+  /** Route the card links to (default `/movies` — the cinema domain). The TV
+   *  home passes `/tv` so clicking the card opens that domain's grid, not the
+   *  movie grid. Kept as a separate prop so the shared card never leaks a
+   *  tvshow library into `/movies?libraryId=…`. */
+  hrefBase?: string;
+  /** Overrides the "{count} movies" caption (TV passes an episode-count label). */
+  countLabel?: string;
 }
 
-export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jellyfinCompat, metadataLanguage, movieCount, coverImage, hasCustomCover, lastScannedAt, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage }: LibraryCardProps) {
+export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jellyfinCompat, metadataLanguage, movieCount, coverImage, hasCustomCover, lastScannedAt, onScanComplete, onEditComplete, onDelete, onEditImage, onRemoveImage, hrefBase = "/movies", countLabel }: LibraryCardProps) {
   const t = useTranslations("movies");
   const tHome = useTranslations("home");
   const tCommon = useTranslations("common");
@@ -108,7 +115,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
 
   return (
     <Link
-      href={`/movies?libraryId=${id}`}
+      href={`${hrefBase}?libraryId=${id}`}
       className={`group flex-shrink-0 cursor-pointer transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`}
       style={{ width: 360 }}
     >
@@ -286,6 +293,8 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
         <p className="truncate text-base font-semibold text-foreground">{name}</p>
         {scanResult ? (
           <p className="text-xs text-primary">{scanResult}</p>
+        ) : countLabel ? (
+          <p className="text-xs text-muted-foreground">{countLabel}</p>
         ) : movieCount != null ? (
           <p className="text-xs text-muted-foreground">
             {t("moviesCount", { count: movieCount })}
