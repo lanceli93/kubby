@@ -25,10 +25,15 @@ HTTP-Range audio streaming with ffmpeg→mp3 fallback, an always-mounted global 
 
 Each media domain owns independent tables / scanner branch / API routes / homepage,
 but shares infra: library management, image serving, the playback pipeline
-(`playback-decider` + `transcode-manager`), auth, and i18n. A domain switcher lives
-as a dropdown on the Kubby brand in `AppHeader` (rendered when a photo OR music OR TV
-library exists — `useHasPhotoLibrary()` / `useHasMusicLibrary()` / `useHasTvLibrary()`;
-order Cinema → TV → Photos → Music). `DomainCookieSync` persists the last domain
+(`playback-decider` + `transcode-manager`), auth, and i18n. Two domain switchers
+exist, both gated on the same library-presence hooks (`useHasPhotoLibrary()` /
+`useHasMusicLibrary()` / `useHasTvLibrary()`) and both ordered Cinema → TV → Photos →
+Music: (1) a dropdown on the Kubby brand in `AppHeader`, and (2) the **left drawer's
+top "MEDIA" group** (`NavSidebar`), which lists the domains as rows with the active
+one highlighted + checked (`useCurrentDomain()`) — this is the always-available
+switcher, present even on the detail/library/search pages where the header collapses
+the brand dropdown into back-nav. The drawer group replaced the old cinema-only
+`Home` item + the redundant single-entry Media group. `DomainCookieSync` persists the last domain
 (`cinema`/`tv`/`photos`/`music`) in a `kubby-domain` cookie so the root can jump to the
 right homepage; it self-heals a stale `tv`/`photos`/`music` cookie when no library of
 that type exists (the Edge proxy redirect can't query the DB). **When adding a domain,

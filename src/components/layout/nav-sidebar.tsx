@@ -3,10 +3,13 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Film, Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid, Images, Music, Tv } from "lucide-react";
+import { Folder, Users, Server, Settings, LogOut, X, UserCircle, Wand2, LayoutGrid, Images, Music, Tv, Clapperboard, Check } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCurrentDomain } from "@/hooks/use-current-domain";
+import { useCurrentDomain, type MediaDomain } from "@/hooks/use-current-domain";
+import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
+import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
+import { useHasTvLibrary } from "@/hooks/use-has-tv-library";
 
 interface NavSidebarProps {
   open: boolean;
@@ -20,6 +23,9 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
   const domain = useCurrentDomain();
+  const hasTvLibrary = useHasTvLibrary();
+  const hasPhotoLibrary = useHasPhotoLibrary();
+  const hasMusicLibrary = useHasMusicLibrary();
 
   // Close on ESC
   useEffect(() => {
@@ -32,18 +38,28 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
     }
   }, [open, onClose]);
 
-  const navItems = [
-    { href: "/", label: tNav("home"), icon: Home },
+  // Domain group — the sidebar's answer to "which domain am I in, and how do I
+  // switch?". Replaces the old cinema-only Home item + the redundant single-entry
+  // Media group. Cinema is always present; the other domains appear only when a
+  // library of that type exists (same shared-cache hooks the header brand
+  // dropdown uses). Order mirrors the header: Cinema → TV → Photos → Music.
+  const domainItems: {
+    domain: MediaDomain;
+    href: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { domain: "cinema", href: "/", label: tNav("cinema"), icon: Clapperboard },
+    ...(hasTvLibrary
+      ? [{ domain: "tv" as const, href: "/tv", label: tNav("tv"), icon: Tv }]
+      : []),
+    ...(hasPhotoLibrary
+      ? [{ domain: "photos" as const, href: "/photos", label: tNav("photos"), icon: Images }]
+      : []),
+    ...(hasMusicLibrary
+      ? [{ domain: "music" as const, href: "/music", label: tNav("music"), icon: Music }]
+      : []),
   ];
-
-  const mediaItems =
-    domain === "photos"
-      ? [{ href: "/photos", label: tNav("allPhotos"), icon: Images, matchPrefix: true }]
-      : domain === "music"
-      ? [{ href: "/music", label: tNav("allMusic"), icon: Music, matchPrefix: true }]
-      : domain === "tv"
-      ? [{ href: "/tv", label: tNav("allTv"), icon: Tv, matchPrefix: true }]
-      : [{ href: "/movies", label: tNav("allMovies"), icon: Film, matchPrefix: true }];
 
   const metadataItems = [
     { href: "/metadata/scraper", label: tNav("providers"), icon: Wand2 },
@@ -118,17 +134,34 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-2">
-          {/* Home */}
-          <div className="flex flex-col gap-0.5">
-            {navItems.map(renderItem)}
-          </div>
-
-          {/* Media */}
+          {/* Domains — current domain highlighted (with a check), tap another to
+              switch. Only shown as a group when >1 domain exists; a single-domain
+              install still renders the lone Cinema row so the label reads clearly. */}
           <div className="flex flex-col gap-0.5">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
               {tNav("media")}
             </p>
-            {mediaItems.map(renderItem)}
+            {domainItems.map((item) => {
+              const Icon = item.icon;
+              const active = domain === item.domain;
+              return (
+                <Link
+                  key={item.domain}
+                  href={item.href}
+                  onClick={onClose}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-fluid cursor-pointer ${
+                    active
+                      ? "bg-white/[0.08] text-primary ring-1 ring-white/[0.06]"
+                      : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="flex-1">{item.label}</span>
+                  {active && <Check className="h-4 w-4 text-primary" />}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Metadata (admin only, cinema domain only) */}

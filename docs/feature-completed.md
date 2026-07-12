@@ -3,6 +3,21 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-12 — Left-drawer domain switcher (orientation + always-available switching)
+
+The user found it easy to lose track of which of the four domains they were in, and the
+only way to switch was the header brand dropdown — which collapses into back-nav on
+detail/library/search/preferences pages, leaving no switcher at all there. Fix: the
+`NavSidebar` top group (previously a cinema-only `Home` item + a redundant single "All X"
+media entry) is now a **domain list** — one row per existing domain (Cinema always;
+TV/Photos/Music gated on the shared `useHas*Library()` hooks), the active one highlighted
++ checked via `useCurrentDomain()`, each linking to that domain's home. Since the drawer
+opens on every page, this is the always-available switcher and doubles as the "you are
+here" indicator. Reused the `nav.media` label + existing hooks — no new i18n keys, no
+schema/API/table-count change. tsc exit 0; verified in-browser (Cinema→TV switch,
+active highlight follows domain, cinema-only Metadata group hides in TV). Detail in the
+kubby skill (feature-patterns.md → Domain switcher; SKILL.md → Domain separation).
+
 ## 2026-07-12 — TV parity round 3: detail-page entrance animation + preferences domain-separation
 
 Two residual gaps the user flagged after round 2: (1) TV detail pages didn't replay the

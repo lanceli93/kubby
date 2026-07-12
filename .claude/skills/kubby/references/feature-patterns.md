@@ -60,9 +60,12 @@ sub-pages (Overview, Scraper, Networking) use `(system)` route group with
 
 **Domain-following (Plan A).** The chrome is organized by media domain so the
 photos/music domains don't inherit cinema-only entries:
-- `NavSidebar` Media group shows exactly one entry (All Movies / All Photos / All
-  Music) for `useCurrentDomain()`; the Metadata group (scraper + browse) is cinema-
-  only (`isAdmin && domain === "cinema"`).
+- `NavSidebar`'s top "MEDIA" group is the domain switcher itself (see Domain switcher
+  below) — one row per existing domain (Cinema always; TV/Photos/Music gated on the
+  library-presence hooks), the active one highlighted + checked via
+  `useCurrentDomain()`. It replaced the old cinema-only `Home` item + the single "All
+  X" media entry (those were redundant with a domain list). The Metadata group
+  (scraper + browse) is cinema-only (`isAdmin && domain === "cinema"`).
 - `PreferencesSidebar` groups its entries into **Cinema** (hero-mosaic, card-badges,
   ratings-bookmarks, playback) + **General** (language). Routes are unchanged — only
   the sidebar grouping. i18n: `preferences.groupCinema` / `groupGeneral`.
@@ -80,15 +83,28 @@ Route migrations: `/settings` → `/profile` + `/preferences/*`; `/card-badges` 
 
 ## Domain switcher + photos navigation
 
-The 🎬 Cinema / 📷 Photos switcher is a **dropdown on the Kubby brand** in
-`AppHeader` (`Kubby ▾` with Clapperboard/Images items + a Check on the active
-domain), not a second pill group. This was a deliberate de-clutter: the header
-already carries the home content Tabs (`首页/收藏/演员`), and two visually identical
-pill rows at different hierarchy levels read as messy. The dropdown only renders
-when `useHasPhotoLibrary()` is true; with no photo library the brand is a plain
-`/` link. The brand dropdown is the **only** cross-domain jump point — `NavSidebar`
-(Media group) and `BottomTabs` show only the *current* domain's entry (see
-Navigation structure → Domain-following), not one per existing library.
+There are **two** cross-domain switchers, both listing Cinema → TV → Photos → Music
+(each non-cinema row gated on its `useHas*Library()` hook) and both marking the
+active domain with a Check:
+
+1. **The Kubby brand dropdown** in `AppHeader` (`Kubby ▾` with Clapperboard/Tv/Images/
+   Music items). This was a deliberate de-clutter: the header already carries the home
+   content Tabs (`首页/收藏/演员`), and two visually identical pill rows at different
+   hierarchy levels read as messy. It only renders when at least one of photo/music/tv
+   libraries exists; otherwise the brand is a plain `/` link. **Caveat: the brand
+   dropdown is replaced by back-nav on detail / library / search / preferences pages**
+   (`needsBackNav`), so it is NOT available everywhere.
+2. **The left drawer's top "MEDIA" group** (`NavSidebar`) — the always-available
+   switcher, present on every page. It renders one row per existing domain, the active
+   one highlighted (`bg-white/[0.08] text-primary ring-1`) + checked via
+   `useCurrentDomain()`; each row links to that domain's home (`/`, `/tv`, `/photos`,
+   `/music`). This replaced the old cinema-only `Home` item + the redundant
+   single-entry Media group (which duplicated what a domain list already conveys). It
+   reuses the `nav.media` label + the same `useHas*Library()` hooks as the header
+   dropdown — no new i18n keys.
+
+`BottomTabs` still shows only the *current* domain's entry (see Navigation structure →
+Domain-following), not one per existing library.
 
 `useHasPhotoLibrary()` (`hooks/use-has-photo-library.ts`) reuses the `["libraries"]`
 React Query cache (5-min staleTime) → `data?.some(l => l.type === "photo")`, so it
