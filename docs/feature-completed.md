@@ -3,6 +3,32 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-12 — TV parity round 3: detail-page entrance animation + preferences domain-separation
+
+Two residual gaps the user flagged after round 2: (1) TV detail pages didn't replay the
+polished open animation movies have, and (2) the shared Preferences pages stacked TV + movie
+sections together (only the sidebar *label* was domain-aware) — confusing, and blocking a
+future independent TV config. Shipped via two file-disjoint opus executors; tsc clean +
+verified in-browser. Detail in the kubby skill (feature-patterns.md → TV series domain →
+poster-morph entrance animation / domain-aware Preferences).
+
+- **Poster-morph entrance animation for TV.** `ShowCard` now runs the same shared-element
+  View Transition as movies — reusing the domain-agnostic `startPosterViewTransition` /
+  `startDimNavigation` helpers (`lib/view-transition.ts`, VT name `"movie-poster"`, safe to
+  share since only one detail page mounts at a time). `show-card.tsx` gained the `<Link
+  onClick>` guard + `posterRef`; the detail hero's large poster carries `POSTER_VT_ATTR` +
+  `viewTransitionName`; the "more like this" row passes `dimTransition` (detail→detail dips
+  to black). No new helper written, no backend touched.
+- **Preferences page bodies are now domain-split.** `card-badges`, `hero-mosaic`, and
+  `ratings-bookmarks` render only the current domain's sections via `useCurrentDomain()`
+  (`domain === "tv"` → TV sections; else → cinema movie/person). Bookmark Icons + Quick
+  Bookmark Template stay in both (shared infra). Invariant preserved: all hooks/queries run
+  unconditionally and every save payload keeps ALL fields — hidden-domain prefs stay
+  hydrated and are saved back untouched, so switching domains never wipes the other's config.
+- **No schema / i18n / table-count change** — reused existing section headers and prefs
+  fields; purely presentational + navigation-UX. tsc exit 0; console clean; cross-domain
+  isolation intact (no DB/API touched).
+
 ## 2026-07-12 — TV↔Cinema full feature-gap closure (parity round 2)
 
 The first TV parity pass left ~12 gaps (re-audited with 3 parallel explorers). The user

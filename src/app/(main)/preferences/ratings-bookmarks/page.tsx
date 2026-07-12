@@ -7,6 +7,7 @@ import { GlassToast } from "@/components/ui/glass-toast";
 import { useTranslations } from "next-intl";
 import { BUILTIN_BOOKMARK_ICONS } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { useCurrentDomain } from "@/hooks/use-current-domain";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
 
 interface CustomIcon {
@@ -34,6 +35,7 @@ export default function PersonalMetadataPage() {
   const t = useTranslations("personalMetadata");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const domain = useCurrentDomain();
 
   const { data: prefs } = useQuery<UserPreferences>({
     queryKey: ["userPreferences"],
@@ -321,6 +323,9 @@ export default function PersonalMetadataPage() {
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
 
+      {/* Cinema domain → Movie + Person Rating Dimensions only. */}
+      {domain !== "tv" && (
+        <>
       {/* Movie Rating Dimensions */}
       <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
@@ -570,8 +575,11 @@ export default function PersonalMetadataPage() {
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
         )}
       </div>
+        </>
+      )}
 
-      {/* TV Show Rating Dimensions */}
+      {/* TV domain → TV Show Rating Dimensions only. */}
+      {domain === "tv" && (
       <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("tvShowRatingDimensions")}
@@ -695,6 +703,7 @@ export default function PersonalMetadataPage() {
           <p className="text-xs text-muted-foreground">{t("maxDimensions")}</p>
         )}
       </div>
+      )}
 
       {/* Delete Dimension Confirmation */}
       {deletingDim && (

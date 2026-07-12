@@ -6,6 +6,7 @@ import { ChevronDown, Film, User } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useCurrentDomain } from "@/hooks/use-current-domain";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
 import {
   getTier,
@@ -181,6 +182,7 @@ export default function CardBadgesPage() {
   const t = useTranslations("cardBadges");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const domain = useCurrentDomain();
 
   const { data: prefs } = useQuery<UserPreferences>({
     queryKey: ["userPreferences"],
@@ -251,6 +253,9 @@ export default function CardBadgesPage() {
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
 
+      {/* Cinema domain → Movie + Person badge sections only. */}
+      {domain !== "tv" && (
+        <>
       {/* Movie card badges */}
       <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
@@ -446,11 +451,14 @@ export default function CardBadgesPage() {
           </ExpandableRules>
         </div>
       </div>
+        </>
+      )}
 
-      {/* TV show card badges — mirrors the movie section; reuses the generic
-          poster preview. TV shows carry no single resolution (multi-episode),
-          so the resolution toggle only takes effect where a caller supplies
-          dimensions. */}
+      {/* TV domain → TV Show Card Badges section only. Mirrors the movie section;
+          reuses the generic poster preview. TV shows carry no single resolution
+          (multi-episode), so the resolution toggle only takes effect where a
+          caller supplies dimensions. */}
+      {domain === "tv" && (
       <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("tvShowCardBadges")}
@@ -548,6 +556,7 @@ export default function CardBadgesPage() {
           </ExpandableRules>
         </div>
       </div>
+      )}
 
       {/* Save button */}
       <button

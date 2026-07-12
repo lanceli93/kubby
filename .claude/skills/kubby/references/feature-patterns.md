@@ -447,6 +447,16 @@ knowing when extending it:
   now favoritable** — the `/api/tv/[id]` GET leftJoins `user_tv_person_data` for per-cast
   `isFavorite`, and cards toggle via `PUT /api/tv/people/{id}/user-data`. (Show-level
   Media Info is *per-episode* by nature, hence sourced from an episode, not the show.)
+- **Poster-morph entrance animation (parity-round-3).** Clicking a `ShowCard` now runs the
+  same shared-element View Transition as movies — `show-card.tsx` calls
+  `startPosterViewTransition`/`startDimNavigation` from `lib/view-transition.ts` on the
+  `<Link onClick>` (guarding modifier/`defaultPrevented` clicks) and `ref`s its inner poster
+  `<div>`; the detail hero's large poster carries `{...{ [POSTER_VT_ATTR]: "" }}` +
+  `style={{ viewTransitionName: "movie-poster" }}` as the morph target. The helper is
+  domain-agnostic — the VT name `"movie-poster"` is intentionally reused (only one detail
+  page is ever mounted, so there's no collision), NOT a cinema-table reference. The "more
+  like this" row passes `dimTransition` so detail→detail dips through black instead of
+  double-morphing (identical to the movie detail page).
 - **TV people sub-domain reaches parity.** `/tv/people/[id]` went from read-only to a
   favorite Heart + multi-dimension `StarRatingDialog` (reusing the cinema
   `personRatingDimensions` prefs — a person's rating dimensions are cross-domain user
@@ -456,14 +466,23 @@ knowing when extending it:
 - **Global search includes TV.** `/api/search` gained SEPARATE `tvShows`/`tvEpisodes`/
   `tvPeople`/`tvBookmarks` result groups (never merged into the cinema arrays), rendered
   as their own sections in `search/page.tsx` linking into `/tv/*`.
-- **Domain-aware Preferences.** `preferences-sidebar.tsx` uses `useCurrentDomain()` to
-  label the media group "TV" when in the TV domain (pages are shared + domain-aware);
-  `card-badges` has a TV Show Badges section (`showTvShowRatingBadge`/
-  `showTvResolutionBadge`); `hero-mosaic` has a TV Wall (`tvHeroMosaicConfig`, filtered
-  to `type==="tvshow"`, previewing `/api/tv/hero-wall`, which now honors the config);
-  `show-card.tsx` renders the rating badge when the pref is on + a `personalRating` is
-  supplied. (The resolution badge is coded but TV cards carry no single per-title
-  resolution, so it stays dark until a caller supplies dimensions — it never invents data.)
+- **Domain-aware Preferences (bodies split, not just the label — parity-round-3).**
+  `preferences-sidebar.tsx` uses `useCurrentDomain()` to label the media group "TV" when in
+  the TV domain, AND the three shared preference PAGE BODIES now render only the current
+  domain's sections via the same hook (2-way split: `domain === "tv"` → TV sections; else →
+  cinema movie/person sections). `card-badges` shows TV Show Card Badges vs Movie+Person
+  Card Badges; `hero-mosaic` shows the TV Wall vs Movie Wall + People Wall; `ratings-bookmarks`
+  (component `PersonalMetadataPage`) shows TV Show Rating Dimensions vs Movie+Person Rating
+  Dimensions — while Bookmark Icons + Quick Bookmark Template + subtle-markers stay in BOTH
+  (shared bookmarking infra for movie & episode bookmarks). **Invariant:** all hooks/queries
+  still run unconditionally and every `handleSave` payload keeps ALL fields (hidden-domain
+  values stay hydrated and are saved back untouched) — only the JSX is gated, so switching
+  domains never wipes the other domain's prefs. Backing fields: `showTvShowRatingBadge`/
+  `showTvResolutionBadge`; the TV Wall persists `tvHeroMosaicConfig` (filtered to
+  `type==="tvshow"`, previewing `/api/tv/hero-wall`, which honors the config); `show-card.tsx`
+  renders the rating badge when the pref is on + a `personalRating` is supplied. (The
+  resolution badge is coded but TV cards carry no single per-title resolution, so it stays
+  dark until a caller supplies dimensions — it never invents data.)
 
 ## Cross-domain safety (a hard rule)
 

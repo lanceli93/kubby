@@ -13,6 +13,7 @@ import { ShowCard } from "@/components/tv/show-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { TiltCard } from "@/components/ui/tilt-card";
+import { POSTER_VT_ATTR } from "@/lib/view-transition";
 import { useHeroParallax } from "@/hooks/use-hero-parallax";
 import { useTranslations } from "next-intl";
 import {
@@ -426,7 +427,11 @@ export default function ShowDetailPage() {
                 />
               )}
               <TiltCard maxTilt={4} className="h-full w-full">
-                <div className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+                <div
+                  {...{ [POSTER_VT_ATTR]: "" }}
+                  style={{ viewTransitionName: "movie-poster" }}
+                  className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10"
+                >
                   {show.posterPath && !imgErrors.has(show.posterPath) ? (
                     <Image
                       src={resolveImageSrc(show.posterPath, 600)}
@@ -880,6 +885,7 @@ export default function ShowDetailPage() {
                     year={s.year}
                     posterPath={s.posterPath}
                     posterBlur={s.posterBlur}
+                    dimTransition
                   />
                 ))}
               </div>

@@ -20,6 +20,7 @@ import {
   PERSON_MOSAIC_TIERS,
 } from "@/lib/people-mosaic-config";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
+import { useCurrentDomain } from "@/hooks/use-current-domain";
 import { getTierColor, getTierBorderColor, type Tier } from "@/lib/tier";
 
 interface Library {
@@ -394,6 +395,7 @@ export default function HeroMosaicPage() {
   const t = useTranslations("heroMosaic");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const domain = useCurrentDomain();
 
   const { data: prefs } = useQuery<UserPreferences>({
     queryKey: ["userPreferences"],
@@ -612,39 +614,49 @@ export default function HeroMosaicPage() {
       <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
 
-        {/* ── Movie Wall section ── */}
-        <SectionHeader>{t("movieWallSection")}</SectionHeader>
+        {/* ── Movie Wall section (cinema domain only) ── */}
+        {domain !== "tv" && (
+          <>
+            <SectionHeader>{t("movieWallSection")}</SectionHeader>
 
-        <WallEditor
-          draft={draft}
-          patch={patch}
-          setLibWeight={setLibWeight}
-          customWeights={customWeights}
-          setCustomWeights={setCustomWeights}
-          libraries={libraries}
-          effectiveWeights={effectiveWeights}
-          weightSum={weightSum}
-          previewMovies={previewMovies}
-          libraryCountLabel={(count) => t("movieCount", { count })}
-        />
+            <WallEditor
+              draft={draft}
+              patch={patch}
+              setLibWeight={setLibWeight}
+              customWeights={customWeights}
+              setCustomWeights={setCustomWeights}
+              libraries={libraries}
+              effectiveWeights={effectiveWeights}
+              weightSum={weightSum}
+              previewMovies={previewMovies}
+              libraryCountLabel={(count) => t("movieCount", { count })}
+            />
+          </>
+        )}
 
-        {/* ── TV Wall section ── */}
-        <SectionHeader>{t("tvWallSection")}</SectionHeader>
+        {/* ── TV Wall section (tv domain only) ── */}
+        {domain === "tv" && (
+          <>
+            <SectionHeader>{t("tvWallSection")}</SectionHeader>
 
-        <WallEditor
-          draft={tvDraft}
-          patch={patchTv}
-          setLibWeight={setTvLibWeight}
-          customWeights={tvCustomWeights}
-          setCustomWeights={setTvCustomWeights}
-          libraries={tvLibraries}
-          effectiveWeights={tvEffectiveWeights}
-          weightSum={tvWeightSum}
-          previewMovies={previewTvMovies}
-          libraryCountLabel={(count) => t("showCount", { count })}
-        />
+            <WallEditor
+              draft={tvDraft}
+              patch={patchTv}
+              setLibWeight={setTvLibWeight}
+              customWeights={tvCustomWeights}
+              setCustomWeights={setTvCustomWeights}
+              libraries={tvLibraries}
+              effectiveWeights={tvEffectiveWeights}
+              weightSum={tvWeightSum}
+              previewMovies={previewTvMovies}
+              libraryCountLabel={(count) => t("showCount", { count })}
+            />
+          </>
+        )}
 
-        {/* ── People Wall section ── */}
+        {/* ── People Wall section (cinema domain only) ── */}
+        {domain !== "tv" && (
+          <>
         <SectionHeader>{t("peopleWallSection")}</SectionHeader>
 
         {/* People live preview */}
@@ -885,6 +897,8 @@ export default function HeroMosaicPage() {
             </button>
           </div>
         </div>
+          </>
+        )}
 
         {/* Save */}
         <button

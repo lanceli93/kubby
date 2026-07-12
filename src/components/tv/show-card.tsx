@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Tv, Star } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { startPosterViewTransition, startDimNavigation } from "@/lib/view-transition";
 import { useTranslations } from "next-intl";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -50,6 +52,11 @@ interface ShowCardProps {
   /** LCP hint — pass for the first ~10 above-the-fold cards so the poster
    *  loads eagerly with fetchpriority=high instead of lazy. */
   priority?: boolean;
+  /** Use the dip-through-dark navigation instead of the poster morph. Set on
+   *  the detail page's "You May Also Like" row: a full darken would hide a
+   *  flying poster, so detail→detail dips to black and rises into the new page
+   *  instead. See `startDimNavigation` in lib/view-transition.ts. */
+  dimTransition?: boolean;
 }
 
 /** A thin poster card for a TV show — mirrors the movie/album card shape but
@@ -66,7 +73,10 @@ export function ShowCard({
   subtitle,
   responsive,
   priority,
+  dimTransition,
 }: ShowCardProps) {
+  const router = useRouter();
+  const posterRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("tv");
   const [imgError, setImgError] = useState(false);
   const { data: prefs } = useUserPreferences();
@@ -78,7 +88,23 @@ export function ShowCard({
       className={`group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03] ${responsive ? "w-full" : ""}`}
       style={responsive ? undefined : { width: 180 }}
     >
-      <Link href={`/tv/${id}`} className="focus-ring block rounded-md">
+      <Link
+        href={`/tv/${id}`}
+        className="focus-ring block rounded-md"
+        onClick={(e) => {
+          // Poster morph into the detail page (shared-element View Transition).
+          // Play button / dropdown items already preventDefault+stopPropagation,
+          // so this only fires for a plain poster/title click. Let modified clicks
+          // (new tab, etc.) fall through to Link's default behaviour.
+          if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          if (dimTransition) {
+            startDimNavigation(`/tv/${id}`, posterRef.current, (href) => router.push(href));
+          } else {
+            startPosterViewTransition(`/tv/${id}`, posterRef.current, (href) => router.push(href));
+          }
+        }}
+      >
         {/* Poster shell — NOT overflow-hidden so tilt + ambient glow can bleed. */}
         <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
           {/* Ambient glow (ambilight) — blurred poster bleeding behind, hover-only */}
@@ -91,7 +117,7 @@ export function ShowCard({
           )}
 
           <TiltCard className="h-full w-full">
-            <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
+            <div ref={posterRef} className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
               {posterPath && !imgError ? (
                 <Image
                   src={resolveImageSrc(posterPath, 360)}
