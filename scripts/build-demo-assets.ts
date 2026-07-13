@@ -31,6 +31,11 @@ const METADATA = path.join(ROOT, "data", "metadata");
 const OUT = path.join(ROOT, "demo-assets");
 const FFMPEG = process.env.FFMPEG_PATH || "ffmpeg";
 
+// Trim the cinema set to keep the downloadable pack small (~15 MB). The music
+// albums reuse these movies' posters as covers, so those titles MUST survive.
+const CINEMA_LIMIT = 15;
+const MUSIC_COVER_MOVIES = ["Blade Runner 2049 (2017)", "La La Land (2016)", "Interstellar (2014)"];
+
 const VIDEO_EXT = new Set([".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v", ".ts", ".rmvb", ".rm"]);
 
 function log(msg: string) {
@@ -120,11 +125,24 @@ function gitSafeNfoThumbs(nfoPath: string) {
 function buildCinema(): void {
   log("Cinema: distilling movies…");
   const dest = path.join(OUT, "cinema");
+
+  // All movie dirs (have a movie.nfo), then pick the CINEMA_LIMIT set — always
+  // including the music-cover movies, then filling with the rest alphabetically
+  // so the pack is deterministic across rebuilds.
+  const allMovies = fs
+    .readdirSync(TEST_MEDIA)
+    .filter((name) => {
+      const srcDir = path.join(TEST_MEDIA, name);
+      return fs.statSync(srcDir).isDirectory() && fs.existsSync(path.join(srcDir, "movie.nfo"));
+    })
+    .sort();
+  const required = MUSIC_COVER_MOVIES.filter((m) => allMovies.includes(m));
+  const rest = allMovies.filter((m) => !required.includes(m));
+  const chosen = [...required, ...rest].slice(0, Math.max(CINEMA_LIMIT, required.length));
+
   let count = 0;
-  for (const name of fs.readdirSync(TEST_MEDIA)) {
+  for (const name of chosen) {
     const srcDir = path.join(TEST_MEDIA, name);
-    if (!fs.statSync(srcDir).isDirectory()) continue;
-    if (!fs.existsSync(path.join(srcDir, "movie.nfo"))) continue; // skip non-movie dirs (photos/, etc.)
     const destDir = path.join(dest, name);
     copyMetaFiles(srcDir, destDir);
     // Copy only the actor photos this movie references.
@@ -133,7 +151,7 @@ function buildCinema(): void {
     gitSafeNfoThumbs(path.join(destDir, "movie.nfo"));
     count++;
   }
-  log(`Cinema: ${count} movies.`);
+  log(`Cinema: ${count} movies (limit ${CINEMA_LIMIT}, incl. ${required.length} music-cover titles).`);
 }
 
 // ─── TV ─────────────────────────────────────────────────────────
@@ -292,7 +310,24 @@ function main() {
   };
   fs.writeFileSync(path.join(OUT, "manifest.json"), JSON.stringify(manifest, null, 2));
   log("Wrote manifest.json.");
-  log("Done. Review demo-assets/ then commit it.");
+
+  packTarball();
+
+  log("Done. Commit demo-assets/ (authoring source) and upload demo-assets.tar.gz to the");
+  log("  'demo-assets' GitHub release:  gh release upload demo-assets demo-assets.tar.gz --clobber");
+}
+
+/**
+ * Pack the built tree into `demo-assets.tar.gz` — the single artifact uploaded
+ * to the GitHub release and downloaded on demand by Demo Mode. `--force-local`
+ * stops GNU tar treating the Windows `D:` path as a remote host.
+ */
+function packTarball(): void {
+  const tarball = path.join(ROOT, "demo-assets.tar.gz");
+  log("Packing demo-assets.tar.gz…");
+  execFileSync("tar", ["--force-local", "-czf", tarball, "-C", OUT, "."], { stdio: "ignore" });
+  const mb = fs.statSync(tarball).size / 1024 / 1024;
+  log(`Wrote ${path.relative(ROOT, tarball)} (${mb.toFixed(1)} MB).`);
 }
 
 main();

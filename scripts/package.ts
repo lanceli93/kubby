@@ -308,13 +308,9 @@ function assembleServer(outputDir: string) {
     console.log("  Copied public/");
   }
 
-  // Copy demo-assets directory (seeds Demo Mode offline in packaged installs)
-  const demoAssetsSrc = path.join(PROJECT_ROOT, "demo-assets");
-  const demoAssetsDest = path.join(serverDir, "demo-assets");
-  if (fs.existsSync(demoAssetsSrc)) {
-    copyDirRecursive(demoAssetsSrc, demoAssetsDest);
-    console.log("  Copied demo-assets/");
-  }
+  // NOTE: demo-assets/ is intentionally NOT bundled here. Demo Mode downloads
+  // its media pack on demand from a GitHub release (see src/lib/demo/
+  // fetch-assets.ts), so the installer stays lean for the majority who skip it.
 }
 
 // Map platform to npm/prebuild naming

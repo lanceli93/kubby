@@ -567,12 +567,25 @@ its delete path owns removing them.**
 
 Fills all four domains on a fresh install so the product isn't a blank slate.
 
-- **Assets are committed, not runtime-scanned in place.** `test-media/`,
-  `test-tv-media/`, and `data/*` are ALL gitignored — a fresh machine has none of
-  them. So demo content lives in a committed `demo-assets/` dir (un-ignored; ~58 MB),
-  authored ONCE by `scripts/build-demo-assets.ts` (dev-only) from the dev's local test
-  data. `scripts/package.ts` copies `demo-assets/` next to `server.js` so packaged
-  installs seed offline. `getDemoAssetsDir()` / `getDemoDir()` in `src/lib/paths.ts`.
+- **Assets are downloaded on demand, NOT bundled into the installer.** `test-media/`,
+  `test-tv-media/`, and `data/*` are ALL gitignored — a fresh machine has none of them.
+  The raw `demo-assets/` tree IS committed (un-ignored; ~44 MB, 15 movies) as the
+  **authoring source** so a dev box seeds with zero network, but it is deliberately NOT
+  copied into packaged builds (that would bloat every installer for an opt-in feature).
+  Instead `scripts/build-demo-assets.ts` packs it into `demo-assets.tar.gz` (~42 MB,
+  gitignored) which is uploaded to a dedicated **`demo-assets` GitHub release**; at seed
+  time `src/lib/demo/fetch-assets.ts` `ensureDemoAssets()` resolves the tree in order:
+  (1) local committed `getDemoAssetsDir()` → (2) prior download `getDemoAssetsCacheDir()`
+  (`{dataDir}/demo-assets`) → (3) download the release tarball + extract. The download is
+  bounded by an overall deadline (`KUBBY_DEMO_DOWNLOAD_TIMEOUT_MS`, default 120s) AND a
+  20s per-chunk stall guard (AbortController), surfacing a clear "download timed out"
+  error; it runs BEFORE the demo user is created in the SSE route, so a failed download
+  leaves the DB pristine. The tarball is extracted by a **dependency-free** gunzip+tar
+  reader (`src/lib/demo/targz.ts`) — packaged installs ship no `tar` binary and we add no
+  npm dep; it handles ustar + GNU-longname + PAX-path and rejects path-traversal entries
+  (round-trip-verified byte-for-byte against real `tar czf` output incl. >100-char paths).
+  Override the source URL via `KUBBY_DEMO_ASSETS_URL`. `getDemoAssetsDir()` /
+  `getDemoAssetsCacheDir()` / `getDemoDir()` in `src/lib/paths.ts`.
 - **One placeholder video, copied per item.** The bundle ships NO per-item videos —
   just one ~235 KB `placeholder.mp4`. The seeder (`src/lib/demo/seed.ts`) copies it
   into every movie/episode slot at seed time (movie slot = `<movieDir>.mp4`; TV slots
@@ -597,9 +610,16 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   orphan people/artist sweep — see Cross-domain safety), then `rm -rf {dataDir}/demo/`.
   `?factoryReset=true` also deletes the demo user (→ `count(users)===0` returns the app
   to the setup wizard). A real library added alongside the demo is never touched —
-  verified. `POST /api/setup/demo` creates the `demo`/`demo` admin + seeds via SSE
-  (guarded by the same first-run `count(users)===0` check as normal setup); the setup
-  wizard forks to it after language selection.
+  verified. `POST /api/setup/demo` downloads the pack, then creates the `demo`/`demo`
+  admin + seeds via SSE (guarded by the same first-run `count(users)===0` check as normal
+  setup); the wizard forks to it after language selection. SSE progress adds a `download`
+  phase before the domain phases (shows MB transferred); the confirm dialog warns it
+  downloads ~40 MB from GitHub and needs internet.
+- **Releasing the pack.** After editing the bundle, run `npx tsx
+  scripts/build-demo-assets.ts` (rebuilds `demo-assets/` + `demo-assets.tar.gz`) then
+  `gh release upload demo-assets demo-assets.tar.gz --clobber` (create the `demo-assets`
+  release once). Because the tarball lives on a fixed tag — not a versioned release — a
+  bundle refresh does not require a new app version.
 
 ## Backend review checklist
 

@@ -1,13 +1,15 @@
 /**
  * Demo Mode seeder.
  *
- * Materializes the committed, read-only `demo-assets/` bundle into the writable
- * data dir, then drives the REAL scanner over it so every domain populates
- * exactly as a normal library would (no forked write path).
+ * Resolves the demo asset bundle (local committed tree on a dev box, else a
+ * ~15 MB pack downloaded from a GitHub release — see fetch-assets.ts), then
+ * materializes it into the writable data dir and drives the REAL scanner over
+ * it so every domain populates exactly as a normal library would (no forked
+ * write path).
  *
  * Why materialize instead of scanning the bundle in place:
  *   - the bundle ships no video files (one placeholder is copied into every
- *     movie/episode slot here — we don't store 30+ clips in git);
+ *     movie/episode slot here — we don't store 15 clips in git);
  *   - the packaged bundle dir may be read-only;
  *   - NFO <thumb> actor-photo paths are absolute + machine-specific, so they
  *     must be rewritten to this install's metadata dir.
@@ -21,7 +23,8 @@ import { v4 as uuid } from "uuid";
 import { db } from "@/lib/db";
 import { mediaLibraries } from "@/lib/db/schema";
 import { scanLibrary } from "@/lib/scanner";
-import { getDemoAssetsDir, getDemoDir, getMetadataDir } from "@/lib/paths";
+import { getDemoDir, getMetadataDir } from "@/lib/paths";
+import { ensureDemoAssets } from "./fetch-assets";
 
 type Manifest = {
   version: number;
@@ -30,11 +33,11 @@ type Manifest = {
   tvEpisodes: Record<string, { season: string; base: string }[]>;
 };
 
-export type DemoPhase = "prepare" | "cinema" | "tv" | "photos" | "music" | "done";
+export type DemoPhase = "download" | "prepare" | "cinema" | "tv" | "photos" | "music" | "done";
 export type DemoProgress = { phase: DemoPhase; current: number; total: number; title: string };
 
-function readManifest(): Manifest {
-  const p = path.join(getDemoAssetsDir(), "manifest.json");
+function readManifest(assetsDir: string): Manifest {
+  const p = path.join(assetsDir, "manifest.json");
   return JSON.parse(fs.readFileSync(p, "utf-8"));
 }
 
@@ -99,9 +102,16 @@ async function seedDomain(
 }
 
 export async function seedDemo(onProgress: (p: DemoProgress) => void = () => {}): Promise<void> {
-  const assets = getDemoAssetsDir();
+  // Resolve the asset pack — local committed tree (dev), prior download cache,
+  // or a fresh download from the GitHub release. Bytes are surfaced as the
+  // "download" phase so the wizard can show a real transfer progress bar.
+  onProgress({ phase: "download", current: 0, total: 0, title: "Downloading demo assets" });
+  const assets = await ensureDemoAssets(({ receivedBytes, totalBytes }) =>
+    onProgress({ phase: "download", current: receivedBytes, total: totalBytes, title: "Downloading demo assets" }),
+  );
+
   const demoRoot = getDemoDir();
-  const manifest = readManifest();
+  const manifest = readManifest(assets);
   const placeholder = path.join(assets, manifest.placeholder);
 
   onProgress({ phase: "prepare", current: 0, total: 1, title: "Preparing demo assets" });

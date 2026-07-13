@@ -59,4 +59,8 @@ next-env.d.ts
 # packaging output
 /dist/
 /.download-cache/
-/.download-cache/
+
+# demo asset pack — uploaded to the GitHub 'demo-assets' release, not committed
+# (the raw demo-assets/ authoring tree IS committed; this tarball is derived)
+/demo-assets.tar.gz
+/.targz-fixture/

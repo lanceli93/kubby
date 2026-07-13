@@ -3,6 +3,38 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-07-13 — Demo Mode: download assets on demand (drop installer bundling)
+
+Bundling the demo pack into every installer was wrong — it bloats the download for
+the majority who never use Demo Mode. Now the pack is fetched from a GitHub release
+only when a user opts in.
+
+- **Not bundled anymore.** Removed the `demo-assets/` copy step from
+  `scripts/package.ts`. The raw `demo-assets/` tree stays committed as the dev
+  **authoring source** (so a dev box still seeds with zero network); packaged installs
+  no longer carry it.
+- **Downloaded on demand.** New `src/lib/demo/fetch-assets.ts` `ensureDemoAssets()`
+  resolves the tree: local committed tree → prior download cache
+  (`{dataDir}/demo-assets`) → download `demo-assets.tar.gz` from the `demo-assets`
+  GitHub release (override via `KUBBY_DEMO_ASSETS_URL`). Bounded by an overall deadline
+  (`KUBBY_DEMO_DOWNLOAD_TIMEOUT_MS`, default 120s) **and** a 20s per-chunk stall guard,
+  with a clear "download timed out" error. Runs BEFORE the demo user is created in the
+  SSE route → a failed download leaves the DB pristine (no orphan account).
+- **Zero-dependency extraction.** `src/lib/demo/targz.ts` — a built-in-`zlib` gunzip +
+  hand-written tar reader (ustar + GNU-longname + PAX-path, path-traversal rejected), so
+  packaged installs need no `tar` binary and no new npm dep. Round-trip-verified
+  byte-for-byte against real `tar czf` output (incl. >100-char GNU-longname paths and
+  trailing-dot dir names); the full 42 MB / 568-file pack extracts in ~1.2s. Also
+  verified the download/cache-hit/timeout/404 lifecycle end-to-end over local HTTP.
+- **Trimmed 30→15 movies** in `build-demo-assets.ts` (always keeps the 3 music-cover
+  titles), which also drops their orphaned cast photos. Bundle 58→44 MB, tarball ~42 MB
+  (art is already-compressed JPEG, so gzip barely helps — the movie count isn't the
+  bulk). Added a pack step that emits `demo-assets.tar.gz` (gitignored) + the
+  `gh release upload` hint.
+- **Wizard/i18n.** New `download` SSE phase (MB progress bar); confirm dialog + demo card
+  now state it downloads ~40 MB from GitHub and needs internet (en + zh).
+- Publishing the `demo-assets` release asset is a one-time out-of-band step (pending).
+
 ## 2026-07-13 — Demo Mode (one-click populated install + clear/factory-reset)
 
 A fresh install has no media (all `test-media/`/`data/*` is gitignored), so a
@@ -28,7 +60,10 @@ committed asset bundle.
   demo libraries (keeps account, reuses the per-library teardown) or factory reset
   (also removes the demo account → returns to first-run setup). Both key off the
   `is_demo` allowlist, so a real library added alongside the demo is never touched.
-- Bundled into packaged builds via a `scripts/package.ts` copy step.
+- ~~Bundled into packaged builds via a `scripts/package.ts` copy step.~~
+  **Superseded same day** — see the 2026-07-13 download-on-demand entry above: the pack
+  is no longer bundled (now downloaded from a GitHub release), and cinema was trimmed
+  30→15 movies.
 
 Verified end-to-end against an empty `KUBBY_DATA_DIR`: 4 demo libs, 30 movies (all
 with media_streams → playable), 8 shows/14 episodes, 18 photos, 3 albums/12 tracks,

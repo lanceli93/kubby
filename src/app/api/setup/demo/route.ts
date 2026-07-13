@@ -6,6 +6,7 @@ import fsPromises from "fs/promises";
 import { db } from "@/lib/db";
 import { users, settings, mediaLibraries } from "@/lib/db/schema";
 import { seedDemo } from "@/lib/demo/seed";
+import { ensureDemoAssets } from "@/lib/demo/fetch-assets";
 import { getDemoDir } from "@/lib/paths";
 import { DELETE as deleteLibrary } from "@/app/api/libraries/[id]/route";
 
@@ -31,6 +32,15 @@ export async function POST() {
       const encoder = new TextEncoder();
       const send = (data: object) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       try {
+        // Download the asset pack FIRST (before touching the DB) so a failed /
+        // timed-out download leaves the install pristine — no orphan demo user
+        // or half-created libraries to clean up. This warms the extract cache;
+        // seedDemo's own ensureDemoAssets call then resolves it instantly.
+        send({ phase: "download", current: 0, total: 0, title: "Downloading demo assets" });
+        await ensureDemoAssets(({ receivedBytes, totalBytes }) =>
+          send({ phase: "download", current: receivedBytes, total: totalBytes, title: "Downloading demo assets" }),
+        );
+
         // Create the demo admin (known credentials, surfaced on the success screen).
         const userId = uuid();
         const passwordHash = await hash(DEMO_PASSWORD, 10);

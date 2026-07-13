@@ -31,7 +31,7 @@ export function SetupWizard() {
   // "seeding" = demo SSE progress, "ready" = demo credentials
   const [screen, setScreen] = useState<"wizard" | "choose" | "seeding" | "ready">("wizard");
   const [demoConfirmOpen, setDemoConfirmOpen] = useState(false);
-  const [demoPhase, setDemoPhase] = useState<"prepare" | "cinema" | "tv" | "photos" | "music" | "done">("prepare");
+  const [demoPhase, setDemoPhase] = useState<"download" | "prepare" | "cinema" | "tv" | "photos" | "music" | "done">("download");
   const [demoCurrent, setDemoCurrent] = useState(0);
   const [demoTotal, setDemoTotal] = useState(0);
   const [demoCreds, setDemoCreds] = useState<{ username: string; password: string }>({ username: "demo", password: "demo" });
@@ -77,6 +77,7 @@ export function SetupWizard() {
   }
 
   const demoPhaseLabel: Record<typeof demoPhase, string> = {
+    download: t("demoPhaseDownload"),
     prepare: t("demoPhasePrepare"),
     cinema: t("demoPhaseCinema"),
     tv: t("demoPhaseTv"),
@@ -85,10 +86,12 @@ export function SetupWizard() {
     done: t("demoPhaseMusic"),
   };
 
+  const isDownloadPhase = demoPhase === "download";
+
   async function handleStartDemo() {
     setDemoConfirmOpen(false);
     setError("");
-    setDemoPhase("prepare");
+    setDemoPhase("download");
     setDemoCurrent(0);
     setDemoTotal(0);
     setSlideDir("right");
@@ -737,8 +740,15 @@ export function SetupWizard() {
                   style={{ width: `${Math.min(100, Math.round((demoCurrent / demoTotal) * 100))}%` }}
                 />
               </div>
-              <span className="text-center text-xs text-[#555568]">{demoCurrent} / {demoTotal}</span>
+              <span className="text-center text-xs text-[#555568]">
+                {isDownloadPhase
+                  ? `${(demoCurrent / 1024 / 1024).toFixed(1)} / ${(demoTotal / 1024 / 1024).toFixed(1)} MB`
+                  : `${demoCurrent} / ${demoTotal}`}
+              </span>
             </div>
+          )}
+          {isDownloadPhase && demoTotal === 0 && !error && (
+            <span className="text-center text-xs text-[#555568]">{t("demoDownloadHint")}</span>
           )}
 
           {error && (

@@ -20,13 +20,24 @@ export function getDbPath(): string {
 }
 
 /**
- * Read-only bundle of demo media shipped inside the repo / packaged build
- * (committed under `demo-assets/`). `scripts/package.ts` copies this next to
- * `server.js`, so `process.cwd()/demo-assets` resolves in both dev and prod.
+ * Authoring source for the demo media bundle: the raw `demo-assets/` tree that
+ * lives committed in the repo (so a dev box seeds with zero network). This is
+ * NOT shipped in packaged builds anymore — packaged installs download the pack
+ * from a GitHub release instead (see getDemoAssetsCacheDir + demo/fetch-assets).
  * Override with KUBBY_DEMO_ASSETS_DIR (e.g. tests / non-standard layouts).
  */
 export function getDemoAssetsDir(): string {
   return process.env.KUBBY_DEMO_ASSETS_DIR || path.join(process.cwd(), "demo-assets");
+}
+
+/**
+ * Writable location under the data dir where a downloaded demo asset pack is
+ * extracted (packaged installs have no committed `demo-assets/` tree). Kept
+ * under the data dir so a factory reset can leave it in place for re-seeding,
+ * or a user can delete it to force a fresh download.
+ */
+export function getDemoAssetsCacheDir(): string {
+  return path.join(getDataDir(), "demo-assets");
 }
 
 /**
