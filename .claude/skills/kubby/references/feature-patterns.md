@@ -615,11 +615,13 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   setup); the wizard forks to it after language selection. SSE progress adds a `download`
   phase before the domain phases (shows MB transferred); the confirm dialog warns it
   downloads ~40 MB from GitHub and needs internet.
-- **Releasing the pack.** After editing the bundle, run `npx tsx
-  scripts/build-demo-assets.ts` (rebuilds `demo-assets/` + `demo-assets.tar.gz`) then
-  `gh release upload demo-assets demo-assets.tar.gz --clobber` (create the `demo-assets`
-  release once). Because the tarball lives on a fixed tag — not a versioned release — a
-  bundle refresh does not require a new app version.
+- **Releasing the pack.** `DEMO_ASSETS_URL` (`fetch-assets.ts`) is pinned to a specific
+  release tag's asset (currently `v0.7.1/demo-assets.tar.gz`). Release assets persist, so
+  later app versions keep resolving that same file — the pack is NOT re-shipped every
+  version. Only when the bundle content changes: `npx tsx scripts/build-demo-assets.ts`
+  (rebuilds `demo-assets/` + `demo-assets.tar.gz`) → `gh release upload v<x.y.z>
+  demo-assets.tar.gz --clobber` → bump `DEMO_ASSETS_URL` to that tag. The `.tar.gz` is
+  gitignored; only the raw `demo-assets/` tree is committed.
 
 ## Backend review checklist
 

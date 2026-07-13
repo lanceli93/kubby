@@ -21,10 +21,16 @@ import path from "path";
 import { getDemoAssetsDir, getDemoAssetsCacheDir } from "@/lib/paths";
 import { extractTarGz } from "./targz";
 
-/** Default location of the release asset. Overridable for forks / mirrors. */
+/**
+ * Default location of the release asset. Pinned to a specific release tag on
+ * purpose: release assets persist, so LATER app versions keep resolving this
+ * same file and never need to re-ship the pack. Bump this only when the pack
+ * content actually changes (upload to the then-current release + update here).
+ * Overridable for forks / mirrors via KUBBY_DEMO_ASSETS_URL.
+ */
 export const DEMO_ASSETS_URL =
   process.env.KUBBY_DEMO_ASSETS_URL ||
-  "https://github.com/lanceli93/kubby/releases/download/demo-assets/demo-assets.tar.gz";
+  "https://github.com/lanceli93/kubby/releases/download/v0.7.1/demo-assets.tar.gz";
 
 // The pack is ~40 MB, so the overall ceiling is generous; the stall guard is
 // what actually catches a hung/half-open connection quickly.

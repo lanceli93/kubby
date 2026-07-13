@@ -313,13 +313,14 @@ function main() {
 
   packTarball();
 
-  log("Done. Commit demo-assets/ (authoring source) and upload demo-assets.tar.gz to the");
-  log("  'demo-assets' GitHub release:  gh release upload demo-assets demo-assets.tar.gz --clobber");
+  log("Done. Commit demo-assets/ (authoring source) and attach demo-assets.tar.gz to a");
+  log("  GitHub release, then point DEMO_ASSETS_URL (src/lib/demo/fetch-assets.ts) at it:");
+  log("  gh release upload v<x.y.z> demo-assets.tar.gz --clobber");
 }
 
 /**
- * Pack the built tree into `demo-assets.tar.gz` — the single artifact uploaded
- * to the GitHub release and downloaded on demand by Demo Mode. `--force-local`
+ * Pack the built tree into `demo-assets.tar.gz` — the single artifact attached
+ * to a GitHub release and downloaded on demand by Demo Mode. `--force-local`
  * stops GNU tar treating the Windows `D:` path as a remote host.
  */
 function packTarball(): void {

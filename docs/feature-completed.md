@@ -15,8 +15,10 @@ only when a user opts in.
   no longer carry it.
 - **Downloaded on demand.** New `src/lib/demo/fetch-assets.ts` `ensureDemoAssets()`
   resolves the tree: local committed tree → prior download cache
-  (`{dataDir}/demo-assets`) → download `demo-assets.tar.gz` from the `demo-assets`
-  GitHub release (override via `KUBBY_DEMO_ASSETS_URL`). Bounded by an overall deadline
+  (`{dataDir}/demo-assets`) → download `demo-assets.tar.gz` from a pinned GitHub release
+  asset (`v0.7.1/demo-assets.tar.gz`; override via `KUBBY_DEMO_ASSETS_URL`). Release
+  assets persist, so later app versions reuse the same file — the pack is not re-shipped
+  per version. Bounded by an overall deadline
   (`KUBBY_DEMO_DOWNLOAD_TIMEOUT_MS`, default 120s) **and** a 20s per-chunk stall guard,
   with a clear "download timed out" error. Runs BEFORE the demo user is created in the
   SSE route → a failed download leaves the DB pristine (no orphan account).
@@ -33,7 +35,8 @@ only when a user opts in.
   `gh release upload` hint.
 - **Wizard/i18n.** New `download` SSE phase (MB progress bar); confirm dialog + demo card
   now state it downloads ~40 MB from GitHub and needs internet (en + zh).
-- Publishing the `demo-assets` release asset is a one-time out-of-band step (pending).
+- **Shipped as v0.7.1** — the pack is attached to the v0.7.1 release and `DEMO_ASSETS_URL`
+  points at that asset.
 
 ## 2026-07-13 — Demo Mode (one-click populated install + clear/factory-reset)
 
