@@ -2,7 +2,7 @@
 
 # Kubby
 
-A self-hosted media server inspired by Jellyfin, reimagined with a modern tech stack. Built with Next.js. Kubby spans three media domains — **movies**, **photos**, and **music** — each with its own library, scanner, and browsing experience, all sharing one dark cinema theme.
+A self-hosted media server inspired by Jellyfin, reimagined with a modern tech stack. Built with Next.js. Kubby spans four media domains — **movies**, **TV & anime**, **photos**, and **music** — each with its own library, scanner, and browsing experience, all sharing one dark cinema theme.
 
 I've been using Jellyfin since 2022 and check the release notes every week, hoping to see long-requested features finally land. Unfortunately, development moves very slowly — for example, the highly requested lazy loading feature was first proposed in 2020 and still hasn't been implemented. That's understandable given Jellyfin's history: it evolved from Media Browser to Emby to Jellyfin over many years, so every change has ripple effects. So I decided to rebuild a similar local media system from scratch using AI and a modern tech stack — that's how Kubby was born.
 
@@ -108,6 +108,20 @@ One search box for movies, actors, and bookmarks. Filter by category if you're l
 
 All movie and actor cards use lazy loading instead of pagination — a [long-requested Jellyfin feature](https://features.jellyfin.org/posts/216/remove-pagination-use-lazy-loading-for-library-view) since 2020 that still hasn't shipped as of February 2026.
 
+## TV & anime
+
+Point Kubby at a folder of TV series or anime and it parses the `Season NN`/`Specials` folders and `SxxExx` filenames into a three-tier library — shows → seasons → episodes — scraping `tvshow.nfo`/`episodedetails` and TMDB's `/tv` endpoint for posters, episode stills, and cast. It's the same dark theme, cards, cast pages, multi-dimension ratings, Cover Flow wall, and video player as the movie side; the TV-specific parts are everything below.
+
+### Season & episode browsing
+
+A show's detail page opens on a cinematic hero, then breaks the series down by season: tab between seasons and each episode lists its own still, title, runtime, and a play button. Watched state and a resume position are tracked **per episode**, not per show.
+
+![TV series detail with seasons and episodes](docs/screenshots/tv-detail.webp)
+
+### Next Up
+
+The TV home page has a **Continue Watching / Next Up** shelf: finish an episode and Kubby surfaces the next one across all your shows, with a progress bar on the ones you're partway through — so you always land on what to watch next.
+
 ## Photos
 
 Point Kubby at a folder of photos and videos and it builds a date-sorted library from their EXIF metadata. Everything below is the same dark theme as the movie side, so your whole media collection feels like one app.
@@ -148,9 +162,9 @@ A QQ-Music-style full-screen player: the cover art spins on a vinyl record, time
 
 ![Now Playing overlay](docs/screenshots/music-nowplaying.webp)
 
-## One app, three libraries
+## One app, four libraries
 
-Movies, photos, and music each get their own homepage and navigation, but share the same account, theme, and image pipeline. A domain switcher on the Kubby brand jumps between them, and the last one you used is remembered. The global music player keeps playing no matter which domain you browse.
+Movies, TV, photos, and music each get their own homepage and navigation, but share the same account, theme, and image pipeline. Two domain switchers jump between them — a dropdown on the Kubby brand and the left drawer's "MEDIA" group — and the last one you used is remembered. The global music player keeps playing no matter which domain you browse.
 
 ![Domain switcher and global player](docs/screenshots/domain-switcher.webp)
 
