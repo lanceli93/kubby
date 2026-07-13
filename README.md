@@ -166,7 +166,7 @@ A QQ-Music-style full-screen player: the cover art spins on a vinyl record, time
 
 Movies, TV, photos, and music each get their own homepage and navigation, but share the same account, theme, and image pipeline. Two domain switchers jump between them — a dropdown on the Kubby brand and the left drawer's "MEDIA" group — and the last one you used is remembered. The global music player keeps playing no matter which domain you browse.
 
-![Domain switcher and global player](docs/screenshots/domain-switcher.webp)
+![Left-drawer domain switcher listing all four domains](docs/screenshots/domain-switcher.webp)
 
 ## Quick start (development)
 
