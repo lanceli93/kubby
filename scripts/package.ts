@@ -143,7 +143,14 @@ function ensureDir(dir: string) {
 }
 
 function copyDirRecursive(src: string, dest: string) {
-  fs.cpSync(src, dest, { recursive: true });
+  // verbatimSymlinks: true is REQUIRED. Node's cpSync defaults to resolving
+  // relative symlinks to absolute paths, which is exactly what bakes a
+  // build-machine path (e.g. /Users/runner/... on CI) into the bundle's
+  // .next/node_modules/<pkg>-<hash> links and 500s every route on user
+  // machines. Preserving links verbatim keeps the bundle relocatable; the
+  // in-bundle relative targets set by fixStandaloneSymlinks() then survive
+  // both the assemble copy AND the later DMG-staging copy.
+  fs.cpSync(src, dest, { recursive: true, verbatimSymlinks: true });
 }
 
 async function downloadFile(url: string, dest: string): Promise<void> {
@@ -311,6 +318,53 @@ function assembleServer(outputDir: string) {
   // NOTE: demo-assets/ is intentionally NOT bundled here. Demo Mode downloads
   // its media pack on demand from a GitHub release (see src/lib/demo/
   // fetch-assets.ts), so the installer stays lean for the majority who skip it.
+
+  // Re-point Turbopack's external-package symlinks into the bundle. See
+  // fixStandaloneSymlinks() for why this is required for the app to boot.
+  fixStandaloneSymlinks(serverDir);
+}
+
+// Next.js/Turbopack emits its serverExternalPackages (better-sqlite3, sharp, …)
+// as symlinks under .next/node_modules/<pkg>-<hash> pointing at the build host's
+// node_modules. Those targets live OUTSIDE the copied server/ dir, and on CI
+// fs.cpSync resolves the relative link to an absolute build-machine path
+// (e.g. /Users/runner/work/kubby/...), which exists on no user's machine — so
+// require() throws "Cannot find module 'better-sqlite3-<hash>'" and every route
+// 500s. The real packages ARE bundled at server/node_modules/<pkg>, so we
+// repoint each link there via an in-bundle relative path that resolves anywhere.
+// No-op on platforms/builds where these symlinks don't exist (e.g. Windows).
+function fixStandaloneSymlinks(serverDir: string) {
+  const nmDir = path.join(serverDir, ".next", "node_modules");
+  if (!fs.existsSync(nmDir)) return;
+
+  let fixed = 0;
+  for (const entry of fs.readdirSync(nmDir, { withFileTypes: true })) {
+    if (!entry.isSymbolicLink()) continue;
+    const linkPath = path.join(nmDir, entry.name);
+
+    // Derive the real package name from the link target. Take everything after
+    // the last "node_modules/" so scoped packages (@img/sharp) survive too.
+    const target = fs.readlinkSync(linkPath);
+    const marker = "node_modules/";
+    const idx = target.replace(/\\/g, "/").lastIndexOf(marker);
+    const pkgRel = idx >= 0 ? target.replace(/\\/g, "/").slice(idx + marker.length) : path.basename(target);
+
+    const realPkg = path.join(serverDir, "node_modules", pkgRel);
+    if (!fs.existsSync(realPkg)) {
+      console.warn(`  WARNING: ${entry.name} -> ${pkgRel} but server/node_modules/${pkgRel} is missing; leaving link as-is`);
+      continue;
+    }
+
+    // Link sits at server/.next/node_modules/, real pkg at server/node_modules/,
+    // so the relative path back is ../../node_modules/<pkg>. POSIX separators
+    // (this code only runs on mac/linux, where these symlinks exist).
+    const relTarget = path.posix.join("..", "..", "node_modules", ...pkgRel.split("/"));
+    fs.rmSync(linkPath);
+    fs.symlinkSync(relTarget, linkPath);
+    console.log(`  Re-pointed ${entry.name} -> ${relTarget}`);
+    fixed++;
+  }
+  if (fixed > 0) console.log(`  Fixed ${fixed} standalone external-package symlink(s)`);
 }
 
 // Map platform to npm/prebuild naming
