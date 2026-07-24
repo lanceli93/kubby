@@ -191,14 +191,15 @@ Download `Kubby.dmg` from the [Releases](https://github.com/lanceli93/kubby/rele
 
 ### 3. First launch
 
-macOS blocks unsigned apps by default. To open Kubby the first time:
+Kubby isn't signed with an Apple Developer ID, so macOS quarantines it on download. Clear the quarantine flag once, then it opens normally forever:
 
-1. Open **Applications** folder, **right-click** Kubby → **Open**
-2. Click **Open** in the confirmation dialog
+```bash
+xattr -dr com.apple.quarantine /Applications/Kubby.app
+```
 
-This is only needed once. After that, Kubby opens normally by double-clicking.
+This is the reliable method on all current macOS versions. After running it, double-click Kubby as usual.
 
-Alternatively: System Settings → Privacy & Security → scroll down → click **Open Anyway**.
+> **Note:** The old "right-click → Open" / "Open Anyway" trick no longer works on recent macOS (Sequoia and later) for apps that aren't notarized — you'll often just see *"Kubby is damaged and can't be opened"* with no bypass button. Use the `xattr` command above instead.
 
 ### What happens on launch
 
@@ -220,7 +221,7 @@ Right-click the Kubby icon in the Dock → **Quit**, or click the tray icon in t
 
 | Status | User Experience |
 |--------|----------------|
-| **Unsigned** (current) | "Can't be opened" dialog — right-click → Open to bypass (once) |
+| **Unsigned** (current) | Blocked as "damaged"/"unverified" — clear quarantine once with `xattr -dr com.apple.quarantine /Applications/Kubby.app` |
 | **Signed** (Developer ID, $99/year) | "From an identified developer" — user can click Open directly |
 | **Signed + Notarized** | No warning at all, same as App Store apps |
 
