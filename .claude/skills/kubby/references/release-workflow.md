@@ -99,6 +99,28 @@ EOF
 )"
 ```
 
+### 5b. Upload the demo asset pack (only if `demo-assets/` changed)
+
+> **Easy to forget, breaks Demo Mode for packaged users if missed.** `DEMO_ASSETS_URL`
+> (`src/lib/demo/fetch-assets.ts`) is pinned to ONE release tag's `demo-assets.tar.gz`.
+> If this release changed the demo content, that URL must have been bumped to THIS tag
+> (a code change in the release), AND the rebuilt tarball must be uploaded to this
+> release — otherwise the download 404s. If the demo content did **not** change, skip
+> this step (the old release's asset keeps resolving).
+
+```bash
+npx tsx scripts/build-demo-assets.ts          # rebuild demo-assets/ + demo-assets.tar.gz (dev box only)
+gh release upload v{x.y.z} demo-assets.tar.gz --clobber
+```
+
+The tarball is ~75 MB; the upload can take several minutes on a slow uplink. Confirm it
+landed alongside the platform installers:
+
+```bash
+gh api repos/lanceli93/kubby/releases/<RELEASE_ID> --jq '[.assets[].name]'
+# expect: demo-assets.tar.gz + the 3 platform files
+```
+
 ### 6. Publish
 
 Edit the draft to add title, notes, and publish in one step:

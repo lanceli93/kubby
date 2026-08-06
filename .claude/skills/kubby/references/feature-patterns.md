@@ -637,7 +637,7 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   phase before the domain phases (shows MB transferred); the confirm dialog warns it
   downloads ~75 MB from GitHub and needs internet.
 - **Releasing the pack.** `DEMO_ASSETS_URL` (`fetch-assets.ts`) is pinned to a specific
-  release tag's asset (currently `v0.7.1/demo-assets.tar.gz`). Release assets persist, so
+  release tag's asset (currently `v0.7.3/demo-assets.tar.gz`). Release assets persist, so
   later app versions keep resolving that same file — the pack is NOT re-shipped every
   version. Only when the bundle content changes: `npx tsx scripts/build-demo-assets.ts`
   (rebuilds `demo-assets/` + `demo-assets.tar.gz`) → `gh release upload v<x.y.z>

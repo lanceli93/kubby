@@ -40,7 +40,7 @@ only when a user opts in.
 - **Downloaded on demand.** New `src/lib/demo/fetch-assets.ts` `ensureDemoAssets()`
   resolves the tree: local committed tree → prior download cache
   (`{dataDir}/demo-assets`) → download `demo-assets.tar.gz` from a pinned GitHub release
-  asset (`v0.7.1/demo-assets.tar.gz`; override via `KUBBY_DEMO_ASSETS_URL`). Release
+  asset (pinned per release, e.g. `v0.7.3/demo-assets.tar.gz`; override via `KUBBY_DEMO_ASSETS_URL`). Release
   assets persist, so later app versions reuse the same file — the pack is not re-shipped
   per version. Bounded by an overall deadline
   (`KUBBY_DEMO_DOWNLOAD_TIMEOUT_MS`, default 120s) **and** a 20s per-chunk stall guard,
