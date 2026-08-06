@@ -590,21 +590,15 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   NO per-item videos — just one ~235 KB `placeholder.mp4`. The seeder
   (`src/lib/demo/seed.ts`) copies it into every movie/episode slot at seed time (movie
   slot = `<movieDir>.mp4`; TV slots come from `manifest.json.tvEpisodes` since no episode
-  videos are committed). Keeps git small; the placeholder is H.264/AAC so it direct-plays.
-  **Exception — the VR movie:** the bundle also ships one real `vr.mp4` (~20 MB, 1080p
-  equirectangular); `manifest.json` names it via `vr` + `vrMovie` (currently
-  `"Avatar The Way of Water (2022)"`). The seeder places `vr.mp4` in that movie's slot
-  instead of the placeholder, and bumps its `dateAdded` a few seconds ahead so it lands
-  first on the cinema home (hero + Recently Added). VR is user-toggled (no auto-detect):
-  press the player's 360° button — the clip is mono, so the default `vrLayout` works. The
-  source clip is `KUBBY_DEMO_VR_SRC` at build time (build skips it with a warning if
-  absent, falling back to the placeholder).
-- **Per-episode still thumbnails work offline.** The bundle carries each show's
-  `.stills/S{NN}E{MM}.jpg`. Demo libs are `scraperEnabled=false`, so to link them the TV
-  scanner (`tv-scanner.ts`) has a **local `.stills/` fallback**: when the scraper gave no
-  still, it looks for `<showDir>/.stills/S{NN}E{MM}.jpg` (the same layout the scraper
-  writes) and links it. General feature (any non-scraped library benefits), not
-  demo-only.
+  videos are committed). **Exception — the VR movie:** the bundle also ships one real
+  `vr.mp4` (~20 MB, 1080p equirect; source `KUBBY_DEMO_VR_SRC`), named via `manifest.vr`
+  + `vrMovie`. The seeder puts it in that movie's slot and bumps its `dateAdded` so it's
+  the cinema hero; VR is user-toggled (mono → default `vrLayout` works, press the 360°
+  button).
+- **Per-episode stills work offline via a scanner fallback.** The bundle carries each
+  show's `.stills/S{NN}E{MM}.jpg`. Since demo libs are `scraperEnabled=false`,
+  `tv-scanner.ts` links a local `<showDir>/.stills/S{NN}E{MM}.jpg` when the scraper gave
+  no still (same naming the scraper writes) — general, not demo-only.
 - **Seeder reuses the REAL scanner — never forks the write path.** It materializes
   `demo-assets/<domain>` → `{dataDir}/demo/<domain>`, then calls `scanLibrary(id)` per
   domain. Demo libs are created `jellyfinCompat=true` (so the scanner imports the
@@ -616,28 +610,21 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   (`scanner/index.ts` `library.jellyfinCompat && fs.existsSync(actor.thumb)`) silently
   finds nothing.
 - **Music = a real 20s clip + synced lyrics.** `build-demo-assets.ts` transcodes the
-  first 20s of a source mp3 (`KUBBY_DEMO_MUSIC_SRC`) into each track (AAC/m4a) with
-  embedded title/artist/album/track tags + a folder `cover.jpg` reusing MOVIE posters,
-  and writes a matching `NN - Title.lrc` synced-lyrics sidecar (sample text, timestamps
-  within the clip). The real music scanner's `readLrcSidecar` links the `.lrc` so the
-  now-playing lyrics panel scrolls in sync. (Build skips music with a warning if the mp3
-  is absent.) Player polish that rode along: the seek/progress bars tint to the cover
-  art's dominant color (via `--music-fill-color`, `--primary` fallback; the waveform was
-  already tinted), and the LRC parser strips `[ti:]/[ar:]/[al:]/…` ID tags so they don't
-  render as lyric lines.
-- **Pre-seeded ratings + basic actor bios (demo account presentation data).** After the
-  scans, `seedDemo(onProgress, userId, locale)` calls `seedDemoUserData` (gated on the
-  `isDemo` MOVIE library) to layer on what a real user would build up: it creates the
-  demo user's `user_preferences` rating dimensions (movies `Plot/Visuals/Music`, actors
-  `Looks/Acting`; Chinese names when demo locale is `zh`) + weights + badges, writes
-  high-ish random (7.0–9.5) multi-dimension ratings for all 30 movies (`user_movie_data`,
-  a few favorites) and for the cinema actors reachable from those movies
-  (`user_person_data`), and fills basic **bio** on those `people` (`overview` — clearly
-  "(demo profile)" sample text — + `birthDate`/`birthYear` + `placeOfBirth`, since demo
-  NFOs carry only name/role/thumb and there's no scraper). Uses a seeded PRNG (no
-  `Math.random`) so re-seeds are stable; idempotent (skips existing rating rows, only
-  fills null bio). **Scope-guarded: movies + cinema `people` only — never `tv_people` /
-  `user_tv_*` / other users.** `userId`+`locale` are threaded from the setup SSE route.
+  first 20s of `KUBBY_DEMO_MUSIC_SRC` into each track (AAC/m4a, tags + folder `cover.jpg`
+  reusing movie posters) and writes a `NN - Title.lrc` synced-lyrics sidecar (sample
+  text); the scanner's `readLrcSidecar` links it so the now-playing panel scrolls.
+  Related player fixes: seek/progress bars tint to the cover's dominant color
+  (`--music-fill-color`, `--primary` fallback; waveform already did), and the LRC parser
+  strips `[ti:]/[ar:]/…` ID tags so they aren't rendered as lyric lines.
+- **Pre-seeded ratings + basic actor bios.** After the scans,
+  `seedDemo(onProgress, userId, locale)` → `seedDemoUserData` layers on the demo
+  account's presentation data: `user_preferences` rating dimensions (movies
+  `Plot/Visuals/Music`, actors `Looks/Acting`; zh names when locale is `zh`), random high
+  (7.0–9.5) ratings for all movies (`user_movie_data`) + their cinema actors
+  (`user_person_data`), and basic bio on those `people` (`overview` sample text +
+  `birthDate`/`placeOfBirth`) — demo NFOs carry only name/role/thumb and there's no
+  scraper. Seeded PRNG (no `Math.random`, stable re-seeds), idempotent, **scope-guarded
+  to movies + cinema `people` — never `tv_people`/`user_tv_*`/other users.**
 - **`is_demo` is the teardown allowlist (migration 0042).** `DELETE /api/setup/demo`
   selects libraries `WHERE is_demo = true` and reuses the per-library
   `DELETE /api/libraries/[id]` teardown (FK cascade + per-domain on-disk cleanup +
