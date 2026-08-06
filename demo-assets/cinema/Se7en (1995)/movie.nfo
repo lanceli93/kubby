@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Se7en</title>
+  <originaltitle>Se7en</originaltitle>
+  <sorttitle>Se7en</sorttitle>
+  <plot>Two homicide detectives are on a desperate hunt for a serial killer whose crimes are based on the &quot;seven deadly sins&quot; in this dark and haunting film that takes viewers from the tortured remains of one victim to the next. The seasoned Det. Somerset researches each sin in an effort to get inside the killer&apos;s mind, while his novice partner, Mills, scoffs at his efforts to unravel the case.</plot>
+  <tagline>Gluttony. Greed. Sloth. Envy. Wrath. Pride. Lust.</tagline>
+  <rating>8.382</rating>
+  <runtime>127</runtime>
+  <premiered>1995-09-22</premiered>
+  <year>1995</year>
+  <genre>Crime</genre>
+  <genre>Mystery</genre>
+  <genre>Thriller</genre>
+  <studio>New Line Cinema</studio>
+  <studio>Juno Pix</studio>
+  <studio>Arnold Kopelson Productions</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">807</uniqueid>
+  <uniqueid type="imdb">tt0114369</uniqueid>
+  <actor>
+    <name>Morgan Freeman</name>
+    <role>Somerset</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Morgan Freeman\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>192</tmdbid>
+  </actor>
+  <actor>
+    <name>Brad Pitt</name>
+    <role>Mills</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Brad Pitt\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>287</tmdbid>
+  </actor>
+  <actor>
+    <name>Gwyneth Paltrow</name>
+    <role>Tracy</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Gwyneth Paltrow\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>12052</tmdbid>
+  </actor>
+  <actor>
+    <name>John Cassini</name>
+    <role>Officer Davis</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\John Cassini\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>12055</tmdbid>
+  </actor>
+  <actor>
+    <name>Peter Crombie</name>
+    <role>Dr. O&apos;Neill</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Peter Crombie\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>30487</tmdbid>
+  </actor>
+  <actor>
+    <name>Reg E. Cathey</name>
+    <role>Dr. Santiago</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Reg E. Cathey\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>38951</tmdbid>
+  </actor>
+  <actor>
+    <name>R. Lee Ermey</name>
+    <role>Police Captain</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\R. Lee Ermey\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>8655</tmdbid>
+  </actor>
+  <actor>
+    <name>Daniel Zacapa</name>
+    <role>Detective Taylor at First Murder</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Daniel Zacapa\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>12054</tmdbid>
+  </actor>
+  <actor>
+    <name>Andrew Kevin Walker</name>
+    <role>Dead Man at 1st Crime Scene</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Andrew Kevin Walker\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>12047</tmdbid>
+  </actor>
+  <actor>
+    <name>George Christy</name>
+    <role>Workman at Door of Somerset&apos;s Office</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\George Christy\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>1583695</tmdbid>
+  </actor>
+  <actor>
+    <name>Endre Hules</name>
+    <role>Cab Driver</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Endre Hules\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>43461</tmdbid>
+  </actor>
+  <actor>
+    <name>Hawthorne James</name>
+    <role>George the Night Guard at the Library</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Hawthorne James\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>12056</tmdbid>
+  </actor>
+  <actor>
+    <name>Bob Mack</name>
+    <role>Gluttony Victim</role>
+    <order>12</order>
+    <tmdbid>4294859</tmdbid>
+  </actor>
+  <actor>
+    <name>William Davidson</name>
+    <role>First Guard at the Library</role>
+    <order>13</order>
+    <tmdbid>1025337</tmdbid>
+  </actor>
+  <actor>
+    <name>Bob Collins</name>
+    <role>Second Guard at the Library</role>
+    <order>14</order>
+    <tmdbid>1055173</tmdbid>
+  </actor>
+  <actor>
+    <name>Jimmy Dale Hartsell</name>
+    <role>Library Janitor</role>
+    <order>15</order>
+    <tmdbid>4207972</tmdbid>
+  </actor>
+  <actor>
+    <name>Richard Roundtree</name>
+    <role>Talbot</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Richard Roundtree\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>6487</tmdbid>
+  </actor>
+  <actor>
+    <name>Charline Su</name>
+    <role>TV News Reporter</role>
+    <order>17</order>
+    <tmdbid>4294870</tmdbid>
+  </actor>
+  <actor>
+    <name>Dominique Jennings</name>
+    <role>TV News Reporter</role>
+    <order>18</order>
+    <tmdbid>95200</tmdbid>
+  </actor>
+  <actor>
+    <name>Allan Kolman</name>
+    <role>First Forensic Man in the Law Office</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Allan Kolman\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>31533</tmdbid>
+  </actor>
+  <director>David Fincher</director>
+  <tag>rage and hate</tag>
+  <tag>police</tag>
+  <tag>s.w.a.t.</tag>
+  <tag>sadism</tag>
+  <tag>self-fulfilling prophecy</tag>
+  <tag>psychopath</tag>
+  <tag>detective</tag>
+  <tag>investigation</tag>
+  <tag>insomnia</tag>
+  <tag>murder</tag>
+  <tag>serial killer</tag>
+  <tag>religion</tag>
+  <tag>shootout</tag>
+  <tag>corpse</tag>
+  <tag>seven deadly sins</tag>
+  <tag>depravity</tag>
+  <tag>neo-noir</tag>
+  <tag>urban gothic</tag>
+  <tag>anxious</tag>
+  <tag>grimdark</tag>
+  <tag>suspenseful</tag>
+  <tag>seven: los siete pecados capitales</tag>
+</movie>

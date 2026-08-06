@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>The Matrix</title>
+  <originaltitle>The Matrix</originaltitle>
+  <sorttitle>The Matrix</sorttitle>
+  <plot>Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.</plot>
+  <tagline>Believe the unbelievable.</tagline>
+  <rating>8.25</rating>
+  <runtime>136</runtime>
+  <premiered>1999-03-31</premiered>
+  <year>1999</year>
+  <genre>Action</genre>
+  <genre>Science Fiction</genre>
+  <studio>Village Roadshow Pictures</studio>
+  <studio>Groucho II Film Partnership</studio>
+  <studio>Silver Pictures</studio>
+  <studio>Warner Bros. Pictures</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">603</uniqueid>
+  <uniqueid type="imdb">tt0133093</uniqueid>
+  <actor>
+    <name>Keanu Reeves</name>
+    <role>Neo</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Keanu Reeves\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>6384</tmdbid>
+  </actor>
+  <actor>
+    <name>Laurence Fishburne</name>
+    <role>Morpheus</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Laurence Fishburne\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>2975</tmdbid>
+  </actor>
+  <actor>
+    <name>Carrie-Anne Moss</name>
+    <role>Trinity</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Carrie-Anne Moss\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>530</tmdbid>
+  </actor>
+  <actor>
+    <name>Hugo Weaving</name>
+    <role>Agent Smith</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Hugo Weaving\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>1331</tmdbid>
+  </actor>
+  <actor>
+    <name>Gloria Foster</name>
+    <role>Oracle</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Gloria Foster\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>9364</tmdbid>
+  </actor>
+  <actor>
+    <name>Joe Pantoliano</name>
+    <role>Cypher</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Joe Pantoliano\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>532</tmdbid>
+  </actor>
+  <actor>
+    <name>Marcus Chong</name>
+    <role>Tank</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Marcus Chong\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>9372</tmdbid>
+  </actor>
+  <actor>
+    <name>Julian Arahanga</name>
+    <role>Apoc</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Julian Arahanga\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>7244</tmdbid>
+  </actor>
+  <actor>
+    <name>Matt Doran</name>
+    <role>Mouse</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Matt Doran\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>9374</tmdbid>
+  </actor>
+  <actor>
+    <name>Belinda McClory</name>
+    <role>Switch</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Belinda McClory\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>9376</tmdbid>
+  </actor>
+  <actor>
+    <name>Anthony Ray Parker</name>
+    <role>Dozer</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Anthony Ray Parker\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>9378</tmdbid>
+  </actor>
+  <actor>
+    <name>Paul Goddard</name>
+    <role>Agent Brown</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Paul Goddard\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>9380</tmdbid>
+  </actor>
+  <actor>
+    <name>Robert Taylor</name>
+    <role>Agent Jones</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Robert Taylor\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>39545</tmdbid>
+  </actor>
+  <actor>
+    <name>David Aston</name>
+    <role>Rhineheart</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Aston\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>9383</tmdbid>
+  </actor>
+  <actor>
+    <name>Marc Aden Gray</name>
+    <role>Choi</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Marc Aden Gray\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>9384</tmdbid>
+  </actor>
+  <actor>
+    <name>Ada Nicodemou</name>
+    <role>Dujour</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Ada Nicodemou\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>181214</tmdbid>
+  </actor>
+  <actor>
+    <name>Deni Gordon</name>
+    <role>Priestess</role>
+    <order>16</order>
+    <tmdbid>1090466</tmdbid>
+  </actor>
+  <actor>
+    <name>Rowan Witt</name>
+    <role>Spoon Boy</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rowan Witt\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>218366</tmdbid>
+  </actor>
+  <actor>
+    <name>Eleanor Witt</name>
+    <role>Potential</role>
+    <order>18</order>
+    <tmdbid>1209244</tmdbid>
+  </actor>
+  <actor>
+    <name>Tamara Brown</name>
+    <role>Potential</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tamara Brown\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>1209245</tmdbid>
+  </actor>
+  <director>Lana Wachowski</director>
+  <director>Lilly Wachowski</director>
+  <tag>man vs machine</tag>
+  <tag>martial arts</tag>
+  <tag>fortune teller</tag>
+  <tag>artificial intelligence (a.i.)</tag>
+  <tag>saving the world</tag>
+  <tag>prophecy</tag>
+  <tag>philosophy</tag>
+  <tag>dystopia</tag>
+  <tag>allegory</tag>
+  <tag>insurgence</tag>
+  <tag>chosen one</tag>
+  <tag>simulated reality </tag>
+  <tag>cyberpunk</tag>
+  <tag>gnosticism</tag>
+</movie>

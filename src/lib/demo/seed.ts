@@ -20,8 +20,9 @@
 import fs from "fs";
 import path from "path";
 import { v4 as uuid } from "uuid";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { mediaLibraries } from "@/lib/db/schema";
+import { mediaLibraries, movies } from "@/lib/db/schema";
 import { scanLibrary } from "@/lib/scanner";
 import { getDemoDir, getMetadataDir } from "@/lib/paths";
 import { ensureDemoAssets } from "./fetch-assets";
@@ -31,6 +32,8 @@ type Manifest = {
   placeholder: string;
   libraries: { cinema: string; tv: string; photos: string; music: string };
   tvEpisodes: Record<string, { season: string; base: string }[]>;
+  vr?: string;        // bundle-relative path to the VR clip (e.g. "vr.mp4")
+  vrMovie?: string;   // cinema folder name that should get the VR clip
 };
 
 export type DemoPhase = "download" | "prepare" | "cinema" | "tv" | "photos" | "music" | "done";
@@ -132,11 +135,16 @@ export async function seedDemo(onProgress: (p: DemoProgress) => void = () => {})
   copyTree(path.join(assets, "music"), musicDir);
 
   // 2a. Cinema: one placeholder video per movie folder + rewrite NFO thumbs.
+  // The VR movie gets the real VR clip in its slot instead of the placeholder,
+  // so it plays as an actual 360°/VR sample; everything else stays a placeholder.
+  const vrSrc = manifest.vr ? path.join(assets, manifest.vr) : null;
+  const vrAvailable = !!(vrSrc && manifest.vrMovie && fs.existsSync(vrSrc));
   if (fs.existsSync(cinemaDir)) {
     for (const movie of fs.readdirSync(cinemaDir)) {
       const dir = path.join(cinemaDir, movie);
       if (!fs.statSync(dir).isDirectory()) continue;
-      placeVideo(placeholder, path.join(dir, `${movie}.mp4`));
+      const isVr = vrAvailable && movie === manifest.vrMovie;
+      placeVideo(isVr ? vrSrc! : placeholder, path.join(dir, `${movie}.mp4`));
       rewriteNfoThumbs(path.join(dir, "movie.nfo"));
     }
   }
@@ -153,6 +161,16 @@ export async function seedDemo(onProgress: (p: DemoProgress) => void = () => {})
 
   // 3. Scan each domain via the real scanner.
   await seedDomain("movie", manifest.libraries.cinema, cinemaDir, onProgress, "cinema");
+  // The cinema homepage orders by dateAdded DESC, but every just-scanned demo
+  // movie shares the same datetime('now') — a non-deterministic tie. Nudge the
+  // VR movie a few seconds later so it deterministically wins (hero + first in
+  // Recently Added), showcasing the VR clip up front.
+  if (vrAvailable) {
+    db.update(movies)
+      .set({ dateAdded: sql`datetime('now','+5 seconds')` })
+      .where(eq(movies.folderPath, path.join(cinemaDir, manifest.vrMovie!)))
+      .run();
+  }
   await seedDomain("tvshow", manifest.libraries.tv, tvDir, onProgress, "tv");
   await seedDomain("photo", manifest.libraries.photos, photosDir, onProgress, "photos");
   await seedDomain("music", manifest.libraries.music, musicDir, onProgress, "music");
