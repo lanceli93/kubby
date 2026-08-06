@@ -569,10 +569,10 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
 
 - **Assets are downloaded on demand, NOT bundled into the installer.** `test-media/`,
   `test-tv-media/`, and `data/*` are ALL gitignored — a fresh machine has none of them.
-  The raw `demo-assets/` tree IS committed (un-ignored; ~44 MB, 15 movies) as the
+  The raw `demo-assets/` tree IS committed (un-ignored; ~75 MB, 30 movies) as the
   **authoring source** so a dev box seeds with zero network, but it is deliberately NOT
   copied into packaged builds (that would bloat every installer for an opt-in feature).
-  Instead `scripts/build-demo-assets.ts` packs it into `demo-assets.tar.gz` (~42 MB,
+  Instead `scripts/build-demo-assets.ts` packs it into `demo-assets.tar.gz` (~75 MB,
   gitignored) which is uploaded to a dedicated **`demo-assets` GitHub release**; at seed
   time `src/lib/demo/fetch-assets.ts` `ensureDemoAssets()` resolves the tree in order:
   (1) local committed `getDemoAssetsDir()` → (2) prior download `getDemoAssetsCacheDir()`
@@ -586,11 +586,25 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   (round-trip-verified byte-for-byte against real `tar czf` output incl. >100-char paths).
   Override the source URL via `KUBBY_DEMO_ASSETS_URL`. `getDemoAssetsDir()` /
   `getDemoAssetsCacheDir()` / `getDemoDir()` in `src/lib/paths.ts`.
-- **One placeholder video, copied per item.** The bundle ships NO per-item videos —
-  just one ~235 KB `placeholder.mp4`. The seeder (`src/lib/demo/seed.ts`) copies it
-  into every movie/episode slot at seed time (movie slot = `<movieDir>.mp4`; TV slots
-  come from `manifest.json.tvEpisodes` since no episode videos are committed). Keeps
-  git small; the placeholder is H.264/AAC so it direct-plays.
+- **One placeholder video, copied per item — plus one real VR clip.** The bundle ships
+  NO per-item videos — just one ~235 KB `placeholder.mp4`. The seeder
+  (`src/lib/demo/seed.ts`) copies it into every movie/episode slot at seed time (movie
+  slot = `<movieDir>.mp4`; TV slots come from `manifest.json.tvEpisodes` since no episode
+  videos are committed). Keeps git small; the placeholder is H.264/AAC so it direct-plays.
+  **Exception — the VR movie:** the bundle also ships one real `vr.mp4` (~20 MB, 1080p
+  equirectangular); `manifest.json` names it via `vr` + `vrMovie` (currently
+  `"Avatar The Way of Water (2022)"`). The seeder places `vr.mp4` in that movie's slot
+  instead of the placeholder, and bumps its `dateAdded` a few seconds ahead so it lands
+  first on the cinema home (hero + Recently Added). VR is user-toggled (no auto-detect):
+  press the player's 360° button — the clip is mono, so the default `vrLayout` works. The
+  source clip is `KUBBY_DEMO_VR_SRC` at build time (build skips it with a warning if
+  absent, falling back to the placeholder).
+- **Per-episode still thumbnails work offline.** The bundle carries each show's
+  `.stills/S{NN}E{MM}.jpg`. Demo libs are `scraperEnabled=false`, so to link them the TV
+  scanner (`tv-scanner.ts`) has a **local `.stills/` fallback**: when the scraper gave no
+  still, it looks for `<showDir>/.stills/S{NN}E{MM}.jpg` (the same layout the scraper
+  writes) and links it. General feature (any non-scraped library benefits), not
+  demo-only.
 - **Seeder reuses the REAL scanner — never forks the write path.** It materializes
   `demo-assets/<domain>` → `{dataDir}/demo/<domain>`, then calls `scanLibrary(id)` per
   domain. Demo libs are created `jellyfinCompat=true` (so the scanner imports the
@@ -601,9 +615,29 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   copying those photos there) — otherwise the scanner's jellyfin-compat photo import
   (`scanner/index.ts` `library.jellyfinCompat && fs.existsSync(actor.thumb)`) silently
   finds nothing.
-- **Music is synthetic + license-safe.** `build-demo-assets.ts` generates ffmpeg sine
-  tones (AAC/m4a) with embedded title/artist/album/track tags + a folder `cover.jpg`
-  reusing MOVIE posters — no copyrighted audio or album art.
+- **Music = a real 20s clip + synced lyrics.** `build-demo-assets.ts` transcodes the
+  first 20s of a source mp3 (`KUBBY_DEMO_MUSIC_SRC`) into each track (AAC/m4a) with
+  embedded title/artist/album/track tags + a folder `cover.jpg` reusing MOVIE posters,
+  and writes a matching `NN - Title.lrc` synced-lyrics sidecar (sample text, timestamps
+  within the clip). The real music scanner's `readLrcSidecar` links the `.lrc` so the
+  now-playing lyrics panel scrolls in sync. (Build skips music with a warning if the mp3
+  is absent.) Player polish that rode along: the seek/progress bars tint to the cover
+  art's dominant color (via `--music-fill-color`, `--primary` fallback; the waveform was
+  already tinted), and the LRC parser strips `[ti:]/[ar:]/[al:]/…` ID tags so they don't
+  render as lyric lines.
+- **Pre-seeded ratings + basic actor bios (demo account presentation data).** After the
+  scans, `seedDemo(onProgress, userId, locale)` calls `seedDemoUserData` (gated on the
+  `isDemo` MOVIE library) to layer on what a real user would build up: it creates the
+  demo user's `user_preferences` rating dimensions (movies `Plot/Visuals/Music`, actors
+  `Looks/Acting`; Chinese names when demo locale is `zh`) + weights + badges, writes
+  high-ish random (7.0–9.5) multi-dimension ratings for all 30 movies (`user_movie_data`,
+  a few favorites) and for the cinema actors reachable from those movies
+  (`user_person_data`), and fills basic **bio** on those `people` (`overview` — clearly
+  "(demo profile)" sample text — + `birthDate`/`birthYear` + `placeOfBirth`, since demo
+  NFOs carry only name/role/thumb and there's no scraper). Uses a seeded PRNG (no
+  `Math.random`) so re-seeds are stable; idempotent (skips existing rating rows, only
+  fills null bio). **Scope-guarded: movies + cinema `people` only — never `tv_people` /
+  `user_tv_*` / other users.** `userId`+`locale` are threaded from the setup SSE route.
 - **`is_demo` is the teardown allowlist (migration 0042).** `DELETE /api/setup/demo`
   selects libraries `WHERE is_demo = true` and reuses the per-library
   `DELETE /api/libraries/[id]` teardown (FK cascade + per-domain on-disk cleanup +
@@ -614,7 +648,7 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   admin + seeds via SSE (guarded by the same first-run `count(users)===0` check as normal
   setup); the wizard forks to it after language selection. SSE progress adds a `download`
   phase before the domain phases (shows MB transferred); the confirm dialog warns it
-  downloads ~40 MB from GitHub and needs internet.
+  downloads ~75 MB from GitHub and needs internet.
 - **Releasing the pack.** `DEMO_ASSETS_URL` (`fetch-assets.ts`) is pinned to a specific
   release tag's asset (currently `v0.7.1/demo-assets.tar.gz`). Release assets persist, so
   later app versions keep resolving that same file — the pack is NOT re-shipped every

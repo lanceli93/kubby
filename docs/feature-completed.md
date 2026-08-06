@@ -3,6 +3,30 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-08-06 — Demo Mode enrichment (VR movie, richer media, ratings & bios)
+
+Three rounds of polish so a fresh demo feels lived-in rather than empty. Details in
+the skill (`references/feature-patterns.md` → Demo Mode). Commits `aaba82d`,
+`3b749cd`, `dd9d301`.
+
+- **More & richer media.** Movie count 15 → 30 (uses all `test-media` titles). The
+  first/default-shown movie is a real **VR clip** (`vr.mp4` ~20 MB 1080p equirect,
+  named via `manifest.vr`/`vrMovie`); the seeder places it in that slot and bumps its
+  `dateAdded` so it's the hero — press the player's 360° button to view. Music is now a
+  real 20s mp3 clip per track (was synthetic sine tones) with per-track `.lrc` synced
+  lyrics. Pack grew ~40 → ~75 MB (wizard copy updated).
+- **Per-episode still thumbnails.** TV scanner gained a local `.stills/S{NN}E{MM}.jpg`
+  fallback (used when no scraper still exists), so demo episodes (and any non-scraped
+  library) show real per-episode thumbnails instead of the TV-icon placeholder.
+- **Music player polish.** Seek/progress bars tint to the cover art's dominant color
+  (`--music-fill-color`, `--primary` fallback; waveform was already tinted); LRC parser
+  strips `[ti:]/[ar:]/…` ID tags so metadata doesn't render as lyric lines.
+- **Pre-seeded ratings + basic actor bios.** After the scans, the demo account gets
+  rating dimensions (movies Plot/Visuals/Music, actors Looks/Acting; localized), random
+  high multi-dim ratings for all movies + their cinema actors, and basic bio
+  (overview/birthDate/placeOfBirth, sample text) on those actors — offline, seeded PRNG,
+  idempotent, scope-guarded to movies + cinema people (never tv_people / other users).
+
 ## 2026-07-13 — Demo Mode: download assets on demand (drop installer bundling)
 
 Bundling the demo pack into every installer was wrong — it bloats the download for
