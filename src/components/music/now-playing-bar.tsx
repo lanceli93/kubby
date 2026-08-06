@@ -121,8 +121,8 @@ export function NowPlayingBar() {
         {/* Mobile-only thin progress line at the very top of the bar */}
         <div className="absolute inset-x-0 top-0 h-0.5 bg-white/10 md:hidden">
           <div
-            className="h-full bg-primary transition-[width] duration-150 ease-linear"
-            style={{ width: `${progress * 100}%` }}
+            className="h-full transition-[width] duration-150 ease-linear"
+            style={{ width: `${progress * 100}%`, background: spectrumColor }}
           />
         </div>
 
@@ -173,7 +173,7 @@ export function NowPlayingBar() {
               <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
                 {formatDuration(currentTime)}
               </span>
-              <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+              <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} fillColor={spectrumColor} />
               <span className="w-10 text-[11px] tabular-nums text-muted-foreground">
                 {formatDuration(duration)}
               </span>
@@ -348,7 +348,7 @@ export function NowPlayingBar() {
                   <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
                     {formatDuration(currentTime)}
                   </span>
-                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} fillColor={spectrumColor} />
                   <span className="w-10 text-xs tabular-nums text-muted-foreground">
                     {formatDuration(duration)}
                   </span>
@@ -450,7 +450,7 @@ export function NowPlayingBar() {
                   <span className="w-9 text-right text-[11px] tabular-nums text-muted-foreground">
                     {formatDuration(currentTime)}
                   </span>
-                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                  <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} fillColor={spectrumColor} />
                   <span className="w-9 text-[11px] tabular-nums text-muted-foreground">
                     {formatDuration(duration)}
                   </span>
@@ -548,7 +548,7 @@ export function NowPlayingBar() {
                     <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
                       {formatDuration(currentTime)}
                     </span>
-                    <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} />
+                    <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} fillColor={spectrumColor} />
                     <span className="w-10 text-[11px] tabular-nums text-muted-foreground">
                       {formatDuration(duration)}
                     </span>
@@ -742,11 +742,13 @@ function SeekBar({
   duration,
   onSeek,
   label,
+  fillColor,
 }: {
   progress: number;
   duration: number;
   onSeek: (seconds: number) => void;
   label: string;
+  fillColor?: string;
 }) {
   return (
     <input
@@ -759,7 +761,7 @@ function SeekBar({
       aria-label={label}
       disabled={duration <= 0}
       className="music-range h-1 flex-1 cursor-pointer"
-      style={{ "--fill": `${progress * 100}%` } as React.CSSProperties}
+      style={{ "--fill": `${progress * 100}%`, "--music-fill-color": fillColor } as React.CSSProperties}
     />
   );
 }

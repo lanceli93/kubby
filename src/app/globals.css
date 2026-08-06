@@ -416,7 +416,7 @@
   border-radius: 9999px;
   background: linear-gradient(
     to right,
-    var(--primary) var(--fill, 0%),
+    var(--music-fill-color, var(--primary)) var(--fill, 0%),
     rgba(255, 255, 255, 0.15) var(--fill, 0%)
   );
 }
@@ -425,7 +425,7 @@
   border-radius: 9999px;
   background: linear-gradient(
     to right,
-    var(--primary) var(--fill, 0%),
+    var(--music-fill-color, var(--primary)) var(--fill, 0%),
     rgba(255, 255, 255, 0.15) var(--fill, 0%)
   );
 }

@@ -22,6 +22,10 @@ interface LyricLine {
  */
 function parseLrc(text: string): { lines: LyricLine[]; synced: boolean } {
   const stampRe = /\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+  // LRC metadata/ID tags — `[ti:]`, `[ar:]`, `[al:]`, `[by:]`, `[offset:]`, … —
+  // have an alphabetic key (vs. a numeric timestamp). Strip them so they don't
+  // render as literal lyric lines.
+  const idTagRe = /\[[a-zA-Z#][a-zA-Z0-9#]*:[^\]]*\]/g;
   const out: LyricLine[] = [];
   let anyTimed = false;
 
@@ -37,7 +41,7 @@ function parseLrc(text: string): { lines: LyricLine[]; synced: boolean } {
       const frac = fracStr ? parseInt(fracStr, 10) / Math.pow(10, fracStr.length) : 0;
       stamps.push(min * 60 + sec + frac);
     }
-    const content = raw.replace(stampRe, "").trim();
+    const content = raw.replace(stampRe, "").replace(idTagRe, "").trim();
     if (stamps.length > 0) {
       anyTimed = true;
       for (const time of stamps) out.push({ time, text: content });

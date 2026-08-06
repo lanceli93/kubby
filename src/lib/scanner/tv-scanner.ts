@@ -28,6 +28,11 @@ const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
 // Junk directories to skip when walking a show tree.
 const SKIP_DIRS = new Set(["@eaDir", "#recycle", ".thumbnails", ".stills"]);
 
+/** Zero-pad a number to 2 digits (matches the scraper's still-file naming). */
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
 // ─── Filename → season/episode parsing ─────────────────────────
 
 export interface ParsedEpisode {
@@ -523,6 +528,19 @@ export async function scanTvShowLibrary(
         const abs = path.join(showDir, scrapedEp.stillPath);
         if (fs.existsSync(abs)) {
           stillRel = scrapedEp.stillPath;
+          stillMtime = getFileMtime(abs);
+          stillBlur = await generateBlurDataURL(abs);
+        }
+      }
+
+      // Local fallback: a non-scraped library (e.g. Demo Mode, scraperEnabled:false)
+      // may ship per-episode stills on disk as .stills/S{NN}E{MM}.jpg — the same
+      // layout the scraper writes. Link one when the scraper gave us nothing.
+      if (!stillRel) {
+        const localRel = path.join(".stills", `S${pad2(parsed.seasonNumber)}E${pad2(parsed.episodeNumber)}.jpg`);
+        const abs = path.join(showDir, localRel);
+        if (fs.existsSync(abs)) {
+          stillRel = localRel;
           stillMtime = getFileMtime(abs);
           stillBlur = await generateBlurDataURL(abs);
         }

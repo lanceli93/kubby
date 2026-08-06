@@ -11,7 +11,8 @@
  *     manifest of the real episode video slots (NO video committed).
  *   - Photos: a handful of movie fanart/poster JPGs reused as a photo album.
  *   - Music: a 20-second clip of a real source mp3, transcoded per track to
- *     AAC/m4a with embedded tags + a folder cover.jpg reusing movie posters.
+ *     AAC/m4a with embedded tags + a folder cover.jpg reusing movie posters, and
+ *     a matching .lrc synced-lyrics sidecar per track so the player scrolls lyrics.
  *   - people/ + tv-people/: only the cast photos actually referenced by the
  *     committed NFOs (parsed from <thumb> paths) — trims unused actors.
  *   - ONE placeholder.mp4 (smallest test clip) — the seeder copies it into every
@@ -233,6 +234,23 @@ const MUSIC_ALBUMS: DemoAlbum[] = [
   { title: "Analog Dreams", artist: "The Prototypes", year: 2023, cover: "Interstellar (2014)", tracks: ["Tape Warmth", "Signal Path", "Reel to Reel", "Fade Out"] },
 ];
 
+/** Sample synced LRC lyrics for a demo track (timestamps within the 20s clip),
+ *  rotated by track index so tracks aren't identical. Clearly placeholder text. */
+function demoLrc(album: DemoAlbum, title: string, trackNo: number): string {
+  const verses = [
+    ["Neon lights across the sky", "Chasing echoes of the night", "Every heartbeat, every sign", "Fading slowly into light"],
+    ["Whisper softly to the dark", "Every ember, every spark", "Hold the moment, let it burn", "Waiting for the tide to turn"],
+    ["Drifting through the open air", "Colors bloom from everywhere", "Silent motion, endless streams", "Woven into quiet dreams"],
+    ["Under skies of faded gold", "Stories left to be retold", "Rolling onward, calm and free", "Like a wave upon the sea"],
+  ];
+  const pool = verses[(trackNo - 1) % verses.length];
+  const stamps = ["00:00.50", "00:05.00", "00:10.00", "00:15.00"];
+  const header = `[ti:${title}]\n[ar:${album.artist}]\n[al:${album.title}]\n`;
+  const lines = pool.map((line, i) => `[${stamps[i]}]${line}`).join("\n");
+  const outro = `\n[00:19.00](demo lyrics)`;
+  return header + lines + outro + "\n";
+}
+
 function buildMusic(): void {
   if (!fs.existsSync(MUSIC_SRC)) {
     log(`WARNING: music source ${MUSIC_SRC} not found — skipping music entirely.`);
@@ -264,8 +282,12 @@ function buildMusic(): void {
         "-metadata", "genre=Electronic",
         outFile,
       ], { stdio: "ignore" });
+      // Synced-lyrics sidecar with the SAME basename — the scanner links it and
+      // the player shows scrolling synced lyrics.
+      const lrcFile = path.join(albumDir, `${String(trackNo).padStart(2, "0")} - ${title}.lrc`);
+      fs.writeFileSync(lrcFile, demoLrc(album, title, trackNo));
     });
-    log(`  ${album.artist} — ${album.title}: ${album.tracks.length} tracks.`);
+    log(`  ${album.artist} — ${album.title}: ${album.tracks.length} tracks (+ .lrc lyrics).`);
   }
 }
 
