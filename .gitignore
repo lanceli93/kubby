@@ -60,6 +60,10 @@ next-env.d.ts
 /dist/
 /.download-cache/
 
+# throwaway demo-test instance + isolated Chrome profile (local verification only)
+/.tmp-demo-test/
+/.tmp-chrome-profile/
+
 # demo asset pack — uploaded to the GitHub 'demo-assets' release, not committed
 # (the raw demo-assets/ authoring tree IS committed; this tarball is derived)
 /demo-assets.tar.gz

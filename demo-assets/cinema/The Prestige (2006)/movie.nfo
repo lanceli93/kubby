@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>The Prestige</title>
+  <originaltitle>The Prestige</originaltitle>
+  <sorttitle>The Prestige</sorttitle>
+  <plot>A mysterious story of two magicians whose intense rivalry leads them on a life-long battle for supremacy -- full of obsession, deceit and jealousy with dangerous and deadly consequences.</plot>
+  <tagline>Are You Watching Closely?</tagline>
+  <rating>8.209</rating>
+  <runtime>130</runtime>
+  <premiered>2006-10-19</premiered>
+  <year>2006</year>
+  <genre>Drama</genre>
+  <genre>Mystery</genre>
+  <genre>Science Fiction</genre>
+  <studio>Warner Bros. Pictures</studio>
+  <studio>Touchstone Pictures</studio>
+  <studio>Newmarket Films</studio>
+  <studio>Syncopy</studio>
+  <country>United Kingdom</country>
+  <uniqueid type="tmdb">1124</uniqueid>
+  <uniqueid type="imdb">tt0482571</uniqueid>
+  <actor>
+    <name>Hugh Jackman</name>
+    <role>Robert Angier</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Hugh Jackman\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>6968</tmdbid>
+  </actor>
+  <actor>
+    <name>Christian Bale</name>
+    <role>Alfred Borden</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Christian Bale\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>3894</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Caine</name>
+    <role>Cutter</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michael Caine\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>3895</tmdbid>
+  </actor>
+  <actor>
+    <name>Piper Perabo</name>
+    <role>Julia McCullough</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Piper Perabo\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>15555</tmdbid>
+  </actor>
+  <actor>
+    <name>Rebecca Hall</name>
+    <role>Sarah</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Rebecca Hall\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>15556</tmdbid>
+  </actor>
+  <actor>
+    <name>Scarlett Johansson</name>
+    <role>Olivia Wenscombe</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Scarlett Johansson\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1245</tmdbid>
+  </actor>
+  <actor>
+    <name>Samantha Mahurin</name>
+    <role>Jess</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Samantha Mahurin\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>1580598</tmdbid>
+  </actor>
+  <actor>
+    <name>David Bowie</name>
+    <role>Tesla</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Bowie\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>7487</tmdbid>
+  </actor>
+  <actor>
+    <name>Andy Serkis</name>
+    <role>Alley</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Andy Serkis\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>1333</tmdbid>
+  </actor>
+  <actor>
+    <name>Daniel Davis</name>
+    <role>Judge</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Daniel Davis\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>177765</tmdbid>
+  </actor>
+  <actor>
+    <name>Jim Piddock</name>
+    <role>Prosecutor</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jim Piddock\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>120560</tmdbid>
+  </actor>
+  <actor>
+    <name>Christopher Neame</name>
+    <role>Defender</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Christopher Neame\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>58860</tmdbid>
+  </actor>
+  <actor>
+    <name>Mark Ryan</name>
+    <role>Captain</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mark Ryan\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>19541</tmdbid>
+  </actor>
+  <actor>
+    <name>Roger Rees</name>
+    <role>Owens</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Roger Rees\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>16407</tmdbid>
+  </actor>
+  <actor>
+    <name>Jamie Harris</name>
+    <role>Sullen Warder</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jamie Harris\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>111195</tmdbid>
+  </actor>
+  <actor>
+    <name>Monty Stuart</name>
+    <role>Stagecoach Driver</role>
+    <order>15</order>
+    <tmdbid>1476065</tmdbid>
+  </actor>
+  <actor>
+    <name>Ron Perkins</name>
+    <role>Hotel Manager</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ron Perkins\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>125024</tmdbid>
+  </actor>
+  <actor>
+    <name>Ricky Jay</name>
+    <role>Milton</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ricky Jay\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>10743</tmdbid>
+  </actor>
+  <actor>
+    <name>J. Paul Moore</name>
+    <role>Virgil</role>
+    <order>18</order>
+    <tmdbid>4870534</tmdbid>
+  </actor>
+  <actor>
+    <name>Anthony De Marco</name>
+    <role>Boy</role>
+    <order>19</order>
+    <tmdbid>144162</tmdbid>
+  </actor>
+  <director>Christopher Nolan</director>
+  <tag>dying and death</tag>
+  <tag>suicide</tag>
+  <tag>class society</tag>
+  <tag>london, england</tag>
+  <tag>magic</tag>
+  <tag>competition</tag>
+  <tag>obsession</tag>
+  <tag>hostility</tag>
+  <tag>class</tag>
+  <tag>diary</tag>
+  <tag>twist</tag>
+  <tag>tricks</tag>
+  <tag>illusion</tag>
+  <tag>rivalry</tag>
+  <tag>partner</tag>
+  <tag>steampunk</tag>
+  <tag>cruelty</tag>
+  <tag>hanging</tag>
+  <tag>jail cell</tag>
+  <tag>shocking</tag>
+  <tag>19th century</tag>
+  <tag>nikola tesla</tag>
+  <tag>magician</tag>
+  <tag>tesla coil</tag>
+  <tag>bittersweet</tag>
+  <tag>secret</tag>
+  <tag>direct</tag>
+  <tag>mind-blowing</tag>
+  <tag>antagonistic</tag>
+</movie>

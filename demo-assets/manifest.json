@@ -1,6 +1,8 @@
 {
   "version": 1,
   "placeholder": "placeholder.mp4",
+  "vr": "vr.mp4",
+  "vrMovie": "Avatar The Way of Water (2022)",
   "libraries": {
     "cinema": "Demo Movies",
     "tv": "Demo TV Shows",

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>The Silence of the Lambs</title>
+  <originaltitle>The Silence of the Lambs</originaltitle>
+  <sorttitle>The Silence of the Lambs</sorttitle>
+  <plot>Clarice Starling is a top student at the FBI&apos;s training academy.  Jack Crawford wants Clarice to interview Dr. Hannibal Lecter, a brilliant psychiatrist who is also a violent psychopath, serving life behind bars for various acts of murder and cannibalism.  Crawford believes that Lecter may have insight into a case and that Starling, as an attractive young woman, may be just the bait to draw him out.</plot>
+  <tagline>To enter the mind of a killer she must challenge the mind of a madman.</tagline>
+  <rating>8.345</rating>
+  <runtime>119</runtime>
+  <premiered>1991-02-14</premiered>
+  <year>1991</year>
+  <genre>Crime</genre>
+  <genre>Thriller</genre>
+  <genre>Drama</genre>
+  <studio>Orion Pictures</studio>
+  <studio>Strong Heart</studio>
+  <studio>A Luta Continua</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">274</uniqueid>
+  <uniqueid type="imdb">tt0102926</uniqueid>
+  <actor>
+    <name>Jodie Foster</name>
+    <role>Clarice Starling</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jodie Foster\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>1038</tmdbid>
+  </actor>
+  <actor>
+    <name>Anthony Hopkins</name>
+    <role>Dr. Hannibal Lecter</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Anthony Hopkins\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>4173</tmdbid>
+  </actor>
+  <actor>
+    <name>Scott Glenn</name>
+    <role>Jack Crawford</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Scott Glenn\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>349</tmdbid>
+  </actor>
+  <actor>
+    <name>Ted Levine</name>
+    <role>Jame Gumb</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Ted Levine\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>15854</tmdbid>
+  </actor>
+  <actor>
+    <name>Anthony Heald</name>
+    <role>Dr. Frederick Chilton</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Anthony Heald\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>16293</tmdbid>
+  </actor>
+  <actor>
+    <name>Brooke Smith</name>
+    <role>Catherine Martin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Brooke Smith\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>31649</tmdbid>
+  </actor>
+  <actor>
+    <name>Diane Baker</name>
+    <role>Senator Ruth Martin</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Diane Baker\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>6930</tmdbid>
+  </actor>
+  <actor>
+    <name>Kasi Lemmons</name>
+    <role>Ardelia Mapp</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kasi Lemmons\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>51864</tmdbid>
+  </actor>
+  <actor>
+    <name>Frankie Faison</name>
+    <role>Barney</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\F\Frankie Faison\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>13936</tmdbid>
+  </actor>
+  <actor>
+    <name>Tracey Walter</name>
+    <role>Lamar</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tracey Walter\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>3801</tmdbid>
+  </actor>
+  <actor>
+    <name>Charles Napier</name>
+    <role>Lt. Boyle</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Charles Napier\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>16119</tmdbid>
+  </actor>
+  <actor>
+    <name>Danny Darst</name>
+    <role>Sgt. Tate</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Danny Darst\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>183640</tmdbid>
+  </actor>
+  <actor>
+    <name>Alex Coleman</name>
+    <role>Sgt. Pembry</role>
+    <order>12</order>
+    <tmdbid>1280997</tmdbid>
+  </actor>
+  <actor>
+    <name>Dan Butler</name>
+    <role>Roden</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dan Butler\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>76470</tmdbid>
+  </actor>
+  <actor>
+    <name>Paul Lazar</name>
+    <role>Pilcher</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Paul Lazar\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>138988</tmdbid>
+  </actor>
+  <actor>
+    <name>Ron Vawter</name>
+    <role>Paul Krendler</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ron Vawter\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>32592</tmdbid>
+  </actor>
+  <actor>
+    <name>Roger Corman</name>
+    <role>FBI Director Hayden Burke</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Roger Corman\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>102429</tmdbid>
+  </actor>
+  <actor>
+    <name>Lawrence A. Bonney</name>
+    <role>FBI Instructor</role>
+    <order>17</order>
+    <tmdbid>1280985</tmdbid>
+  </actor>
+  <actor>
+    <name>Lawrence T. Wrentz</name>
+    <role>Agent Burroughs</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\L\Lawrence T. Wrentz\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>192268</tmdbid>
+  </actor>
+  <actor>
+    <name>Don Brockett</name>
+    <role>Friendly Psychopath</role>
+    <order>19</order>
+    <tmdbid>31118</tmdbid>
+  </actor>
+  <director>Jonathan Demme</director>
+  <tag>prison</tag>
+  <tag>based on novel or book</tag>
+  <tag>kidnapping</tag>
+  <tag>psychopath</tag>
+  <tag>fbi</tag>
+  <tag>scientific study</tag>
+  <tag>murder</tag>
+  <tag>serial killer</tag>
+  <tag>psychological thriller</tag>
+  <tag>brutality</tag>
+  <tag>cannibal</tag>
+  <tag>psychiatrist</tag>
+  <tag>biting</tag>
+  <tag>moth</tag>
+  <tag>virginia</tag>
+  <tag>macabre</tag>
+  <tag>disturbed</tag>
+  <tag>neo-noir</tag>
+  <tag>twisted</tag>
+  <tag>skinning</tag>
+  <tag>cannibalism</tag>
+  <tag>psychological horror</tag>
+  <tag>hannibal lecter</tag>
+  <tag>past history</tag>
+  <tag>psychological profiling</tag>
+  <tag>crime thriller</tag>
+  <tag>crime horror</tag>
+</movie>

@@ -43,14 +43,17 @@ export async function POST() {
 
         // Create the demo admin (known credentials, surfaced on the success screen).
         const userId = uuid();
+        const locale = "en";
         const passwordHash = await hash(DEMO_PASSWORD, 10);
         db.insert(users)
-          .values({ id: userId, username: DEMO_USERNAME, passwordHash, isAdmin: true, locale: "en" })
+          .values({ id: userId, username: DEMO_USERNAME, passwordHash, isAdmin: true, locale })
           .run();
         setSetting("demo_user_id", userId);
         setSetting("demo_seeded_at", new Date().toISOString());
 
-        await seedDemo((p) => send(p));
+        // Pass the demo user's id + locale so seedDemo can seed that account's
+        // rating dimensions, movie/actor ratings, and basic actor bios.
+        await seedDemo((p) => send(p), userId, locale);
 
         send({ phase: "done", done: true, username: DEMO_USERNAME, password: DEMO_PASSWORD });
       } catch (error) {

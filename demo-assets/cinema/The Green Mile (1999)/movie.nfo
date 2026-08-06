@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>The Green Mile</title>
+  <originaltitle>The Green Mile</originaltitle>
+  <sorttitle>The Green Mile</sorttitle>
+  <plot>A supernatural tale set on death row in a Southern prison, where gentle giant John Coffey possesses the mysterious power to heal people&apos;s ailments. When the cell block&apos;s head guard, Paul Edgecomb, recognizes Coffey&apos;s miraculous gift, he tries desperately to help stave off the condemned man&apos;s execution.</plot>
+  <tagline>Paul Edgecomb didn&apos;t believe in miracles. Until the day he met one.</tagline>
+  <rating>8.506</rating>
+  <runtime>189</runtime>
+  <premiered>1999-12-10</premiered>
+  <year>1999</year>
+  <genre>Fantasy</genre>
+  <genre>Drama</genre>
+  <genre>Crime</genre>
+  <studio>Castle Rock Entertainment</studio>
+  <studio>Darkwoods Productions</studio>
+  <country>United States of America</country>
+  <uniqueid type="tmdb">497</uniqueid>
+  <uniqueid type="imdb">tt0120689</uniqueid>
+  <actor>
+    <name>Tom Hanks</name>
+    <role>Paul Edgecomb</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Tom Hanks\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>31</tmdbid>
+  </actor>
+  <actor>
+    <name>David Morse</name>
+    <role>Brutus &apos;Brutal&apos; Howell</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\David Morse\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>52</tmdbid>
+  </actor>
+  <actor>
+    <name>Bonnie Hunt</name>
+    <role>Jan Edgecomb</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Bonnie Hunt\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>5149</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Clarke Duncan</name>
+    <role>John Coffey</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michael Clarke Duncan\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>61981</tmdbid>
+  </actor>
+  <actor>
+    <name>James Cromwell</name>
+    <role>Warden Hal Moores</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\James Cromwell\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>2505</tmdbid>
+  </actor>
+  <actor>
+    <name>Michael Jeter</name>
+    <role>Eduard Delacroix</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Michael Jeter\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>2169</tmdbid>
+  </actor>
+  <actor>
+    <name>Graham Greene</name>
+    <role>Arlen Bitterbuck</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\G\Graham Greene\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>6804</tmdbid>
+  </actor>
+  <actor>
+    <name>Doug Hutchison</name>
+    <role>Percy Wetmore</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Doug Hutchison\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>6806</tmdbid>
+  </actor>
+  <actor>
+    <name>Sam Rockwell</name>
+    <role>&apos;Wild Bill&apos; Wharton</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sam Rockwell\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>6807</tmdbid>
+  </actor>
+  <actor>
+    <name>Barry Pepper</name>
+    <role>Dean Stanton</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\B\Barry Pepper\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>12834</tmdbid>
+  </actor>
+  <actor>
+    <name>Jeffrey DeMunn</name>
+    <role>Harry Terwilliger</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\J\Jeffrey DeMunn\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>12645</tmdbid>
+  </actor>
+  <actor>
+    <name>Patricia Clarkson</name>
+    <role>Melinda Moores</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Patricia Clarkson\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>1276</tmdbid>
+  </actor>
+  <actor>
+    <name>Harry Dean Stanton</name>
+    <role>Toot-Toot</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\H\Harry Dean Stanton\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>5048</tmdbid>
+  </actor>
+  <actor>
+    <name>Dabbs Greer</name>
+    <role>Old Paul Edgecomb</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\D\Dabbs Greer\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>6805</tmdbid>
+  </actor>
+  <actor>
+    <name>Eve Brent</name>
+    <role>Elaine Connelly</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Eve Brent\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>128201</tmdbid>
+  </actor>
+  <actor>
+    <name>William Sadler</name>
+    <role>Klaus Detterick</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\W\William Sadler\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>6573</tmdbid>
+  </actor>
+  <actor>
+    <name>Mack Miles</name>
+    <role>Orderly Hector</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mack Miles\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>139992</tmdbid>
+  </actor>
+  <actor>
+    <name>Rai Tasco</name>
+    <role>Man in Nursing Home</role>
+    <order>17</order>
+    <tmdbid>1502939</tmdbid>
+  </actor>
+  <actor>
+    <name>Edrie Warner</name>
+    <role>Lady in Nursing Home</role>
+    <order>18</order>
+    <tmdbid>2522726</tmdbid>
+  </actor>
+  <actor>
+    <name>Paula Malcomson</name>
+    <role>Marjorie Detterick</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\P\Paula Malcomson\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>47533</tmdbid>
+  </actor>
+  <director>Frank Darabont</director>
+  <tag>mentally disabled</tag>
+  <tag>death penalty</tag>
+  <tag>based on novel or book</tag>
+  <tag>southern usa</tag>
+  <tag>psychopath</tag>
+  <tag>death row</tag>
+  <tag>jail guard</tag>
+  <tag>supernatural</tag>
+  <tag>great depression</tag>
+  <tag>prison guard</tag>
+  <tag>jail</tag>
+  <tag>electric chair</tag>
+  <tag>capital punishment</tag>
+  <tag>torture</tag>
+  <tag>magic realism</tag>
+  <tag>healing</tag>
+  <tag>1930s</tag>
+  <tag>abuse of power</tag>
+  <tag>prison drama</tag>
+</movie>

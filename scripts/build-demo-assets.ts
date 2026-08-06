@@ -10,12 +10,15 @@
  *   - TV: every show's tvshow.nfo + posters + .stills/ (episode thumbs), and a
  *     manifest of the real episode video slots (NO video committed).
  *   - Photos: a handful of movie fanart/poster JPGs reused as a photo album.
- *   - Music: license-safe SYNTHETIC ffmpeg tone tracks (AAC/m4a) with embedded
- *     tags + a folder cover.jpg reusing movie posters (no copyrighted audio/art).
+ *   - Music: a 20-second clip of a real source mp3, transcoded per track to
+ *     AAC/m4a with embedded tags + a folder cover.jpg reusing movie posters, and
+ *     a matching .lrc synced-lyrics sidecar per track so the player scrolls lyrics.
  *   - people/ + tv-people/: only the cast photos actually referenced by the
  *     committed NFOs (parsed from <thumb> paths) — trims unused actors.
  *   - ONE placeholder.mp4 (smallest test clip) — the seeder copies it into every
  *     movie/episode folder at runtime, so we never store 30+ videos in git.
+ *   - ONE vr.mp4 (~20 MB) — the seeder wires this to the demo VR movie instead
+ *     of the placeholder, so the pack is now larger (~75 MB) but still reasonable.
  *   - manifest.json — library names + the TV episode video slots the seeder needs.
  *
  * Usage:  npx tsx scripts/build-demo-assets.ts
@@ -31,10 +34,15 @@ const METADATA = path.join(ROOT, "data", "metadata");
 const OUT = path.join(ROOT, "demo-assets");
 const FFMPEG = process.env.FFMPEG_PATH || "ffmpeg";
 
-// Trim the cinema set to keep the downloadable pack small (~15 MB). The music
-// albums reuse these movies' posters as covers, so those titles MUST survive.
-const CINEMA_LIMIT = 15;
+// Trim the cinema set to keep the downloadable pack reasonably small (~75 MB
+// with the VR clip). The music albums reuse these movies' posters as covers, so
+// those titles MUST survive.
+const CINEMA_LIMIT = 30;
 const MUSIC_COVER_MOVIES = ["Blade Runner 2049 (2017)", "La La Land (2016)", "Interstellar (2014)"];
+
+const VR_MOVIE = "Avatar The Way of Water (2022)";
+const VR_SRC = process.env.KUBBY_DEMO_VR_SRC || "C:/Users/Lance/Downloads/vr1.mp4";
+const MUSIC_SRC = process.env.KUBBY_DEMO_MUSIC_SRC || "C:/Users/Lance/Downloads/music1.mp3";
 
 const VIDEO_EXT = new Set([".mp4", ".mkv", ".avi", ".wmv", ".mov", ".flv", ".webm", ".m4v", ".ts", ".rmvb", ".rm"]);
 
@@ -218,7 +226,7 @@ function buildPhotos(): void {
   log(`Photos: ${n} images.`);
 }
 
-// ─── Music (synthetic, license-safe) ────────────────────────────
+// ─── Music (20s clip of a real source mp3) ──────────────────────
 type DemoAlbum = { title: string; artist: string; year: number; cover: string; tracks: string[] };
 const MUSIC_ALBUMS: DemoAlbum[] = [
   { title: "Neon Skyline", artist: "The Prototypes", year: 2021, cover: "Blade Runner 2049 (2017)", tracks: ["Ignition", "Skyline Drift", "Chrome Rain", "Afterglow"] },
@@ -226,11 +234,31 @@ const MUSIC_ALBUMS: DemoAlbum[] = [
   { title: "Analog Dreams", artist: "The Prototypes", year: 2023, cover: "Interstellar (2014)", tracks: ["Tape Warmth", "Signal Path", "Reel to Reel", "Fade Out"] },
 ];
 
+/** Sample synced LRC lyrics for a demo track (timestamps within the 20s clip),
+ *  rotated by track index so tracks aren't identical. Clearly placeholder text. */
+function demoLrc(album: DemoAlbum, title: string, trackNo: number): string {
+  const verses = [
+    ["Neon lights across the sky", "Chasing echoes of the night", "Every heartbeat, every sign", "Fading slowly into light"],
+    ["Whisper softly to the dark", "Every ember, every spark", "Hold the moment, let it burn", "Waiting for the tide to turn"],
+    ["Drifting through the open air", "Colors bloom from everywhere", "Silent motion, endless streams", "Woven into quiet dreams"],
+    ["Under skies of faded gold", "Stories left to be retold", "Rolling onward, calm and free", "Like a wave upon the sea"],
+  ];
+  const pool = verses[(trackNo - 1) % verses.length];
+  const stamps = ["00:00.50", "00:05.00", "00:10.00", "00:15.00"];
+  const header = `[ti:${title}]\n[ar:${album.artist}]\n[al:${album.title}]\n`;
+  const lines = pool.map((line, i) => `[${stamps[i]}]${line}`).join("\n");
+  const outro = `\n[00:19.00](demo lyrics)`;
+  return header + lines + outro + "\n";
+}
+
 function buildMusic(): void {
-  log("Music: generating synthetic tone tracks…");
+  if (!fs.existsSync(MUSIC_SRC)) {
+    log(`WARNING: music source ${MUSIC_SRC} not found — skipping music entirely.`);
+    return;
+  }
+  log("Music: transcoding 20s clips from the source mp3…");
   const dest = path.join(OUT, "music");
   const cinema = path.join(OUT, "cinema");
-  let freq = 220;
   for (const album of MUSIC_ALBUMS) {
     const albumDir = path.join(dest, `${album.artist} - ${album.title}`);
     ensureDir(albumDir);
@@ -239,12 +267,11 @@ function buildMusic(): void {
     if (fs.existsSync(coverSrc)) copyFile(coverSrc, path.join(albumDir, "cover.jpg"));
     album.tracks.forEach((title, i) => {
       const trackNo = i + 1;
-      freq = 180 + ((freq * 1.5 + trackNo * 40) % 400); // vary pitch per track
       const outFile = path.join(albumDir, `${String(trackNo).padStart(2, "0")} - ${title}.m4a`);
-      // A short pleasant-ish tone; embedded iTunes-style tags for the scanner.
+      // First 20s of the source mp3 with gentle fades; embedded iTunes-style tags for the scanner.
       execFileSync(FFMPEG, [
-        "-y", "-f", "lavfi", "-i", `sine=frequency=${Math.round(freq)}:duration=12`,
-        "-af", "afade=t=in:d=0.5,afade=t=out:st=11:d=1,volume=0.4",
+        "-y", "-i", MUSIC_SRC, "-t", "20",
+        "-af", "afade=t=in:d=0.5,afade=t=out:st=19:d=1",
         "-c:a", "aac", "-b:a", "128k",
         "-metadata", `title=${title}`,
         "-metadata", `artist=${album.artist}`,
@@ -255,8 +282,12 @@ function buildMusic(): void {
         "-metadata", "genre=Electronic",
         outFile,
       ], { stdio: "ignore" });
+      // Synced-lyrics sidecar with the SAME basename — the scanner links it and
+      // the player shows scrolling synced lyrics.
+      const lrcFile = path.join(albumDir, `${String(trackNo).padStart(2, "0")} - ${title}.lrc`);
+      fs.writeFileSync(lrcFile, demoLrc(album, title, trackNo));
     });
-    log(`  ${album.artist} — ${album.title}: ${album.tracks.length} tracks.`);
+    log(`  ${album.artist} — ${album.title}: ${album.tracks.length} tracks (+ .lrc lyrics).`);
   }
 }
 
@@ -282,6 +313,19 @@ function buildPlaceholder(): void {
   ], { stdio: "ignore" });
 }
 
+// ─── VR clip ────────────────────────────────────────────────────
+// Copy the VR source clip verbatim; the seeder wires it to the demo VR movie
+// instead of the shared placeholder. Skipped (with a warning) if absent.
+function buildVr(): void {
+  const out = path.join(OUT, "vr.mp4");
+  if (!fs.existsSync(VR_SRC)) {
+    log(`WARNING: VR source ${VR_SRC} not found — skipping vr.mp4 (demo VR movie will fall back to placeholder).`);
+    return;
+  }
+  copyFile(VR_SRC, out);
+  log(`vr.mp4 ← ${VR_SRC} (${(fs.statSync(out).size / 1024 / 1024).toFixed(1)} MB)`);
+}
+
 // ─── main ───────────────────────────────────────────────────────
 function main() {
   if (!fs.existsSync(TEST_MEDIA)) throw new Error(`Missing ${TEST_MEDIA} — run this on a dev box with test data.`);
@@ -294,10 +338,14 @@ function main() {
   buildPhotos();
   buildMusic();
   buildPlaceholder();
+  buildVr();
 
   const manifest = {
     version: 1,
     placeholder: "placeholder.mp4",
+    // The VR movie gets vr.mp4 instead of the shared placeholder.
+    vr: "vr.mp4",
+    vrMovie: VR_MOVIE,
     libraries: {
       cinema: "Demo Movies",
       tv: "Demo TV Shows",

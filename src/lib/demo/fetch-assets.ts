@@ -32,7 +32,7 @@ export const DEMO_ASSETS_URL =
   process.env.KUBBY_DEMO_ASSETS_URL ||
   "https://github.com/lanceli93/kubby/releases/download/v0.7.1/demo-assets.tar.gz";
 
-// The pack is ~40 MB, so the overall ceiling is generous; the stall guard is
+// The pack is ~75 MB, so the overall ceiling is generous; the stall guard is
 // what actually catches a hung/half-open connection quickly.
 const OVERALL_TIMEOUT_MS = Number(process.env.KUBBY_DEMO_DOWNLOAD_TIMEOUT_MS) || 120_000;
 const STALL_TIMEOUT_MS = 20_000; // no bytes for this long → give up

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<movie>
+  <title>Your Name.</title>
+  <originaltitle>君の名は。</originaltitle>
+  <sorttitle>Your Name.</sorttitle>
+  <plot>High schoolers Mitsuha and Taki are complete strangers living separate lives. But one night, they suddenly switch places. Mitsuha wakes up in Taki’s body, and he in hers. This bizarre occurrence continues to happen randomly, and the two must adjust their lives around each other.</plot>
+  <tagline>Separated by distance, connected by fate.</tagline>
+  <rating>8.482</rating>
+  <runtime>106</runtime>
+  <premiered>2016-07-01</premiered>
+  <year>2016</year>
+  <genre>Animation</genre>
+  <genre>Romance</genre>
+  <genre>Drama</genre>
+  <studio>CoMix Wave Films</studio>
+  <studio>TOHO</studio>
+  <studio>KADOKAWA</studio>
+  <studio>jeki</studio>
+  <studio>AMUSE</studio>
+  <studio>voque ting</studio>
+  <studio>Lawson Entertainment</studio>
+  <country>Japan</country>
+  <uniqueid type="tmdb">372058</uniqueid>
+  <uniqueid type="imdb">tt5311514</uniqueid>
+  <actor>
+    <name>Ryunosuke Kamiki</name>
+    <role>Taki Tachibana (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ryunosuke Kamiki\photo.jpg</thumb>
+    <order>0</order>
+    <tmdbid>225730</tmdbid>
+  </actor>
+  <actor>
+    <name>Mone Kamishiraishi</name>
+    <role>Mitsuha Miyamizu (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Mone Kamishiraishi\photo.jpg</thumb>
+    <order>1</order>
+    <tmdbid>1369100</tmdbid>
+  </actor>
+  <actor>
+    <name>Ryo Narita</name>
+    <role>Katsuhiko Teshigawara (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\R\Ryo Narita\photo.jpg</thumb>
+    <order>2</order>
+    <tmdbid>1668610</tmdbid>
+  </actor>
+  <actor>
+    <name>Aoi Yuuki</name>
+    <role>Sayaka Natori (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\A\Aoi Yuuki\photo.jpg</thumb>
+    <order>3</order>
+    <tmdbid>936275</tmdbid>
+  </actor>
+  <actor>
+    <name>Nobunaga Shimazaki</name>
+    <role>Tsukasa Fujii (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\N\Nobunaga Shimazaki\photo.jpg</thumb>
+    <order>4</order>
+    <tmdbid>1210634</tmdbid>
+  </actor>
+  <actor>
+    <name>Kaito Ishikawa</name>
+    <role>Shinta Takagi (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kaito Ishikawa\photo.jpg</thumb>
+    <order>5</order>
+    <tmdbid>1324666</tmdbid>
+  </actor>
+  <actor>
+    <name>Kanon Tani</name>
+    <role>Yotsuha Miyamizu (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kanon Tani\photo.jpg</thumb>
+    <order>6</order>
+    <tmdbid>1344919</tmdbid>
+  </actor>
+  <actor>
+    <name>Masaki Terasoma</name>
+    <role>Toshiki Miyamizu (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Masaki Terasoma\photo.jpg</thumb>
+    <order>7</order>
+    <tmdbid>219659</tmdbid>
+  </actor>
+  <actor>
+    <name>Sayaka Ohara</name>
+    <role>Futaha Miyamizu (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Sayaka Ohara\photo.jpg</thumb>
+    <order>8</order>
+    <tmdbid>148447</tmdbid>
+  </actor>
+  <actor>
+    <name>Kazuhiko Inoue</name>
+    <role>Taki&apos;s Father (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kazuhiko Inoue\photo.jpg</thumb>
+    <order>9</order>
+    <tmdbid>89968</tmdbid>
+  </actor>
+  <actor>
+    <name>Chafurin</name>
+    <role>Teshigawara&apos;s Father (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\C\Chafurin\photo.jpg</thumb>
+    <order>10</order>
+    <tmdbid>87583</tmdbid>
+  </actor>
+  <actor>
+    <name>Yuka Kato</name>
+    <role>Teshigawara&apos;s Mother (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Y\Yuka Kato\photo.jpg</thumb>
+    <order>11</order>
+    <tmdbid>3351486</tmdbid>
+  </actor>
+  <actor>
+    <name>Kana Hanazawa</name>
+    <role>Teacher Yuki-chan (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\K\Kana Hanazawa\photo.jpg</thumb>
+    <order>12</order>
+    <tmdbid>119143</tmdbid>
+  </actor>
+  <actor>
+    <name>Masami Nagasawa</name>
+    <role>Miki Okudera (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Masami Nagasawa\photo.jpg</thumb>
+    <order>13</order>
+    <tmdbid>87637</tmdbid>
+  </actor>
+  <actor>
+    <name>Etsuko Ichihara</name>
+    <role>Hitoha Miyamizu (voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\E\Etsuko Ichihara\photo.jpg</thumb>
+    <order>14</order>
+    <tmdbid>91288</tmdbid>
+  </actor>
+  <actor>
+    <name>Yuka Terasaki</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Y\Yuka Terasaki\photo.jpg</thumb>
+    <order>15</order>
+    <tmdbid>1247771</tmdbid>
+  </actor>
+  <actor>
+    <name>Takashi Onozuka</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\T\Takashi Onozuka\photo.jpg</thumb>
+    <order>16</order>
+    <tmdbid>83935</tmdbid>
+  </actor>
+  <actor>
+    <name>Yohei Namekawa</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\Y\Yohei Namekawa\photo.jpg</thumb>
+    <order>17</order>
+    <tmdbid>2013665</tmdbid>
+  </actor>
+  <actor>
+    <name>Miyuu Tsuji</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\M\Miyuu Tsuji\photo.jpg</thumb>
+    <order>18</order>
+    <tmdbid>1435904</tmdbid>
+  </actor>
+  <actor>
+    <name>Shinya Hamazoe</name>
+    <role>(voice)</role>
+    <thumb>D:\AIworkspace\kubby\data\metadata\people\S\Shinya Hamazoe\photo.jpg</thumb>
+    <order>19</order>
+    <tmdbid>1257137</tmdbid>
+  </actor>
+  <director>Makoto Shinkai</director>
+  <tag>high school</tag>
+  <tag>race against time</tag>
+  <tag>dreams</tag>
+  <tag>afterlife</tag>
+  <tag>natural disaster</tag>
+  <tag>supernatural</tag>
+  <tag>time travel</tag>
+  <tag>comet</tag>
+  <tag>romance</tag>
+  <tag>tragedy</tag>
+  <tag>school</tag>
+  <tag>body-swap</tag>
+  <tag>high school student</tag>
+  <tag>nonlinear timeline</tag>
+  <tag>naked</tag>
+  <tag>star crossed lovers</tag>
+  <tag>power of love</tag>
+  <tag>anime</tag>
+  <tag>japanese high school</tag>
+  <tag>urban fantasy</tag>
+</movie>
