@@ -30,7 +30,7 @@ import { extractTarGz } from "./targz";
  */
 export const DEMO_ASSETS_URL =
   process.env.KUBBY_DEMO_ASSETS_URL ||
-  "https://github.com/lanceli93/kubby/releases/download/v0.7.1/demo-assets.tar.gz";
+  "https://github.com/lanceli93/kubby/releases/download/v0.7.3/demo-assets.tar.gz";
 
 // The pack is ~75 MB, so the overall ceiling is generous; the stall guard is
 // what actually catches a hung/half-open connection quickly.
