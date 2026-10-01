@@ -50,9 +50,10 @@ Then tell Fable to orchestrate, e.g.:
    the same executor via SendMessage, or re-delegate).
 4. **Record.** Confirm the checklist item is ticked. Fable owns commits and doc
    updates (per project `CLAUDE.md`): when a batch of changes is done, `git add`
-   + `git commit` with a short message; on feature completion, move items from
-   `docs/feature-request.md` to `docs/feature-completed.md` and update the
-   latest `docs/architecture-v0.x-mvp.md`.
+   + `git commit` with a short message; on feature completion, remove the items from
+   `docs/feature-request.md` and update the kubby skill
+   (`.claude/skills/kubby/`) — git history + the skill are the record; there is
+   no completed-features log any more.
 
 ## Notes
 - The executor's `model:` frontmatter (sonnet) is just the default. The

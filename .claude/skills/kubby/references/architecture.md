@@ -127,7 +127,7 @@ kubby/
 ├── docs/
 │   ├── architecture-v03.md               # Historical architecture snapshot (NOT maintained — keep the kubby skill current instead)
 │   ├── packaging-guide.md                # Packaging technical deep-dive
-│   ├── feature-completed.md              # Completed features log
+│   ├── archive/                          # Frozen historical docs (incl. feature-completed.md — no longer maintained)
 │   └── feature-request.md               # Pending feature requests
 └── .github/workflows/
     ├── release.yml                       # Desktop builds (3 platforms)
@@ -684,5 +684,5 @@ Key patterns:
 
 Per CLAUDE.md instructions:
 - After big features: update **this skill** (SKILL.md, references/architecture.md, references/feature-patterns.md) — this doc is the maintained reference, NOT `docs/architecture-v0.x-mvp.md`. Verify against shipped code; grep for stale counts/claims before committing.
-- Remove completed items from `docs/feature-request.md`, record in `docs/feature-completed.md`
+- Remove completed items from `docs/feature-request.md` (no completed-features log — git history + this skill are the record)
 - Git commit with short message after many code changes

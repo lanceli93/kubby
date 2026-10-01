@@ -179,8 +179,9 @@ manual edits. Release flow: push `v0.x.y` tag → CI extracts version → passes
   `docs/architecture-v0.x-mvp.md` (no longer maintained). Verify against the actual
   shipped code, and grep for stale counts/claims (e.g. "N tables", "N namespaces")
   before committing.
-- Remove completed items from `docs/feature-request.md`, record in
-  `docs/feature-completed.md`.
+- Remove completed items from `docs/feature-request.md`. There is **no completed-
+  features log** any more — git commits + this skill are the record
+  (`docs/archive/feature-completed.md` is the frozen historical log; don't append).
 - Git commit with a short message after many code changes, and call out that you
   committed / updated docs.
 
