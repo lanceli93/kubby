@@ -36,6 +36,8 @@ import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 interface EpisodeItem {
   id: string;
@@ -173,6 +175,8 @@ export default function ShowDetailPage() {
   const tMeta = useTranslations("metadata");
   const tCommon = useTranslations("common");
   const tSettings = useTranslations("settings");
+  const isAdmin = useIsAdmin();
+  const { showError, errorToast } = useErrorToast();
   const { data: prefs } = useUserPreferences();
   const tvShowDimensions = prefs?.tvShowRatingDimensions ?? [];
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
@@ -300,88 +304,108 @@ export default function ShowDetailPage() {
 
   const toggleFavorite = useMutation({
     mutationFn: () =>
-      fetch(`/api/tv/${showId}/user-data`, {
+      fetchOk(`/api/tv/${showId}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !show?.userData?.isFavorite }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show", showId] }),
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const toggleEpisodeWatched = useMutation({
     mutationFn: ({ episodeId, isPlayed }: { episodeId: string; isPlayed: boolean }) =>
-      fetch(`/api/tv/episodes/${episodeId}/user-data`, {
+      fetchOk(`/api/tv/episodes/${episodeId}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPlayed }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show", showId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tv-show", showId] });
+      // The server resets the resume point on watched/unwatched, which
+      // changes what the TV home Continue Watching / Next Up row shows.
+      queryClient.invalidateQueries({ queryKey: ["tv-next-up"] });
+    },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
-    await fetch(`/api/tv/${showId}/user-data`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["tv-show", showId] });
+    try {
+      await fetchOk(`/api/tv/${showId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["tv-show", showId] });
+    } catch {
+      showError(tMeta("saveFailed"));
+    }
   };
 
   const deleteShow = useMutation({
     mutationFn: (opts?: { deleteFiles?: boolean }) =>
-      fetch(`/api/tv/${showId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+      fetchOk(`/api/tv/${showId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
       router.push("/tv");
     },
+    // Stay on the page: the show still exists.
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   // Bookmark edit/delete hit the PER-EPISODE routes; the episodeId comes from
   // each aggregated bookmark and is captured in the map closure below.
   const deleteBookmark = useMutation({
     mutationFn: ({ episodeId, bookmarkId }: { episodeId: string; bookmarkId: string }) =>
-      fetch(`/api/tv/episodes/${episodeId}/bookmarks/${bookmarkId}`, { method: "DELETE" }),
+      fetchOk(`/api/tv/episodes/${episodeId}/bookmarks/${bookmarkId}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show-bookmarks", showId] }),
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   const updateBookmark = useMutation({
     mutationFn: ({ episodeId, bookmarkId, data }: { episodeId: string; bookmarkId: string; data: { iconType?: string; tags?: string[]; note?: string } }) =>
-      fetch(`/api/tv/episodes/${episodeId}/bookmarks/${bookmarkId}`, {
+      fetchOk(`/api/tv/episodes/${episodeId}/bookmarks/${bookmarkId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show-bookmarks", showId] }),
+    onError: () => showError(tMeta("saveFailed")),
   });
 
   // Cast favoriting — hits the ISOLATED TV person endpoint, never the cinema
   // /api/people route (tv_people ids must never resolve against cinema tables).
   const togglePersonFavorite = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/tv/people/${id}/user-data`, {
+      fetchOk(`/api/tv/people/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !current }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tv-show", showId] }),
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   // Per-episode personal rating — PUTs the episode user-data and refreshes the
   // show so the saved rating shows on the row.
   const saveEpisodeRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
     if (!ratingEpisode) return;
-    await fetch(`/api/tv/episodes/${ratingEpisode.id}/user-data`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["tv-show", showId] });
+    try {
+      await fetchOk(`/api/tv/episodes/${ratingEpisode.id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["tv-show", showId] });
+    } catch {
+      showError(tMeta("saveFailed"));
+    }
   };
 
   if (!show) {
     return (
       <div className="flex h-96 items-center justify-center text-muted-foreground">
-        Loading...
+        {tCommon("loading")}...
       </div>
     );
   }
@@ -570,12 +594,16 @@ export default function ShowDetailPage() {
                       return;
                     }
                     const newEnabled = !prefs?.externalPlayerEnabled;
-                    await fetch("/api/settings/personal-metadata", {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
-                    });
-                    queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+                    try {
+                      await fetchOk("/api/settings/personal-metadata", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
+                      });
+                      queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+                    } catch {
+                      showError(tMeta("saveFailed"));
+                    }
                   }}
                   className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all cursor-pointer ${
                     externalEnabled ? "text-indigo-400" : "text-white/70"
@@ -590,6 +618,7 @@ export default function ShowDetailPage() {
                   <DropdownMenuTrigger asChild>
                     <button
                       className="glass-btn flex h-11 w-11 items-center justify-center rounded-xl text-white/70 transition-all"
+                      aria-label={tMovies("moreOptions")}
                     >
                       <MoreVertical className="h-5 w-5" />
                     </button>
@@ -598,14 +627,19 @@ export default function ShowDetailPage() {
                     align="start"
                     className="w-52 border-white/10 bg-black/70 backdrop-blur-xl"
                   >
-                    <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
-                      <Pencil className="h-4 w-4" />
-                      {tMeta("editMetadata")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
-                      <ImageIcon className="h-4 w-4" />
-                      {tMeta("editImages")}
-                    </DropdownMenuItem>
+                    {/* Metadata / image edits and delete are admin-only. */}
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
+                          <Pencil className="h-4 w-4" />
+                          {tMeta("editMetadata")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
+                          <ImageIcon className="h-4 w-4" />
+                          {tMeta("editImages")}
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     {firstEpisodeId && (
                       <DropdownMenuItem onClick={() => setMediaInfoOpen(true)}>
                         <Info className="h-4 w-4" />
@@ -618,11 +652,15 @@ export default function ShowDetailPage() {
                         {tMovies("playExternal", { player: externalPlayerName || "" })}
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
-                      <Trash2 className="h-4 w-4" />
-                      {tMeta("deleteMedia")}
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
+                          <Trash2 className="h-4 w-4" />
+                          {tMeta("deleteMedia")}
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -638,7 +676,7 @@ export default function ShowDetailPage() {
               <div className="flex flex-col gap-1.5 pt-1 text-sm max-w-full md:max-w-[80%]">
                 {show.genres && show.genres.length > 0 && (
                   <div>
-                    <span className="text-white/50">Genres: </span>
+                    <span className="text-white/50">{tMovies("genres")}: </span>
                     <span className="text-white/90">
                       {show.genres.map((genre, i) => (
                         <span key={genre}>
@@ -656,13 +694,13 @@ export default function ShowDetailPage() {
                 )}
                 {show.directors && show.directors.length > 0 && (
                   <div>
-                    <span className="text-white/50">Director: </span>
+                    <span className="text-white/50">{tMovies("director")}: </span>
                     <span className="text-white/90">{show.directors.map((d) => d.name).join(", ")}</span>
                   </div>
                 )}
                 {show.studios && show.studios.length > 0 && (
                   <div>
-                    <span className="text-white/50">Studio: </span>
+                    <span className="text-white/50">{tMovies("studio")}: </span>
                     <span className="text-white/90">
                       {show.studios.map((studio, i) => (
                         <span key={studio}>
@@ -717,7 +755,7 @@ export default function ShowDetailPage() {
                           {ep.stillPath && !imgErrors.has(ep.stillPath) ? (
                             <Image
                               src={resolveImageSrc(ep.stillPath, 320)}
-                              alt={ep.title || `Episode ${ep.episodeNumber}`}
+                              alt={ep.title || t("episode", { number: ep.episodeNumber })}
                               fill
                               className="object-cover"
                               sizes="160px"
@@ -894,21 +932,23 @@ export default function ShowDetailPage() {
         </div>
       </div>
 
-      {/* Metadata editor dialog */}
-      <TvShowMetadataEditor
-        showId={showId}
-        open={metadataOpen}
-        onOpenChange={setMetadataOpen}
-      />
-
-      {/* Image editor dialog */}
-      <ImageEditorDialog
-        open={imageEditorOpen}
-        onOpenChange={setImageEditorOpen}
-        entityType="tvshow"
-        entityId={showId}
-        entityName={show.title}
-      />
+      {/* Metadata + image editor dialogs (admin-only) */}
+      {isAdmin && (
+        <>
+          <TvShowMetadataEditor
+            showId={showId}
+            open={metadataOpen}
+            onOpenChange={setMetadataOpen}
+          />
+          <ImageEditorDialog
+            open={imageEditorOpen}
+            onOpenChange={setImageEditorOpen}
+            entityType="tvshow"
+            entityId={showId}
+            entityName={show.title}
+          />
+        </>
+      )}
 
       {/* Personal rating dialog */}
       <StarRatingDialog
@@ -997,6 +1037,7 @@ export default function ShowDetailPage() {
           externalToast
         )}
       </GlassToast>
+      {errorToast}
     </div>
   );
 }

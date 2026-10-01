@@ -16,6 +16,7 @@ import { type MosaicMovie } from "@/components/home/hero-mosaic";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { DEFAULT_HERO_MOSAIC_CONFIG } from "@/lib/hero-mosaic-config";
 import { useTranslations } from "next-intl";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 interface ShowItem {
   id: string;
@@ -76,7 +77,9 @@ export default function TvHomePage() {
 function TvHomeContent() {
   const t = useTranslations("tv");
   const tHome = useTranslations("home");
+  const tMeta = useTranslations("metadata");
   const queryClient = useQueryClient();
+  const { showError, errorToast } = useErrorToast();
   // TV poster-wall layout (columns/style/angle/flow) — the TV-domain twin of the
   // cinema home's heroMosaicConfig. Drives the mosaic layout only; the /api/tv
   // hero-wall pool is a plain random draw (TV shows carry no year/resolution to
@@ -92,11 +95,12 @@ function TvHomeContent() {
   const libraries = allLibraries.filter((lib) => lib.type === "tvshow");
 
   const deleteLibrary = useMutation({
-    mutationFn: (id: string) => fetch(`/api/libraries/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => fetchOk(`/api/libraries/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       queryClient.invalidateQueries({ queryKey: ["tv-shows"] });
     },
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,13 +109,15 @@ function TvHomeContent() {
     mutationFn: ({ id, file }: { id: string; file: File }) => {
       const formData = new FormData();
       formData.append("file", file);
-      return fetch(`/api/libraries/${id}/cover`, { method: "POST", body: formData });
+      return fetchOk(`/api/libraries/${id}/cover`, { method: "POST", body: formData });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["libraries"] }),
+    onError: () => showError(tMeta("uploadFailed")),
   });
   const removeCover = useMutation({
-    mutationFn: (id: string) => fetch(`/api/libraries/${id}/cover`, { method: "DELETE" }),
+    mutationFn: (id: string) => fetchOk(`/api/libraries/${id}/cover`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["libraries"] }),
+    onError: () => showError(tMeta("imageDeleteFailed")),
   });
   const handleEditImage = useCallback((id: string) => {
     pendingLibraryIdRef.current = id;
@@ -252,6 +258,7 @@ function TvHomeContent() {
             )}
           </div>
         </div>
+        {errorToast}
       </div>
     </AmbientProvider>
   );

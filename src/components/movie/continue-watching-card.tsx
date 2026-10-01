@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Play } from "lucide-react";
+import { X } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { TiltCard } from "@/components/ui/tilt-card";
@@ -19,6 +19,8 @@ interface ContinueWatchingCardProps {
   progress?: number;
   discLabel?: string | null;
   currentDisc?: number;
+  /** Remove this item from Continue Watching (clears the resume point). */
+  onDismiss?: () => void;
 }
 
 export function ContinueWatchingCard({
@@ -31,9 +33,11 @@ export function ContinueWatchingCard({
   progress,
   discLabel,
   currentDisc,
+  onDismiss,
 }: ContinueWatchingCardProps) {
   const router = useRouter();
   const t = useTranslations("movies");
+  const tMeta = useTranslations("metadata");
   const [imgError, setImgError] = useState(false);
   const imageSrc = fanartPath || posterPath;
   const displayTitle = discLabel ? `${discLabel} · ${title}` : title;
@@ -70,7 +74,7 @@ export function ContinueWatchingCard({
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                  No Image
+                  {tMeta("noImage")}
                 </div>
               )}
 
@@ -113,6 +117,24 @@ export function ContinueWatchingCard({
               )}
             </div>
           </TiltCard>
+
+          {/* Dismiss (×) — top-right, on hover / keyboard focus (always shown on
+              touch screens, which have no hover). A sibling of the TiltCard, not
+              inside it, so the lifted 3D play overlay can't swallow its clicks. */}
+          {onDismiss && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDismiss();
+              }}
+              aria-label={t("removeFromContinueWatching")}
+              title={t("removeFromContinueWatching")}
+              className="absolute right-1.5 top-1.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white/80 opacity-0 transition-opacity hover:bg-black/80 hover:text-white focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100 cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </Link>
     </div>

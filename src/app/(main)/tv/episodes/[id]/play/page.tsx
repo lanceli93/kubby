@@ -2,6 +2,8 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { fetchOk } from "@/components/shared/use-error-toast";
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useUserPreferences, type UserPreferences } from "@/hooks/use-user-preferences";
@@ -53,6 +55,7 @@ export default function EpisodePlayerPage() {
   const searchParams = useSearchParams();
   const episodeId = params.id as string;
   const queryClient = useQueryClient();
+  const tMovies = useTranslations("movies");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -355,12 +358,13 @@ export default function EpisodePlayerPage() {
       if (is360Mode && view360Ref.current) {
         formData.append("viewState", JSON.stringify(view360Ref.current.getView()));
       }
-      return fetch(`${basePath}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
+      return fetchOk(`${basePath}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tv-episode-bookmarks", episodeId] });
-      showOsd("Bookmark added");
+      showOsd(tMovies("bookmarkAdded"));
     },
+    onError: () => showOsd(tMovies("bookmarkSaveFailed")),
   });
 
   const saveDetailedBookmark = useMutation({
@@ -374,7 +378,7 @@ export default function EpisodePlayerPage() {
       if (thumbnail) formData.append("thumbnail", thumbnail, "thumb.jpg");
       if (aspect) formData.append("thumbnailAspect", String(aspect));
       if (is360Mode && view360Ref.current) formData.append("viewState", JSON.stringify(view360Ref.current.getView()));
-      return fetch(`${basePath}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
+      return fetchOk(`${basePath}/bookmarks`, { method: "POST", body: formData }).then((r) => r.json());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tv-episode-bookmarks", episodeId] });
@@ -383,8 +387,9 @@ export default function EpisodePlayerPage() {
       setBookmarkTags([]);
       setBookmarkNote("");
       setTagInput("");
-      showOsd("Bookmark saved");
+      showOsd(tMovies("bookmarkSaved"));
     },
+    onError: () => showOsd(tMovies("bookmarkSaveFailed")),
   });
 
   // ── Auto-play next episode ────────────────────────────────────────

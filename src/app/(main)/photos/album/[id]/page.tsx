@@ -1,11 +1,27 @@
 "use client";
 
-import { use, useCallback, useMemo, useState } from "react";
+import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, MoreHorizontal, Pencil, Trash2, CheckSquare, X, ImageMinus } from "lucide-react";
+import {
+  ArrowLeft,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  CheckSquare,
+  X,
+  ImageMinus,
+  BookImage,
+} from "lucide-react";
 import { PhotoGrid, type PhotoItem } from "@/components/photos/photo-grid";
+import {
+  DeletePhotosDialog,
+  type DeletePhotosResult,
+} from "@/components/photos/delete-photos-dialog";
+import { GlassToast } from "@/components/ui/glass-toast";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { fetchJsonOrThrow } from "@/lib/photos/fetch-json";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -38,12 +54,20 @@ export default function AlbumDetailPage({
   const t = useTranslations("photos");
   const router = useRouter();
   const queryClient = useQueryClient();
+  const isAdmin = useIsAdmin();
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadedItems, setLoadedItems] = useState<PhotoItem[]>([]);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePhotosOpen, setDeletePhotosOpen] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; success: boolean } | null>(null);
+
+  const showToast = useCallback((msg: string, success: boolean) => {
+    setToast({ msg, success });
+    window.setTimeout(() => setToast(null), 2500);
+  }, []);
 
   const { data: album } = useQuery<AlbumDetail>({
     queryKey: ["photo-album", albumId],
@@ -71,7 +95,7 @@ export default function AlbumDetailPage({
 
   const removeItems = useMutation({
     mutationFn: (itemIds: string[]) =>
-      fetch(`/api/photos/albums/${albumId}/items`, {
+      fetchJsonOrThrow(`/api/photos/albums/${albumId}/items`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemIds }),
@@ -84,15 +108,53 @@ export default function AlbumDetailPage({
       queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
       exitSelection();
     },
+    onError: () => showToast(t("actionFailed"), false),
   });
 
   const deleteAlbum = useMutation({
-    mutationFn: () => fetch(`/api/photos/albums/${albumId}`, { method: "DELETE" }),
+    mutationFn: () => fetchJsonOrThrow(`/api/photos/albums/${albumId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
       router.push("/photos");
     },
+    // Stay on the album on failure — the dialog closes and a toast explains.
+    onError: () => {
+      setDeleteOpen(false);
+      showToast(t("actionFailed"), false);
+    },
   });
+
+  const setCover = useMutation({
+    mutationFn: (itemId: string) =>
+      fetchJsonOrThrow(`/api/photos/albums/${albumId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coverItemId: itemId }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["photo-album", albumId] });
+      queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
+      exitSelection();
+      showToast(t("coverSet"), true);
+    },
+    onError: () => showToast(t("actionFailed"), false),
+  });
+
+  const onPhotosDeleted = useCallback(
+    (result: DeletePhotosResult) => {
+      setDeletePhotosOpen(false);
+      exitSelection();
+      if (result.failed.length > 0) {
+        showToast(
+          t("deletePartial", { deleted: result.deleted.length, failed: result.failed.length }),
+          false,
+        );
+      } else {
+        showToast(t("deletedCount", { count: result.deleted.length }), true);
+      }
+    },
+    [exitSelection, showToast, t],
+  );
 
   const selectedCount = selectedIds.size;
 
@@ -113,6 +175,18 @@ export default function AlbumDetailPage({
             <span className="flex-1 text-sm font-medium text-foreground">
               {t("selectedCount", { count: selectedCount })}
             </span>
+            {selectedCount === 1 && (
+              <button
+                type="button"
+                disabled={setCover.isPending}
+                onClick={() => setCover.mutate([...selectedIds][0])}
+                aria-label={t("setAsCover")}
+                className="focus-ring flex items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-white/10 disabled:opacity-40"
+              >
+                <BookImage className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("setAsCover")}</span>
+              </button>
+            )}
             <button
               type="button"
               disabled={selectedCount === 0 || removeItems.isPending}
@@ -122,6 +196,18 @@ export default function AlbumDetailPage({
               <ImageMinus className="h-4 w-4" />
               {t("removeFromAlbum")}
             </button>
+            {isAdmin && (
+              <button
+                type="button"
+                disabled={selectedCount === 0}
+                onClick={() => setDeletePhotosOpen(true)}
+                aria-label={t("delete")}
+                className="focus-ring flex items-center gap-2 rounded-lg bg-destructive/15 px-3 py-1.5 text-sm font-medium text-red-300 transition-colors hover:bg-destructive/25 disabled:opacity-40"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("delete")}</span>
+              </button>
+            )}
           </>
         ) : (
           <>
@@ -213,7 +299,7 @@ export default function AlbumDetailPage({
                 onClick={() => setDeleteOpen(false)}
                 className="focus-ring rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
-                {t("close")}
+                {t("cancel")}
               </button>
               <button
                 type="button"
@@ -227,6 +313,18 @@ export default function AlbumDetailPage({
           </DialogContent>
         </Dialog>
       )}
+
+      {deletePhotosOpen && (
+        <DeletePhotosDialog
+          ids={[...selectedIds]}
+          onClose={() => setDeletePhotosOpen(false)}
+          onDeleted={onPhotosDeleted}
+        />
+      )}
+
+      <GlassToast visible={!!toast} success={toast?.success ?? true}>
+        {toast?.msg}
+      </GlassToast>
 
       {/* loadedItems is tracked for potential future select-all; referenced to
           keep the setter meaningful. */}
@@ -247,10 +345,11 @@ function RenameAlbumDialog({
   const t = useTranslations("photos");
   const queryClient = useQueryClient();
   const [name, setName] = useState(currentName);
+  const [error, setError] = useState(false);
 
   const rename = useMutation({
     mutationFn: (newName: string) =>
-      fetch(`/api/photos/albums/${albumId}`, {
+      fetchJsonOrThrow(`/api/photos/albums/${albumId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName }),
@@ -259,6 +358,10 @@ function RenameAlbumDialog({
       queryClient.invalidateQueries({ queryKey: ["photo-album", albumId] });
       queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
       onClose();
+    },
+    onError: () => {
+      setError(true);
+      window.setTimeout(() => setError(false), 2500);
     },
   });
 
@@ -288,18 +391,22 @@ function RenameAlbumDialog({
               onClick={onClose}
               className="focus-ring rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              {t("close")}
+              {t("cancel")}
             </button>
             <button
               type="submit"
               disabled={!name.trim() || rename.isPending}
               className="focus-ring rounded-lg bg-primary/25 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/35 disabled:opacity-40"
             >
-              {t("create")}
+              {t("save")}
             </button>
           </div>
         </form>
       </DialogContent>
+
+      <GlassToast visible={error} success={false} className="z-[100]">
+        {t("actionFailed")}
+      </GlassToast>
     </Dialog>
   );
 }

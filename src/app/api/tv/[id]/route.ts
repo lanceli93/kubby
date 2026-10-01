@@ -19,6 +19,7 @@ import { auth } from "@/lib/auth";
 import { writeTvShowNfo, type NfoTvShowData } from "@/lib/scanner/nfo-writer";
 import { computeAgeAtRelease } from "@/lib/scanner";
 import { resolveDataPath } from "@/lib/paths";
+import { requireAdmin } from "@/lib/auth-guard";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -238,10 +239,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {
@@ -386,10 +385,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   const deleteFiles = request.nextUrl.searchParams.get("deleteFiles") === "true";

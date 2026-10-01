@@ -66,6 +66,8 @@ export function BookmarkCard({
   disabledIconIds,
 }: BookmarkCardProps) {
   const tPM = useTranslations("personalMetadata");
+  const t = useTranslations("movies");
+  const tCommon = useTranslations("common");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editIconType, setEditIconType] = useState(bookmark.iconType || "bookmark");
@@ -146,7 +148,7 @@ export function BookmarkCard({
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={resolveImageSrc(bookmark.thumbnailPath, 640)}
-            alt={`Bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`}
+            alt={t("bookmarkAt", { time: formatTimestamp(bookmark.timestampSeconds) })}
             className="h-full w-full object-cover"
             draggable={false}
           />
@@ -181,7 +183,7 @@ export function BookmarkCard({
         {/* Disc badge - top left */}
         {bookmark.discNumber && bookmark.discNumber > 1 && (
           <span className="absolute left-2 top-2 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-            Disc {bookmark.discNumber}
+            {t("disc")} {bookmark.discNumber}
           </span>
         )}
 
@@ -194,7 +196,8 @@ export function BookmarkCard({
               openEdit();
             }}
             className="absolute bottom-2 right-11 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100 cursor-pointer"
-            title="Edit bookmark"
+            title={t("editBookmark")}
+            aria-label={t("editBookmark")}
           >
             <MoreVertical className="h-3.5 w-3.5" />
           </button>
@@ -209,7 +212,8 @@ export function BookmarkCard({
               setConfirmDelete(true);
             }}
             className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500/80 text-white opacity-0 transition-opacity hover:bg-red-500 group-hover:opacity-100 cursor-pointer"
-            title="Delete bookmark"
+            title={t("deleteBookmark")}
+            aria-label={t("deleteBookmark")}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -221,7 +225,7 @@ export function BookmarkCard({
             className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-md bg-black/80"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
           >
-            <p className="text-sm text-white/90">Delete this bookmark?</p>
+            <p className="text-sm text-white/90">{t("confirmDeleteBookmark")}</p>
             <div className="flex gap-2">
               <button
                 onClick={(e) => {
@@ -231,7 +235,7 @@ export function BookmarkCard({
                 }}
                 className="rounded-md px-3 py-1.5 text-xs text-white/60 hover:text-white bg-white/10 hover:bg-white/20 cursor-pointer"
               >
-                Cancel
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={(e) => {
@@ -242,7 +246,7 @@ export function BookmarkCard({
                 }}
                 className="rounded-md px-3 py-1.5 text-xs font-medium text-white bg-red-500/80 hover:bg-red-500 cursor-pointer"
               >
-                Delete
+                {tCommon("delete")}
               </button>
             </div>
           </div>
@@ -282,12 +286,12 @@ export function BookmarkCard({
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent className="border-white/10 bg-black/70 backdrop-blur-xl sm:max-w-[440px]">
             <DialogHeader>
-              <DialogTitle>Edit Bookmark</DialogTitle>
+              <DialogTitle>{t("editBookmark")}</DialogTitle>
             </DialogHeader>
 
             {/* Timestamp (read-only) */}
             <div>
-              <label className="mb-1 block text-sm text-muted-foreground">Timestamp</label>
+              <label className="mb-1 block text-sm text-muted-foreground">{t("bookmarkTimestamp")}</label>
               <div className="rounded-md bg-white/10 px-3 py-2 text-sm text-foreground">
                 {formatTimestamp(bookmark.timestampSeconds)}
               </div>
@@ -295,7 +299,7 @@ export function BookmarkCard({
 
             {/* Icon type - scrollable grid */}
             <div>
-              <label className="mb-1 block text-sm text-muted-foreground">Type</label>
+              <label className="mb-1 block text-sm text-muted-foreground">{t("bookmarkType")}</label>
               <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto p-0.5">
                 {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIconIds?.includes(bi.id)).map((bi) => {
                   const BiIcon = bi.icon;
@@ -334,7 +338,7 @@ export function BookmarkCard({
 
             {/* Tags */}
             <div>
-              <label className="mb-1 block text-sm text-muted-foreground">Tags</label>
+              <label className="mb-1 block text-sm text-muted-foreground">{t("bookmarkTags")}</label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {editTags.map((tag) => (
                   <span
@@ -364,18 +368,18 @@ export function BookmarkCard({
                     setEditTagInput("");
                   }
                 }}
-                placeholder="Type and press Enter to add"
+                placeholder={t("tagsPlaceholder")}
                 className="w-full rounded-md bg-white/10 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:ring-1 focus:ring-white/30"
               />
             </div>
 
             {/* Note */}
             <div>
-              <label className="mb-1 block text-sm text-muted-foreground">Note</label>
+              <label className="mb-1 block text-sm text-muted-foreground">{t("bookmarkNote")}</label>
               <textarea
                 value={editNote}
                 onChange={(e) => setEditNote(e.target.value)}
-                placeholder="Optional note..."
+                placeholder={t("bookmarkNotePlaceholder")}
                 rows={2}
                 className="w-full resize-none rounded-md bg-white/10 px-3 py-2 text-sm text-foreground placeholder-muted-foreground outline-none focus:ring-1 focus:ring-white/30"
               />
@@ -386,13 +390,13 @@ export function BookmarkCard({
                 onClick={() => setEditOpen(false)}
                 className="rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                Cancel
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={handleSave}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 cursor-pointer"
               >
-                Save
+                {tCommon("save")}
               </button>
             </DialogFooter>
           </DialogContent>

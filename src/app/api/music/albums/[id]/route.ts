@@ -17,6 +17,7 @@ import {
   removeDirIfEmpty,
   pruneOrphanArtists,
 } from "@/lib/music/mutations";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // GET /api/music/albums/[id]
 export async function GET(
@@ -112,10 +113,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {
@@ -155,10 +154,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   const deleteFiles = request.nextUrl.searchParams.get("deleteFiles") === "true";

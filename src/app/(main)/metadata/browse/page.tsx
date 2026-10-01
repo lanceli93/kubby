@@ -35,6 +35,7 @@ const POSTER_HEIGHT = 210;
 
 export default function MetadataBrowsePage() {
   const t = useTranslations("dashboard");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>("movies");
@@ -133,8 +134,8 @@ export default function MetadataBrowsePage() {
   });
 
   const tabs: { key: TabType; label: string; icon: typeof Film }[] = [
-    { key: "movies", label: "Movies", icon: Film },
-    { key: "people", label: "Actors", icon: Users },
+    { key: "movies", label: t("tabMovies"), icon: Film },
+    { key: "people", label: t("tabActors"), icon: Users },
   ];
 
   const filters: { key: MissingFilter; label: string; icon?: typeof FileText }[] = [
@@ -194,7 +195,7 @@ export default function MetadataBrowsePage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={activeTab === "movies" ? "Search movies..." : "Search actors..."}
+              placeholder={activeTab === "movies" ? t("searchMoviesPlaceholder") : t("searchActorsPlaceholder")}
               className="h-9 w-full rounded-md border border-white/[0.06] bg-white/[0.05] pl-9 pr-3 text-sm text-foreground placeholder:text-[#555568] focus:border-primary focus:outline-none"
             />
           </div>
@@ -252,7 +253,7 @@ export default function MetadataBrowsePage() {
       {/* Card Grid */}
       {loading && currentItems.length === 0 ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground text-sm">
-          Loading...
+          {tc("loading")}
         </div>
       ) : currentItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
@@ -393,15 +394,16 @@ const BrowsePersonCard = memo(function BrowsePersonCard({ item, onSelect }: { it
 
 /* ── Missing field icon indicators ── */
 
-const missingIconMap: Record<string, { icon: typeof FileText; label: string }> = {
-  overview: { icon: FileText, label: "Overview" },
-  date: { icon: Calendar, label: "Date" },
-  fanart: { icon: ImageOff, label: "Fanart" },
-  height: { icon: Ruler, label: "Height" },
-  cupSize: { icon: Cherry, label: "Cup Size" },
+const missingIconMap: Record<string, { icon: typeof FileText; labelKey: string }> = {
+  overview: { icon: FileText, labelKey: "fieldOverview" },
+  date: { icon: Calendar, labelKey: "fieldDate" },
+  fanart: { icon: ImageOff, labelKey: "fieldFanart" },
+  height: { icon: Ruler, labelKey: "fieldHeight" },
+  cupSize: { icon: Cherry, labelKey: "fieldCupSize" },
 };
 
 function MissingIndicators({ fields }: { fields: string[] }) {
+  const t = useTranslations("dashboard");
   if (fields.length === 0) return null;
   return (
     <div className="absolute bottom-1.5 left-1.5 flex gap-1">
@@ -413,7 +415,7 @@ function MissingIndicators({ fields }: { fields: string[] }) {
           <div
             key={f}
             className="flex h-5 w-5 items-center justify-center rounded-md bg-black/60 backdrop-blur-sm"
-            title={`Missing: ${entry.label}`}
+            title={t("missingFieldTitle", { field: t(entry.labelKey) })}
           >
             <Icon className="h-3 w-3 text-amber-400" />
           </div>

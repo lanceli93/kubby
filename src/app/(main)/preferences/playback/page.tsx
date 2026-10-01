@@ -4,9 +4,17 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useQueryClient } from "@tanstack/react-query";
-import { Monitor } from "lucide-react";
+import { Monitor, RotateCcw } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const PLAYER_PRESETS: Record<string, { platform: "mac" | "win"; macPath?: string; winPath?: string; label: string; icon: string }> = {
   IINA: { platform: "mac", macPath: "/Applications/IINA.app", label: "macOS", icon: "/icons/iina.png" },
@@ -31,6 +39,7 @@ export default function PlaybackPreferencesPage() {
   const [playerPath, setPlayerPath] = useState("");
   const [playerMode, setPlayerMode] = useState<string>("local");
   const [isLocalhost, setIsLocalhost] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   useEffect(() => {
     const host = window.location.hostname;
@@ -113,10 +122,54 @@ export default function PlaybackPreferencesPage() {
     }
   }
 
+  // Reset to defaults — clears the external player selection, going back to
+  // the built-in web player.
+  async function handleResetDefaults() {
+    setResetConfirmOpen(false);
+    setPlaybackSaving(true);
+    try {
+      const res = await fetch("/api/settings/personal-metadata", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          externalPlayerEnabled: false,
+          externalPlayerName: null,
+          externalPlayerPath: null,
+          externalPlayerMode: "local",
+        }),
+      });
+      if (res.ok) {
+        setPlayerName("");
+        setPlayerPath("");
+        // Mirror the hydration effect's localhost correction so the UI
+        // never shows "local" mode when it isn't actually selectable.
+        setPlayerMode(isLocalhost ? "local" : "stream");
+        showPlaybackToast(t("playbackSettingsSaved"), true);
+        queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+      } else {
+        showPlaybackToast(t("failedToSave"), false);
+      }
+    } catch {
+      showPlaybackToast(t("somethingWentWrong"), false);
+    } finally {
+      setPlaybackSaving(false);
+    }
+  }
+
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("playback")}</h1>
+      <div className="flex w-full max-w-[720px] items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("playback")}</h1>
+        <button
+          type="button"
+          onClick={() => setResetConfirmOpen(true)}
+          className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground active:scale-95 cursor-pointer"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          {tCommon("resetToDefaults")}
+        </button>
+      </div>
 
       <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
@@ -135,8 +188,7 @@ export default function PlaybackPreferencesPage() {
               }`}
             >
               <Monitor className="h-5 w-5 flex-shrink-0 opacity-50" />
-              <span>None</span>
-              <span className="text-xs text-muted-foreground">(Web Player)</span>
+              <span>{t("playerNone")}</span>
             </button>
             {Object.entries(PLAYER_PRESETS).map(([name, preset]) => {
               const disabled = !isPlayerCompatible(name, playerMode);
@@ -222,6 +274,32 @@ export default function PlaybackPreferencesPage() {
       <GlassToast visible={!!playbackToast} success={playbackToast?.success}>
         {playbackToast?.text}
       </GlassToast>
+
+      {/* Reset to Defaults Confirmation */}
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>{t("resetDefaultsTitle")}</DialogTitle>
+            <DialogDescription>{t("resetDefaultsDesc")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleResetDefaults}
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 cursor-pointer"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </div>
   );

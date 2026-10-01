@@ -105,6 +105,13 @@ These hold across the whole codebase — know them before changing anything.
   via `KUBBY_DATA_DIR` env. Never hardcode paths.
 - **Auth split**: `auth.config.ts` (lightweight, Edge-compatible, no DB) + `auth.ts`
   (full, with DB). Middleware imports the lightweight one.
+- **API authorization is per-handler**: the Edge proxy only checks *login* (and
+  `/api/users`, `/api/setup`, `/api/filesystem` are public prefixes). Every route calls
+  `requireUser()` or `requireAdmin()` from `src/lib/auth-guard.ts` (DB-backed — the JWT's
+  `isAdmin` is frozen at sign-in). Shared/global mutations are admin-only; personal data
+  (ratings, favorites, bookmarks, progress, own prefs) is per-user. UI hides admin
+  controls via `useIsAdmin()` — cosmetic only. See `references/architecture.md` →
+  Authentication.
 - **Data directory resolution** (launcher): `KUBBY_DATA_DIR` env > `config.json`
   `dataDir` > OS default. Windows installer provides a custom page; upgrade
   preserves the previous choice via registry.

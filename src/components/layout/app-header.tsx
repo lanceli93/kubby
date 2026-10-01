@@ -17,6 +17,7 @@ import {
 import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
 import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
 import { useHasTvLibrary } from "@/hooks/use-has-tv-library";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 
 function KubbyLogo({ className }: { className?: string }) {
   return (
@@ -55,6 +56,7 @@ export function AppHeader() {
   const hasPhotoLibrary = useHasPhotoLibrary();
   const hasMusicLibrary = useHasMusicLibrary();
   const hasTvLibrary = useHasTvLibrary();
+  const isAdmin = useIsAdmin();
   const isPhotoDomain = pathname.startsWith("/photos");
   const isMusicDomain = pathname.startsWith("/music");
   const isTvDomain = pathname.startsWith("/tv");
@@ -115,6 +117,16 @@ export function AppHeader() {
     queryFn: () => fetch(`/api/tv/people/${personId}`).then((r) => r.json()),
     enabled: !!isTvPersonFilmography && !!personId,
   });
+
+  // Admin-only "Demo" pill while demo libraries or the shared demo/demo account
+  // remain — the panel that removes them lives on the dashboard. Shares the
+  // ["demo-status"] cache with that panel, so clearing there hides this too.
+  const { data: demoStatus } = useQuery<{ hasDemo: boolean; hasDemoUser?: boolean }>({
+    queryKey: ["demo-status"],
+    queryFn: () => fetch("/api/setup/demo").then((r) => r.json()),
+    enabled: isAdmin,
+  });
+  const showDemoBadge = isAdmin && (!!demoStatus?.hasDemo || !!demoStatus?.hasDemoUser);
 
   const initials =
     session?.user?.name
@@ -272,6 +284,16 @@ export function AppHeader() {
         )}
       </div>
       <div className="pointer-events-auto flex items-center gap-4">
+        {showDemoBadge && (
+          <Link
+            href="/dashboard#demo-data"
+            title={tNav("demoBadgeTitle")}
+            aria-label={tNav("demoBadgeTitle")}
+            className="hidden items-center rounded-full border border-amber-300/25 bg-amber-300/[0.08] px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-amber-200/90 backdrop-blur-sm transition-colors hover:border-amber-300/40 hover:bg-amber-300/15 hover:text-amber-100 sm:inline-flex"
+          >
+            {tNav("demoBadge")}
+          </Link>
+        )}
         <Link
           href="/search"
           onClick={(e) => {

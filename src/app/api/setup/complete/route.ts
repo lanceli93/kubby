@@ -53,14 +53,24 @@ export async function POST(request: Request) {
 
   let libraryId: string | null = null;
   if (libraryName && paths.length > 0) {
+    // Allowlist the type (mirrors POST /api/libraries) so an unexpected
+    // value can't land in the DB — this endpoint is reachable without auth
+    // until the first user exists.
+    const validTypes = ["movie", "tvshow", "photo", "music"];
+    const finalType = validTypes.includes(libraryType) ? libraryType : "movie";
+    // Photo and music libraries have no scraper/NFO/metadata-language concept —
+    // force these off regardless of what the request body sent (same rule as
+    // POST /api/libraries).
+    const isMetadataless = finalType === "photo" || finalType === "music";
+
     libraryId = uuid();
     db.insert(mediaLibraries).values({
       id: libraryId,
       name: libraryName,
-      type: libraryType || "movie",
+      type: finalType,
       folderPath: serializeFolderPaths(paths),
-      scraperEnabled: scraperEnabled ? true : false,
-      jellyfinCompat: jellyfinCompat ? true : false,
+      scraperEnabled: isMetadataless ? false : !!scraperEnabled,
+      jellyfinCompat: isMetadataless ? false : !!jellyfinCompat,
     }).run();
   }
 

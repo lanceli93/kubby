@@ -2,12 +2,20 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Film, User } from "lucide-react";
+import { ChevronDown, Film, User, RotateCcw } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCurrentDomain } from "@/hooks/use-current-domain";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   getTier,
   getTierColor,
@@ -197,6 +205,7 @@ export default function CardBadgesPage() {
   const [showTvBadge, setShowTvBadge] = useState(true);
   const [showTvResolutionBadge, setShowTvResolutionBadge] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [toast, setToast] = useState<{
     text: string;
     success: boolean;
@@ -248,10 +257,56 @@ export default function CardBadgesPage() {
     }
   };
 
+  // Reset to defaults — every badge toggle on this page defaults to shown.
+  const handleResetDefaults = async () => {
+    setResetConfirmOpen(false);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/personal-metadata", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          showMovieRatingBadge: true,
+          showResolutionBadge: true,
+          showPersonTierBadge: true,
+          showPersonRatingBadge: true,
+          showTvShowRatingBadge: true,
+          showTvResolutionBadge: true,
+        }),
+      });
+      if (res.ok) {
+        setShowMovieBadge(true);
+        setShowResolutionBadge(true);
+        setShowPersonBadge(true);
+        setShowPersonRatingBadge(true);
+        setShowTvBadge(true);
+        setShowTvResolutionBadge(true);
+        showToast(t("saved"), true);
+        queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+      } else {
+        showToast(t("failedToSave"), false);
+      }
+    } catch {
+      showToast(t("failedToSave"), false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
+      <div className="flex w-full max-w-[720px] items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
+        <button
+          type="button"
+          onClick={() => setResetConfirmOpen(true)}
+          className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground active:scale-95 cursor-pointer"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          {tCommon("resetToDefaults")}
+        </button>
+      </div>
 
       {/* Cinema domain → Movie + Person badge sections only. */}
       {domain !== "tv" && (
@@ -570,6 +625,32 @@ export default function CardBadgesPage() {
       <GlassToast visible={!!toast} success={toast?.success}>
         {toast?.text}
       </GlassToast>
+
+      {/* Reset to Defaults Confirmation */}
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>{t("resetDefaultsTitle")}</DialogTitle>
+            <DialogDescription>{t("resetDefaultsDesc")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleResetDefaults}
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 cursor-pointer"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </div>
   );

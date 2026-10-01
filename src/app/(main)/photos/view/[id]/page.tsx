@@ -9,11 +9,29 @@ import {
   useCallback,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { X, ChevronLeft, ChevronRight, Info, FolderPlus } from "lucide-react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  FolderPlus,
+  Trash2,
+  BookImage,
+} from "lucide-react";
 import { LightboxVideo } from "@/components/photos/lightbox-video";
 import { LightboxInfoPanel } from "@/components/photos/lightbox-info-panel";
 import { AddToAlbumDialog } from "@/components/photos/add-to-album-dialog";
+import { DeletePhotosDialog } from "@/components/photos/delete-photos-dialog";
+import { GlassToast } from "@/components/ui/glass-toast";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { fetchJsonOrThrow } from "@/lib/photos/fetch-json";
 
 // Full-screen lightbox for a single photo/video (docs/photos-library-design.md
 // §7). The container is `fixed inset-0 z-50 bg-black` so it fully covers the
@@ -48,7 +66,10 @@ export default function PhotoViewPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const t = useTranslations("photos");
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const isAdmin = useIsAdmin();
   const searchParams = useSearchParams();
   // Scope carried from the timeline / album view so prev/next walks the same
   // set and shares its cache. `lib` = library filter, `album` = album detail.
@@ -57,6 +78,15 @@ export default function PhotoViewPage({
 
   const [showInfo, setShowInfo] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; success: boolean } | null>(
+    null,
+  );
+
+  const showToast = useCallback((msg: string, success: boolean) => {
+    setToast({ msg, success });
+    window.setTimeout(() => setToast(null), 2500);
+  }, []);
 
   // The current item's library — needed to scope the album picker. Reuses the
   // ["photo", id] detail cache the info panel also uses; only fetched once the
@@ -130,8 +160,36 @@ export default function PhotoViewPage({
   );
   const close = useCallback(() => router.push("/photos"), [router]);
 
-  // Keyboard: ←/→ navigate, Esc closes.
+  // Opened from an album → the current item can become that album's cover.
+  const setCover = useMutation({
+    mutationFn: () =>
+      fetchJsonOrThrow(`/api/photos/albums/${albumParam}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coverItemId: id }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["photo-album", albumParam] });
+      queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
+      showToast(t("coverSet"), true);
+    },
+    onError: () => showToast(t("actionFailed"), false),
+  });
+
+  // After a delete, step to a neighbour (next first, else previous) so the
+  // viewer keeps flowing; with no neighbours left, leave the lightbox.
+  const onDeleted = useCallback(() => {
+    setDeleteOpen(false);
+    const target = next ?? prev;
+    if (target) goTo(target);
+    else close();
+  }, [next, prev, goTo, close]);
+
+  // Keyboard: ←/→ navigate, Esc closes. Suspended while a dialog is open so
+  // Esc dismisses the dialog instead of the lightbox behind it.
+  const dialogOpen = addOpen || deleteOpen;
   useEffect(() => {
+    if (dialogOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") {
         e.preventDefault();
@@ -146,7 +204,7 @@ export default function PhotoViewPage({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [prev, next, goTo, close]);
+  }, [prev, next, goTo, close, dialogOpen]);
 
   // Preload the immediate neighbours (images only — video isn't preloaded).
   useEffect(() => {
@@ -191,7 +249,7 @@ export default function PhotoViewPage({
         <button
           type="button"
           onClick={close}
-          aria-label="Close"
+          aria-label={t("close")}
           className="focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white"
         >
           <X className="h-5 w-5" />
@@ -199,10 +257,23 @@ export default function PhotoViewPage({
         <span className="flex-1 truncate text-sm font-medium text-white/80 drop-shadow">
           {current?.fileName ?? ""}
         </span>
+        {albumParam && (
+          <button
+            type="button"
+            disabled={setCover.isPending}
+            onClick={() => setCover.mutate()}
+            aria-label={t("setAsCover")}
+            title={t("setAsCover")}
+            className="focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40"
+          >
+            <BookImage className="h-5 w-5" />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          aria-label="Add to album"
+          aria-label={t("addToAlbum")}
+          title={t("addToAlbum")}
           className="focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-white/15 hover:text-white"
         >
           <FolderPlus className="h-5 w-5" />
@@ -210,13 +281,25 @@ export default function PhotoViewPage({
         <button
           type="button"
           onClick={() => setShowInfo((v) => !v)}
-          aria-label="Info"
+          aria-label={t("infoTitle")}
+          title={t("infoTitle")}
           className={`focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full drop-shadow transition-colors hover:bg-white/15 hover:text-white ${
             showInfo ? "bg-white/15 text-white" : "text-white/80"
           }`}
         >
           <Info className="h-5 w-5" />
         </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            aria-label={t("deletePhoto")}
+            title={t("deletePhoto")}
+            className="focus-ring pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full text-white/80 drop-shadow transition-colors hover:bg-red-500/20 hover:text-red-300"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Prev / next arrows (hidden when there's no neighbour). */}
@@ -224,7 +307,7 @@ export default function PhotoViewPage({
         <button
           type="button"
           onClick={() => goTo(prev)}
-          aria-label="Previous"
+          aria-label={t("previous")}
           className="focus-ring absolute left-2 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white/70 drop-shadow transition-colors hover:bg-white/15 hover:text-white sm:left-4"
         >
           <ChevronLeft className="h-7 w-7" />
@@ -234,7 +317,7 @@ export default function PhotoViewPage({
         <button
           type="button"
           onClick={() => goTo(next)}
-          aria-label="Next"
+          aria-label={t("next")}
           className="focus-ring absolute right-2 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full text-white/70 drop-shadow transition-colors hover:bg-white/15 hover:text-white sm:right-4"
         >
           <ChevronRight className="h-7 w-7" />
@@ -253,6 +336,22 @@ export default function PhotoViewPage({
           onDone={() => setAddOpen(false)}
         />
       )}
+
+      {deleteOpen && (
+        <DeletePhotosDialog
+          ids={[id]}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={onDeleted}
+        />
+      )}
+
+      <GlassToast
+        visible={!!toast}
+        success={toast?.success ?? true}
+        className="z-[100]"
+      >
+        {toast?.msg}
+      </GlassToast>
     </div>
   );
 }

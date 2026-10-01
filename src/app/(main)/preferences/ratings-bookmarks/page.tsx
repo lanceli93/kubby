@@ -2,13 +2,21 @@
 
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Upload, Trash2, ChevronUp, ChevronDown, Pencil, Plus, Minus } from "lucide-react";
+import { X, Upload, Trash2, ChevronUp, ChevronDown, Pencil, Plus, Minus, RotateCcw } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { useTranslations } from "next-intl";
 import { BUILTIN_BOOKMARK_ICONS } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useCurrentDomain } from "@/hooks/use-current-domain";
 import type { UserPreferences } from "@/hooks/use-user-preferences";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface CustomIcon {
   id: string;
@@ -81,6 +89,10 @@ export default function PersonalMetadataPage() {
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [iconDotColor, setIconDotColor] = useState("#ffffff");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Custom icon delete confirmation — mirrors startDelete/deletingDim above.
+  const [deletingIcon, setDeletingIcon] = useState<{ id: string; label: string; count: number | null } | null>(null);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const showToast = (text: string, success: boolean) => {
     clearTimeout(toastTimer.current);
@@ -302,15 +314,29 @@ export default function PersonalMetadataPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookmark-icons"] });
     },
+    onError: () => {
+      showToast(t("failedToSave"), false);
+    },
   });
 
   const deleteIcon = useMutation({
     mutationFn: async (iconId: string) => {
       const res = await fetch(`/api/settings/bookmark-icons/${iconId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
+      return iconId;
     },
-    onSuccess: () => {
+    onSuccess: (iconId) => {
       queryClient.invalidateQueries({ queryKey: ["bookmark-icons"] });
+      // The server already reset the saved quickBookmarkTemplate.iconType if it
+      // pointed at this icon — keep the unsaved local draft in sync too, or a
+      // follow-up Save would write the deleted icon id straight back.
+      setQbIconType((prev) => (prev === iconId ? "bookmark" : prev));
+      setDisabledIcons((prev) => {
+        if (!prev.has(iconId)) return prev;
+        const next = new Set(prev);
+        next.delete(iconId);
+        return next;
+      });
       showToast(t("iconDeleted"), true);
     },
     onError: () => {
@@ -318,10 +344,79 @@ export default function PersonalMetadataPage() {
     },
   });
 
+  // Opens the delete-confirm dialog and fetches a cheap usage count, mirroring
+  // startDelete/deletingDim for rating dimensions above.
+  const startDeleteIcon = async (iconId: string, label: string) => {
+    setDeletingIcon({ id: iconId, label, count: null });
+    try {
+      const res = await fetch(`/api/settings/bookmark-icons/${iconId}`);
+      const data = await res.json();
+      setDeletingIcon((prev) => (prev ? { ...prev, count: data.count ?? 0 } : null));
+    } catch {
+      setDeletingIcon((prev) => (prev ? { ...prev, count: 0 } : null));
+    }
+  };
+
+  const confirmDeleteIcon = () => {
+    if (!deletingIcon) return;
+    deleteIcon.mutate(deletingIcon.id);
+    setDeletingIcon(null);
+  };
+
+  // Reset to defaults — scoped to toggles/config: dimension weights, disabled
+  // icons, subtle markers, and the quick-bookmark template. Custom rating
+  // dimensions and custom icons are left alone (never deleted here).
+  const handleResetDefaults = async () => {
+    setResetConfirmOpen(false);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/personal-metadata", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieDimensionWeights: {},
+          personDimensionWeights: {},
+          tvShowDimensionWeights: {},
+          disabledBookmarkIcons: [],
+          subtleBookmarkMarkers: false,
+          quickBookmarkTemplate: null,
+        }),
+      });
+      if (res.ok) {
+        setMovieWeights({});
+        setPersonWeights({});
+        setTvShowWeights({});
+        setDisabledIcons(new Set());
+        setSubtleMarkers(false);
+        setQbIconType("bookmark");
+        setQbTags([]);
+        setQbNote("");
+        showToast(t("saved"), true);
+        queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+      } else {
+        showToast(t("failedToSave"), false);
+      }
+    } catch {
+      showToast(t("failedToSave"), false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
+      <div className="flex w-full max-w-[720px] items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
+        <button
+          type="button"
+          onClick={() => setResetConfirmOpen(true)}
+          className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground active:scale-95 cursor-pointer"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          {tCommon("resetToDefaults")}
+        </button>
+      </div>
 
       {/* Cinema domain → Movie + Person Rating Dimensions only. */}
       {domain !== "tv" && (
@@ -738,6 +833,66 @@ export default function PersonalMetadataPage() {
         </div>
       )}
 
+      {/* Delete Custom Icon Confirmation — same fixed-overlay style as the
+          rating-dimension delete confirm above. */}
+      {deletingIcon && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-xl border border-white/[0.08] bg-[#0a0a0f]/90 p-6 shadow-2xl backdrop-blur-2xl ring-1 ring-white/[0.06]">
+            <h3 className="text-base font-semibold text-foreground">{t("deleteIconTitle")}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {deletingIcon.count === null
+                ? t("deleteDimensionLoading")
+                : deletingIcon.count > 0
+                  ? t("deleteIconConfirm", { label: deletingIcon.label, count: deletingIcon.count })
+                  : t("deleteIconNoData", { label: deletingIcon.label })}
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeletingIcon(null)}
+                className="rounded-lg bg-white/10 px-4 py-2 text-sm text-muted-foreground transition-fluid hover:bg-white/15 hover:text-foreground cursor-pointer"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteIcon}
+                disabled={deletingIcon.count === null}
+                className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 transition-fluid hover:bg-red-500/30 active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                {tCommon("delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset to Defaults Confirmation */}
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>{t("resetDefaultsTitle")}</DialogTitle>
+            <DialogDescription>{t("resetDefaultsDesc")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleResetDefaults}
+              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 cursor-pointer"
+            >
+              {tCommon("confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Bookmark Icons */}
       <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <div>
@@ -835,7 +990,8 @@ export default function PersonalMetadataPage() {
                       title={t("dotColor")}
                     />
                     <button
-                      onClick={() => deleteIcon.mutate(ci.id)}
+                      type="button"
+                      onClick={() => startDeleteIcon(ci.id, ci.label)}
                       className="text-red-400/0 group-hover/icon:text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                       title="Delete"
                     >

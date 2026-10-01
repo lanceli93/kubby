@@ -5,12 +5,16 @@ import { eq } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 import { parseFolderPaths } from "@/lib/folder-paths";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // POST /api/libraries/[id]/cover — upload a custom cover image
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
   try {
     const library = db
@@ -47,6 +51,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
   try {
     const library = db

@@ -3,13 +3,13 @@ import path from "path";
 import { db } from "@/lib/db";
 import { musicTracks } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import {
   deleteFileQuiet,
   removeDirIfEmpty,
   pruneEmptyAlbums,
   pruneOrphanArtists,
 } from "@/lib/music/mutations";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // PUT /api/music/tracks/[id] — edit track metadata.
 // Body: { title?, trackNumber?, discNumber?, year?, lyrics? }
@@ -17,10 +17,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {
@@ -60,10 +58,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   const deleteFiles = request.nextUrl.searchParams.get("deleteFiles") === "true";

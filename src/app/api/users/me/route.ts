@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { requireUser } from "@/lib/auth-guard";
 
 // GET /api/users/me - Get current user profile
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   const user = db.select({
     id: users.id,
@@ -17,7 +15,7 @@ export async function GET() {
     displayName: users.displayName,
     isAdmin: users.isAdmin,
     locale: users.locale,
-  }).from(users).where(eq(users.id, session.user.id)).get();
+  }).from(users).where(eq(users.id, guard.user.id)).get();
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -28,10 +26,8 @@ export async function GET() {
 
 // PUT /api/users/me - Update current user profile
 export async function PUT(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const body = await request.json();
@@ -43,7 +39,7 @@ export async function PUT(request: NextRequest) {
 
     db.update(users)
       .set(updates)
-      .where(eq(users.id, session.user.id))
+      .where(eq(users.id, guard.user.id))
       .run();
 
     return NextResponse.json({ success: true });

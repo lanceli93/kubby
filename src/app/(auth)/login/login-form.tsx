@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -35,6 +35,16 @@ function LoginFormInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // Registration is admin-only once a first user exists — showing "Register"
+  // then is a dead end (POST /api/users 403s). Only offer it pre-setup.
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/setup/status")
+      .then((r) => r.json())
+      .then((d) => setNeedsSetup(!!d.needsSetup))
+      .catch(() => setNeedsSetup(false));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -133,17 +143,18 @@ function LoginFormInner() {
             </button>
           </form>
 
-          <div className="flex items-center gap-1">
-            <span className="text-[13px] text-[#666680]">
-              {t("dontHaveAccount")}
-            </span>
+          {needsSetup === true ? (
             <Link
-              href="/register"
+              href="/setup"
               className="text-[13px] font-semibold text-primary hover:underline"
             >
-              {t("register")}
+              {t("goToSetup")}
             </Link>
-          </div>
+          ) : needsSetup === false ? (
+            <span className="text-[13px] text-[#666680]">
+              {t("accountsCreatedByAdmin")}
+            </span>
+          ) : null}
 
           <p className="text-xs text-[#444460]">Kubby Media Server</p>
         </div>

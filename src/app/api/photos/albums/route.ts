@@ -3,11 +3,15 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { photoAlbums, photoAlbumItems, photoItems, mediaLibraries } from "@/lib/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { requireUser } from "@/lib/auth-guard";
 
 // GET /api/photos/albums?libraryId=
 // List albums (optionally scoped to one library) with member count and a
 // resolved cover item id. Cover = explicit coverItemId, else the newest member.
 export async function GET(request: NextRequest) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const libraryId = request.nextUrl.searchParams.get("libraryId");
 
@@ -62,6 +66,9 @@ export async function GET(request: NextRequest) {
 // POST /api/photos/albums  { name, libraryId }
 // Creates an empty album in a photo library.
 export async function POST(request: NextRequest) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const body = await request.json();
     const name = typeof body.name === "string" ? body.name.trim() : "";

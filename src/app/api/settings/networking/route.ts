@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { requireAdmin } from "@/lib/auth-guard";
 
 const dataDir = process.env.KUBBY_DATA_DIR || "./data";
 const configPath = path.join(dataDir, "config.json");
@@ -24,6 +25,9 @@ function writeConfig(cfg: ConfigJson) {
 
 // GET /api/settings/networking
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const cfg = readConfig();
     const isDocker = process.env.KUBBY_DOCKER === "1";
@@ -45,6 +49,9 @@ export async function GET() {
 
 // PUT /api/settings/networking
 export async function PUT(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const isDocker = process.env.KUBBY_DOCKER === "1";
     if (isDocker) {

@@ -10,7 +10,8 @@ import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 // Isolated TV-domain person page. TV people live in tv_people; user-data
 // (favorite + personal multi-dimension rating) lives in user_tv_person_data,
@@ -50,10 +51,10 @@ interface TvPersonUserData {
   dimensionRatings?: Record<string, number> | null;
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  return d.toLocaleDateString(locale === "zh" ? "zh-CN" : locale, { year: "numeric", month: "long", day: "numeric" });
 }
 
 export default function TvPersonDetailPage() {
@@ -61,6 +62,10 @@ export default function TvPersonDetailPage() {
   const personId = params.id as string;
   const tPerson = useTranslations("person");
   const tMovies = useTranslations("movies");
+  const tMeta = useTranslations("metadata");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const { showError, errorToast } = useErrorToast();
   const queryClient = useQueryClient();
   const { data: prefs } = useUserPreferences();
   // TV people reuse the cinema PERSON rating dimensions — a person's rating
@@ -84,17 +89,21 @@ export default function TvPersonDetailPage() {
   });
 
   const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
-    await fetch(`/api/tv/people/${personId}/user-data`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["tv-person-user-data", personId] });
+    try {
+      await fetchOk(`/api/tv/people/${personId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["tv-person-user-data", personId] });
+    } catch {
+      showError(tMeta("saveFailed"));
+    }
   };
 
   const toggleFavorite = useMutation({
     mutationFn: (current: boolean) =>
-      fetch(`/api/tv/people/${personId}/user-data`, {
+      fetchOk(`/api/tv/people/${personId}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !current }),
@@ -102,6 +111,7 @@ export default function TvPersonDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tv-person-user-data", personId] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   // Guard against both the loading window and a not-found/error response —
@@ -110,7 +120,7 @@ export default function TvPersonDetailPage() {
   if (isLoading || !person || !person.name) {
     return (
       <div className="flex h-96 items-center justify-center text-muted-foreground">
-        Loading...
+        {tCommon("loading")}...
       </div>
     );
   }
@@ -168,7 +178,7 @@ export default function TvPersonDetailPage() {
                     <button
                       onClick={() => setRatingOpen(true)}
                       className="glass-badge inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
-                      aria-label="Edit rating"
+                      aria-label={tMovies("editRating")}
                     >
                       <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
                       {userData.personalRating.toFixed(1)}
@@ -181,7 +191,7 @@ export default function TvPersonDetailPage() {
                   <button
                     onClick={() => setRatingOpen(true)}
                     className="glass-btn inline-flex h-7 items-center justify-center rounded-lg px-2 text-white/40 transition-all hover:text-[var(--gold)] cursor-pointer"
-                    aria-label="Rate person"
+                    aria-label={tMovies("ratePerson")}
                   >
                     <Star className="h-3.5 w-3.5" />
                   </button>
@@ -191,7 +201,7 @@ export default function TvPersonDetailPage() {
                 <button
                   onClick={() => toggleFavorite.mutate(!!userData?.isFavorite)}
                   className="glass-btn inline-flex h-7 w-7 items-center justify-center rounded-xl transition-all cursor-pointer"
-                  aria-label="Toggle favorite"
+                  aria-label={tMovies("toggleFavorite")}
                 >
                   <Heart className={`h-3.5 w-3.5 ${userData?.isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
                 </button>
@@ -208,14 +218,14 @@ export default function TvPersonDetailPage() {
                   <div>
                     <span className="text-white/50">{tPerson("born")}: </span>
                     <span className="text-white/90">
-                      {person.birthDate ? formatDate(person.birthDate) : person.birthYear}
+                      {person.birthDate ? formatDate(person.birthDate, locale) : person.birthYear}
                     </span>
                   </div>
                 )}
                 {person.deathDate && (
                   <div>
                     <span className="text-white/50">{tPerson("died")}: </span>
-                    <span className="text-white/90">{formatDate(person.deathDate)}</span>
+                    <span className="text-white/90">{formatDate(person.deathDate, locale)}</span>
                   </div>
                 )}
                 {person.placeOfBirth && (
@@ -294,6 +304,7 @@ export default function TvPersonDetailPage() {
         dimensionWeights={prefs?.personDimensionWeights}
         showTier
       />
+      {errorToast}
     </div>
   );
 }

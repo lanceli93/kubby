@@ -78,10 +78,18 @@ export async function PUT(
       .where(and(eq(userEpisodeData.userId, userId), eq(userEpisodeData.episodeId, episodeId)))
       .get();
 
+    // Explicitly marking watched/unwatched (isPlayed true OR false) without a
+    // position resets the resume point, so the episode stops showing as
+    // in-progress. A caller that sends a position alongside isPlayed keeps it.
+    const resetsResume =
+      body.isPlayed !== undefined && body.playbackPositionSeconds === undefined;
+
     if (existing) {
       const updateData: Record<string, unknown> = {};
       if (body.playbackPositionSeconds !== undefined)
         updateData.playbackPositionSeconds = body.playbackPositionSeconds;
+      else if (resetsResume)
+        updateData.playbackPositionSeconds = 0;
       if (body.isPlayed !== undefined) updateData.isPlayed = body.isPlayed;
       if (body.playCount !== undefined) updateData.playCount = body.playCount;
       if (body.personalRating !== undefined) updateData.personalRating = body.personalRating;

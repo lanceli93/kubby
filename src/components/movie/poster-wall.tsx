@@ -1291,7 +1291,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
       {/* Exit button */}
       <button
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t("close")}
         className="glass-btn absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-fluid hover:text-foreground active:scale-95 cursor-pointer"
       >
         <X className="h-5 w-5" />

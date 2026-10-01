@@ -7,8 +7,8 @@ import { pipeline } from "stream/promises";
 import { db } from "@/lib/db";
 import { mediaLibraries } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { parseFolderPaths } from "@/lib/folder-paths";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // Allowed audio extensions — mirrors the scanner's AUDIO_EXTENSIONS.
 const AUDIO_EXTENSIONS = new Set([
@@ -46,10 +46,8 @@ async function uniqueDest(dir: string, fileName: string): Promise<string> {
 // Streams each file into {libraryFolder}/Uploads/, then returns { libraryId,
 // saved, skipped } — the client triggers a library scan to ingest them.
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const form = await request.formData();

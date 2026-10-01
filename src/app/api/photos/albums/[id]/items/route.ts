@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { photoAlbums, photoAlbumItems, photoItems } from "@/lib/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
+import { requireUser } from "@/lib/auth-guard";
 
 // POST /api/photos/albums/[id]/items  { itemIds: string[] }
 // Add photos to an album. Already-present photos are ignored (unique index).
@@ -10,6 +11,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   const { id: albumId } = await params;
   try {
     const body = await request.json();
@@ -57,6 +61,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   const { id: albumId } = await params;
   try {
     const body = await request.json();

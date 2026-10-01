@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { GlassToast } from "@/components/ui/glass-toast";
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
   const [displayName, setDisplayName] = useState(session?.user?.name || "");
@@ -30,8 +30,21 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ displayName }),
       });
-      if (res.ok) showToast(t("changesSaved"), true);
-      else showToast(t("failedToSave"), false);
+      if (res.ok) {
+        // The JWT's `name` is frozen at sign-in — tell next-auth to patch it
+        // into the token so the header/sidebar update without a re-login.
+        await update({ name: displayName || session?.user?.email || "" });
+        showToast(t("changesSaved"), true);
+      } else {
+        let message = t("failedToSave");
+        try {
+          const data = await res.json();
+          if (data?.error) message = data.error;
+        } catch {
+          // ignore — fall back to generic message
+        }
+        showToast(message, false);
+      }
     } catch {
       showToast(t("somethingWentWrong"), false);
     }
@@ -107,6 +120,7 @@ export default function ProfilePage() {
             {t("username")}
           </label>
           <p className="text-sm text-[#666680]">{session?.user?.email}</p>
+          <p className="text-xs text-[#555568]">{t("usernameChangeHint")}</p>
         </div>
         <div className="flex justify-end">
           <button

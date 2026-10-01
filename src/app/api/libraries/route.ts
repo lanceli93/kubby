@@ -6,9 +6,13 @@ import { db } from "@/lib/db";
 import { mediaLibraries, movies } from "@/lib/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
 import { parseFolderPaths, serializeFolderPaths } from "@/lib/folder-paths";
+import { requireAdmin, requireUser } from "@/lib/auth-guard";
 
 // GET /api/libraries
 export async function GET() {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const rows = db
       .select({
@@ -70,6 +74,9 @@ export async function GET() {
 
 // POST /api/libraries
 export async function POST(request: NextRequest) {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const body = await request.json();
     const { name, type = "movie", folderPaths, folderPath, scraperEnabled = false, jellyfinCompat = false, metadataLanguage } = body;

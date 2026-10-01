@@ -4,6 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function MetadataProvidersPage() {
   const t = useTranslations("dashboard");
@@ -15,6 +23,8 @@ export default function MetadataProvidersPage() {
   const [configured, setConfigured] = useState(false);
   const [maskedKey, setMaskedKey] = useState("");
   const [saving, setSaving] = useState(false);
+  const [removeOpen, setRemoveOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   // NFO writeback state
   const [nfoWriteback, setNfoWriteback] = useState(true);
@@ -69,6 +79,26 @@ export default function MetadataProvidersPage() {
       showToast(t("apiKeyInvalid"), false);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRemoveKey = async () => {
+    setRemoving(true);
+    try {
+      const res = await fetch("/api/settings/scraper", { method: "DELETE" });
+      if (res.ok) {
+        setConfigured(false);
+        setMaskedKey("");
+        setApiKey("");
+        showToast(t("apiKeyRemoved"), true);
+      } else {
+        showToast(t("apiKeyRemoveFailed"), false);
+      }
+    } catch {
+      showToast(t("apiKeyRemoveFailed"), false);
+    } finally {
+      setRemoving(false);
+      setRemoveOpen(false);
     }
   };
 
@@ -131,11 +161,47 @@ export default function MetadataProvidersPage() {
         </div>
 
         {configured && (
-          <div className="flex items-center gap-2 text-sm text-green-400">
-            <CheckCircle className="h-4 w-4" />
-            TMDB API key configured
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm text-green-400">
+              <CheckCircle className="h-4 w-4" />
+              {t("apiKeyConfigured")}
+            </div>
+            <button
+              type="button"
+              onClick={() => setRemoveOpen(true)}
+              className="text-sm text-destructive hover:underline cursor-pointer"
+            >
+              {t("removeApiKey")}
+            </button>
           </div>
         )}
+
+        {/* Remove key confirmation */}
+        <Dialog open={removeOpen} onOpenChange={setRemoveOpen}>
+          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>{t("removeApiKeyConfirmTitle")}</DialogTitle>
+              <DialogDescription>{t("removeApiKeyConfirmDesc")}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <button
+                type="button"
+                onClick={() => setRemoveOpen(false)}
+                className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {tc("cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveKey}
+                disabled={removing}
+                className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {removing ? tc("loading") : tc("delete")}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Divider */}
         <div className="h-px bg-white/[0.06]" />

@@ -2,23 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq, count } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { eq, count, and, ne } from "drizzle-orm";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // DELETE /api/users/[id] - Delete user (admin only)
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
 
   // Cannot delete yourself
-  if (id === session.user.id) {
+  if (id === guard.user.id) {
     return NextResponse.json(
       { error: "Cannot delete your own account" },
       { status: 400 }
@@ -64,10 +62,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
 
@@ -78,10 +74,17 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { isAdmin, password } = body;
+    const { isAdmin, password, displayName, username } = body;
 
     // Toggle admin role
     if (typeof isAdmin === "boolean") {
+      // Cannot change your own role from this dialog (avoid locking yourself out)
+      if (id === guard.user.id) {
+        return NextResponse.json(
+          { error: "You cannot change your own administrator status" },
+          { status: 400 }
+        );
+      }
       // Prevent demoting last admin
       if (target.isAdmin && !isAdmin) {
         const [{ total }] = db
@@ -97,6 +100,31 @@ export async function PUT(
         }
       }
       db.update(users).set({ isAdmin }).where(eq(users.id, id)).run();
+    }
+
+    // Update display name
+    if (typeof displayName === "string" || displayName === null) {
+      db.update(users)
+        .set({ displayName: displayName || null })
+        .where(eq(users.id, id))
+        .run();
+    }
+
+    // Update username (trimmed, non-empty, unique)
+    if (typeof username === "string") {
+      const trimmed = username.trim();
+      if (!trimmed) {
+        return NextResponse.json({ error: "Username cannot be empty" }, { status: 400 });
+      }
+      const existing = db
+        .select()
+        .from(users)
+        .where(and(eq(users.username, trimmed), ne(users.id, id)))
+        .get();
+      if (existing) {
+        return NextResponse.json({ error: "Username already taken" }, { status: 409 });
+      }
+      db.update(users).set({ username: trimmed }).where(eq(users.id, id)).run();
     }
 
     // Reset password

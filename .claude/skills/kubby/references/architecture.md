@@ -379,26 +379,39 @@ users ──1:N──> tv_episode_bookmarks ──N:1──> tv_episodes
   - `GET /api/music/tracks/[id]/stream` — **direct** mode: original file with HTTP 206 Range (mp3/aac/flac/ogg/opus/wav); **transcode** mode: ffmpeg→mp3 pipe (`-f mp3 -ab 192k`, no Range) for wma/aiff/alac/etc. Mode from `decideAudioPlayback` (see Audio Playback)
 - HLS streaming: `GET /api/stream/[sessionId]/playlist.m3u8`, `GET /api/stream/[sessionId]/segment/[name]`, `POST/PATCH/DELETE /api/stream/[sessionId]` (POST=seek, PATCH=heartbeat, DELETE=stop)
 
-### Admin only
-- `GET/PUT /api/settings/scraper` — TMDB API key
-- `POST /api/libraries` — Create library
-- `GET/PUT/DELETE /api/libraries/[id]` — Library detail/update/delete
-- `POST /api/libraries/[id]/scan` — Trigger scan (SSE progress)
-- `GET /api/filesystem` — Server directory browser
-- `GET /api/users` — User list
-- `PUT/DELETE /api/users/[id]` — Update role/reset password / delete user (last-admin protection)
-- `GET /api/dashboard/stats` — Statistics
-- `GET /api/dashboard/activity` — Activity log (placeholder)
+### Admin only (server-enforced via `requireAdmin()`)
+- `GET/PUT/DELETE /api/settings/scraper` — TMDB API key (GET = `requireUser`, returns only `configured` + masked key; DELETE clears it)
+- `GET/PUT /api/settings/networking`, `PUT /api/settings/nfo-writeback`
+- `POST /api/libraries` — Create library (`GET /api/libraries` = any user, nav needs it)
+- `PUT/DELETE /api/libraries/[id]` — Library update/delete (teardown lives in `src/lib/library-teardown.ts` `deleteLibraryById()`, shared with demo clear)
+- `POST /api/libraries/[id]/scan`, `POST/DELETE /api/libraries/[id]/cover`
+- `GET /api/filesystem` — Server directory browser (admin, OR anyone while 0 users = setup wizard)
+- `PUT/DELETE` movies / tv shows / people + their `/images` routes; music `upload` + tracks/albums/artists `PUT/DELETE`
+- `DELETE /api/photos/[id]`, `POST /api/photos/delete` `{ids}` — delete photo/video: source file + thumbs + row (file must resolve inside the library's folders; row kept if unlink fails)
+- `GET /api/users`, `POST /api/users` (after first user), `PUT/DELETE /api/users/[id]` — PUT accepts `isAdmin`/`password`/`displayName`/`username` (unique → 409); self-delete, self-demote and last-admin removal are refused
+- `GET /api/dashboard/stats`, `GET /api/dashboard/activity` — activity is derived from existing tables (library created/scanned, movies/shows/photos/albums added grouped per library per UTC day, users created); `{id, kind, name, library, count, timestamp}`, formatted client-side
+- `DELETE /api/setup/demo?scope=libraries|account|all` — demo teardown (see feature-patterns → Demo Mode)
 
 ## Authentication
 
-- **Two-file split**: `auth.config.ts` (Edge middleware, no DB imports) + `auth.ts` (full, bcrypt + DB)
-- **JWT payload**: `{ id, isAdmin, locale }`
-- **Route protection**: middleware.ts imports auth.config.ts
-  - Public: `/login`, `/register`, `/setup`, `/api/setup`, `/api/users` (POST), `/api/auth`
-  - Admin: `/dashboard/*`, `POST /api/libraries`, `/api/settings/scraper`, `/api/filesystem`
-  - Authenticated: everything else
-
+- **Two-file split**: `auth.config.ts` (Edge proxy, no DB imports) + `auth.ts` (full, bcrypt + DB)
+- **JWT payload**: `{ id, isAdmin, locale, name }` — frozen at sign-in. The jwt callback
+  accepts `trigger === "update"` for `name`/`locale` only (profile save calls
+  `useSession().update({ name })` so the header refreshes without re-login).
+- **The proxy only enforces LOGIN, never roles** (`src/proxy.ts` → `authorized()`).
+  Public prefixes: `/login`, `/register`, `/setup`, `/api/setup`, `/api/users`,
+  `/api/auth`, `/api/filesystem`, plus the movie/episode `/stream` regexes (external
+  players). `/dashboard/*` *pages* redirect non-admins, but that is cosmetic for APIs.
+- **Every API handler guards itself** with `src/lib/auth-guard.ts`:
+  `requireUser()` / `requireAdmin()` re-read the user row from the DB (so a deleted or
+  demoted user's still-valid JWT is rejected) and return `{ user }` or a 401/403
+  `NextResponse`. Handlers under a public prefix (`/api/users/**`, `/api/setup/**`,
+  `/api/filesystem`) MUST call a guard or do their own zero-users check.
+- **Client gating is cosmetic**: `useIsAdmin()` (`src/hooks/use-is-admin.ts`) hides
+  admin-only controls (edit/delete/image menus on movie/TV/person pages + cards, photo
+  delete, music edit/upload); the server is the source of truth.
+- Self-registration is closed after setup: login shows "Accounts are created by your
+  administrator"; `/register` renders a disabled state (redirects to `/setup` if 0 users).
 ## Library Scanner
 
 ```

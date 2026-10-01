@@ -4,20 +4,18 @@ import path from "path";
 import { db } from "@/lib/db";
 import { people } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
 import { generateBlurDataURL } from "@/lib/blur-utils";
 import { toRelativeDataPath, resolveDataPath } from "@/lib/paths";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // POST /api/people/[id]/images?type=poster|fanart — upload image
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   const type = request.nextUrl.searchParams.get("type");
@@ -66,10 +64,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {

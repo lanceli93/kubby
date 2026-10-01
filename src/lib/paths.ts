@@ -112,3 +112,15 @@ export function resolveDataPath(storedPath: string): string {
   if (path.isAbsolute(storedPath)) return storedPath;
   return path.join(getDataDir(), storedPath);
 }
+
+/**
+ * True when `target` resolves strictly inside `root`. Case-insensitive on
+ * Windows. Guard every recursive delete of a DB-derived path with this — a
+ * person's photo_path can come from an NFO and point anywhere on disk.
+ */
+export function isPathInside(target: string, root: string): boolean {
+  const norm = (p: string) => (process.platform === "win32" ? p.toLowerCase() : p);
+  const t = norm(path.resolve(target));
+  const r = norm(path.resolve(root));
+  return t.startsWith(r + path.sep);
+}

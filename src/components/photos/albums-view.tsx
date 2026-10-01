@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { GlassToast } from "@/components/ui/glass-toast";
+import { fetchJsonOrThrow } from "@/lib/photos/fetch-json";
 
 interface Album {
   id: string;
@@ -123,17 +125,22 @@ function CreateAlbumDialog({
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [libId, setLibId] = useState<string | null>(defaultLibraryId);
+  const [error, setError] = useState(false);
 
   const create = useMutation({
     mutationFn: (payload: { name: string; libraryId: string }) =>
-      fetch(`/api/photos/albums`, {
+      fetchJsonOrThrow(`/api/photos/albums`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      }).then((r) => r.json()),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
       onClose();
+    },
+    onError: () => {
+      setError(true);
+      window.setTimeout(() => setError(false), 2500);
     },
   });
 
@@ -188,7 +195,7 @@ function CreateAlbumDialog({
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              {t("close")}
+              {t("cancel")}
             </button>
             <button
               type="submit"
@@ -200,6 +207,10 @@ function CreateAlbumDialog({
           </div>
         </form>
       </DialogContent>
+
+      <GlassToast visible={error} success={false} className="z-[100]">
+        {t("actionFailed")}
+      </GlassToast>
     </Dialog>
   );
 }

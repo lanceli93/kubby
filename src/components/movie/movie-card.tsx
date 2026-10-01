@@ -12,6 +12,7 @@ import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { MediaInfoDialog } from "@/components/movie/media-info-dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { TiltCard } from "@/components/ui/tilt-card";
 import {
   DropdownMenu,
@@ -113,6 +114,9 @@ export function MovieCard({
   const [mediaInfoOpen, setMediaInfoOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const { data: prefs } = useUserPreferences();
+  // Metadata / image edits and deletes are admin-only (server-enforced too);
+  // non-admins keep Play + Media Info in the menu.
+  const isAdmin = useIsAdmin();
   const showRatingBadge = prefs?.showMovieRatingBadge !== false;
   const showResBadge = prefs?.showResolutionBadge !== false;
 
@@ -164,7 +168,7 @@ export function MovieCard({
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                No Poster
+                {tMeta("noImage")}
               </div>
             )}
 
@@ -260,6 +264,7 @@ export function MovieCard({
                         e.stopPropagation();
                       }}
                       className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20"
+                      aria-label={t("moreOptions")}
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
@@ -281,24 +286,28 @@ export function MovieCard({
                       <Play className="h-4 w-4" />
                       {t("play")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMetadataOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      {t("editMetadata")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageEditorOpen(true);
-                      }}
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                      {tMeta("editImages")}
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMetadataOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          {t("editMetadata")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImageEditorOpen(true);
+                          }}
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          {tMeta("editImages")}
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
@@ -308,17 +317,21 @@ export function MovieCard({
                       <Info className="h-4 w-4" />
                       {t("mediaInfo")}
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      {t("deleteMovie")}
-                    </DropdownMenuItem>
+                    {isAdmin && onDelete && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          {t("deleteMovie")}
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { Shield, User, Plus, Trash2, KeyRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Shield, User, Plus, Trash2, KeyRound, Pencil } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { useTranslations } from "next-intl";
 import {
@@ -34,6 +35,7 @@ export default function UsersPage() {
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: users = [] } = useQuery<UserInfo[]>({
     queryKey: ["users"],
@@ -53,6 +55,14 @@ export default function UsersPage() {
 
   // Add User dialog
   const [addOpen, setAddOpen] = useState(false);
+  // Dashboard "Add User" quick action links here with ?add=1.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("add") === "1") {
+      setAddOpen(true);
+      router.replace("/dashboard/users");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
@@ -116,23 +126,45 @@ export default function UsersPage() {
     },
   });
 
-  // Toggle role
-  const toggleRole = useMutation({
-    mutationFn: async ({ id, isAdmin }: { id: string; isAdmin: boolean }) => {
-      const res = await fetch(`/api/users/${id}`, {
+  // Edit User dialog (display name, username, admin toggle)
+  const [editTarget, setEditTarget] = useState<UserInfo | null>(null);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
+
+  const openEditDialog = (user: UserInfo) => {
+    setEditTarget(user);
+    setEditDisplayName(user.displayName || "");
+    setEditUsername(user.username);
+    setEditIsAdmin(user.isAdmin);
+  };
+
+  const editUser = useMutation({
+    mutationFn: async () => {
+      if (!editTarget) return;
+      const isSelf = editTarget.id === currentUserId;
+      const body: Record<string, unknown> = {
+        displayName: editDisplayName || null,
+        username: editUsername,
+      };
+      // Never send isAdmin for your own account — the toggle is disabled for
+      // self in the UI and the server rejects it anyway (can't lock yourself out).
+      if (!isSelf) body.isAdmin = editIsAdmin;
+      const res = await fetch(`/api/users/${editTarget.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isAdmin }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to update role");
+        throw new Error(data.error || "Failed to update user");
       }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      setToast({ text: t("roleUpdated"), success: true });
+      setEditTarget(null);
+      setToast({ text: t("userUpdated"), success: true });
     },
     onError: (err: Error) => {
       setToast({ text: err.message, success: false });
@@ -166,6 +198,13 @@ export default function UsersPage() {
     },
   });
 
+  const editTargetIsSelf = editTarget?.id === currentUserId;
+  const editTargetIsLastAdmin = !!editTarget?.isAdmin && adminCount <= 1;
+  const canChangeEditTargetRole = !editTargetIsSelf && !editTargetIsLastAdmin;
+
+  const rowBtn =
+    "flex h-8 items-center gap-1.5 rounded-md border border-white/[0.08] px-2.5 text-xs text-muted-foreground transition-fluid hover:bg-white/[0.06] hover:text-foreground cursor-pointer";
+
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
@@ -184,13 +223,24 @@ export default function UsersPage() {
         {users.map((user) => {
           const isSelf = user.id === currentUserId;
           const isLastAdmin = user.isAdmin && adminCount <= 1;
-          const canToggleRole = !isSelf && !isLastAdmin;
           const canDelete = !isSelf && !(user.isAdmin && adminCount <= 1);
+
+          const deleteDisabledReason = isSelf
+            ? t("cannotDeleteSelf")
+            : isLastAdmin
+              ? t("cannotDeleteLastAdmin")
+              : null;
 
           return (
             <div
               key={user.id}
-              className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4 last:border-b-0 transition-colors hover:bg-white/[0.02]"
+              role="button"
+              tabIndex={0}
+              onClick={() => openEditDialog(user)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") openEditDialog(user);
+              }}
+              className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4 last:border-b-0 transition-colors hover:bg-white/[0.02] cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -203,6 +253,7 @@ export default function UsersPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">
                     {user.displayName || user.username}
+                    {isSelf && <span className="ml-2 text-xs font-normal text-muted-foreground">({t("you")})</span>}
                   </p>
                   {user.displayName && user.displayName !== user.username && (
                     <p className="text-xs text-muted-foreground">{user.username}</p>
@@ -210,65 +261,48 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {/* Role badge — clickable to toggle */}
-                <button
-                  onClick={() => {
-                    if (canToggleRole) {
-                      toggleRole.mutate({ id: user.id, isAdmin: !user.isAdmin });
-                    }
-                  }}
-                  disabled={!canToggleRole}
-                  title={
-                    isSelf
-                      ? t("cannotDeleteSelf")
-                      : isLastAdmin
-                        ? t("cannotDeleteLastAdmin")
-                        : undefined
-                  }
-                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                {/* Role badge — read-only, no hidden click */}
+                <span
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium ${
                     user.isAdmin
                       ? "bg-primary/10 text-primary"
                       : "bg-white/5 text-muted-foreground"
-                  } ${canToggleRole ? "cursor-pointer hover:bg-white/10" : "cursor-default opacity-70"}`}
+                  }`}
                 >
                   {user.isAdmin ? t("admin") : t("userRole")}
-                </button>
+                </span>
 
                 <span className="text-xs text-muted-foreground">
                   {formatDate(user.createdAt)}
                 </span>
 
-                {/* Reset password */}
-                <button
-                  onClick={() => {
-                    setResetTarget(user);
-                    setResetPw("");
-                  }}
-                  className="rounded-md p-1.5 text-muted-foreground transition-fluid hover:bg-white/5 hover:text-foreground cursor-pointer"
-                  title={t("resetPassword")}
-                >
-                  <KeyRound className="h-4 w-4" />
-                </button>
-
-                {/* Delete */}
-                <button
-                  onClick={() => canDelete && setDeleteTarget(user)}
-                  disabled={!canDelete}
-                  title={
-                    isSelf
-                      ? t("cannotDeleteSelf")
-                      : isLastAdmin
-                        ? t("cannotDeleteLastAdmin")
-                        : t("deleteUser")
-                  }
-                  className={`rounded-md p-1.5 transition-fluid ${
-                    canDelete
-                      ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                      : "cursor-default text-muted-foreground/30"
-                  }`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                {/* Row actions — labeled inline buttons so delete/reset are
+                    discoverable without opening a menu. */}
+                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => openEditDialog(user)}
+                    className={rowBtn}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    <span className="hidden md:inline">{t("edit")}</span>
+                  </button>
+                  <button
+                    onClick={() => { setResetTarget(user); setResetPw(""); }}
+                    className={rowBtn}
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    <span className="hidden md:inline">{t("resetPassword")}</span>
+                  </button>
+                  <button
+                    onClick={() => canDelete && setDeleteTarget(user)}
+                    disabled={!canDelete}
+                    title={deleteDisabledReason ?? t("deleteUser")}
+                    className={`${rowBtn} ${canDelete ? "hover:!border-destructive/40 hover:!bg-destructive/10 hover:!text-destructive" : "!cursor-not-allowed opacity-40"}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="hidden md:inline">{t("deleteUser")}</span>
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -344,6 +378,77 @@ export default function UsersPage() {
                 className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
                 {createUser.isPending ? tCommon("loading") : tCommon("confirm")}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(v) => { if (!v) setEditTarget(null); }}>
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>{t("editUserTitle")}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => { e.preventDefault(); editUser.mutate(); }}
+            className="flex flex-col gap-4 pt-2"
+          >
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-muted-foreground">{t("displayName")}</label>
+              <input
+                type="text"
+                value={editDisplayName}
+                onChange={(e) => setEditDisplayName(e.target.value)}
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-muted-foreground">{t("username")}</label>
+              <input
+                type="text"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+                className="h-11 rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label
+                className={`flex items-center gap-2.5 px-1 ${canChangeEditTargetRole ? "cursor-pointer" : "cursor-default"}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={editIsAdmin}
+                  disabled={!canChangeEditTargetRole}
+                  onChange={(e) => setEditIsAdmin(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary disabled:opacity-50"
+                />
+                <span className={`text-sm ${canChangeEditTargetRole ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                  {t("makeAdmin")}
+                </span>
+              </label>
+              {!canChangeEditTargetRole && (
+                <p className="px-1 text-xs text-muted-foreground">
+                  {editTargetIsSelf ? t("cannotChangeOwnRole") : t("cannotDeleteLastAdmin")}
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditTarget(null)}
+                className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                type="submit"
+                disabled={editUser.isPending}
+                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                {editUser.isPending ? tCommon("loading") : tCommon("save")}
               </button>
             </div>
           </form>

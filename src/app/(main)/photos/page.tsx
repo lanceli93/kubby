@@ -3,11 +3,17 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckSquare, X, FolderPlus, ChevronDown } from "lucide-react";
+import { CheckSquare, X, FolderPlus, ChevronDown, Trash2 } from "lucide-react";
 import { PhotoGrid, type PhotoItem } from "@/components/photos/photo-grid";
 import { AlbumsView } from "@/components/photos/albums-view";
 import { AddToAlbumDialog } from "@/components/photos/add-to-album-dialog";
+import {
+  DeletePhotosDialog,
+  type DeletePhotosResult,
+} from "@/components/photos/delete-photos-dialog";
+import { GlassToast } from "@/components/ui/glass-toast";
 import { usePhotoLibraries } from "@/hooks/use-photo-libraries";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -37,6 +43,9 @@ export default function PhotosPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadedItems, setLoadedItems] = useState<PhotoItem[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; success: boolean } | null>(null);
+  const isAdmin = useIsAdmin();
 
   const showLibraryFilter = photoLibraries.length > 1;
   const activeLibrary = libraryId
@@ -69,6 +78,22 @@ export default function PhotosPage() {
   const onItemsChange = useCallback((items: PhotoItem[]) => {
     setLoadedItems(items);
   }, []);
+
+  const onPhotosDeleted = useCallback(
+    (result: DeletePhotosResult) => {
+      setDeleteOpen(false);
+      exitSelection();
+      const partial = result.failed.length > 0;
+      setToast({
+        msg: partial
+          ? t("deletePartial", { deleted: result.deleted.length, failed: result.failed.length })
+          : t("deletedCount", { count: result.deleted.length }),
+        success: !partial,
+      });
+      window.setTimeout(() => setToast(null), 2500);
+    },
+    [exitSelection, t],
+  );
 
   // Which library the selected photos will land in. When "All" is active we
   // fall back to the sole photo library (albums require a library); with
@@ -110,6 +135,18 @@ export default function PhotosPage() {
               <FolderPlus className="h-4 w-4" />
               {t("addToAlbum")}
             </button>
+            {isAdmin && (
+              <button
+                type="button"
+                disabled={selectedIds.size === 0}
+                onClick={() => setDeleteOpen(true)}
+                aria-label={t("delete")}
+                className="focus-ring flex items-center gap-2 rounded-lg bg-destructive/15 px-3 py-1.5 text-sm font-medium text-red-300 transition-colors hover:bg-destructive/25 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("delete")}</span>
+              </button>
+            )}
           </>
         ) : (
           <>
@@ -195,6 +232,18 @@ export default function PhotosPage() {
           }}
         />
       )}
+
+      {deleteOpen && (
+        <DeletePhotosDialog
+          ids={[...selectedIds]}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={onPhotosDeleted}
+        />
+      )}
+
+      <GlassToast visible={!!toast} success={toast?.success ?? true}>
+        {toast?.msg}
+      </GlassToast>
     </div>
   );
 }

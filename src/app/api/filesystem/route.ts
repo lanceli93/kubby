@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { execSync } from "child_process";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth-guard";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { count } from "drizzle-orm";
@@ -47,13 +47,13 @@ function getWindowsDrives(): { name: string; path: string }[] {
 
 // GET /api/filesystem?path=/some/dir - List directories at given path
 export async function GET(request: NextRequest) {
-  // Allow access if: user is logged in, OR no users exist (setup mode)
-  const session = await auth();
+  // Allow access if: user is an admin, OR no users exist (setup mode — the
+  // wizard browses folders before the admin account is created).
   const userCount = db.select({ count: count() }).from(users).get();
   const isSetupMode = userCount?.count === 0;
-
-  if (!session?.user && !isSetupMode) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isSetupMode) {
+    const guard = await requireAdmin();
+    if (guard instanceof NextResponse) return guard;
   }
   const { searchParams } = new URL(request.url);
   const requestedPath = searchParams.get("path");

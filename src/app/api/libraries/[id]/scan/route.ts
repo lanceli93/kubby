@@ -1,11 +1,15 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { scanLibrary } from "@/lib/scanner";
+import { requireAdmin } from "@/lib/auth-guard";
 
 // POST /api/libraries/[id]/scan — SSE streaming progress
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
 
   const stream = new ReadableStream({

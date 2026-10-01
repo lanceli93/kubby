@@ -32,6 +32,7 @@ import {
   Boxes,
 } from "lucide-react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 // Three.js lives entirely inside PosterWall; dynamic() keeps it out of the
 // initial page bundle and only fetches the chunk when the wall is opened.
@@ -128,10 +129,13 @@ export default function MovieBrowsePage() {
 
 function useMovieMutations() {
   const queryClient = useQueryClient();
+  const tMeta = useTranslations("metadata");
+  // Each consumer renders `errorToast` so failed mutations surface a toast.
+  const { showError, errorToast } = useErrorToast();
 
   const toggleFavorite = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/movies/${id}/user-data`, {
+      fetchOk(`/api/movies/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !current }),
@@ -139,11 +143,12 @@ function useMovieMutations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const toggleWatched = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/movies/${id}/user-data`, {
+      fetchOk(`/api/movies/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPlayed: !current }),
@@ -151,17 +156,20 @@ function useMovieMutations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const deleteMovie = useMutation({
     mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
-      fetch(`/api/movies/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+      fetchOk(`/api/movies/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   return {
+    errorToast,
     handleToggleFavorite: (id: string, current: boolean) =>
       toggleFavorite.mutate({ id, current }),
     handleToggleWatched: (id: string, current: boolean) =>
@@ -301,7 +309,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
   }, [sort, sortOrder, sortDimension, selectedGenres, selectedTags, selectedYears, router, pathname]);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
-  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie, errorToast } =
     useMovieMutations();
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
@@ -867,6 +875,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
           {t("noMovies")}
         </div>
       )}
+      {errorToast}
     </div>
   );
 }
@@ -915,7 +924,7 @@ function GenresTabContent({ libraryId }: { libraryId: string }) {
 }
 
 function GenreScrollRow({ genre, libraryId }: { genre: string; libraryId: string }) {
-  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie, errorToast } =
     useMovieMutations();
 
   const { data: movies = [] } = useQuery<Movie[]>({
@@ -969,6 +978,7 @@ function GenreScrollRow({ genre, libraryId }: { genre: string; libraryId: string
           />
         ))}
       </ScrollRow>
+      {errorToast}
     </section>
   );
 }
@@ -995,19 +1005,22 @@ const TIERS = ["SSS", "SS", "S", "A", "B", "C", "D", "E"] as const;
 
 function usePersonMutations() {
   const queryClient = useQueryClient();
+  const tMeta = useTranslations("metadata");
+  const { showError, errorToast } = useErrorToast();
 
   const deletePerson = useMutation({
     mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
-      fetch(`/api/people/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+      fetchOk(`/api/people/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["people"] });
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   const togglePersonFavorite = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/people/${id}/user-data`, {
+      fetchOk(`/api/people/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !current }),
@@ -1015,9 +1028,11 @@ function usePersonMutations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   return {
+    errorToast,
     handleDeletePerson: (id: string, deleteFiles?: boolean) =>
       deletePerson.mutate({ id, deleteFiles }),
     handleTogglePersonFavorite: (id: string, current: boolean) =>
@@ -1043,7 +1058,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
   const filterRef = useRef<HTMLDivElement>(null);
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
-  const { handleDeletePerson, handleTogglePersonFavorite } = usePersonMutations();
+  const { handleDeletePerson, handleTogglePersonFavorite, errorToast } = usePersonMutations();
 
   const sortOptions = [
     { value: "name", label: t("nameAZ"), icon: ArrowDownAZ },
@@ -1514,6 +1529,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
           {t("noActors")}
         </div>
       )}
+      {errorToast}
     </div>
   );
 }
@@ -1535,7 +1551,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
   const [yearsExpanded, setYearsExpanded] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
-  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie } =
+  const { handleToggleFavorite, handleToggleWatched, handleDeleteMovie, errorToast } =
     useMovieMutations();
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
@@ -1936,6 +1952,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
           {t("noMovies")}
         </div>
       )}
+      {errorToast}
     </div>
   );
 }

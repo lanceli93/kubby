@@ -7,6 +7,7 @@ import { Star, Heart, MoreHorizontal, ImageIcon, Pencil, Trash2 } from "lucide-r
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useTranslations } from "next-intl";
 import { TiltCard } from "@/components/ui/tilt-card";
 import {
@@ -75,7 +76,11 @@ export function PersonCard({
   const t = useTranslations("person");
   const tMeta = useTranslations("metadata");
   const tCommon = useTranslations("common");
+  const tMovies = useTranslations("movies");
   const { data: prefs } = useUserPreferences();
+  // The ⋯ menu is all admin-only actions (edit metadata / images / delete).
+  const isAdmin = useIsAdmin();
+  const showMenu = !readonly && isAdmin;
   const showTierBadge = prefs?.showPersonTierBadge !== false;
   const showRatingBadge = prefs?.showPersonRatingBadge !== false;
   const [imgError, setImgError] = useState(false);
@@ -148,7 +153,7 @@ export function PersonCard({
                 it tilts with the card. A readonly card (TV cast) with no
                 favorite handler renders no bar at all — its ⋯ menu edits the
                 cinema people tables, which must not touch a tv_people id. */}
-            {(onToggleFavorite || !readonly) && (
+            {(onToggleFavorite || showMenu) && (
             <div className={`absolute inset-x-0 bottom-0 flex items-center ${onToggleFavorite ? "justify-between" : "justify-end"} px-3 pt-6 pb-2.5 bg-gradient-to-t from-black/85 via-black/55 to-transparent transition-opacity duration-200 ease-out z-[5] ${menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
               {onToggleFavorite && (
                 <button
@@ -162,7 +167,7 @@ export function PersonCard({
                   <Heart className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
                 </button>
               )}
-              {!readonly && (
+              {showMenu && (
               <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -171,6 +176,7 @@ export function PersonCard({
                       e.stopPropagation();
                     }}
                     className="flex h-7 w-7 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/20"
+                    aria-label={tMovies("moreOptions")}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>

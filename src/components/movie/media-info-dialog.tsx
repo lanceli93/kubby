@@ -192,6 +192,7 @@ function SubtitleStreamInfo({ stream, index, total, t }: { stream: MediaStream; 
 
 export function MediaInfoDialog({ movieId, open, onOpenChange, apiBase = "/api/movies" }: MediaInfoDialogProps) {
   const t = useTranslations("mediaInfoDialog");
+  const tCommon = useTranslations("common");
 
   const { data, isLoading } = useQuery<MediaInfoData>({
     queryKey: ["media-info", apiBase, movieId],
@@ -224,7 +225,7 @@ export function MediaInfoDialog({ movieId, open, onOpenChange, apiBase = "/api/m
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
-            Loading...
+            {tCommon("loading")}...
           </div>
         ) : !data ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">

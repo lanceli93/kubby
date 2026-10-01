@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useAllScans, useScanActions } from "@/providers/scan-provider";
 import Image from "next/image";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { GlassToast } from "@/components/ui/glass-toast";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +47,10 @@ interface Library {
 
 export default function LibrariesPage() {
   const t = useTranslations("dashboard");
+  const tHome = useTranslations("home");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [name, setName] = useState("");
@@ -84,6 +89,16 @@ export default function LibrariesPage() {
   const [deleteCleanupOrphans, setDeleteCleanupOrphans] = useState(true);
   const [deleteNfo, setDeleteNfo] = useState(false);
 
+  // Toast feedback for create/edit/delete mutations
+  const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const showToast = (text: string, success: boolean) => {
+    clearTimeout(toastTimer.current);
+    setToast({ text, success });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
+
   const { data: libraries = [] } = useQuery<Library[]>({
     queryKey: ["libraries"],
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
@@ -97,16 +112,40 @@ export default function LibrariesPage() {
       .catch(() => setTmdbConfigured(false));
   };
 
+  // Dashboard "Add Library" quick action links here with ?add=1 — open the
+  // Add dialog automatically, then clear the param so a refresh doesn't
+  // reopen it.
+  // Read window.location rather than useSearchParams() so the page needn't be
+  // wrapped in a Suspense boundary for the production prerender.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("add") === "1") {
+      checkTmdbKey();
+      setScraperError("");
+      setOpen(true);
+      router.replace("/dashboard/libraries");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Folder path required to create — covers both already-added paths and
+  // whatever's currently typed into the "new path" box.
+  const createFolderPaths = newFolderPath.trim()
+    ? [...folderPaths, newFolderPath.trim()]
+    : folderPaths;
+  const canCreateLibrary = createFolderPaths.length > 0;
+
   const createLibrary = useMutation({
-    mutationFn: () => {
-      const allPaths = newFolderPath.trim()
-        ? [...folderPaths, newFolderPath.trim()]
-        : folderPaths;
-      return fetch("/api/libraries", {
+    mutationFn: async () => {
+      const res = await fetch("/api/libraries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type, folderPaths: allPaths, scraperEnabled, jellyfinCompat, metadataLanguage: metadataLanguage === "en" ? null : metadataLanguage }),
+        body: JSON.stringify({ name, type, folderPaths: createFolderPaths, scraperEnabled, jellyfinCompat, metadataLanguage: metadataLanguage === "en" ? null : metadataLanguage }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("createLibraryFailed"));
+      }
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
@@ -118,6 +157,10 @@ export default function LibrariesPage() {
       setScraperEnabled(false);
       setJellyfinCompat(false);
       setMetadataLanguage("en");
+      showToast(t("libraryCreated"), true);
+    },
+    onError: (error: Error) => {
+      showToast(error.message || t("createLibraryFailed"), false);
     },
   });
 
@@ -137,10 +180,21 @@ export default function LibrariesPage() {
   const anyScanning = libraries.some((lib) => scansMap.get(lib.id)?.scanning);
 
   const deleteLibrary = useMutation({
-    mutationFn: ({ id, cleanupOrphans, deleteNfo }: { id: string; cleanupOrphans: boolean; deleteNfo: boolean }) =>
-      fetch(`/api/libraries/${id}?cleanupOrphans=${cleanupOrphans}&deleteNfo=${deleteNfo}`, { method: "DELETE" }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["libraries"] }),
+    mutationFn: async ({ id, cleanupOrphans, deleteNfo }: { id: string; cleanupOrphans: boolean; deleteNfo: boolean }) => {
+      const res = await fetch(`/api/libraries/${id}?cleanupOrphans=${cleanupOrphans}&deleteNfo=${deleteNfo}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("deleteLibraryFailed"));
+      }
+      return res.json().catch(() => ({}));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      showToast(t("libraryDeleted"), true);
+    },
+    onError: (error: Error) => {
+      showToast(error.message || t("deleteLibraryFailed"), false);
+    },
   });
 
   const openEditDialog = (lib: Library) => {
@@ -161,7 +215,7 @@ export default function LibrariesPage() {
     if (!editLibId) return;
     setEditSaving(true);
     try {
-      await fetch(`/api/libraries/${editLibId}`, {
+      const res = await fetch(`/api/libraries/${editLibId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -172,10 +226,16 @@ export default function LibrariesPage() {
           metadataLanguage: editMetadataLanguage === "en" ? null : editMetadataLanguage,
         }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || t("updateLibraryFailed"), false);
+        return; // keep the dialog open so the user can fix/retry
+      }
       setEditOpen(false);
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      showToast(t("libraryUpdated"), true);
     } catch {
-      // ignore
+      showToast(t("updateLibraryFailed"), false);
     } finally {
       setEditSaving(false);
     }
@@ -236,11 +296,11 @@ export default function LibrariesPage() {
                 <>
                   <Progress value={(progress.current / progress.total) * 100} className="h-1.5 w-full" />
                   <span className="text-xs text-white/80">
-                    Scanning {progress.current}/{progress.total}
+                    {tHome("scanProgress", { current: progress.current, total: progress.total })}
                   </span>
                 </>
               ) : (
-                <span className="text-xs text-white/80">Scanning...</span>
+                <span className="text-xs text-white/80">{tHome("scanning")}</span>
               )}
             </div>
           )}
@@ -266,12 +326,12 @@ export default function LibrariesPage() {
                   onClick={(e) => { e.stopPropagation(); startScan(lib.id); }}
                 >
                   <HardDriveDownload className="h-4 w-4" />
-                  Scan Library
+                  {tHome("scanLibrary")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(lib); }}>
                   <Pencil className="h-4 w-4" />
-                  Edit
+                  {tHome("editLibrary")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
@@ -284,7 +344,7 @@ export default function LibrariesPage() {
                   }}
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete
+                  {tc("delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -324,7 +384,7 @@ export default function LibrariesPage() {
     <div className="stagger-children flex flex-col gap-6 p-8 px-10">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Media Libraries</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("mediaLibraries")}</h1>
         <div className="flex items-center gap-2">
           {libraries.length > 0 && (
             <button
@@ -333,19 +393,19 @@ export default function LibrariesPage() {
               className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm font-medium text-foreground transition-fluid hover:bg-white/[0.04] disabled:opacity-50 cursor-pointer active:scale-95"
             >
               <RefreshCw className={`h-4 w-4 ${anyScanning ? "animate-spin" : ""}`} />
-              Scan All Libraries
+              {t("scanAllLibraries")}
             </button>
           )}
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) { checkTmdbKey(); setScraperError(""); } }}>
             <DialogTrigger asChild>
               <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer transition-fluid active:scale-95">
                 <Plus className="h-4 w-4" />
-                Add Library
+                {t("addLibrary")}
               </button>
             </DialogTrigger>
             <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Add Media Library</DialogTitle>
+                <DialogTitle>{t("addMediaLibraryTitle")}</DialogTitle>
               </DialogHeader>
               <form
                 onSubmit={(e) => {
@@ -356,7 +416,7 @@ export default function LibrariesPage() {
               >
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-medium text-muted-foreground">
-                    Library Name
+                    {tHome("libraryName")}
                   </label>
                   <input
                     type="text"
@@ -369,14 +429,14 @@ export default function LibrariesPage() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-medium text-muted-foreground">
-                    Library Type
+                    {t("libraryTypeLabel")}
                   </label>
                   <Select value={type} onValueChange={setType}>
                     <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="movie">Movie</SelectItem>
+                      <SelectItem value="movie">{t("libraryTypeMovie")}</SelectItem>
                       <SelectItem value="tvshow">{t("libraryTypeTv")}</SelectItem>
                       <SelectItem value="photo">{t("libraryTypePhoto")}</SelectItem>
                       <SelectItem value="music">{t("libraryTypeMusic")}</SelectItem>
@@ -385,7 +445,7 @@ export default function LibrariesPage() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-medium text-muted-foreground">
-                    Folder Paths
+                    {tHome("folderPaths")}
                   </label>
                   <div className="flex flex-col gap-2">
                     {folderPaths.map((p, idx) => (
@@ -443,9 +503,12 @@ export default function LibrariesPage() {
                         className="flex h-11 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3.5 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
                       >
                         <Plus className="h-3.5 w-3.5" />
-                        Add
+                        {tHome("addFolder")}
                       </button>
                     </div>
+                    {!canCreateLibrary && (
+                      <p className="text-xs text-destructive">{t("folderPathRequiredHint")}</p>
+                    )}
                   </div>
                 </div>
                 <FolderPicker
@@ -460,7 +523,7 @@ export default function LibrariesPage() {
                 {/* Metadata downloaders section */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-muted-foreground">
-                    Metadata downloaders (Movies)
+                    {t("metadataDownloadersMoviesLabel")}
                   </label>
                   <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                     <span className="text-sm text-foreground">TheMovieDb</span>
@@ -468,7 +531,7 @@ export default function LibrariesPage() {
                       checked={scraperEnabled}
                       onCheckedChange={(checked) => {
                         if (checked && tmdbConfigured === false) {
-                          setScraperError("TMDB API key is not configured. Please set it up in Dashboard > Scraper before enabling.");
+                          setScraperError(t("scraperApiKeyMissing"));
                           return;
                         }
                         setScraperEnabled(checked);
@@ -476,7 +539,7 @@ export default function LibrariesPage() {
                     />
                   </div>
                   <p className="text-xs text-[#555568]">
-                    Select metadata downloaders to automatically fetch movie info during library scan.
+                    {t("metadataDownloadersMoviesDesc")}
                   </p>
                 </div>
 
@@ -514,10 +577,10 @@ export default function LibrariesPage() {
                 {/* Jellyfin Compatibility Mode */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-medium text-muted-foreground">
-                    Jellyfin Compatibility
+                    {tHome("jellyfinCompat")}
                   </label>
                   <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
-                    <span className="text-sm text-foreground">Jellyfin Compatibility Mode</span>
+                    <span className="text-sm text-foreground">{tHome("jellyfinCompat")}</span>
                     <Switch
                       checked={jellyfinCompat}
                       onCheckedChange={(checked) => {
@@ -530,7 +593,7 @@ export default function LibrariesPage() {
                     />
                   </div>
                   <p className="text-xs text-[#555568]">
-                    Prevents Kubby from writing to NFO files and imports actor photos from Jellyfin local paths.
+                    {tHome("jellyfinCompatHelp")}
                   </p>
                 </div>
 
@@ -538,9 +601,9 @@ export default function LibrariesPage() {
                 <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
                   <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
                     <DialogHeader>
-                      <DialogTitle>Enable Jellyfin Compatibility?</DialogTitle>
+                      <DialogTitle>{tHome("jellyfinCompatDialogTitle")}</DialogTitle>
                       <DialogDescription>
-                        When enabled, Kubby will never modify or create NFO files in your library folders. Actor photos referenced by local paths in NFO thumb tags will be copied to Kubby&apos;s metadata directory. This is recommended if Jellyfin also uses this library.
+                        {tHome("jellyfinCompatDialogDesc")}
                       </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -549,7 +612,7 @@ export default function LibrariesPage() {
                         onClick={() => setJellyfinCompatConfirmOpen(false)}
                         className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
-                        Cancel
+                        {tc("cancel")}
                       </button>
                       <button
                         type="button"
@@ -559,7 +622,7 @@ export default function LibrariesPage() {
                         }}
                         className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                       >
-                        Enable
+                        {tc("enable")}
                       </button>
                     </DialogFooter>
                   </DialogContent>
@@ -577,7 +640,7 @@ export default function LibrariesPage() {
                         href="/metadata/scraper"
                         className="mt-1 inline-block text-sm font-medium text-primary hover:underline"
                       >
-                        Go to Scraper Settings
+                        {t("goToScraperSettings")}
                       </Link>
                     </div>
                     <button
@@ -595,14 +658,14 @@ export default function LibrariesPage() {
                     onClick={() => setOpen(false)}
                     className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground"
                   >
-                    Cancel
+                    {tc("cancel")}
                   </button>
                   <button
                     type="submit"
-                    disabled={createLibrary.isPending}
+                    disabled={createLibrary.isPending || !canCreateLibrary}
                     className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {createLibrary.isPending ? "Creating..." : "Create Library"}
+                    {createLibrary.isPending ? t("creatingLibrary") : t("createLibrary")}
                   </button>
                 </div>
               </form>
@@ -646,7 +709,7 @@ export default function LibrariesPage() {
 
       {libraries.length === 0 && (
         <div className="flex h-64 items-center justify-center text-muted-foreground">
-          No media libraries yet. Add one to get started.
+          {t("noLibraries")}
         </div>
       )}
 
@@ -654,14 +717,14 @@ export default function LibrariesPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Edit Library</DialogTitle>
+            <DialogTitle>{tHome("editLibrary")}</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(e) => { e.preventDefault(); handleEditSave(); }}
             className="flex flex-col gap-5 pt-4 overflow-hidden"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">Library Name</label>
+              <label className="text-[13px] font-medium text-muted-foreground">{tHome("libraryName")}</label>
               <input
                 type="text"
                 value={editName}
@@ -671,7 +734,7 @@ export default function LibrariesPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">Folder Paths</label>
+              <label className="text-[13px] font-medium text-muted-foreground">{tHome("folderPaths")}</label>
               <div className="flex flex-col gap-2">
                 {editFolderPaths.map((p, idx) => (
                   <div key={idx} className="flex items-center gap-2 min-w-0">
@@ -729,7 +792,7 @@ export default function LibrariesPage() {
                     className="flex h-11 items-center gap-1.5 rounded-lg border border-white/[0.06] px-3.5 text-sm text-muted-foreground hover:bg-white/[0.04] hover:text-foreground disabled:opacity-30"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    Add
+                    {tHome("addFolder")}
                   </button>
                 </div>
               </div>
@@ -746,7 +809,7 @@ export default function LibrariesPage() {
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-medium text-muted-foreground">
-                Metadata downloaders (Movies)
+                {t("metadataDownloadersMoviesLabel")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
                 <span className="text-sm text-foreground">TheMovieDb</span>
@@ -754,7 +817,7 @@ export default function LibrariesPage() {
                   checked={editScraperEnabled}
                   onCheckedChange={(checked) => {
                     if (checked && editTmdbConfigured === false) {
-                      setEditScraperError("TMDB API key is not configured. Please set it up in Dashboard > Scraper before enabling.");
+                      setEditScraperError(t("scraperApiKeyMissing"));
                       return;
                     }
                     setEditScraperEnabled(checked);
@@ -792,7 +855,7 @@ export default function LibrariesPage() {
                 <div className="flex-1">
                   <p className="text-sm text-destructive">{editScraperError}</p>
                   <Link href="/metadata/scraper" className="mt-1 inline-block text-sm font-medium text-primary hover:underline">
-                    Go to Scraper Settings
+                    {t("goToScraperSettings")}
                   </Link>
                 </div>
                 <button type="button" onClick={() => setEditScraperError("")} className="shrink-0 text-destructive/60 hover:text-destructive">
@@ -803,10 +866,10 @@ export default function LibrariesPage() {
             {/* Jellyfin Compatibility */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-medium text-muted-foreground">
-                Jellyfin Compatibility
+                {tHome("jellyfinCompat")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
-                <span className="text-sm text-foreground">Jellyfin Compatibility Mode</span>
+                <span className="text-sm text-foreground">{tHome("jellyfinCompat")}</span>
                 <Switch
                   checked={editJellyfinCompat}
                   onCheckedChange={(checked) => {
@@ -816,7 +879,7 @@ export default function LibrariesPage() {
                 />
               </div>
               <p className="text-xs text-[#555568]">
-                Prevents Kubby from writing to NFO files and imports actor photos from Jellyfin local paths.
+                {tHome("jellyfinCompatHelp")}
               </p>
             </div>
               </>
@@ -827,14 +890,14 @@ export default function LibrariesPage() {
                 onClick={() => setEditOpen(false)}
                 className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground"
               >
-                Cancel
+                {tc("cancel")}
               </button>
               <button
                 type="submit"
                 disabled={editSaving}
                 className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                {editSaving ? "Saving..." : "Save"}
+                {editSaving ? t("saving") : tc("save")}
               </button>
             </div>
           </form>
@@ -847,13 +910,13 @@ export default function LibrariesPage() {
           <DialogHeader>
             <DialogTitle>
               {editJellyfinCompatAction === "enable"
-                ? "Enable Jellyfin Compatibility?"
-                : "Disable Jellyfin Compatibility?"}
+                ? tHome("jellyfinCompatDialogTitle")
+                : tHome("jellyfinCompatDisableTitle")}
             </DialogTitle>
             <DialogDescription>
               {editJellyfinCompatAction === "enable"
-                ? "When enabled, Kubby will never modify or create NFO files in your library folders. Actor photos referenced by local paths in NFO thumb tags will be copied to Kubby\u2019s metadata directory. This is recommended if Jellyfin also uses this library."
-                : "Kubby will resume writing NFO files when metadata is edited or actors are supplemented during scans. Existing NFO files may be overwritten."}
+                ? tHome("jellyfinCompatDialogDesc")
+                : tHome("jellyfinCompatDisableDesc")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -862,7 +925,7 @@ export default function LibrariesPage() {
               onClick={() => setEditJellyfinCompatConfirmOpen(false)}
               className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              Cancel
+              {tc("cancel")}
             </button>
             <button
               type="button"
@@ -872,7 +935,7 @@ export default function LibrariesPage() {
               }}
               className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Confirm
+              {tc("confirm")}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -882,16 +945,15 @@ export default function LibrariesPage() {
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Delete Library</DialogTitle>
+            <DialogTitle>{tHome("deleteLibrary")} &ldquo;{deleteLibName}&rdquo;</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteLibName}&rdquo;?{" "}
               {deleteLibType === "photo"
-                ? "All photos and videos in it will be removed from the library (source files on disk are untouched)."
+                ? tHome("confirmDeleteLibraryPhoto")
                 : deleteLibType === "music"
-                  ? "All albums, artists and tracks in it will be removed from the library (source files on disk are untouched)."
+                  ? tHome("confirmDeleteLibraryMusic")
                   : deleteLibType === "tvshow"
-                    ? "All shows, seasons and episodes in it will be removed from the library (source files on disk are untouched)."
-                    : "All movies in it will be removed."}
+                    ? tHome("confirmDeleteLibraryTv")
+                    : tHome("confirmDeleteLibrary")}
             </DialogDescription>
           </DialogHeader>
           {/* Orphan-actor cleanup: a per-domain concept backed by an isolated
@@ -907,8 +969,8 @@ export default function LibrariesPage() {
                 />
                 <span className="text-sm text-muted-foreground">
                   {deleteLibType === "tvshow"
-                    ? "Clean up people no longer associated with any TV show"
-                    : "Clean up actors no longer associated with any movie"}
+                    ? tHome("cleanupOrphanPeopleTv")
+                    : tHome("cleanupOrphanPeople")}
                 </span>
               </label>
               {deleteLibType === "movie" && (
@@ -919,7 +981,7 @@ export default function LibrariesPage() {
                     onChange={(e) => setDeleteNfo(e.target.checked)}
                     className="h-4 w-4 rounded border-white/[0.06] bg-white/[0.05] accent-primary"
                   />
-                  <span className="text-sm text-muted-foreground">Delete NFO files from media folders (allows re-scraping)</span>
+                  <span className="text-sm text-muted-foreground">{tHome("deleteNfoFiles")}</span>
                 </label>
               )}
             </div>
@@ -930,7 +992,7 @@ export default function LibrariesPage() {
               onClick={() => setDeleteOpen(false)}
               className="rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              Cancel
+              {tc("cancel")}
             </button>
             <button
               type="button"
@@ -950,11 +1012,15 @@ export default function LibrariesPage() {
               }}
               className="rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"
             >
-              Delete
+              {tc("delete")}
             </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <GlassToast visible={!!toast} success={toast?.success}>
+        {toast?.text}
+      </GlassToast>
     </div>
     </div>
   );

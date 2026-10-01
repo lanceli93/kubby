@@ -37,6 +37,8 @@ import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { FrameScrubber } from "@/components/movie/frame-scrubber";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 interface DiscInfo {
   id: string;
@@ -170,6 +172,8 @@ export default function MovieDetailPage() {
   const [bookmarkMode, setBookmarkMode] = useState(false);
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
   const onImgError = (path: string) => setImgErrors(prev => new Set(prev).add(path));
+  const isAdmin = useIsAdmin();
+  const { showError, errorToast } = useErrorToast();
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
   const SUPPORTED_PLAYERS = ["IINA", "PotPlayer"];
@@ -264,64 +268,79 @@ export default function MovieDetailPage() {
 
   const deleteBookmark = useMutation({
     mutationFn: (bookmarkId: string) =>
-      fetch(`/api/movies/${movieId}/bookmarks/${bookmarkId}`, { method: "DELETE" }),
+      fetchOk(`/api/movies/${movieId}/bookmarks/${bookmarkId}`, { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie-bookmarks", movieId] }),
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   const updateBookmark = useMutation({
     mutationFn: ({ bookmarkId, data }: { bookmarkId: string; data: { iconType?: string; tags?: string[]; note?: string } }) =>
-      fetch(`/api/movies/${movieId}/bookmarks/${bookmarkId}`, {
+      fetchOk(`/api/movies/${movieId}/bookmarks/${bookmarkId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie-bookmarks", movieId] }),
+    onError: () => showError(tMeta("saveFailed")),
   });
 
   const toggleFavorite = useMutation({
     mutationFn: () =>
-      fetch(`/api/movies/${movieId}/user-data`, {
+      fetchOk(`/api/movies/${movieId}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !movie?.userData?.isFavorite }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie", movieId] }),
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
-    await fetch(`/api/movies/${movieId}/user-data`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+    try {
+      await fetchOk(`/api/movies/${movieId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+    } catch {
+      showError(tMeta("saveFailed"));
+    }
   };
 
   const toggleWatched = useMutation({
     mutationFn: () =>
-      fetch(`/api/movies/${movieId}/user-data`, {
+      fetchOk(`/api/movies/${movieId}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPlayed: !movie?.userData?.isPlayed }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movie", movieId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+      // Marking watched/unwatched resets the resume point server-side, so the
+      // home Continue Watching row must refetch too.
+      queryClient.invalidateQueries({ queryKey: ["movies", "continue-watching"] });
+    },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const [deleteFiles, setDeleteFiles] = useState(false);
 
   const deleteMovie = useMutation({
     mutationFn: (opts?: { deleteFiles?: boolean }) =>
-      fetch(`/api/movies/${movieId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+      fetchOk(`/api/movies/${movieId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       // Preserve source library filter so we return to the same library view
       router.push(movie?.mediaLibraryId ? `/movies?libraryId=${movie.mediaLibraryId}` : "/movies");
     },
+    // Stay on the page — the movie still exists.
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   const togglePersonFavorite = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/people/${id}/user-data`, {
+      fetchOk(`/api/people/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !current }),
@@ -330,12 +349,13 @@ export default function MovieDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   if (!movie) {
     return (
       <div className="flex h-96 items-center justify-center text-muted-foreground">
-        Loading...
+        {tCommon("loading")}...
       </div>
     );
   }
@@ -428,7 +448,7 @@ export default function MovieDetailPage() {
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-[var(--surface)] text-muted-foreground">
-                    No Poster
+                    {tMeta("noImage")}
                   </div>
                 )}
               </div>
@@ -550,12 +570,16 @@ export default function MovieDetailPage() {
                     return;
                   }
                   const newEnabled = !prefs?.externalPlayerEnabled;
-                  await fetch("/api/settings/personal-metadata", {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+                  try {
+                    await fetchOk("/api/settings/personal-metadata", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ externalPlayerEnabled: newEnabled }),
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
+                  } catch {
+                    showError(tMeta("saveFailed"));
+                  }
                 }}
                 className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all cursor-pointer ${
                   externalEnabled ? "text-indigo-400" : "text-white/70"
@@ -568,7 +592,8 @@ export default function MovieDetailPage() {
                 <button
                   onClick={() => setFanartMode(true)}
                   className="glass-btn hidden md:flex h-11 w-11 items-center justify-center rounded-xl text-white/70 transition-all"
-                  title="View fanart"
+                  title={t("viewFanart")}
+                  aria-label={t("viewFanart")}
                 >
                   <Maximize2 className="h-5 w-5" />
                 </button>
@@ -578,7 +603,9 @@ export default function MovieDetailPage() {
                 className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all ${
                   movie.userData?.isPlayed ? "text-green-400" : "text-white/70"
                 }`}
-                title="Mark as watched"
+                title={t("watched")}
+                aria-label={t("watched")}
+                aria-pressed={!!movie.userData?.isPlayed}
               >
                 <CheckCircle className="h-5 w-5" />
               </button>
@@ -587,7 +614,9 @@ export default function MovieDetailPage() {
                 className={`glass-btn flex h-11 w-11 items-center justify-center rounded-xl transition-all ${
                   movie.userData?.isFavorite ? "text-red-400" : "text-white/70"
                 }`}
-                title="Favorite"
+                title={t("favorite")}
+                aria-label={t("favorite")}
+                aria-pressed={!!movie.userData?.isFavorite}
               >
                 <Heart
                   className={`h-5 w-5 ${movie.userData?.isFavorite ? "fill-red-400" : ""}`}
@@ -612,6 +641,7 @@ export default function MovieDetailPage() {
                 <DropdownMenuTrigger asChild>
                   <button
                     className="glass-btn flex h-11 w-11 items-center justify-center rounded-xl text-white/70 transition-all"
+                    aria-label={t("moreOptions")}
                   >
                     <MoreVertical className="h-5 w-5" />
                   </button>
@@ -620,23 +650,32 @@ export default function MovieDetailPage() {
                   align="start"
                   className="w-52 border-white/10 bg-black/70 backdrop-blur-xl"
                 >
-                  <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
-                    <Pencil className="h-4 w-4" />
-                    {t("editMetadata")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
-                    <ImageIcon className="h-4 w-4" />
-                    {tMeta("editImages")}
-                  </DropdownMenuItem>
+                  {/* Metadata / image edits and delete are admin-only. */}
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuItem onClick={() => setMetadataOpen(true)}>
+                        <Pencil className="h-4 w-4" />
+                        {t("editMetadata")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setImageEditorOpen(true)}>
+                        <ImageIcon className="h-4 w-4" />
+                        {tMeta("editImages")}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuItem onClick={() => setMediaInfoOpen(true)}>
                     <Info className="h-4 w-4" />
                     {t("mediaInfo")}
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
-                    <Trash2 className="h-4 w-4" />
-                    {tMeta("deleteMedia")}
-                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
+                        <Trash2 className="h-4 w-4" />
+                        {tMeta("deleteMedia")}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -670,7 +709,7 @@ export default function MovieDetailPage() {
               )}
               {genres.length > 0 && (
                 <div>
-                  <span className="text-white/50">Genres: </span>
+                  <span className="text-white/50">{t("genres")}: </span>
                   <span className="text-white/90">
                     {genres.map((genre, i) => (
                       <span key={genre}>
@@ -688,13 +727,13 @@ export default function MovieDetailPage() {
               )}
               {movie.directors.length > 0 && (
                 <div>
-                  <span className="text-white/50">Director: </span>
+                  <span className="text-white/50">{t("director")}: </span>
                   <span className="text-white/90">{movie.directors.map((d) => d.name).join(", ")}</span>
                 </div>
               )}
               {studios.length > 0 && (
                 <div>
-                  <span className="text-white/50">Studio: </span>
+                  <span className="text-white/50">{t("studio")}: </span>
                   <span className="text-white/90">
                     {studios.map((studio, i) => (
                       <span key={studio}>
@@ -712,7 +751,7 @@ export default function MovieDetailPage() {
               )}
               {movie.country && (
                 <div>
-                  <span className="text-white/50">Country: </span>
+                  <span className="text-white/50">{t("country")}: </span>
                   <span className="text-white/90">{movie.country}</span>
                 </div>
               )}
@@ -922,12 +961,14 @@ export default function MovieDetailPage() {
       )}
       </div>
 
-      {/* Metadata editor dialog */}
-      <MovieMetadataEditor
-        movieId={movieId}
-        open={metadataOpen}
-        onOpenChange={setMetadataOpen}
-      />
+      {/* Metadata editor dialog (admin-only) */}
+      {isAdmin && (
+        <MovieMetadataEditor
+          movieId={movieId}
+          open={metadataOpen}
+          onOpenChange={setMetadataOpen}
+        />
+      )}
 
       {/* Media info dialog */}
       <MediaInfoDialog
@@ -936,14 +977,16 @@ export default function MovieDetailPage() {
         onOpenChange={setMediaInfoOpen}
       />
 
-      {/* Image editor dialog */}
-      <ImageEditorDialog
-        open={imageEditorOpen}
-        onOpenChange={setImageEditorOpen}
-        entityType="movie"
-        entityId={movieId}
-        entityName={movie.title}
-      />
+      {/* Image editor dialog (admin-only) */}
+      {isAdmin && (
+        <ImageEditorDialog
+          open={imageEditorOpen}
+          onOpenChange={setImageEditorOpen}
+          entityType="movie"
+          entityId={movieId}
+          entityName={movie.title}
+        />
+      )}
 
       {/* Personal rating dialog */}
       <StarRatingDialog
@@ -1011,6 +1054,7 @@ export default function MovieDetailPage() {
           externalToast
         )}
       </GlassToast>
+      {errorToast}
     </div>
     </div>
   );

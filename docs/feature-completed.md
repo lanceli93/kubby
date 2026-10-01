@@ -3,6 +3,35 @@
 Reverse-chronological. Detailed patterns live in the kubby skill
 (`.claude/skills/kubby/`); this is a short ledger of shipped work.
 
+## 2026-10-01 — Closed-loop & authorization audit
+
+Tested the app end-to-end on an isolated instance and fixed "can create but can't
+undo/delete" gaps plus API authorization. Checklist: `docs/tasks/closed-loop-audit.md`;
+patterns in the skill (`architecture.md` → Authentication, `feature-patterns.md` → Demo
+Mode + Backend review checklist #5).
+
+- **Security.** `DELETE /api/setup/demo` was callable unauthenticated (factory reset
+  by anyone). All shared mutations now go through DB-backed `requireAdmin()` /
+  `requireUser()` (`src/lib/auth-guard.ts`): libraries, scan, settings, filesystem,
+  music upload/edit, movie/TV/person edit+delete+images, dashboard APIs, users.
+  Deleted/demoted users' JWTs no longer work. Recursive person-dir deletes are confined
+  to Kubby's metadata dirs.
+- **Demo lifecycle.** Demo panel moved to the top of System, stays until both the demo
+  libraries AND the `demo`/`demo` admin are gone; new "Remove demo account"; honest
+  factory reset (keeps other accounts, signs out correctly); signed-in-as-demo callout;
+  admin-only DEMO pill in the header.
+- **Users & accounts.** Labeled Edit / Reset password / Delete per row; Edit dialog
+  (display name, username, role); profile name change refreshes the session; Register
+  dead-end replaced by a "ask your administrator" state.
+- **Content.** Admin-only edit/delete hidden for regular users; every mutation checks
+  `res.ok` with an error toast (no more silent "success" + redirect); image delete
+  confirms; watched/unwatched resets resume position; Continue Watching ×; photo/video
+  delete (file + thumbs + row) and "Set as album cover".
+- **Dashboard/settings.** Scan All works; Recent Activity is real; TV counts say
+  episodes; quick actions open the add dialogs; TMDB key removable; setup wizard offers
+  all four library types; bookmark-icon delete confirms; "Reset to defaults" on
+  preference pages; language change feedback; broad i18n cleanup.
+
 ## 2026-08-06 — Demo Mode enrichment (VR movie, richer media, ratings & bios)
 
 Three rounds of polish so a fresh demo feels lived-in rather than empty. Details in

@@ -626,16 +626,30 @@ Fills all four domains on a fresh install so the product isn't a blank slate.
   scraper. Seeded PRNG (no `Math.random`, stable re-seeds), idempotent, **scope-guarded
   to movies + cinema `people` — never `tv_people`/`user_tv_*`/other users.**
 - **`is_demo` is the teardown allowlist (migration 0042).** `DELETE /api/setup/demo`
-  selects libraries `WHERE is_demo = true` and reuses the per-library
-  `DELETE /api/libraries/[id]` teardown (FK cascade + per-domain on-disk cleanup +
-  orphan people/artist sweep — see Cross-domain safety), then `rm -rf {dataDir}/demo/`.
-  `?factoryReset=true` also deletes the demo user (→ `count(users)===0` returns the app
-  to the setup wizard). A real library added alongside the demo is never touched —
+  (**admin-only** — `/api/setup` is a public proxy prefix, so the handler calls
+  `requireAdmin()`) takes `?scope=`: `libraries` (default) selects `WHERE is_demo = true`
+  and calls `deleteLibraryById()` (`src/lib/library-teardown.ts` — FK cascade + per-domain
+  on-disk cleanup + orphan people/artist sweep, see Cross-domain safety) then
+  `rm -rf {dataDir}/demo/`; `account` deletes the demo user (`settings.demo_user_id`);
+  `all` (= legacy `?factoryReset=true`) does both. It refuses `account` while you're
+  signed in as the demo user (`reason:"self"`) and `account`/`all` when the demo user is
+  the last admin with other users left (`reason:"lastAdmin"`). Returns
+  `{ usersRemaining, removedCurrentUser }`; the client then `signOut()`s to `/setup`
+  (0 users) or `/login` (you deleted yourself). A real library added alongside the demo is never touched —
   verified. `POST /api/setup/demo` downloads the pack, then creates the `demo`/`demo`
   admin + seeds via SSE (guarded by the same first-run `count(users)===0` check as normal
   setup); the wizard forks to it after language selection. SSE progress adds a `download`
   phase before the domain phases (shows MB transferred); the confirm dialog warns it
   downloads ~75 MB from GitHub and needs internet.
+- **Teardown must be discoverable (it was the #1 "how do I delete the demo?" report).**
+  `GET /api/setup/demo` returns `{hasDemo}` to everyone and, for admins,
+  `hasDemoUser / isCurrentUserDemo / demoIsLastAdmin / otherUserCount`. The System
+  overview renders the **Demo Data panel at the TOP** (`id="demo-data"`) while demo libs
+  OR the demo account exist — clearing libraries alone leaves a known-password admin, so
+  the panel must not vanish until the account is gone too. Signed in as `demo`, it shows a
+  callout: create your own admin → sign in with it → remove the demo account. `AppHeader`
+  shows an admin-only amber **DEMO** pill → `/dashboard#demo-data` (shares the
+  `["demo-status"]` query, so clearing hides it).
 - **Releasing the pack.** `DEMO_ASSETS_URL` (`fetch-assets.ts`) is pinned to a specific
   release tag's asset (currently `v0.7.3/demo-assets.tar.gz`). Release assets persist, so
   later app versions keep resolving that same file — the pack is NOT re-shipped every
@@ -660,12 +674,16 @@ racing them.**
    the middleware is `src/proxy.ts` in Next 16, gating via `authorized()` in
    `auth.config.ts` — its `publicPaths` list + the stream regex are the whole
    allowlist); path traversal on any route that turns a **client-supplied** param
-   into an `fs` path (DB-sourced paths are safe, client-sourced are not); command/
-   arg injection (all ffmpeg/external-player spawns use arg arrays, no shell — keep
-   it that way); SSRF (TMDB fetches are fixed-domain); SQL is fully Drizzle-
-   parameterized. Known residual (deferred): most `settings`/`libraries`/mutation
-   routes authorize on "any logged-in session", not `isAdmin` — fine for a single-
-   admin install, revisit when a non-admin user exists.
+   into an `fs` path; command/arg injection (all ffmpeg/external-player spawns use
+   arg arrays, no shell — keep it that way); SSRF (TMDB fetches are fixed-domain); SQL
+   is fully Drizzle-parameterized. **DB-sourced paths are NOT automatically safe for
+   destructive ops**: `people.photo_path` can come from an NFO `<thumb>` and point
+   anywhere (even another Kubby instance's data dir), so every recursive `rm` of a
+   DB-derived dir must pass `isPathInside(dir, <the dir Kubby owns>)` from
+   `src/lib/paths.ts` (person delete + orphan sweeps in `library-teardown.ts` do).
+   **Role checks**: since 2026-10-01 every shared mutation calls `requireAdmin()`
+   (DB-backed, `src/lib/auth-guard.ts`) — when adding a route, pick `requireUser()`
+   or `requireAdmin()` explicitly; the proxy only checks login.
 3. **Robustness** — orphaned ffmpeg (client disconnect / shutdown / mid-stream),
    unbounded concurrent transcode sessions (**still uncapped** — deferred), races
    between session create/kill/seek, scanner concurrency (needs a server-side lock,
@@ -679,6 +697,16 @@ racing them.**
    `no such column` on upgrade. Also: FK cascade completeness (+ `PRAGMA
    foreign_keys=ON`), indexes on hot WHERE/ORDER-BY/JOIN columns of large tables,
    UNIQUE constraints the upsert logic assumes.
+
+5. **Closed loops (2026-10-01 audit, `docs/tasks/closed-loop-audit.md`)** — for
+   everything a user can create/enable, check there is a reachable edit/undo/delete in
+   the UI (not just an API), that it's discoverable (labeled buttons beat icon-only /
+   hover-only / bottom-of-page), that the mutation checks `res.ok` and shows an error
+   toast instead of closing/navigating as if it worked (`fetchOk` + `useErrorToast` in
+   `src/components/shared/use-error-toast.tsx`), that destructive actions confirm
+   (`src/components/shared/confirm-dialog.tsx`), and that settings pages have "Reset to
+   defaults". Still open: cancelling an in-flight scan, "hide from Next Up", signed
+   stream URLs.
 
 **Fixes shipped from this review** (`574f5ec`, hardening only, no behavior change):
 confined `/api/images/[...path]` to library-folders + data-dir roots (was an

@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GlassToast } from "@/components/ui/glass-toast";
+import { fetchJsonOrThrow } from "@/lib/photos/fetch-json";
 
 interface Album {
   id: string;
@@ -37,7 +38,13 @@ export function AddToAlbumDialog({
   const queryClient = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; success: boolean } | null>(null);
+
+  // Failures keep the dialog open so the user can retry or pick another album.
+  const showError = () => {
+    setToast({ msg: t("actionFailed"), success: false });
+    window.setTimeout(() => setToast(null), 2500);
+  };
 
   const { data: albums = [], isLoading } = useQuery<Album[]>({
     queryKey: ["photo-albums", libraryId],
@@ -47,30 +54,31 @@ export function AddToAlbumDialog({
 
   const addToAlbum = useMutation({
     mutationFn: (albumId: string) =>
-      fetch(`/api/photos/albums/${albumId}/items`, {
+      fetchJsonOrThrow(`/api/photos/albums/${albumId}/items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemIds }),
-      }).then((r) => r.json()),
+      }),
     onSuccess: (_data, albumId) => {
       queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
       queryClient.invalidateQueries({
         queryKey: ["photos", { libraryId: null, albumId }],
       });
-      setToast(t("addedToAlbum", { count: itemIds.length }));
+      setToast({ msg: t("addedToAlbum", { count: itemIds.length }), success: true });
       window.setTimeout(onDone, 900);
     },
+    onError: showError,
   });
 
   const createAndAdd = useMutation({
     mutationFn: async (name: string) => {
-      const album = await fetch(`/api/photos/albums`, {
+      const album = await fetchJsonOrThrow<{ id?: string }>(`/api/photos/albums`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, libraryId }),
-      }).then((r) => r.json());
+      });
       if (!album?.id) throw new Error("create failed");
-      await fetch(`/api/photos/albums/${album.id}/items`, {
+      await fetchJsonOrThrow(`/api/photos/albums/${album.id}/items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemIds }),
@@ -79,8 +87,13 @@ export function AddToAlbumDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
-      setToast(t("addedToAlbum", { count: itemIds.length }));
+      setToast({ msg: t("addedToAlbum", { count: itemIds.length }), success: true });
       window.setTimeout(onDone, 900);
+    },
+    onError: () => {
+      // The album may have been created before the add failed — refresh the list.
+      queryClient.invalidateQueries({ queryKey: ["photo-albums"] });
+      showError();
     },
   });
 
@@ -175,8 +188,8 @@ export function AddToAlbumDialog({
         </div>
       </DialogContent>
 
-      <GlassToast visible={!!toast} className="z-[100]">
-        {toast}
+      <GlassToast visible={!!toast} success={toast?.success ?? true} className="z-[100]">
+        {toast?.msg}
       </GlassToast>
     </Dialog>
   );

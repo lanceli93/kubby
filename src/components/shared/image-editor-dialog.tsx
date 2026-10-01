@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 interface ImageEditorDialogProps {
   open: boolean;
@@ -43,6 +45,8 @@ export function ImageEditorDialog({
   const tMeta = useTranslations("metadata");
   const [uploading, setUploading] = useState<"poster" | "fanart" | null>(null);
   const [deleting, setDeleting] = useState<"poster" | "fanart" | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<"poster" | "fanart" | null>(null);
+  const { showError, errorToast } = useErrorToast();
   const posterInputRef = useRef<HTMLInputElement>(null);
   const fanartInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,7 +88,7 @@ export function ImageEditorDialog({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      await fetch(`${apiBase}/images?type=${type}`, {
+      await fetchOk(`${apiBase}/images?type=${type}`, {
         method: "POST",
         body: formData,
       });
@@ -94,6 +98,8 @@ export function ImageEditorDialog({
       if (entityType === "person") {
         queryClient.invalidateQueries({ queryKey: ["movie"] });
       }
+    } catch {
+      showError(tMeta("uploadFailed"));
     } finally {
       setUploading(null);
     }
@@ -102,7 +108,7 @@ export function ImageEditorDialog({
   const handleDelete = async (type: "poster" | "fanart") => {
     setDeleting(type);
     try {
-      await fetch(`${apiBase}/images`, {
+      await fetchOk(`${apiBase}/images`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type }),
@@ -112,6 +118,8 @@ export function ImageEditorDialog({
       if (entityType === "person") {
         queryClient.invalidateQueries({ queryKey: ["movie"] });
       }
+    } catch {
+      showError(tMeta("imageDeleteFailed"));
     } finally {
       setDeleting(null);
     }
@@ -129,6 +137,7 @@ export function ImageEditorDialog({
   const isMovieDerivedFanart = entityType === "person" && fanartSource === "movie";
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[900px] sm:rounded-lg overflow-y-auto">
         <DialogHeader>
@@ -167,7 +176,8 @@ export function ImageEditorDialog({
               </button>
               {posterPath && (
                 <button
-                  onClick={() => handleDelete("poster")}
+                  onClick={() => setConfirmDelete("poster")}
+                  aria-label={tMeta("deleteImage")}
                   disabled={busy}
                   className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
                 >
@@ -222,7 +232,8 @@ export function ImageEditorDialog({
               </button>
               {fanartPath && !isMovieDerivedFanart && (
                 <button
-                  onClick={() => handleDelete("fanart")}
+                  onClick={() => setConfirmDelete("fanart")}
+                  aria-label={tMeta("deleteImage")}
                   disabled={busy}
                   className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
                 >
@@ -241,5 +252,14 @@ export function ImageEditorDialog({
         </div>
       </DialogContent>
     </Dialog>
+    <ConfirmDialog
+      open={confirmDelete !== null}
+      onOpenChange={(o) => { if (!o) setConfirmDelete(null); }}
+      title={tMeta("confirmDeleteImageTitle")}
+      description={tMeta("confirmDeleteImage")}
+      onConfirm={() => { if (confirmDelete) handleDelete(confirmDelete); }}
+    />
+    {errorToast}
+    </>
   );
 }

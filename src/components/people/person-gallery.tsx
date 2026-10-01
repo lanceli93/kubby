@@ -13,6 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 import {
   DndContext,
   closestCenter,
@@ -157,6 +158,7 @@ export function PersonGallery({
   const tPerson = useTranslations("person");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const { showError, errorToast } = useErrorToast();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -214,13 +216,20 @@ export function PersonGallery({
       return IMAGE_EXTENSIONS.has(ext);
     });
     if (imageFiles.length === 0) return;
-    // Upload in batches to avoid exceeding body size limit
+    // Upload in batches to avoid exceeding body size limit. Keep going past a
+    // failed batch so one bad file doesn't drop the rest, then report it.
+    let failed = false;
     for (let i = 0; i < imageFiles.length; i += UPLOAD_BATCH_SIZE) {
       const batch = imageFiles.slice(i, i + UPLOAD_BATCH_SIZE);
       const formData = new FormData();
       for (const file of batch) formData.append("file", file);
-      await fetch(`/api/people/${personId}/gallery`, { method: "POST", body: formData });
+      try {
+        await fetchOk(`/api/people/${personId}/gallery`, { method: "POST", body: formData });
+      } catch {
+        failed = true;
+      }
     }
+    if (failed) showError(tPerson("galleryUploadFailed"));
     queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (folderInputRef.current) folderInputRef.current.value = "";
@@ -229,12 +238,16 @@ export function PersonGallery({
   // ── Delete ──
   const handleDeleteGalleryImage = async () => {
     if (!deleteTarget) return;
-    await fetch(`/api/people/${personId}/gallery`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename: deleteTarget }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
+    try {
+      await fetchOk(`/api/people/${personId}/gallery`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: deleteTarget }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["person-gallery", personId] });
+    } catch {
+      showError(tPerson("galleryDeleteFailed"));
+    }
     setDeleteTarget(null);
   };
 
@@ -389,21 +402,24 @@ export function PersonGallery({
     const { active, over } = event;
     setOverInfo(null);
     if (over && active.id !== over.id) {
-      setLocalOrder((prev) => {
-        const oldIndex = prev.indexOf(active.id as string);
-        const newIndex = prev.indexOf(over.id as string);
-        if (oldIndex === -1 || newIndex === -1) return prev;
+      const prev = localOrder;
+      const oldIndex = prev.indexOf(active.id as string);
+      const newIndex = prev.indexOf(over.id as string);
+      if (oldIndex !== -1 && newIndex !== -1) {
         const next = [...prev];
         next.splice(oldIndex, 1);
         next.splice(newIndex, 0, active.id as string);
-        // Fire-and-forget save
-        fetch(`/api/people/${personId}/gallery`, {
+        // Optimistic reorder; roll back to the previous order if the save fails.
+        setLocalOrder(next);
+        fetchOk(`/api/people/${personId}/gallery`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ order: next }),
+        }).catch(() => {
+          setLocalOrder(prev);
+          showError(tPerson("reorderFailed"));
         });
-        return next;
-      });
+      }
     }
     setActiveId(null);
   };
@@ -611,6 +627,7 @@ export function PersonGallery({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {errorToast}
     </>
   );
 }

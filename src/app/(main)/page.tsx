@@ -21,6 +21,7 @@ import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { DEFAULT_HERO_MOSAIC_CONFIG } from "@/lib/hero-mosaic-config";
 import { DEFAULT_PEOPLE_MOSAIC_CONFIG } from "@/lib/people-mosaic-config";
 import { useTranslations } from "next-intl";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 interface Movie {
   id: string;
@@ -75,7 +76,7 @@ function MovieRow({
   prioritizeFirst?: boolean;
   onToggleFavorite: (id: string, current: boolean) => void;
   onToggleWatched: (id: string, current: boolean) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, deleteFiles: boolean) => void;
 }) {
   if (movies.length === 0) return null;
 
@@ -112,7 +113,7 @@ function MovieRow({
             onToggleWatched={() =>
               onToggleWatched(movie.id, !!movie.isWatched)
             }
-            onDelete={() => onDelete(movie.id)}
+            onDelete={(deleteFiles) => onDelete(movie.id, deleteFiles)}
           />
           </AmbientHoverZone>
           );
@@ -123,7 +124,9 @@ function MovieRow({
 
 export default function HomePage() {
   const t = useTranslations("home");
+  const tMeta = useTranslations("metadata");
   const queryClient = useQueryClient();
+  const { showError, errorToast } = useErrorToast();
   const { data: prefs } = useUserPreferences();
   const mosaicConfig = prefs?.heroMosaicConfig;
 
@@ -186,7 +189,7 @@ export default function HomePage() {
 
   const toggleFavorite = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/movies/${id}/user-data`, {
+      fetchOk(`/api/movies/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !current }),
@@ -194,11 +197,12 @@ export default function HomePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const toggleWatched = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/movies/${id}/user-data`, {
+      fetchOk(`/api/movies/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPlayed: !current }),
@@ -206,31 +210,62 @@ export default function HomePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   const deleteMovie = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/movies/${id}`, { method: "DELETE" }),
+    mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
+      fetchOk(`/api/movies/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
+    },
+    onError: () => showError(tMeta("deleteFailed")),
+  });
+
+  // Continue Watching dismiss — clears the resume point (position 0, back to
+  // disc 1) so the movie drops out of the row. Optimistically removed; rolled
+  // back if the save fails.
+  const dismissContinueWatching = useMutation({
+    mutationFn: (id: string) =>
+      fetchOk(`/api/movies/${id}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playbackPositionSeconds: 0, currentDisc: 1 }),
+      }),
+    onMutate: async (id: string) => {
+      const key = ["movies", "continue-watching"];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Movie[]>(key);
+      queryClient.setQueryData<Movie[]>(key, (old) => old?.filter((m) => m.id !== id));
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) queryClient.setQueryData(["movies", "continue-watching"], context.previous);
+      showError(tMeta("actionFailed"));
+    },
+    onSettled: (_data, _err, id) => {
+      queryClient.invalidateQueries({ queryKey: ["movies", "continue-watching"] });
+      // The detail page shows the resume state too.
+      queryClient.invalidateQueries({ queryKey: ["movie", id] });
     },
   });
 
 
   const deleteLibrary = useMutation({
     mutationFn: ({ id, cleanupOrphans, deleteNfo }: { id: string; cleanupOrphans: boolean; deleteNfo: boolean }) =>
-      fetch(`/api/libraries/${id}?cleanupOrphans=${cleanupOrphans}&deleteNfo=${deleteNfo}`, { method: "DELETE" }),
+      fetchOk(`/api/libraries/${id}?cleanupOrphans=${cleanupOrphans}&deleteNfo=${deleteNfo}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   const uploadCover = useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) => {
       const formData = new FormData();
       formData.append("file", file);
-      return fetch(`/api/libraries/${id}/cover`, {
+      return fetchOk(`/api/libraries/${id}/cover`, {
         method: "POST",
         body: formData,
       });
@@ -238,6 +273,7 @@ export default function HomePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
     },
+    onError: () => showError(tMeta("uploadFailed")),
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -263,10 +299,11 @@ export default function HomePage() {
 
   const removeCover = useMutation({
     mutationFn: (id: string) =>
-      fetch(`/api/libraries/${id}/cover`, { method: "DELETE" }),
+      fetchOk(`/api/libraries/${id}/cover`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
     },
+    onError: () => showError(tMeta("imageDeleteFailed")),
   });
 
   const handleToggleFavorite = (id: string, current: boolean) => {
@@ -277,8 +314,8 @@ export default function HomePage() {
     toggleWatched.mutate({ id, current });
   };
 
-  const handleDeleteMovie = (id: string) => {
-    deleteMovie.mutate(id);
+  const handleDeleteMovie = (id: string, deleteFiles: boolean) => {
+    deleteMovie.mutate({ id, deleteFiles });
   };
 
   // Hero pool: up to 5 slides, deduped by id — the first few continue-watching
@@ -407,6 +444,7 @@ export default function HomePage() {
                     progress={movie.progress}
                     discLabel={movie.discLabel}
                     currentDisc={movie.currentDisc}
+                    onDismiss={() => dismissContinueWatching.mutate(movie.id)}
                   />
                 ))}
               </ScrollRow>
@@ -453,6 +491,7 @@ export default function HomePage() {
         </TabsContent>
         </div>
       </Tabs>
+      {errorToast}
     </div>
     </AmbientProvider>
   );

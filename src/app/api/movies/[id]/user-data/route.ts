@@ -76,12 +76,23 @@ export async function PUT(
       )
       .get();
 
+    // Explicitly marking watched/unwatched (isPlayed true OR false) without a
+    // position resets the resume point, so the movie leaves Continue Watching
+    // and the next play starts from the top. A caller that sends a position
+    // (or disc) alongside isPlayed — e.g. the player — keeps its own values.
+    const resetsResume =
+      body.isPlayed !== undefined && body.playbackPositionSeconds === undefined;
+
     if (existing) {
       const updateData: Record<string, unknown> = {};
       if (body.playbackPositionSeconds !== undefined)
         updateData.playbackPositionSeconds = body.playbackPositionSeconds;
+      else if (resetsResume)
+        updateData.playbackPositionSeconds = 0;
       if (body.currentDisc !== undefined)
         updateData.currentDisc = body.currentDisc;
+      else if (resetsResume)
+        updateData.currentDisc = 1;
       if (body.isPlayed !== undefined)
         updateData.isPlayed = body.isPlayed;
       if (body.isFavorite !== undefined)

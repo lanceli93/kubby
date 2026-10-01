@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { GlassToast } from "@/components/ui/glass-toast";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { fetchOk } from "@/components/shared/use-error-toast";
 
 interface MovieMetadataEditorProps {
   movieId: string;
@@ -172,6 +174,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
       queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
       onOpenChange(false);
     },
+    onError: () => showToast(t("saveFailed"), false),
   });
 
   const showToast = (text: string, success: boolean) => {
@@ -183,6 +186,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   // Image editing state & handlers
   const [imgUploading, setImgUploading] = useState<"poster" | "fanart" | null>(null);
   const [imgDeleting, setImgDeleting] = useState<"poster" | "fanart" | null>(null);
+  const [confirmImageDelete, setConfirmImageDelete] = useState<"poster" | "fanart" | null>(null);
   const posterInputRef = useRef<HTMLInputElement>(null);
   const fanartInputRef = useRef<HTMLInputElement>(null);
   const imgBusy = imgUploading !== null || imgDeleting !== null;
@@ -192,8 +196,10 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     try {
       const formData = new FormData();
       formData.append("file", file);
-      await fetch(`/api/movies/${movieId}/images?type=${type}`, { method: "POST", body: formData });
+      await fetchOk(`/api/movies/${movieId}/images?type=${type}`, { method: "POST", body: formData });
       queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+    } catch {
+      showToast(t("uploadFailed"), false);
     } finally {
       setImgUploading(null);
     }
@@ -202,12 +208,14 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
   const handleImageDelete = async (type: "poster" | "fanart") => {
     setImgDeleting(type);
     try {
-      await fetch(`/api/movies/${movieId}/images`, {
+      await fetchOk(`/api/movies/${movieId}/images`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type }),
       });
       queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+    } catch {
+      showToast(t("imageDeleteFailed"), false);
     } finally {
       setImgDeleting(null);
     }
@@ -251,14 +259,19 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
     }
 
     // Save personal rating via user-data API first (must complete before query invalidation)
-    await fetch(`/api/movies/${movieId}/user-data`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalRating,
-        dimensionRatings: dimRatingsToSend,
-      }),
-    });
+    try {
+      await fetchOk(`/api/movies/${movieId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personalRating,
+          dimensionRatings: dimRatingsToSend,
+        }),
+      });
+    } catch {
+      showToast(t("saveFailed"), false);
+      return;
+    }
 
     mutation.mutate({
       title: form.title,
@@ -647,7 +660,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                   </button>
                   {movie?.posterPath && (
                     <button
-                      onClick={() => handleImageDelete("poster")}
+                      onClick={() => setConfirmImageDelete("poster")}
                       disabled={imgBusy}
                       className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
                     >
@@ -688,7 +701,7 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
                   </button>
                   {movie?.fanartPath && (
                     <button
-                      onClick={() => handleImageDelete("fanart")}
+                      onClick={() => setConfirmImageDelete("fanart")}
                       disabled={imgBusy}
                       className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
                     >
@@ -903,6 +916,13 @@ export function MovieMetadataEditor({ movieId, open, onOpenChange }: MovieMetada
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <ConfirmDialog
+      open={confirmImageDelete !== null}
+      onOpenChange={(o) => { if (!o) setConfirmImageDelete(null); }}
+      title={t("confirmDeleteImageTitle")}
+      description={t("confirmDeleteImage")}
+      onConfirm={() => { if (confirmImageDelete) handleImageDelete(confirmImageDelete); }}
+    />
     <GlassToast visible={!!toast} success={toast?.success} className="z-[100]">
       {toast?.text}
     </GlassToast>

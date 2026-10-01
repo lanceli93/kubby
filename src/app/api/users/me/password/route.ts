@@ -3,14 +3,12 @@ import { compare, hash } from "bcryptjs";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { requireUser } from "@/lib/auth-guard";
 
 // PUT /api/users/me/password - Change password
 export async function PUT(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const body = await request.json();
@@ -23,15 +21,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const user = db
-      .select()
-      .from(users)
-      .where(eq(users.id, session.user.id))
-      .get();
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    const user = guard.user;
 
     const valid = await compare(currentPassword, user.passwordHash);
     if (!valid) {
@@ -44,7 +34,7 @@ export async function PUT(request: NextRequest) {
     const newHash = await hash(newPassword, 12);
     db.update(users)
       .set({ passwordHash: newHash })
-      .where(eq(users.id, session.user.id))
+      .where(eq(users.id, user.id))
       .run();
 
     return NextResponse.json({ success: true });

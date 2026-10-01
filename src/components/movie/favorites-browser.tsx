@@ -12,6 +12,7 @@ import { MovieCard } from "@/components/movie/movie-card";
 import { PersonCard } from "@/components/people/person-card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 interface FavMovie {
   id: string;
@@ -56,7 +57,11 @@ const GRID_CLASS =
  */
 export function FavoritesBrowser({ libraryId = "" }: { libraryId?: string }) {
   const t = useTranslations("movies");
+  const tMeta = useTranslations("metadata");
   const queryClient = useQueryClient();
+  const { showError, errorToast } = useErrorToast();
+  const onActionError = () => showError(tMeta("actionFailed"));
+  const onDeleteError = () => showError(tMeta("deleteFailed"));
   const [tab, setTab] = useState<"movies" | "actors">("movies");
 
   // ── Favorite movies ──────────────────────────────────────────
@@ -103,47 +108,52 @@ export function FavoritesBrowser({ libraryId = "" }: { libraryId?: string }) {
   // ── Mutations ─────────────────────────────────────────────────
   const toggleMovieFavorite = useMutation({
     mutationFn: (id: string) =>
-      fetch(`/api/movies/${id}/user-data`, {
+      fetchOk(`/api/movies/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: false }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movies"] }),
+    onError: onActionError,
   });
   const toggleMovieWatched = useMutation({
     mutationFn: ({ id, current }: { id: string; current: boolean }) =>
-      fetch(`/api/movies/${id}/user-data`, {
+      fetchOk(`/api/movies/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPlayed: !current }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movies"] }),
+    onError: onActionError,
   });
   const deleteMovie = useMutation({
     mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
-      fetch(`/api/movies/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, {
+      fetchOk(`/api/movies/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, {
         method: "DELETE",
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movies"] }),
+    onError: onDeleteError,
   });
   const togglePersonFavorite = useMutation({
     mutationFn: (id: string) =>
-      fetch(`/api/people/${id}/user-data`, {
+      fetchOk(`/api/people/${id}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: false }),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["people"] }),
+    onError: onActionError,
   });
   const deletePerson = useMutation({
     mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
-      fetch(`/api/people/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, {
+      fetchOk(`/api/people/${id}${deleteFiles ? "?deleteFiles=true" : ""}`, {
         method: "DELETE",
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["people"] });
       queryClient.invalidateQueries({ queryKey: ["movies"] });
     },
+    onError: onDeleteError,
   });
 
   const loading = moviesQuery.isLoading || actorsQuery.isLoading;
@@ -156,6 +166,7 @@ export function FavoritesBrowser({ libraryId = "" }: { libraryId?: string }) {
   }
 
   return (
+    <>
     <Tabs
       value={tab}
       onValueChange={(v) => setTab(v as "movies" | "actors")}
@@ -237,7 +248,7 @@ export function FavoritesBrowser({ libraryId = "" }: { libraryId?: string }) {
                 key={person.id}
                 id={person.id}
                 name={person.name}
-                role={`${person.movieCount} ${person.movieCount === 1 ? "movie" : "movies"}`}
+                role={t("personMovieCount", { count: person.movieCount })}
                 photoPath={person.photoPath}
                 photoBlur={person.photoBlur}
                 personalRating={person.personalRating}
@@ -265,5 +276,7 @@ export function FavoritesBrowser({ libraryId = "" }: { libraryId?: string }) {
         )}
       </TabsContent>
     </Tabs>
+    {errorToast}
+    </>
   );
 }

@@ -4,8 +4,8 @@ import path from "path";
 import { db } from "@/lib/db";
 import { people } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
+import { requireUser } from "@/lib/auth-guard";
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 const ORDER_FILE = "order.json";
@@ -59,6 +59,9 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
   try {
     const person = db.select().from(people).where(eq(people.id, id)).get();
@@ -90,10 +93,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {
@@ -137,10 +138,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {
@@ -208,10 +207,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {

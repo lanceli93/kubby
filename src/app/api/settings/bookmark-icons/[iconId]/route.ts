@@ -1,9 +1,37 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { bookmarkIcons, movieBookmarks } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { bookmarkIcons, movieBookmarks, userPreferences } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import fs from "fs/promises";
+
+// GET /api/settings/bookmark-icons/[iconId] — cheap usage count, so the
+// delete-confirm dialog can tell the user how many bookmarks reference this
+// icon before they commit (mirrors /api/settings/dimension-usage).
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ iconId: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { iconId } = await params;
+
+    const result = db
+      .select({ count: sql<number>`count(*)` })
+      .from(movieBookmarks)
+      .where(and(eq(movieBookmarks.userId, session.user.id), eq(movieBookmarks.iconType, iconId)))
+      .get();
+
+    return NextResponse.json({ count: result?.count ?? 0 });
+  } catch (err) {
+    console.error("GET /api/settings/bookmark-icons/[iconId] error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
 
 export async function PUT(
   req: Request,
@@ -84,6 +112,27 @@ export async function DELETE(
         eq(movieBookmarks.iconType, iconId),
       ))
       .run();
+
+    // If this icon is the quick-bookmark template's current iconType, fall
+    // back the template to the default "bookmark" icon too — otherwise the
+    // template would keep pointing at a deleted icon.
+    const prefs = db
+      .select({ id: userPreferences.id, quickBookmarkTemplate: userPreferences.quickBookmarkTemplate })
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, session.user.id))
+      .get();
+    if (prefs?.quickBookmarkTemplate) {
+      try {
+        const template = JSON.parse(prefs.quickBookmarkTemplate) as { iconType?: string; tags?: string[]; note?: string };
+        if (template.iconType === iconId) {
+          template.iconType = "bookmark";
+          db.update(userPreferences)
+            .set({ quickBookmarkTemplate: JSON.stringify(template) })
+            .where(eq(userPreferences.id, prefs.id))
+            .run();
+        }
+      } catch { /* corrupt template JSON — leave it as-is */ }
+    }
 
     // Delete from DB
     db.delete(bookmarkIcons)

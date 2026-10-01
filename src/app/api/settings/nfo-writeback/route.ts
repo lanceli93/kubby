@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { requireAdmin, requireUser } from "@/lib/auth-guard";
 
 const NFO_WRITEBACK_KEY = "nfo_writeback_enabled";
 
 // GET /api/settings/nfo-writeback
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const row = db
@@ -30,10 +28,8 @@ export async function GET() {
 
 // PUT /api/settings/nfo-writeback
 export async function PUT(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const body = await request.json();

@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { photoAlbums, photoAlbumItems, photoItems } from "@/lib/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { requireUser } from "@/lib/auth-guard";
 
 // GET /api/photos/albums/[id] — single album header (name, count, resolved cover).
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
   try {
     const album = db
@@ -61,6 +65,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
   try {
     const body = await request.json();
@@ -96,6 +103,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
   try {
     db.delete(photoAlbums).where(eq(photoAlbums.id, id)).run();

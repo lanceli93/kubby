@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { requireUser } from "@/lib/auth-guard";
 
 // GET /api/libraries/[id]/people-filters
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const { id } = await params;
 

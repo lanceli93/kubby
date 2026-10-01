@@ -7,6 +7,7 @@ import { BUILTIN_BOOKMARK_ICONS, getBuiltinIcon } from "@/lib/bookmark-icons";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import type { CustomIconData } from "@/components/movie/bookmark-card";
+import { GlassToast } from "@/components/ui/glass-toast";
 
 interface BookmarkData {
   id: string;
@@ -96,7 +97,14 @@ export function FrameScrubber({
   const [bookmarkTags, setBookmarkTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [bookmarkNote, setBookmarkNote] = useState("");
-  const [saveToast, setSaveToast] = useState(false);
+  const [saveToast, setSaveToast] = useState<{ text: string; success: boolean } | null>(null);
+  const saveToastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const showSaveToast = (text: string, success: boolean) => {
+    clearTimeout(saveToastTimer.current);
+    setSaveToast({ text, success });
+    saveToastTimer.current = setTimeout(() => setSaveToast(null), success ? 2000 : 3500);
+  };
+  useEffect(() => () => clearTimeout(saveToastTimer.current), []);
   const [timeInput, setTimeInput] = useState("");
   const [selectedActorId, setSelectedActorId] = useState("");
   const [actorDropdownOpen, setActorDropdownOpen] = useState(false);
@@ -208,6 +216,7 @@ export function FrameScrubber({
       // Fetch the frame as a blob for thumbnail
       const thumbUrl = `/api/movies/${movieId}/frame?t=${Math.round(seekSeconds)}&disc=${currentDisc}&maxWidth=960`;
       const thumbRes = await fetch(thumbUrl);
+      if (!thumbRes.ok) throw new Error("Failed to extract frame");
       const thumbBlob = await thumbRes.blob();
 
       const formData = new FormData();
@@ -236,9 +245,9 @@ export function FrameScrubber({
       setBookmarkTags([]);
       setBookmarkNote("");
       setTagInput("");
-      setSaveToast(true);
-      setTimeout(() => setSaveToast(false), 2000);
+      showSaveToast(t("bookmarkAdded"), true);
     },
+    onError: () => showSaveToast(t("bookmarkSaveFailed"), false),
   });
 
   // Save screenshot to actor gallery
@@ -247,6 +256,7 @@ export function FrameScrubber({
       if (!selectedActorId) throw new Error("No actor selected");
       const thumbUrl = `/api/movies/${movieId}/frame?t=${Math.round(seekSeconds)}&disc=${currentDisc}&maxWidth=1920`;
       const res = await fetch(thumbUrl);
+      if (!res.ok) throw new Error("Failed to extract frame");
       const blob = await res.blob();
       const formData = new FormData();
       formData.append("file", blob, "screenshot.jpg");
@@ -259,7 +269,9 @@ export function FrameScrubber({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["person-gallery", selectedActorId] });
+      showSaveToast(t("screenshotSaved"), true);
     },
+    onError: () => showSaveToast(t("screenshotFailed"), false),
   });
 
   // Filter bookmarks for current disc
@@ -268,6 +280,7 @@ export function FrameScrubber({
   const progress = currentRuntime > 0 ? (seekSeconds / currentRuntime) * 100 : 0;
 
   return (
+    <>
     <div className="relative z-10 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
       {/* Two-column layout: frame with overlay controls on left, form on right */}
       <div className="flex gap-6">
@@ -598,5 +611,11 @@ export function FrameScrubber({
         </div>
       </div>
     </div>
+    {/* Save feedback — outside the backdrop-blur panel, which would otherwise
+        become the containing block for this fixed-position toast. */}
+    <GlassToast visible={!!saveToast} success={saveToast?.success} position="top">
+      {saveToast?.text}
+    </GlassToast>
+    </>
   );
 }

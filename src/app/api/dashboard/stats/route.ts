@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, mediaLibraries, users, photoItems, musicTracks, tvEpisodes, tvShows } from "@/lib/db/schema";
 import { count, sum, eq } from "drizzle-orm";
+import { requireAdmin } from "@/lib/auth-guard";
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return "0 B";
@@ -12,6 +13,9 @@ function formatBytes(bytes: number): string {
 }
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const [{ total: totalLibraries }] = db.select({ total: count() }).from(mediaLibraries).all();
     const [{ total: totalUsers }] = db.select({ total: count() }).from(users).all();

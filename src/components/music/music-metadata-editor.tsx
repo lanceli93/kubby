@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
@@ -67,9 +67,17 @@ export function MusicMetadataEditor({
   });
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ text: string; success: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const showToast = (text: string, success: boolean) => {
+    clearTimeout(toastTimer.current);
+    setToast({ text, success });
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   useEffect(() => {
     if (!open) return;
+    setToast(null);
     setForm({
       title: initial.title ?? "",
       name: initial.name ?? "",
@@ -122,10 +130,10 @@ export function MusicMetadataEditor({
       for (const key of invalidateKeys) {
         queryClient.invalidateQueries({ queryKey: key });
       }
-      setToast({ text: t("saved"), success: true });
+      showToast(t("saved"), true);
       setTimeout(() => onOpenChange(false), 600);
     } catch {
-      setToast({ text: t("saveFailed"), success: false });
+      showToast(t("saveFailed"), false);
     } finally {
       setSaving(false);
     }

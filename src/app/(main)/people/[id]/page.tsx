@@ -8,7 +8,7 @@ import { MoreVertical, Pencil, ImageIcon, ExternalLink, Star, Heart, Maximize2, 
 import Link from "next/link";
 import { MovieCard } from "@/components/movie/movie-card";
 import { resolveImageSrc } from "@/lib/image-utils";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -30,6 +30,8 @@ import {
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
 
 interface PersonDetail {
   id: string;
@@ -70,10 +72,10 @@ interface PersonDetail {
   }[];
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  return d.toLocaleDateString(locale === "zh" ? "zh-CN" : locale, { year: "numeric", month: "long", day: "numeric" });
 }
 
 export default function PersonDetailPage() {
@@ -84,6 +86,9 @@ export default function PersonDetailPage() {
   const tPerson = useTranslations("person");
   const tMeta = useTranslations("metadata");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const isAdmin = useIsAdmin();
+  const { showError, errorToast } = useErrorToast();
   const queryClient = useQueryClient();
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
@@ -111,26 +116,32 @@ export default function PersonDetailPage() {
 
   const deletePerson = useMutation({
     mutationFn: (opts?: { deleteFiles?: boolean }) =>
-      fetch(`/api/people/${personId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
+      fetchOk(`/api/people/${personId}${opts?.deleteFiles ? "?deleteFiles=true" : ""}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["people"] });
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       router.push("/");
     },
+    // Stay on the page: the person still exists.
+    onError: () => showError(tMeta("deleteFailed")),
   });
 
   const savePersonalRating = async (rating: number | null, dimensionRatings?: Record<string, number> | null) => {
-    await fetch(`/api/people/${personId}/user-data`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ personalRating: rating, dimensionRatings }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["person", personId] });
+    try {
+      await fetchOk(`/api/people/${personId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personalRating: rating, dimensionRatings }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["person", personId] });
+    } catch {
+      showError(tMeta("saveFailed"));
+    }
   };
 
   const toggleFavorite = useMutation({
     mutationFn: (current: boolean) =>
-      fetch(`/api/people/${personId}/user-data`, {
+      fetchOk(`/api/people/${personId}/user-data`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isFavorite: !current }),
@@ -139,6 +150,7 @@ export default function PersonDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["person", personId] });
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
+    onError: () => showError(tMeta("actionFailed")),
   });
 
   // The API returns { error } (no `name`) for a missing person — a truthy
@@ -147,7 +159,7 @@ export default function PersonDetailPage() {
   if (!person || !person.name) {
     return (
       <div className="flex h-96 items-center justify-center text-muted-foreground">
-        Loading...
+        {tCommon("loading")}...
       </div>
     );
   }
@@ -224,7 +236,7 @@ export default function PersonDetailPage() {
                   <button
                     onClick={() => setRatingOpen(true)}
                     className="glass-badge inline-flex h-7 items-center gap-1 rounded-md border border-[var(--gold)]/30 px-2.5 text-sm font-semibold text-[var(--gold)] transition-opacity hover:opacity-80 cursor-pointer"
-                    aria-label="Edit rating"
+                    aria-label={t("editRating")}
                   >
                     <Star className="h-3.5 w-3.5 fill-[var(--gold)]" />
                     {person.userData.personalRating.toFixed(1)}
@@ -237,7 +249,7 @@ export default function PersonDetailPage() {
                 <button
                   onClick={() => setRatingOpen(true)}
                   className="glass-btn inline-flex h-7 items-center justify-center rounded-lg px-2 text-white/40 transition-all hover:text-[var(--gold)] cursor-pointer"
-                  aria-label="Rate person"
+                  aria-label={t("ratePerson")}
                 >
                   <Star className="h-3.5 w-3.5" />
                 </button>
@@ -247,7 +259,7 @@ export default function PersonDetailPage() {
               <button
                 onClick={() => toggleFavorite.mutate(!!person.userData?.isFavorite)}
                 className="glass-btn inline-flex h-7 w-7 items-center justify-center rounded-xl transition-all cursor-pointer"
-                aria-label="Toggle favorite"
+                aria-label={t("toggleFavorite")}
               >
                 <Heart className={`h-3.5 w-3.5 ${person.userData?.isFavorite ? "fill-red-500 text-red-500" : "text-white/70"}`} />
               </button>
@@ -257,18 +269,20 @@ export default function PersonDetailPage() {
                 <button
                   onClick={() => setFanartMode(true)}
                   className="glass-btn hidden md:inline-flex h-7 w-7 items-center justify-center rounded-xl text-white/70 transition-all cursor-pointer"
-                  aria-label="View fanart"
+                  aria-label={t("viewFanart")}
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
                 </button>
               )}
 
-              {/* Three-dot menu */}
+              {/* Three-dot menu: every item is admin-only (edit metadata /
+                  images, delete), so non-admins get no menu at all. */}
+              {isAdmin && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     className="glass-btn inline-flex h-7 items-center justify-center rounded-xl px-2 text-white/70 transition-all cursor-pointer"
-                    aria-label="More options"
+                    aria-label={t("moreOptions")}
                   >
                     <MoreVertical className="h-3.5 w-3.5" />
                   </button>
@@ -292,6 +306,7 @@ export default function PersonDetailPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              )}
             </div>
 
             {/* Overview / Biography */}
@@ -307,7 +322,7 @@ export default function PersonDetailPage() {
                 <div>
                   <span className="text-white/50">{tPerson("born")}: </span>
                   <span className="text-white/90">
-                    {person.birthDate ? formatDate(person.birthDate) : person.birthYear}
+                    {person.birthDate ? formatDate(person.birthDate, locale) : person.birthYear}
                   </span>
                 </div>
               )}
@@ -315,7 +330,7 @@ export default function PersonDetailPage() {
                 <div>
                   <span className="text-white/50">{tPerson("died")}: </span>
                   <span className="text-white/90">
-                    {formatDate(person.deathDate)}
+                    {formatDate(person.deathDate, locale)}
                   </span>
                 </div>
               )}
@@ -440,21 +455,23 @@ export default function PersonDetailPage() {
           creates a containing block that breaks DragOverlay fixed positioning */}
       <PersonGallery personId={personId} galleryImages={galleryImages} />
 
-      {/* Metadata editor dialog */}
-      <PersonMetadataEditor
-        personId={personId}
-        open={metadataOpen}
-        onOpenChange={setMetadataOpen}
-      />
-
-      {/* Image editor dialog */}
-      <ImageEditorDialog
-        open={imageEditorOpen}
-        onOpenChange={setImageEditorOpen}
-        entityType="person"
-        entityId={personId}
-        entityName={person.name}
-      />
+      {/* Metadata + image editor dialogs (admin-only) */}
+      {isAdmin && (
+        <>
+          <PersonMetadataEditor
+            personId={personId}
+            open={metadataOpen}
+            onOpenChange={setMetadataOpen}
+          />
+          <ImageEditorDialog
+            open={imageEditorOpen}
+            onOpenChange={setImageEditorOpen}
+            entityType="person"
+            entityId={personId}
+            entityName={person.name}
+          />
+        </>
+      )}
 
       {/* Personal rating dialog */}
       <StarRatingDialog
@@ -509,6 +526,7 @@ export default function PersonDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {errorToast}
     </div>
     </div>
   );

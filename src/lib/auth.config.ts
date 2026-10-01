@@ -17,11 +17,19 @@ export const authConfig: NextAuthConfig = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin;
         token.locale = (user as { locale?: string }).locale || "en";
+      }
+      // Client called `update(...)` (e.g. after saving profile) — the JWT's
+      // `name`/`locale` are otherwise frozen at sign-in until the next login.
+      // Only copy the specific allowed fields, never trust the whole payload.
+      if (trigger === "update" && session) {
+        const patch = session as { name?: string; locale?: string };
+        if (typeof patch.name === "string") token.name = patch.name;
+        if (typeof patch.locale === "string") token.locale = patch.locale;
       }
       return token;
     },

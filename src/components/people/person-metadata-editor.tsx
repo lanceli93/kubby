@@ -21,6 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { GlassToast } from "@/components/ui/glass-toast";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { fetchOk } from "@/components/shared/use-error-toast";
 
 interface PersonMetadataEditorProps {
   personId: string;
@@ -129,6 +131,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
       queryClient.invalidateQueries({ queryKey: ["person", personId] });
       onOpenChange(false);
     },
+    onError: () => showToast(t("saveFailed"), false),
   });
 
   const showToast = (text: string, success: boolean) => {
@@ -140,6 +143,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
   // Image editing state & handlers
   const [imgUploading, setImgUploading] = useState<"poster" | "fanart" | null>(null);
   const [imgDeleting, setImgDeleting] = useState<"poster" | "fanart" | null>(null);
+  const [confirmImageDelete, setConfirmImageDelete] = useState<"poster" | "fanart" | null>(null);
   const posterInputRef = useRef<HTMLInputElement>(null);
   const fanartInputRef = useRef<HTMLInputElement>(null);
   const imgBusy = imgUploading !== null || imgDeleting !== null;
@@ -150,9 +154,11 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     try {
       const formData = new FormData();
       formData.append("file", file);
-      await fetch(`/api/people/${personId}/images?type=${type}`, { method: "POST", body: formData });
+      await fetchOk(`/api/people/${personId}/images?type=${type}`, { method: "POST", body: formData });
       queryClient.invalidateQueries({ queryKey: ["person", personId] });
       queryClient.invalidateQueries({ queryKey: ["movie"] });
+    } catch {
+      showToast(t("uploadFailed"), false);
     } finally {
       setImgUploading(null);
     }
@@ -161,13 +167,15 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
   const handleImageDelete = async (type: "poster" | "fanart") => {
     setImgDeleting(type);
     try {
-      await fetch(`/api/people/${personId}/images`, {
+      await fetchOk(`/api/people/${personId}/images`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type }),
       });
       queryClient.invalidateQueries({ queryKey: ["person", personId] });
       queryClient.invalidateQueries({ queryKey: ["movie"] });
+    } catch {
+      showToast(t("imageDeleteFailed"), false);
     } finally {
       setImgDeleting(null);
     }
@@ -253,14 +261,19 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
     }
 
     // Save personal rating via user-data API first
-    await fetch(`/api/people/${personId}/user-data`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalRating,
-        dimensionRatings: dimRatingsToSend,
-      }),
-    });
+    try {
+      await fetchOk(`/api/people/${personId}/user-data`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personalRating,
+          dimensionRatings: dimRatingsToSend,
+        }),
+      });
+    } catch {
+      showToast(t("saveFailed"), false);
+      return;
+    }
 
     mutation.mutate({
       name: form.name,
@@ -529,7 +542,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   </button>
                   {person?.photoPath && (
                     <button
-                      onClick={() => handleImageDelete("poster")}
+                      onClick={() => setConfirmImageDelete("poster")}
                       disabled={imgBusy}
                       className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
                     >
@@ -578,7 +591,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                   </button>
                   {person?.fanartPath && !isMovieDerivedFanart && (
                     <button
-                      onClick={() => handleImageDelete("fanart")}
+                      onClick={() => setConfirmImageDelete("fanart")}
                       disabled={imgBusy}
                       className="h-7 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
                     >
@@ -826,6 +839,13 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
         </DialogFooter>
       </DialogContent>
 
+      <ConfirmDialog
+        open={confirmImageDelete !== null}
+        onOpenChange={(o) => { if (!o) setConfirmImageDelete(null); }}
+        title={t("confirmDeleteImageTitle")}
+        description={t("confirmDeleteImage")}
+        onConfirm={() => { if (confirmImageDelete) handleImageDelete(confirmImageDelete); }}
+      />
       <GlassToast visible={!!toast} success={toast?.success} className="z-[100]">
         {toast?.text}
       </GlassToast>

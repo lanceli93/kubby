@@ -8,7 +8,8 @@ import { eq, desc, and, sql } from "drizzle-orm";
 import { computeAgeAtRelease } from "@/lib/scanner";
 import { auth } from "@/lib/auth";
 import { getPersonDir } from "@/lib/person-utils";
-import { resolveDataPath, toRelativeDataPath } from "@/lib/paths";
+import { resolveDataPath, toRelativeDataPath, getPeopleMetadataDir, isPathInside } from "@/lib/paths";
+import { requireAdmin } from "@/lib/auth-guard";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -27,10 +28,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   const deleteFiles = request.nextUrl.searchParams.get("deleteFiles") === "true";
@@ -47,6 +46,9 @@ export async function DELETE(
     if (deleteFiles) {
       const personDir = getPersonDir(person);
       try {
+        // photo_path may point outside our metadata dir (NFO-supplied) —
+        // only recursively delete folders Kubby owns.
+        if (!isPathInside(personDir, getPeopleMetadataDir())) throw new Error("outside metadata dir");
         await fsPromises.rm(personDir, { recursive: true, force: true });
       } catch (fsError) {
         console.error("Failed to delete person folder:", personDir, fsError);
@@ -65,10 +67,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {

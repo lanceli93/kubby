@@ -9,19 +9,22 @@ import {
   musicTracks,
 } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { getAlbumTrackCounts } from "@/lib/music/queries";
 import {
   deleteFileQuiet,
   removeDirIfEmpty,
   pruneEmptyAlbums,
 } from "@/lib/music/mutations";
+import { requireAdmin, requireUser } from "@/lib/auth-guard";
 
 // GET /api/music/artists/[id]
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
+
   const { id } = await params;
   try {
     const artist = db
@@ -86,10 +89,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   try {
@@ -138,10 +139,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
   const deleteFiles = request.nextUrl.searchParams.get("deleteFiles") === "true";

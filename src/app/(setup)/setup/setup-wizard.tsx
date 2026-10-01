@@ -137,15 +137,15 @@ export function SetupWizard() {
   function handleAdminNext() {
     setError("");
     if (!username.trim()) {
-      setError("Username is required");
+      setError(t("usernameRequired"));
       return;
     }
     if (password.length < 1) {
-      setError("Password is required");
+      setError(tAuth("passwordRequired"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(tAuth("passwordsDoNotMatch"));
       return;
     }
     setSlideDir("right");
@@ -332,9 +332,9 @@ export function SetupWizard() {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground cursor-pointer"
                 >
                   {showPassword ? (
-                    <Eye className="h-[18px] w-[18px]" />
-                  ) : (
                     <EyeOff className="h-[18px] w-[18px]" />
+                  ) : (
+                    <Eye className="h-[18px] w-[18px]" />
                   )}
                 </button>
               </div>
@@ -359,9 +359,9 @@ export function SetupWizard() {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground cursor-pointer"
                 >
                   {showConfirm ? (
-                    <Eye className="h-[18px] w-[18px]" />
-                  ) : (
                     <EyeOff className="h-[18px] w-[18px]" />
+                  ) : (
+                    <Eye className="h-[18px] w-[18px]" />
                   )}
                 </button>
               </div>
@@ -417,14 +417,29 @@ export function SetupWizard() {
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("libraryType")}
               </label>
-              <Select value={libraryType} onValueChange={setLibraryType}>
+              <Select
+                value={libraryType}
+                onValueChange={(value) => {
+                  setLibraryType(value);
+                  // Photo/music have no scraper/NFO concept — drop any
+                  // state carried over from a movie/tvshow selection so it
+                  // can't be silently sent to the server.
+                  if (value === "photo" || value === "music") {
+                    setScraperEnabled(false);
+                    setJellyfinCompat(false);
+                    setTmdbApiKey("");
+                    setTmdbApiKeyError("");
+                  }
+                }}
+              >
                 <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="movie">Movie</SelectItem>
-                  <SelectItem value="tvshow">TV Shows</SelectItem>
-                  <SelectItem value="music" disabled>Music (coming soon)</SelectItem>
+                  <SelectItem value="movie">{t("libraryTypeMovie")}</SelectItem>
+                  <SelectItem value="tvshow">{t("libraryTypeTv")}</SelectItem>
+                  <SelectItem value="photo">{t("libraryTypePhoto")}</SelectItem>
+                  <SelectItem value="music">{t("libraryTypeMusic")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -494,7 +509,10 @@ export function SetupWizard() {
               </div>
             </div>
 
-            {/* TMDB Scraper */}
+            {/* TMDB Scraper + Jellyfin Compatibility — movie/tvshow only;
+                photo/music libraries have no scraper/NFO concept. */}
+            {(libraryType === "movie" || libraryType === "tvshow") && (
+              <>
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-medium text-muted-foreground">
                 {t("metadataDownloaders")}
@@ -577,6 +595,8 @@ export function SetupWizard() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+              </>
+            )}
           </div>
 
           {error && <p className="text-sm text-destructive" role="alert">{error}</p>}

@@ -3,16 +3,14 @@ import { db } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { validateApiKey } from "@/lib/tmdb";
-import { auth } from "@/lib/auth";
+import { requireAdmin, requireUser } from "@/lib/auth-guard";
 
 const TMDB_API_KEY = "tmdb_api_key";
 
 // GET /api/settings/scraper
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireUser();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const row = db.select().from(settings).where(eq(settings.key, TMDB_API_KEY)).get();
@@ -30,10 +28,8 @@ export async function GET() {
 
 // PUT /api/settings/scraper
 export async function PUT(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const body = await request.json();
@@ -60,6 +56,22 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ valid: true });
   } catch (error) {
     console.error("Update scraper settings error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// DELETE /api/settings/scraper — clears the stored TMDB API key so scraping
+// can be fully disabled again (PUT alone can't remove it since it rejects
+// an empty key).
+export async function DELETE() {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
+  try {
+    db.delete(settings).where(eq(settings.key, TMDB_API_KEY)).run();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete scraper settings error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
