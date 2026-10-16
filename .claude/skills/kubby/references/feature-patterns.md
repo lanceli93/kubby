@@ -823,10 +823,14 @@ movies + ScrollRows for libraries/continue-watching/favorites), Favorites
   the 2fe0dd5 boost read as a whole-page color cast. What fixed it: (1) clamp the
   tint in **OKLCH** (L 0.32–0.48, C 0.05–0.13), not HSL, because HSL let
   yellow/orange posters blaze far brighter than blue at the same "L"; (2) a
-  top-anchored `mask-image` fade (opaque to 30%, transparent at 80%) so the light
-  comes from the hero and the content rows stay near-neutral black; (3) blob
-  opacities ≈0.24/0.20/0.16/0.12. Tune intensity with these knobs, and don't add
-  more full-viewport blobs.
+  top-anchored `mask-image` fade (opaque to 25%, transparent at 70%) so the light
+  comes from the hero and the content rows stay near-neutral black; (3) a scroll
+  fade: the field is pinned to the viewport, so a capture-phase `scroll` listener
+  on its parent fades it to 0.15 over the first 0.6× viewport of vertical scroll
+  (horizontal ScrollRows are skipped by a min-overflow check), otherwise the glow
+  hangs behind the rows after the hero is gone; (4) blob opacities
+  ≈0.20/0.16/0.13/0.10. Tune intensity with these knobs, and don't add more
+  full-viewport blobs.
 - **Preferences UI**: `/preferences/hero-mosaic/page.tsx` — two sections (Movie
   wall / Actor wall) separated by a divider, each with live preview. Single Save
   button PUTs both configs in one request and invalidates both hero-wall queries.

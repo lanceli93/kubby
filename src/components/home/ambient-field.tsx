@@ -40,6 +40,14 @@ const BASE_COLOR: RGB = [40, 42, 90];
 const TAU = 600;
 // Per-channel residual below which we snap and stop the loop.
 const SETTLE_EPSILON = 0.5;
+// Scroll fade: the field is pinned to the viewport (it doesn't scroll), so once
+// the hero scrolls away the glow would hang behind the content rows. Fade it to
+// FADE_MIN over the first FADE_DISTANCE × viewport-height of vertical scroll.
+const FADE_DISTANCE = 0.6;
+const FADE_MIN = 0.15;
+// Ignore scrollers with less vertical overflow than this (horizontal ScrollRows
+// carry a few px of overflow-y from their glow padding and always report 0).
+const MIN_VERTICAL_OVERFLOW = 120;
 // Hover dwell before we commit to retargeting, so skimming a row of posters
 // doesn't strobe the glow through a dozen hues.
 const HOVER_DELAY_MS = 120;
@@ -194,8 +202,9 @@ interface AmbientFieldProps {
 }
 
 /**
- * The visual glow layer. Place as the first child of the page's `relative`
- * scroll container. `aria-hidden`, non-interactive, pinned behind content.
+ * The visual glow layer. Place as the first child of the page's non-scrolling
+ * `relative` root, a sibling of the scroll container (its scroll drives the
+ * fade). `aria-hidden`, non-interactive, pinned behind content.
  * Colors are driven entirely by the `--ambient` CSS variable that the provider
  * mutates, so this component itself never re-renders during animation.
  */
@@ -218,6 +227,23 @@ export function AmbientField({ className }: AmbientFieldProps) {
     };
   }, [fieldRef]);
 
+  // Fade the field out as the page's vertical scroller moves. Scroll events
+  // don't bubble, so listen in the capture phase on our parent — that catches
+  // the sibling scroll container without the pages having to pass a ref.
+  useEffect(() => {
+    const el = localRef.current;
+    const host = el?.parentElement;
+    if (!el || !host) return;
+    const onScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.scrollHeight - target.clientHeight < MIN_VERTICAL_OVERFLOW) return;
+      const t = Math.min(target.scrollTop / (target.clientHeight * FADE_DISTANCE), 1);
+      el.style.opacity = String(1 - (1 - FADE_MIN) * t);
+    };
+    host.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => host.removeEventListener("scroll", onScroll, { capture: true });
+  }, []);
+
   return (
     <div
       ref={localRef}
@@ -231,9 +257,9 @@ export function AmbientField({ className }: AmbientFieldProps) {
       // whole viewport being tinted.
       style={{
         maskImage:
-          "linear-gradient(to bottom, black 0%, black 30%, transparent 80%)",
+          "linear-gradient(to bottom, black 0%, black 25%, transparent 70%)",
         WebkitMaskImage:
-          "linear-gradient(to bottom, black 0%, black 30%, transparent 80%)",
+          "linear-gradient(to bottom, black 0%, black 25%, transparent 70%)",
       }}
     >
       {/* Breathing wrapper — one slow shared opacity pulse over the whole field. */}
@@ -247,7 +273,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "70vw",
             height: "70vw",
             filter: "blur(80px)",
-            opacity: 0.24,
+            opacity: 0.2,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
@@ -260,7 +286,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "50vw",
             height: "50vw",
             filter: "blur(80px)",
-            opacity: 0.2,
+            opacity: 0.16,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
@@ -276,7 +302,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             height: "40vw",
             transform: "translateX(-50%)",
             filter: "blur(90px)",
-            opacity: 0.16,
+            opacity: 0.13,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
@@ -289,7 +315,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "45vw",
             height: "45vw",
             filter: "blur(80px)",
-            opacity: 0.12,
+            opacity: 0.1,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
