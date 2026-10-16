@@ -226,6 +226,15 @@ export function AmbientField({ className }: AmbientFieldProps) {
         "pointer-events-none absolute inset-0 z-0 overflow-hidden",
         className
       )}
+      // Light pours from the screen (the hero up top) and falls off down the
+      // room: the content rows below sit on near-neutral #0a0a0f instead of the
+      // whole viewport being tinted.
+      style={{
+        maskImage:
+          "linear-gradient(to bottom, black 0%, black 30%, transparent 80%)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, black 0%, black 30%, transparent 80%)",
+      }}
     >
       {/* Breathing wrapper — one slow shared opacity pulse over the whole field. */}
       <div className="absolute inset-0 animate-ambient-breathe motion-reduce:animate-none">
@@ -238,7 +247,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "70vw",
             height: "70vw",
             filter: "blur(80px)",
-            opacity: 0.3,
+            opacity: 0.24,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
@@ -251,23 +260,23 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "50vw",
             height: "50vw",
             filter: "blur(80px)",
-            opacity: 0.26,
+            opacity: 0.2,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
-        {/* Bottom-center wash — sits directly under the hero wall so the color a
-            spotlit poster casts spills down into the page background right below
-            it (the effect the user wanted to make more obvious). Wide + soft. */}
+        {/* Center wash — sits just under the hero wall so the color a spotlit
+            poster casts spills a little way into the page below it. Kept short
+            so it doesn't blanket the content rows. */}
         <div
           className="absolute rounded-full"
           style={{
-            top: "38%",
+            top: "22%",
             left: "50%",
-            width: "90vw",
-            height: "60vw",
+            width: "80vw",
+            height: "40vw",
             transform: "translateX(-50%)",
             filter: "blur(90px)",
-            opacity: 0.22,
+            opacity: 0.16,
             background: "rgb(var(--ambient) / 1)",
           }}
         />
@@ -280,7 +289,7 @@ export function AmbientField({ className }: AmbientFieldProps) {
             width: "45vw",
             height: "45vw",
             filter: "blur(80px)",
-            opacity: 0.2,
+            opacity: 0.12,
             background: "rgb(var(--ambient) / 1)",
           }}
         />

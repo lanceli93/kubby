@@ -4,25 +4,26 @@
  *
  * The blur placeholders are minuscule, stable base64 JPEGs, so we decode each
  * into an <img>, draw it onto an 8x8 offscreen canvas (`willReadFrequently`),
- * average the pixels, then clamp saturation/lightness so the resulting glow
+ * average the pixels, then clamp perceptual lightness/chroma (OKLCH) so the glow
  * reads as a dim projector wash on the #0a0a0f background rather than a cheap
  * bright color cast (色光要压暗). Results are memoized — the same data URL
  * always yields the same color, and callers hammer this on every card hover.
  */
 
-// Indigo primary (#6366f1) darkened toward the ambient base — the fallback used
-// when a poster is basically grayscale (no meaningful hue to borrow).
-const INDIGO_HUE = 239; // deg
-const GRAYSCALE_S_THRESHOLD = 0.08;
+// Fallback used when a poster is basically grayscale (no meaningful hue to
+// borrow): the indigo primary (#6366f1) hue, dimmed toward the ambient base.
+const INDIGO_HUE = 277; // deg, OKLCH hue of #6366f1
+const GRAYSCALE_C_THRESHOLD = 0.02;
 
-// Cinema-safe clamp ranges (HSL, 0..1). Lifted from the original dim wash
-// (S≤0.55 / L≤0.3) so the tint the spotlit poster casts onto the page actually
-// reads as colored light instead of a barely-there smudge — still clamped well
-// under fully-saturated/bright so it stays a projector glow, not a color cast.
-const SAT_MIN = 0.3;
-const SAT_MAX = 0.68;
-const LIGHT_MIN = 0.2;
-const LIGHT_MAX = 0.44;
+// Cinema-safe clamp ranges in OKLCH (perceptual). Clamping in HSL let warm hues
+// (yellow/orange/green) come out far brighter than blue/purple at the same "L",
+// so some posters washed the whole page. OKLCH L is perceived lightness, so every
+// poster now casts a glow of the same strength — only the hue differs. Sits
+// between the original dim wash and the over-bright 2fe0dd5 boost.
+const L_MIN = 0.32;
+const L_MAX = 0.48;
+const C_MIN = 0.05;
+const C_MAX = 0.13;
 
 // data URL → resolved RGB tuple (or null). Also holds in-flight promises so
 // concurrent hovers over the same card share one decode.
@@ -32,54 +33,60 @@ function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
 
-/** RGB (0..255) → HSL (h in 0..360, s/l in 0..1). */
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  const rn = r / 255;
-  const gn = g / 255;
-  const bn = b / 255;
-  const max = Math.max(rn, gn, bn);
-  const min = Math.min(rn, gn, bn);
-  const l = (max + min) / 2;
-  let h = 0;
-  let s = 0;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case rn:
-        h = (gn - bn) / d + (gn < bn ? 6 : 0);
-        break;
-      case gn:
-        h = (bn - rn) / d + 2;
-        break;
-      default:
-        h = (rn - gn) / d + 4;
-        break;
-    }
-    h *= 60;
-  }
-  return [h, s, l];
+const toLinear = (c: number) =>
+  c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+const fromLinear = (c: number) =>
+  c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+
+/** sRGB (0..255) → OKLCH (L 0..1, C ≥ 0, h in 0..360). */
+function rgbToOklch(r: number, g: number, b: number): [number, number, number] {
+  const rl = toLinear(r / 255);
+  const gl = toLinear(g / 255);
+  const bl = toLinear(b / 255);
+  const l = Math.cbrt(0.4122214708 * rl + 0.5363325363 * gl + 0.0514459929 * bl);
+  const m = Math.cbrt(0.2119034982 * rl + 0.6806995451 * gl + 0.1073969566 * bl);
+  const s = Math.cbrt(0.0883024619 * rl + 0.2817188376 * gl + 0.6299787005 * bl);
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+  const h = (Math.atan2(B, A) * 180) / Math.PI;
+  return [L, Math.hypot(A, B), h < 0 ? h + 360 : h];
 }
 
-/** HSL (h in 0..360, s/l in 0..1) → RGB (0..255, rounded). */
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const hp = h / 60;
-  const x = c * (1 - Math.abs((hp % 2) - 1));
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  if (hp >= 0 && hp < 1) [r, g, b] = [c, x, 0];
-  else if (hp < 2) [r, g, b] = [x, c, 0];
-  else if (hp < 3) [r, g, b] = [0, c, x];
-  else if (hp < 4) [r, g, b] = [0, x, c];
-  else if (hp < 5) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-  const m = l - c / 2;
+/** OKLCH → linear sRGB (unclamped; may fall outside 0..1 when out of gamut). */
+function oklchToLinear(L: number, C: number, h: number): [number, number, number] {
+  const rad = (h * Math.PI) / 180;
+  const A = C * Math.cos(rad);
+  const B = C * Math.sin(rad);
+  const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3;
+  const m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3;
+  const s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
   return [
-    Math.round((r + m) * 255),
-    Math.round((g + m) * 255),
-    Math.round((b + m) * 255),
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+}
+
+/** OKLCH → sRGB (0..255, rounded), reducing chroma until it fits the gamut. */
+function oklchToRgb(L: number, C: number, h: number): [number, number, number] {
+  const inGamut = (c: [number, number, number]) =>
+    c.every((v) => v >= -1e-4 && v <= 1 + 1e-4);
+  let lin = oklchToLinear(L, C, h);
+  if (!inGamut(lin)) {
+    let lo = 0;
+    let hi = C;
+    for (let i = 0; i < 12; i++) {
+      const mid = (lo + hi) / 2;
+      if (inGamut(oklchToLinear(L, mid, h))) lo = mid;
+      else hi = mid;
+    }
+    lin = oklchToLinear(L, lo, h);
+  }
+  return lin.map((v) => Math.round(clamp(fromLinear(clamp(v, 0, 1)), 0, 1) * 255)) as [
+    number,
+    number,
+    number,
   ];
 }
 
@@ -111,16 +118,14 @@ function decode(blurDataURL: string): Promise<[number, number, number] | null> {
         const gAvg = gSum / pixels;
         const bAvg = bSum / pixels;
 
-        const [h, s, l] = rgbToHsl(rAvg, gAvg, bAvg);
+        const [L, C, h] = rgbToOklch(rAvg, gAvg, bAvg);
         // Grayscale source → borrow the indigo brand hue so the glow still has
         // a cinematic tint instead of a muddy gray.
-        if (s < GRAYSCALE_S_THRESHOLD) {
-          resolve(hslToRgb(INDIGO_HUE, 0.4, 0.3));
+        if (C < GRAYSCALE_C_THRESHOLD) {
+          resolve(oklchToRgb(0.38, 0.09, INDIGO_HUE));
           return;
         }
-        const clampedS = clamp(s, SAT_MIN, SAT_MAX);
-        const clampedL = clamp(l, LIGHT_MIN, LIGHT_MAX);
-        resolve(hslToRgb(h, clampedS, clampedL));
+        resolve(oklchToRgb(clamp(L, L_MIN, L_MAX), clamp(C, C_MIN, C_MAX), h));
       } catch {
         // Cross-origin taint or any canvas failure → no color.
         resolve(null);
