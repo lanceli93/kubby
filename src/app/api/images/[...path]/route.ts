@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { getImageCacheDir, getDataDir } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { mediaLibraries } from "@/lib/db/schema";
+import { parseFolderPaths } from "@/lib/folder-paths";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -67,7 +68,8 @@ export async function GET(
       .select({ folderPath: mediaLibraries.folderPath })
       .from(mediaLibraries)
       .all()
-      .map((row) => row.folderPath),
+      // folderPath may be a JSON array (multi-folder libraries) — expand it.
+      .flatMap((row) => parseFolderPaths(row.folderPath)),
   ].map((root) => path.resolve(root));
   // Windows paths are case-insensitive and the DB may store a different case
   // than the request, so compare lowercased on Windows; keep the exact bytes
