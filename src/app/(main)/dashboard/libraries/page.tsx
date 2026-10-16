@@ -248,7 +248,7 @@ export default function LibrariesPage() {
     const isScanning = libScan?.scanning ?? false;
     const progress = libScan?.progress;
     return (
-      <div key={lib.id} className="group flex flex-col" style={{ width: 320 }}>
+      <div key={lib.id} className="group flex flex-col" style={{ width: "20rem" }}>
         {/* Cover image — click to edit */}
         <div
           role="button"
@@ -256,7 +256,7 @@ export default function LibrariesPage() {
           onClick={() => openEditDialog(lib)}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") openEditDialog(lib); }}
           className="relative w-full overflow-hidden rounded-lg ring-1 ring-white/[0.06] bg-white/[0.05] cursor-pointer transition-fluid hover:scale-[1.03]"
-          style={{ height: 180 }}
+          style={{ height: "11.25rem" }}
         >
           {lib.coverImage ? (
             <Image
@@ -286,7 +286,7 @@ export default function LibrariesPage() {
 
           {/* Library name overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
-            <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: 40 }}>{lib.name}</h2>
+            <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: "2.5rem" }}>{lib.name}</h2>
           </div>
 
           {/* Scanning overlay with progress */}
@@ -403,7 +403,7 @@ export default function LibrariesPage() {
                 {t("addLibrary")}
               </button>
             </DialogTrigger>
-            <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[500px]">
+            <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[31.25rem]">
               <DialogHeader>
                 <DialogTitle>{t("addMediaLibraryTitle")}</DialogTitle>
               </DialogHeader>
@@ -415,7 +415,7 @@ export default function LibrariesPage() {
                 className="flex flex-col gap-5 pt-4 overflow-hidden"
               >
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-medium text-muted-foreground">
+                  <label className="text-[0.8125rem] font-medium text-muted-foreground">
                     {tHome("libraryName")}
                   </label>
                   <input
@@ -428,7 +428,7 @@ export default function LibrariesPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-medium text-muted-foreground">
+                  <label className="text-[0.8125rem] font-medium text-muted-foreground">
                     {t("libraryTypeLabel")}
                   </label>
                   <Select value={type} onValueChange={setType}>
@@ -444,7 +444,7 @@ export default function LibrariesPage() {
                   </Select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-medium text-muted-foreground">
+                  <label className="text-[0.8125rem] font-medium text-muted-foreground">
                     {tHome("folderPaths")}
                   </label>
                   <div className="flex flex-col gap-2">
@@ -522,7 +522,7 @@ export default function LibrariesPage() {
                   <>
                 {/* Metadata downloaders section */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-muted-foreground">
+                  <label className="text-[0.8125rem] font-medium text-muted-foreground">
                     {t("metadataDownloadersMoviesLabel")}
                   </label>
                   <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -546,7 +546,7 @@ export default function LibrariesPage() {
                 {/* Metadata language */}
                 {scraperEnabled && (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[13px] font-medium text-muted-foreground">
+                    <label className="text-[0.8125rem] font-medium text-muted-foreground">
                       Metadata Language
                     </label>
                     <Select value={metadataLanguage} onValueChange={setMetadataLanguage}>
@@ -576,7 +576,7 @@ export default function LibrariesPage() {
 
                 {/* Jellyfin Compatibility Mode */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-medium text-muted-foreground">
+                  <label className="text-[0.8125rem] font-medium text-muted-foreground">
                     {tHome("jellyfinCompat")}
                   </label>
                   <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -599,7 +599,7 @@ export default function LibrariesPage() {
 
                 {/* Jellyfin compat confirmation dialog */}
                 <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
-                  <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+                  <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
                     <DialogHeader>
                       <DialogTitle>{tHome("jellyfinCompatDialogTitle")}</DialogTitle>
                       <DialogDescription>
@@ -715,7 +715,7 @@ export default function LibrariesPage() {
 
       {/* Edit library dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[500px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[31.25rem]">
           <DialogHeader>
             <DialogTitle>{tHome("editLibrary")}</DialogTitle>
           </DialogHeader>
@@ -724,7 +724,7 @@ export default function LibrariesPage() {
             className="flex flex-col gap-5 pt-4 overflow-hidden"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{tHome("libraryName")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{tHome("libraryName")}</label>
               <input
                 type="text"
                 value={editName}
@@ -734,7 +734,7 @@ export default function LibrariesPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{tHome("folderPaths")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{tHome("folderPaths")}</label>
               <div className="flex flex-col gap-2">
                 {editFolderPaths.map((p, idx) => (
                   <div key={idx} className="flex items-center gap-2 min-w-0">
@@ -808,7 +808,7 @@ export default function LibrariesPage() {
               <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("metadataDownloadersMoviesLabel")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -827,7 +827,7 @@ export default function LibrariesPage() {
             </div>
             {editScraperEnabled && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-muted-foreground">Metadata Language</label>
+                <label className="text-[0.8125rem] font-medium text-muted-foreground">Metadata Language</label>
                 <Select value={editMetadataLanguage} onValueChange={setEditMetadataLanguage}>
                   <SelectTrigger className="h-11 w-full rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 text-sm text-foreground">
                     <SelectValue />
@@ -865,7 +865,7 @@ export default function LibrariesPage() {
             )}
             {/* Jellyfin Compatibility */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {tHome("jellyfinCompat")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -906,7 +906,7 @@ export default function LibrariesPage() {
 
       {/* Edit Jellyfin compat confirmation dialog */}
       <Dialog open={editJellyfinCompatConfirmOpen} onOpenChange={setEditJellyfinCompatConfirmOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>
               {editJellyfinCompatAction === "enable"
@@ -943,7 +943,7 @@ export default function LibrariesPage() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{tHome("deleteLibrary")} &ldquo;{deleteLibName}&rdquo;</DialogTitle>
             <DialogDescription>

@@ -47,7 +47,7 @@ interface Paginated<T> {
 // Same responsive poster grid the library / actors browsers use, so the
 // favorites view reads identically to drilling into a media library.
 const GRID_CLASS =
-  "grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center";
+  "grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,11.25rem)] md:gap-x-4 md:gap-y-6 justify-center";
 
 /**
  * Favorites in the same full-grid form as a media library, split by a

@@ -68,7 +68,7 @@ export function DeletePhotosDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && !del.isPending && onClose()}>
-      <DialogContent className="!bg-black/50 border-white/[0.08] backdrop-blur-2xl sm:max-w-[400px]">
+      <DialogContent className="!bg-black/50 border-white/[0.08] backdrop-blur-2xl sm:max-w-[25rem]">
         <DialogHeader>
           <DialogTitle>
             {single ? t("deletePhoto") : t("deleteSelectedTitle", { count: ids.length })}

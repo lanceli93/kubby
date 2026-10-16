@@ -91,7 +91,7 @@ export default function ProfilePage() {
       {/* Profile */}
       <form
         onSubmit={handleProfileSave}
-        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
+        className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
       >
         <div className="flex items-center gap-5">
           <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground shadow-[0_0_24px_rgba(59,130,246,0.2)]">
@@ -105,7 +105,7 @@ export default function ProfilePage() {
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("displayName")}
           </label>
           <input
@@ -116,7 +116,7 @@ export default function ProfilePage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("username")}
           </label>
           <p className="text-sm text-[#666680]">{session?.user?.email}</p>
@@ -135,13 +135,13 @@ export default function ProfilePage() {
       {/* Change Password */}
       <form
         onSubmit={handlePasswordChange}
-        className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
+        className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7"
       >
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {t("changePassword")}
         </h2>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("currentPassword")}
           </label>
           <input
@@ -153,7 +153,7 @@ export default function ProfilePage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("newPassword")}
           </label>
           <input
@@ -165,7 +165,7 @@ export default function ProfilePage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("confirmNewPassword")}
           </label>
           <input
@@ -187,7 +187,7 @@ export default function ProfilePage() {
       </form>
 
       {/* Account Info */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("accountInfo")}</h2>
         <div className="flex gap-2 text-sm">
           <span className="text-[#666680]">{t("accountType")}:</span>

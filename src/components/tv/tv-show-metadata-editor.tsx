@@ -335,7 +335,7 @@ export function TvShowMetadataEditor({ showId, open, onOpenChange }: TvShowMetad
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[700px] sm:rounded-lg overflow-y-auto overflow-x-hidden">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[43.75rem] sm:rounded-lg overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>{t("editMetadata")}</DialogTitle>
         </DialogHeader>
@@ -567,7 +567,7 @@ export function TvShowMetadataEditor({ showId, open, onOpenChange }: TvShowMetad
                     );
                   }}
                 >
-                  <SelectTrigger className="h-9 w-[120px] rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground">
+                  <SelectTrigger className="h-9 w-[7.5rem] rounded-lg border border-white/[0.06] bg-[var(--input-bg)] px-3 text-sm text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -616,7 +616,7 @@ export function TvShowMetadataEditor({ showId, open, onOpenChange }: TvShowMetad
           <TabsContent value="images" className="pt-4">
             <div className="flex flex-col sm:flex-row items-start gap-4">
               {/* Poster */}
-              <div className="flex w-1/2 sm:w-[180px] flex-shrink-0 flex-col gap-2">
+              <div className="flex w-1/2 sm:w-[11.25rem] flex-shrink-0 flex-col gap-2">
                 <h3 className="text-xs font-medium text-white/50">{t("poster")}</h3>
                 <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
                   {show?.posterPath ? (
@@ -659,7 +659,7 @@ export function TvShowMetadataEditor({ showId, open, onOpenChange }: TvShowMetad
               {/* Fanart */}
               <div className="flex w-full sm:min-w-0 sm:flex-1 flex-col gap-2">
                 <h3 className="text-xs font-medium text-white/50">{t("fanart")}</h3>
-                <div className="relative aspect-video sm:h-[250px] sm:aspect-auto w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
+                <div className="relative aspect-video sm:h-[15.625rem] sm:aspect-auto w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
                   {show?.fanartPath ? (
                     <Image
                       src={resolveImageSrc(show.fanartPath)}

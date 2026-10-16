@@ -93,12 +93,12 @@ function MovieCardPreview({
   ratingValue: number;
 }) {
   return (
-    <div className="relative" style={{ width: 120, height: 180 }}>
+    <div className="relative" style={{ width: "7.5rem", height: "11.25rem" }}>
       <PosterPlaceholder icon="movie" className="h-full w-full" />
 
       {/* Resolution badge — top-left */}
       {showResolution && (
-        <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/90">
+        <div className="absolute left-1.5 top-1.5 rounded border border-white/30 bg-black/60 px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-white/90">
           {resolutionLabel}
         </div>
       )}
@@ -107,7 +107,7 @@ function MovieCardPreview({
       {showRating && (
         <div className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
           <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
-          <span className="text-[11px] font-medium text-[var(--gold)]">
+          <span className="text-[0.6875rem] font-medium text-[var(--gold)]">
             {ratingValue.toFixed(1)}
           </span>
         </div>
@@ -128,13 +128,13 @@ function PersonCardPreview({
 }) {
   const tier = getTier(rating);
   return (
-    <div className="relative" style={{ width: 120, height: 180 }}>
+    <div className="relative" style={{ width: "7.5rem", height: "11.25rem" }}>
       <PosterPlaceholder icon="person" className="h-full w-full" />
 
       {/* Tier badge — top-left */}
       {showTier && (
         <div
-          className={`absolute left-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}
+          className={`absolute left-1.5 top-1.5 rounded border bg-black/60 px-1.5 py-0.5 text-[0.6875rem] font-black tracking-wider ${getTierColor(tier)} ${getTierBorderColor(tier)} ${getTierGlow(tier)}`}
         >
           {tier}
         </div>
@@ -144,7 +144,7 @@ function PersonCardPreview({
       {showRating && (
         <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5">
           <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
-          <span className="text-[11px] font-medium text-[var(--gold)]">
+          <span className="text-[0.6875rem] font-medium text-[var(--gold)]">
             {rating.toFixed(1)}
           </span>
         </div>
@@ -296,7 +296,7 @@ export default function CardBadgesPage() {
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-      <div className="flex w-full max-w-[720px] items-center justify-between">
+      <div className="flex w-full max-w-[45rem] items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
         <button
           type="button"
@@ -312,7 +312,7 @@ export default function CardBadgesPage() {
       {domain !== "tv" && (
         <>
       {/* Movie card badges */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("movieCardBadges")}
         </h2>
@@ -411,7 +411,7 @@ export default function CardBadgesPage() {
       </div>
 
       {/* Person card badges */}
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("personCardBadges")}
         </h2>
@@ -514,7 +514,7 @@ export default function CardBadgesPage() {
           (multi-episode), so the resolution toggle only takes effect where a
           caller supplies dimensions. */}
       {domain === "tv" && (
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("tvShowCardBadges")}
         </h2>
@@ -617,7 +617,7 @@ export default function CardBadgesPage() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full max-w-[720px] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
+        className="w-full max-w-[45rem] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
       >
         {saving ? tCommon("loading") : tCommon("save")}
       </button>
@@ -628,7 +628,7 @@ export default function CardBadgesPage() {
 
       {/* Reset to Defaults Confirmation */}
       <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[26.25rem]">
           <DialogHeader>
             <DialogTitle>{t("resetDefaultsTitle")}</DialogTitle>
             <DialogDescription>{t("resetDefaultsDesc")}</DialogDescription>

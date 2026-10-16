@@ -8,6 +8,7 @@ import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { rem } from "@/hooks/use-root-scale";
 import { useTranslations } from "next-intl";
 import { TiltCard } from "@/components/ui/tilt-card";
 import {
@@ -50,6 +51,7 @@ interface PersonCardProps {
   readonly?: boolean;
 }
 
+// Design px (16px = 1rem); rendered via rem() so cards scale with the root font-size.
 const sizeConfig = {
   sm: { width: 140, height: 210 },
   md: { width: 160, height: 240 },
@@ -91,7 +93,7 @@ export function PersonCard({
   const [deleteFiles, setDeleteFiles] = useState(false);
 
   return (
-    <div className={`group flex-shrink-0 transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`} style={{ width }}>
+    <div className={`group flex-shrink-0 transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`} style={{ width: rem(width) }}>
     <Link
       href={`${hrefBase}/${id}`}
     >
@@ -100,7 +102,7 @@ export function PersonCard({
           TiltCard so it all tilts as one object; the hover bar uses a gradient
           scrim, not backdrop-blur (preserve-3d breaks backdrop-filter on
           descendants in Chromium). */}
-      <div className="relative" style={{ width, height }}>
+      <div className="relative" style={{ width: rem(width), height: rem(height) }}>
         {/* Ambient glow (ambilight) — blurred photo bleeding behind, hover-only */}
         {photoBlur && (
           <div
@@ -132,7 +134,7 @@ export function PersonCard({
             {showTierBadge && personalRating != null && personalRating > 0 && (() => {
               const tier = getTier(personalRating);
               return (
-                <div className={`tilt-lift absolute left-1.5 top-1.5 z-[4] glass-badge rounded-md px-1.5 py-0.5 text-[11px] font-black tracking-wider ${getTierColor(tier)} ${getTierGlow(tier)}`} style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                <div className={`tilt-lift absolute left-1.5 top-1.5 z-[4] glass-badge rounded-md px-1.5 py-0.5 text-[0.6875rem] font-black tracking-wider ${getTierColor(tier)} ${getTierGlow(tier)}`} style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
                   {tier}
                 </div>
               );
@@ -142,7 +144,7 @@ export function PersonCard({
             {showRatingBadge && personalRating != null && personalRating > 0 && (
               <div className="tilt-lift absolute right-1.5 top-1.5 z-[4] flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
                 <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
-                <span className="text-[11px] font-medium text-[var(--gold)]">
+                <span className="text-[0.6875rem] font-medium text-[var(--gold)]">
                   {personalRating.toFixed(1)}
                 </span>
               </div>
@@ -262,7 +264,7 @@ export function PersonCard({
       )}
       {deleteOpen && (
         <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
-          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
             <DialogHeader>
               <DialogTitle>{t("deletePerson")}</DialogTitle>
               <DialogDescription>{t("confirmDeletePerson")}</DialogDescription>

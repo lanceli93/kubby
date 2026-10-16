@@ -101,7 +101,7 @@ export function AddToAlbumDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="!bg-black/50 border-white/[0.08] backdrop-blur-2xl sm:max-w-[420px]">
+      <DialogContent className="!bg-black/50 border-white/[0.08] backdrop-blur-2xl sm:max-w-[26.25rem]">
         <DialogHeader>
           <DialogTitle>{t("addToAlbum")}</DialogTitle>
         </DialogHeader>

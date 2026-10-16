@@ -243,7 +243,7 @@ export function SetupWizard() {
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
       {/* Step 1: Language Selection */}
       {screen === "wizard" && step === 1 && (
-        <div key="step1" className={`flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+        <div key="step1" className={`flex w-[32.5rem] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
             {t("welcomeToKubby")}
@@ -262,7 +262,7 @@ export function SetupWizard() {
               }`}
             >
               <span className={`text-2xl font-bold ${selectedLocale === "en" ? "text-primary" : "text-muted-foreground"}`}>EN</span>
-              <span className={`text-[15px] ${selectedLocale === "en" ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+              <span className={`text-[0.9375rem] ${selectedLocale === "en" ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                 English
               </span>
             </button>
@@ -275,13 +275,13 @@ export function SetupWizard() {
               }`}
             >
               <span className={`text-2xl font-bold ${selectedLocale === "zh" ? "text-primary" : "text-muted-foreground"}`}>中</span>
-              <span className={`text-[15px] ${selectedLocale === "zh" ? "font-semibold text-foreground" : "text-muted-foreground"}`}>中文</span>
+              <span className={`text-[0.9375rem] ${selectedLocale === "zh" ? "font-semibold text-foreground" : "text-muted-foreground"}`}>中文</span>
             </button>
           </div>
 
           <button
             onClick={handleLanguageNext}
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
           >
             {tc("next")}
           </button>
@@ -292,7 +292,7 @@ export function SetupWizard() {
 
       {/* Step 2: Create Admin */}
       {screen === "wizard" && step === 2 && (
-        <div key="step2" className={`flex w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+        <div key="step2" className={`flex w-[30rem] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
             {t("createAdminAccount")}
@@ -301,7 +301,7 @@ export function SetupWizard() {
           <div className="flex w-full flex-col gap-5">
             {/* Username */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {tAuth("username")}
               </label>
               <input
@@ -315,7 +315,7 @@ export function SetupWizard() {
 
             {/* Password */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {tAuth("password")}
               </label>
               <div className="relative">
@@ -332,9 +332,9 @@ export function SetupWizard() {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground cursor-pointer"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-[18px] w-[18px]" />
+                    <EyeOff className="h-[1.125rem] w-[1.125rem]" />
                   ) : (
-                    <Eye className="h-[18px] w-[18px]" />
+                    <Eye className="h-[1.125rem] w-[1.125rem]" />
                   )}
                 </button>
               </div>
@@ -342,7 +342,7 @@ export function SetupWizard() {
 
             {/* Confirm Password */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {tAuth("confirmPassword")}
               </label>
               <div className="relative">
@@ -359,9 +359,9 @@ export function SetupWizard() {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground cursor-pointer"
                 >
                   {showConfirm ? (
-                    <EyeOff className="h-[18px] w-[18px]" />
+                    <EyeOff className="h-[1.125rem] w-[1.125rem]" />
                   ) : (
-                    <Eye className="h-[18px] w-[18px]" />
+                    <Eye className="h-[1.125rem] w-[1.125rem]" />
                   )}
                 </button>
               </div>
@@ -373,13 +373,13 @@ export function SetupWizard() {
           <div className="flex w-full gap-3">
             <button
               onClick={() => { setSlideDir("left"); setStep(1); }}
-              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[0.9375rem] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
             >
               {tc("back")}
             </button>
             <button
               onClick={handleAdminNext}
-              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
+              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
             >
               {tc("next")}
             </button>
@@ -391,7 +391,7 @@ export function SetupWizard() {
 
       {/* Step 3: Add Media Library */}
       {screen === "wizard" && step === 3 && (
-        <div key="step3" className={`flex max-h-[90vh] w-[480px] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+        <div key="step3" className={`flex max-h-[90vh] w-[30rem] flex-col items-center gap-6 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="shrink-0 brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="shrink-0 text-xl font-semibold text-foreground">
             {t("addMediaLibrary")}
@@ -400,7 +400,7 @@ export function SetupWizard() {
           <div className="flex w-full flex-col gap-5 overflow-y-auto pr-1">
             {/* Library Name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("libraryName")}
               </label>
               <input
@@ -414,7 +414,7 @@ export function SetupWizard() {
 
             {/* Library Type */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("libraryType")}
               </label>
               <Select
@@ -446,7 +446,7 @@ export function SetupWizard() {
 
             {/* Folder Paths (multi-folder) */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("folderPath")}
               </label>
               <div className="flex flex-col gap-2">
@@ -514,7 +514,7 @@ export function SetupWizard() {
             {(libraryType === "movie" || libraryType === "tvshow") && (
               <>
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("metadataDownloaders")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -527,7 +527,7 @@ export function SetupWizard() {
             </div>
             {scraperEnabled && (
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-medium text-muted-foreground">
+                <label className="text-[0.8125rem] font-medium text-muted-foreground">
                   {t("tmdbApiKey")}
                 </label>
                 <input
@@ -548,7 +548,7 @@ export function SetupWizard() {
 
             {/* Jellyfin Compatibility Mode */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("jellyfinCompatMode")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -569,7 +569,7 @@ export function SetupWizard() {
 
             {/* Jellyfin compat confirmation dialog */}
             <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
-              <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+              <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
                 <DialogHeader>
                   <DialogTitle>{t("jellyfinCompatConfirmTitle")}</DialogTitle>
                   <DialogDescription>{t("jellyfinCompatConfirmDesc")}</DialogDescription>
@@ -605,14 +605,14 @@ export function SetupWizard() {
             <button
               onClick={() => { setSlideDir("left"); setStep(2); }}
               disabled={loading}
-              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center rounded-lg border border-white/[0.06] text-[0.9375rem] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer disabled:opacity-50"
             >
               {tc("back")}
             </button>
             <button
               onClick={() => handleComplete(false)}
               disabled={loading}
-              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
+              className="flex h-11 flex-[2] items-center justify-center rounded-lg bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
             >
               {loading ? tc("loading") : tc("next")}
             </button>
@@ -621,7 +621,7 @@ export function SetupWizard() {
           <button
             onClick={() => handleComplete(true)}
             disabled={loading}
-            className="text-[13px] text-muted-foreground hover:text-foreground transition-fluid cursor-pointer"
+            className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-fluid cursor-pointer"
           >
             {t("skipForNow")}
           </button>
@@ -638,23 +638,23 @@ export function SetupWizard() {
 
       {/* Step 4: Complete */}
       {screen === "wizard" && step === 4 && (
-        <div key="step4" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
+        <div key="step4" className="flex w-[30rem] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
 
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-green-500/10">
+          <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-green-500/10">
             <Check className="h-9 w-9 text-green-500" />
           </div>
 
           <h2 className="text-2xl font-bold text-foreground">
             {t("youreAllSet")}
           </h2>
-          <p className="w-[320px] text-center text-sm text-muted-foreground">
+          <p className="w-[20rem] text-center text-sm text-muted-foreground">
             {t("setupCompleteDesc")}
           </p>
 
           <button
             onClick={() => router.push("/login")}
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
           >
             {t("goToSignIn")}
           </button>
@@ -665,7 +665,7 @@ export function SetupWizard() {
 
       {/* Fork: Choose setup path */}
       {screen === "choose" && (
-        <div key="choose" className={`flex w-[520px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
+        <div key="choose" className={`flex w-[32.5rem] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 ${slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left"}`}>
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
           <h2 className="text-xl font-semibold text-foreground">
             {t("chooseSetupTitle")}
@@ -681,8 +681,8 @@ export function SetupWizard() {
                 <Settings2 className="h-5 w-5" />
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[15px] font-semibold text-foreground">{t("manualSetupTitle")}</span>
-                <span className="text-[13px] leading-relaxed text-muted-foreground">{t("manualSetupDesc")}</span>
+                <span className="text-[0.9375rem] font-semibold text-foreground">{t("manualSetupTitle")}</span>
+                <span className="text-[0.8125rem] leading-relaxed text-muted-foreground">{t("manualSetupDesc")}</span>
               </div>
             </button>
 
@@ -695,22 +695,22 @@ export function SetupWizard() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[15px] font-semibold text-foreground">{t("demoSetupTitle")}</span>
-                <span className="text-[13px] leading-relaxed text-muted-foreground">{t("demoSetupDesc")}</span>
+                <span className="text-[0.9375rem] font-semibold text-foreground">{t("demoSetupTitle")}</span>
+                <span className="text-[0.8125rem] leading-relaxed text-muted-foreground">{t("demoSetupDesc")}</span>
               </div>
             </button>
           </div>
 
           <button
             onClick={() => { setSlideDir("left"); setScreen("wizard"); setStep(1); }}
-            className="text-[13px] text-muted-foreground hover:text-foreground transition-fluid cursor-pointer"
+            className="text-[0.8125rem] text-muted-foreground hover:text-foreground transition-fluid cursor-pointer"
           >
             {tc("back")}
           </button>
 
           {/* Demo confirmation dialog */}
           <Dialog open={demoConfirmOpen} onOpenChange={setDemoConfirmOpen}>
-            <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+            <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
               <DialogHeader>
                 <DialogTitle>{t("demoConfirmTitle")}</DialogTitle>
                 <DialogDescription>{t("demoConfirmDesc")}</DialogDescription>
@@ -738,10 +738,10 @@ export function SetupWizard() {
 
       {/* Demo seeding progress */}
       {screen === "seeding" && (
-        <div key="seeding" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
+        <div key="seeding" className="flex w-[30rem] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
 
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary/10">
+          <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-primary/10">
             <Loader2 className="h-9 w-9 animate-spin text-primary" />
           </div>
 
@@ -776,7 +776,7 @@ export function SetupWizard() {
               <p className="text-sm text-destructive" role="alert">{error}</p>
               <button
                 onClick={() => { setSlideDir("left"); setError(""); setScreen("choose"); }}
-                className="flex h-11 w-full items-center justify-center rounded-lg border border-white/[0.06] text-[15px] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
+                className="flex h-11 w-full items-center justify-center rounded-lg border border-white/[0.06] text-[0.9375rem] font-semibold text-muted-foreground transition-fluid hover:text-foreground cursor-pointer"
               >
                 {tc("back")}
               </button>
@@ -787,34 +787,34 @@ export function SetupWizard() {
 
       {/* Demo ready */}
       {screen === "ready" && (
-        <div key="ready" className="flex w-[480px] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
+        <div key="ready" className="flex w-[30rem] flex-col items-center gap-7 rounded-2xl border border-white/[0.06] glass-cinema px-10 py-12 animate-slide-in-right">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
 
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-green-500/10">
+          <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-green-500/10">
             <Check className="h-9 w-9 text-green-500" />
           </div>
 
           <h2 className="text-2xl font-bold text-foreground">
             {t("demoReadyTitle")}
           </h2>
-          <p className="w-[320px] text-center text-sm text-muted-foreground">
+          <p className="w-[20rem] text-center text-sm text-muted-foreground">
             {t("demoReadyDesc")}
           </p>
 
           <div className="flex w-full flex-col gap-2.5">
             <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
-              <span className="text-[13px] font-medium text-muted-foreground">{t("demoUsername")}</span>
+              <span className="text-[0.8125rem] font-medium text-muted-foreground">{t("demoUsername")}</span>
               <span className="rounded-md bg-white/[0.06] px-2.5 py-1 font-mono text-sm text-foreground">{demoCreds.username}</span>
             </div>
             <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
-              <span className="text-[13px] font-medium text-muted-foreground">{t("demoPassword")}</span>
+              <span className="text-[0.8125rem] font-medium text-muted-foreground">{t("demoPassword")}</span>
               <span className="rounded-md bg-white/[0.06] px-2.5 py-1 font-mono text-sm text-foreground">{demoCreds.password}</span>
             </div>
           </div>
 
           <button
             onClick={() => router.push("/login")}
-            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer"
           >
             {t("goToSignIn")}
           </button>

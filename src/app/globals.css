@@ -182,6 +182,17 @@
     height: 100%;
   }
 
+  /* Fluid UI scale for large viewports. The layout is designed around a
+     ~1440–1920px canvas; on a 2560px+ viewport (4K @150%, 1440p @100%) a fixed
+     16px root leaves text and components tiny relative to the screen. Keep 16px
+     up to 1920px, grow linearly to 20px (1.25×) at 2560px, cap at 24px (1.5×).
+     Every rem-based size scales with it — size UI in rem (never raw px) so it
+     follows. Media-query breakpoints are unaffected (they use the browser's
+     initial 16px). JS layouts that need the factor: `useRootScale()`. */
+  html {
+    font-size: clamp(16px, calc(0.625vw + 4px), 24px);
+  }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -412,7 +423,7 @@
   border-radius: 9999px;
 }
 .music-range::-webkit-slider-runnable-track {
-  height: 4px;
+  height: 0.25rem;
   border-radius: 9999px;
   background: linear-gradient(
     to right,
@@ -421,7 +432,7 @@
   );
 }
 .music-range::-moz-range-track {
-  height: 4px;
+  height: 0.25rem;
   border-radius: 9999px;
   background: linear-gradient(
     to right,
@@ -432,17 +443,17 @@
 .music-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  height: 12px;
-  width: 12px;
-  margin-top: -4px;
+  height: 0.75rem;
+  width: 0.75rem;
+  margin-top: -0.25rem;
   border-radius: 9999px;
   background: #ffffff;
   opacity: 0;
   transition: opacity 0.15s ease;
 }
 .music-range::-moz-range-thumb {
-  height: 12px;
-  width: 12px;
+  height: 0.75rem;
+  width: 0.75rem;
   border: none;
   border-radius: 9999px;
   background: #ffffff;

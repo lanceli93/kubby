@@ -377,7 +377,7 @@ export default function MovieDetailPage() {
     <div ref={scrollRef} className="h-full overflow-y-scroll scrollbar-hide">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — Jellyfin style */}
-      <div ref={heroRef} className="relative md:min-h-[750px] w-full overflow-hidden">
+      <div ref={heroRef} className="relative md:min-h-[46.875rem] w-full overflow-hidden">
         {/* Fanart Background — parallax layer. Slightly overscaled so scroll/
             pointer drift never reveals empty edges. Ref'd for depth transforms
             (this wrapper holds ONLY the fanart image — never the glass panel —
@@ -385,7 +385,7 @@ export default function MovieDetailPage() {
         {movie.fanartPath && !imgErrors.has(movie.fanartPath) && (
           <div
             ref={fanartRef}
-            className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform"
+            className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform"
           >
             <Image
               src={resolveImageSrc(movie.fanartPath, 1920)}
@@ -421,7 +421,7 @@ export default function MovieDetailPage() {
               same element — it is the static target of the card→detail poster
               morph (see lib/view-transition.ts), so TiltCard wrappers around it
               are fine. */}
-          <div ref={posterRef} className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 will-change-transform">
+          <div ref={posterRef} className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0 will-change-transform">
             {/* Ambient glow — blurred poster bleeding behind, always lit (this is
                 a hero). Sits behind the poster; skipped when there is no poster. */}
             {movie.posterPath && !imgErrors.has(movie.posterPath) && (
@@ -682,7 +682,7 @@ export default function MovieDetailPage() {
 
             {/* Overview */}
             {movie.overview && (
-              <p className="max-w-full md:max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
+              <p className="max-w-full md:max-w-[80%] text-[0.9375rem] leading-relaxed text-white/80 line-clamp-5">
                 {movie.overview}
               </p>
             )}
@@ -813,12 +813,12 @@ export default function MovieDetailPage() {
                   )}
                   {/* Resolution badge — top-left */}
                   {getResolutionLabel(disc.videoWidth) && (
-                    <div className="absolute left-1.5 top-1.5 rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80 shadow-sm">
+                    <div className="absolute left-1.5 top-1.5 rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-black/80 shadow-sm">
                       {getResolutionLabel(disc.videoWidth)}
                     </div>
                   )}
                   {/* Disc number badge — bottom-right, liquid glass */}
-                  <div className="absolute right-1.5 bottom-1.5 flex h-6 w-6 items-center justify-center rounded-full glass-badge text-[11px] font-bold text-white/90 shadow-lg">
+                  <div className="absolute right-1.5 bottom-1.5 flex h-6 w-6 items-center justify-center rounded-full glass-badge text-[0.6875rem] font-bold text-white/90 shadow-lg">
                     {disc.discNumber}
                   </div>
                   {/* Centered play button on hover */}
@@ -846,7 +846,7 @@ export default function MovieDetailPage() {
                   key={disc.id}
                   onClick={() => launchExternal(disc.discNumber)}
                   className="group flex-shrink-0 cursor-pointer text-left transition-[scale] duration-200 ease-out hover:scale-[1.03]"
-                  style={{ width: 140 }}
+                  style={{ width: "8.75rem" }}
                 >
                   {poster}
                   {info}
@@ -856,7 +856,7 @@ export default function MovieDetailPage() {
                   key={disc.id}
                   href={`/movies/${movie.id}/play?disc=${disc.discNumber}`}
                   className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03]"
-                  style={{ width: 140 }}
+                  style={{ width: "8.75rem" }}
                 >
                   {poster}
                   {info}
@@ -1001,7 +1001,7 @@ export default function MovieDetailPage() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{t("deleteMovie")}</DialogTitle>
             <DialogDescription>{t("confirmDeleteMovie")}</DialogDescription>

@@ -17,7 +17,7 @@ export function AdminSidebar() {
   return (
     <>
       <aside className="hidden md:flex w-60 flex-col gap-1 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6 ring-1 ring-white/[0.06]">
-        <span className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
+        <span className="mb-2 px-5 text-[0.6875rem] font-semibold uppercase tracking-wider text-[#555568]">
           {t("system")}
         </span>
         <div className="mx-3 mb-2 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />
@@ -37,10 +37,10 @@ export function AdminSidebar() {
               }`}
             >
               {isActive && (
-                <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+                <div className="absolute left-0 top-1/2 h-5 w-[0.1875rem] -translate-y-1/2 rounded-r-full bg-primary" />
               )}
               <Icon
-                className={`h-[18px] w-[18px] transition-colors ${
+                className={`h-[1.125rem] w-[1.125rem] transition-colors ${
                   isActive ? "text-primary" : "text-[#666680] group-hover:text-muted-foreground"
                 }`}
               />

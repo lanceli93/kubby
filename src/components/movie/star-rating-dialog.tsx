@@ -87,7 +87,7 @@ function StarRow({
       <div className="flex items-center gap-1 md:gap-1.5">
         <button
           onClick={() => onFine(-0.1)}
-          className="flex h-5 w-5 md:h-7 md:w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-[10px] md:text-xs transition-colors hover:bg-white/10"
+          className="flex h-5 w-5 md:h-7 md:w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-[0.625rem] md:text-xs transition-colors hover:bg-white/10"
         >
           −
         </button>
@@ -96,7 +96,7 @@ function StarRow({
         </span>
         <button
           onClick={() => onFine(0.1)}
-          className="flex h-5 w-5 md:h-7 md:w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-[10px] md:text-xs transition-colors hover:bg-white/10"
+          className="flex h-5 w-5 md:h-7 md:w-7 items-center justify-center rounded-full border border-white/30 text-white/70 text-[0.625rem] md:text-xs transition-colors hover:bg-white/10"
         >
           +
         </button>
@@ -213,7 +213,7 @@ export function StarRatingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`!bg-black/40 border-white/[0.06] backdrop-blur-xl ${hasDimensions ? "sm:max-w-[480px]" : "sm:max-w-[340px]"}`}>
+      <DialogContent className={`!bg-black/40 border-white/[0.06] backdrop-blur-xl ${hasDimensions ? "sm:max-w-[30rem]" : "sm:max-w-[21.25rem]"}`}>
         <DialogHeader>
           <DialogTitle>{t("personalRating")}</DialogTitle>
         </DialogHeader>

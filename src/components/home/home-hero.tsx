@@ -260,7 +260,7 @@ export function HomeHero({
   // then get pushed down when the wall arrives.
   if (!displayEntry && wallPending) {
     return (
-      <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden bg-[#0a0a0f] md:h-[calc(100vh-340px)] md:min-h-[480px]">
+      <div className="relative h-[52vh] min-h-[23.75rem] w-full overflow-hidden bg-[#0a0a0f] md:h-[calc(100vh-21.25rem)] md:min-h-[30rem]">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[55%] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/55 to-transparent" />
       </div>
     );
@@ -301,7 +301,7 @@ export function HomeHero({
     metaItems.push(
       <span
         key="resolution"
-        className="rounded border border-white/20 px-1.5 py-px text-[10.5px] font-semibold uppercase tracking-wider text-white/85"
+        className="rounded border border-white/20 px-1.5 py-px text-[0.65625rem] font-semibold uppercase tracking-wider text-white/85"
       >
         {resolution}
       </span>
@@ -321,7 +321,7 @@ export function HomeHero({
     );
 
   return (
-    <div className="group/hero relative h-[52vh] min-h-[380px] w-full overflow-hidden md:h-[calc(100vh-340px)] md:min-h-[480px]">
+    <div className="group/hero relative h-[52vh] min-h-[23.75rem] w-full overflow-hidden md:h-[calc(100vh-21.25rem)] md:min-h-[30rem]">
       {/* Backdrop layer (z-0, non-interactive): animated poster wall that drives
           the featured movie, or a single fallback backdrop of the active slide. */}
       {wallMode ? (
@@ -363,7 +363,7 @@ export function HomeHero({
       <div className="pointer-events-none absolute inset-x-0 bottom-[10%] z-[2] px-4 md:px-12">
         {/* Left text block — re-fades on slide change */}
         <div key={id} className="animate-fade-in max-w-xl md:max-w-3xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.3em] text-white/50">
             NOW SHOWING · {t(isContinueWatching ? "continueWatching" : "recentlyAdded")}
           </p>
           {/* Single line, ellipsis for very long titles. Explicit leading:
@@ -378,7 +378,7 @@ export function HomeHero({
             </p>
           )}
           {metaItems.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-white/65">
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.8125rem] text-white/65">
               {metaItems.flatMap((node, i) =>
                 i === 0
                   ? [node]
@@ -436,7 +436,7 @@ export function HomeHero({
                   jumpTo(i);
                 }}
                 aria-label={`Slide ${i + 1}`}
-                className="relative h-[3px] w-10 cursor-pointer overflow-hidden rounded-full bg-white/25 transition-all duration-300"
+                className="relative h-[0.1875rem] w-10 cursor-pointer overflow-hidden rounded-full bg-white/25 transition-all duration-300"
               >
                 {reduced ? (
                   <span className="absolute inset-0 rounded-full bg-white/80" />
@@ -456,7 +456,7 @@ export function HomeHero({
                   jumpTo(i);
                 }}
                 aria-label={`Slide ${i + 1}`}
-                className="h-[3px] w-5 cursor-pointer rounded-full bg-white/25 transition-all duration-300 hover:bg-white/50"
+                className="h-[0.1875rem] w-5 cursor-pointer rounded-full bg-white/25 transition-all duration-300 hover:bg-white/50"
               />
             )
           )}

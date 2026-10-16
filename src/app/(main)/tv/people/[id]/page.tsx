@@ -129,9 +129,9 @@ export default function TvPersonDetailPage() {
     <div className="h-full overflow-y-scroll scrollbar-hide animate-fade-in">
       <div className="flex flex-col">
         {/* Hero Section with Fanart */}
-        <div className="relative md:min-h-[750px] w-full overflow-hidden">
+        <div className="relative md:min-h-[46.875rem] w-full overflow-hidden">
           {person.fanartPath && !fanartError && (
-            <div className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto">
+            <div className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto">
               <Image
                 src={resolveImageSrc(person.fanartPath)}
                 alt=""
@@ -148,7 +148,7 @@ export default function TvPersonDetailPage() {
 
           <div className="relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24">
             {/* Poster — 350×525 (2:3) */}
-            <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+            <div className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
               {person.photoPath && !photoError ? (
                 <Image
                   src={resolveImageSrc(person.photoPath)}
@@ -208,7 +208,7 @@ export default function TvPersonDetailPage() {
               </div>
 
               {person.overview && (
-                <p className="max-w-full md:max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
+                <p className="max-w-full md:max-w-[80%] text-[0.9375rem] leading-relaxed text-white/80 line-clamp-5">
                   {person.overview}
                 </p>
               )}
@@ -265,7 +265,7 @@ export default function TvPersonDetailPage() {
         </div>
 
         {/* Shows (TV filmography) */}
-        <section className="flex flex-col gap-4 px-4 md:px-20 mt-[10px] pb-12">
+        <section className="flex flex-col gap-4 px-4 md:px-20 mt-[0.625rem] pb-12">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-semibold text-foreground">{tMovies("cast")}</h2>
             <span className="text-sm text-[#666680]">({person.shows.length})</span>

@@ -261,7 +261,7 @@ function SegBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`focus-ring rounded-full px-3.5 py-1 text-[13px] font-medium transition-colors ${
+      className={`focus-ring rounded-full px-3.5 py-1 text-[0.8125rem] font-medium transition-colors ${
         active
           ? "bg-primary/25 text-foreground"
           : "text-muted-foreground hover:text-foreground"

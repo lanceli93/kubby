@@ -70,7 +70,7 @@ export default function ArtistDetailPage() {
         {/* Header: circular image + name + overview + album count */}
         <div className="flex flex-col items-center gap-5 text-center md:flex-row md:items-center md:text-left">
           {/* Circular image with ambient glow */}
-          <div className="relative h-[160px] w-[160px] flex-shrink-0">
+          <div className="relative h-[10rem] w-[10rem] flex-shrink-0">
             {artist.imageBlur && (
               <div
                 aria-hidden
@@ -115,7 +115,7 @@ export default function ArtistDetailPage() {
               {t("albumCount", { count: artist.albums.length })}
             </p>
             {artist.overview && (
-              <p className="max-w-full text-[15px] leading-relaxed text-white/80 line-clamp-4 md:max-w-[80%]">
+              <p className="max-w-full text-[0.9375rem] leading-relaxed text-white/80 line-clamp-4 md:max-w-[80%]">
                 {artist.overview}
               </p>
             )}
@@ -126,7 +126,7 @@ export default function ArtistDetailPage() {
         <div className="mt-8">
           <h2 className="mb-4 text-xl font-semibold text-foreground">{t("albums")}</h2>
           {artist.albums.length > 0 ? (
-            <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,11.25rem)] md:gap-x-4 md:gap-y-6 justify-center">
               {artist.albums.map((album, index) => (
                 <AlbumCard
                   key={album.id}

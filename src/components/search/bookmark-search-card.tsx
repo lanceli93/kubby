@@ -93,7 +93,7 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
   }
 
   const isPortrait = (bookmark.thumbnailAspect ?? 1.78) < 1;
-  const cardWidth = isPortrait ? "w-[140px]" : "w-[280px]";
+  const cardWidth = isPortrait ? "w-[8.75rem]" : "w-[17.5rem]";
   const aspectClass = isPortrait ? "aspect-[2/3]" : "aspect-video";
 
   const card = (
@@ -138,7 +138,7 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
             {bookmark.tags.slice(0, 2).map((tag) => (
               <span
                 key={tag}
-                className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm"
+                className="rounded bg-white/20 px-1.5 py-0.5 text-[0.625rem] font-medium text-white backdrop-blur-sm"
               >
                 {tag}
               </span>
@@ -148,7 +148,7 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
 
         {/* Disc badge */}
         {bookmark.discNumber && bookmark.discNumber > 1 && (
-          <span className="absolute left-2 top-2 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+          <span className="absolute left-2 top-2 rounded bg-white/20 px-1.5 py-0.5 text-[0.625rem] font-medium text-white backdrop-blur-sm">
             Disc {bookmark.discNumber}
           </span>
         )}
@@ -156,7 +156,7 @@ export function BookmarkSearchCard({ bookmark, customIcons, externalEnabled, onE
 
       {/* Note below card */}
       {bookmark.note && (
-        <p className={`mt-1 truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[140px]" : "max-w-[280px]"}`}>
+        <p className={`mt-1 truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[8.75rem]" : "max-w-[17.5rem]"}`}>
           {bookmark.note}
         </p>
       )}

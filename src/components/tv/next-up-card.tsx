@@ -40,7 +40,7 @@ export function NextUpCard({
   const image = !imgError ? (stillPath ?? showPosterPath) : showPosterPath;
 
   return (
-    <div className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03]" style={{ width: 300 }}>
+    <div className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03]" style={{ width: "18.75rem" }}>
       <Link href={`/tv/episodes/${episodeId}/play`} className="focus-ring block rounded-md">
         {/* Still shell — 16:9 landscape. NOT overflow-hidden so tilt + glow bleed. */}
         <div className="relative w-full aspect-video">

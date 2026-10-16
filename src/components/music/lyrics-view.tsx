@@ -142,7 +142,7 @@ export function LyricsView({
       {/* Top/bottom padding lets the first & last lines reach the vertical
           centre; the container clips and fades them (mask in globals.css). */}
       <div
-        className={`flex max-w-lg flex-col gap-5 px-2 pb-[45vh] pt-[16vh] md:max-w-[min(40vw,720px)] md:px-6 md:gap-[clamp(1.5rem,1.6vw,2.25rem)] ${
+        className={`flex max-w-lg flex-col gap-5 px-2 pb-[45vh] pt-[16vh] md:max-w-[min(40vw,45rem)] md:px-6 md:gap-[clamp(1.5rem,1.6vw,2.25rem)] ${
           align === "left" ? "mr-auto items-start" : "mx-auto"
         }`}
       >

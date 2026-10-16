@@ -139,7 +139,7 @@ export function ImageEditorDialog({
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[900px] sm:rounded-lg overflow-y-auto">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[56.25rem] sm:rounded-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{tMeta("editImages")}</DialogTitle>
         </DialogHeader>
@@ -147,7 +147,7 @@ export function ImageEditorDialog({
         {/* Single row: poster (2:3) left + fanart (16:9) right, top-aligned */}
         <div className="flex items-start gap-4 pt-1">
           {/* Poster */}
-          <div className="flex w-[200px] flex-shrink-0 flex-col gap-2">
+          <div className="flex w-[12.5rem] flex-shrink-0 flex-col gap-2">
             <h3 className="text-xs font-medium text-white/50">{tMeta("poster")}</h3>
             <div className="relative aspect-[2/3] w-full overflow-hidden bg-white/[0.04] border border-white/[0.06]">
               {posterPath ? (
@@ -199,13 +199,13 @@ export function ImageEditorDialog({
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-medium text-white/50">{tMeta("fanart")}</h3>
               {isMovieDerivedFanart && (
-                <span className="inline-flex items-center gap-1 rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px] text-white/40">
+                <span className="inline-flex items-center gap-1 rounded bg-white/[0.06] px-1.5 py-0.5 text-[0.6875rem] text-white/40">
                   <Info className="h-3 w-3" />
                   {tMeta("usingMovieFanart")}
                 </span>
               )}
             </div>
-            <div className="relative h-[300px] w-full overflow-hidden bg-white/[0.04] border border-white/[0.06]">
+            <div className="relative h-[18.75rem] w-full overflow-hidden bg-white/[0.04] border border-white/[0.06]">
               {fanartPath ? (
                 <Image
                   src={resolveImageSrc(fanartPath)}

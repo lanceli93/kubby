@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, FolderOpen, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { useRootScale } from "@/hooks/use-root-scale";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -37,6 +38,7 @@ interface GalleryImage {
 }
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif", ".bmp"]);
+// Design px at a 16px root; multiplied by useRootScale() in the layout below.
 const GALLERY_ROW_HEIGHT = 360;
 const GALLERY_GAP = 6;
 
@@ -45,6 +47,7 @@ function JustifiedSortableItem({
   image,
   width,
   height,
+  gap,
   isDragActive,
   insertIndicator,
   isHighlighted,
@@ -55,6 +58,7 @@ function JustifiedSortableItem({
   image: GalleryImage;
   width: number;
   height: number;
+  gap: number;
   isDragActive: boolean;
   insertIndicator: "left" | "right" | null;
   isHighlighted: boolean;
@@ -68,8 +72,8 @@ function JustifiedSortableItem({
 
   // The indicator bar sits centred in the gap between items.
   // offset = half gap + half bar width → centres the 4px bar in the 6px gap.
-  const barW = GALLERY_GAP; // fill the entire gap
-  const barOffset = Math.ceil(GALLERY_GAP / 2 + barW / 2); // from item edge
+  const barW = gap; // fill the entire gap
+  const barOffset = Math.ceil(gap / 2 + barW / 2); // from item edge
 
   return (
     <div
@@ -303,6 +307,9 @@ export function PersonGallery({
   }, []);
 
   // ── Justified layout rows ──
+  const scale = useRootScale();
+  const rowHeight = GALLERY_ROW_HEIGHT * scale;
+  const gap = GALLERY_GAP * scale;
   const justifiedRows = (() => {
     if (containerWidth <= 0) return [];
     const rows: { filename: string; path: string; width: number; height: number }[][] = [];
@@ -314,10 +321,10 @@ export function PersonGallery({
       if (!d) continue;
       const ratio = d.w / d.h;
       currentRow.push({ ...img, ratio });
-      currentRowWidth += ratio * GALLERY_ROW_HEIGHT + (currentRow.length > 1 ? GALLERY_GAP : 0);
+      currentRowWidth += ratio * rowHeight + (currentRow.length > 1 ? gap : 0);
 
       if (currentRowWidth >= containerWidth && currentRow.length > 1) {
-        const totalGap = (currentRow.length - 1) * GALLERY_GAP;
+        const totalGap = (currentRow.length - 1) * gap;
         const totalRatio = currentRow.reduce((s, r) => s + r.ratio, 0);
         const rowH = (containerWidth - totalGap) / totalRatio;
         rows.push(
@@ -333,9 +340,9 @@ export function PersonGallery({
       }
     }
     if (currentRow.length > 0) {
-      const totalGap = (currentRow.length - 1) * GALLERY_GAP;
+      const totalGap = (currentRow.length - 1) * gap;
       const totalRatio = currentRow.reduce((s, r) => s + r.ratio, 0);
-      const rowH = Math.min((containerWidth - totalGap) / totalRatio, GALLERY_ROW_HEIGHT);
+      const rowH = Math.min((containerWidth - totalGap) / totalRatio, rowHeight);
       rows.push(
         currentRow.map((r) => ({
           filename: r.filename,
@@ -505,15 +512,16 @@ export function PersonGallery({
             onDragCancel={handleDragCancel}
           >
             <SortableContext items={localOrder} strategy={rectSortingStrategy}>
-              <div className="flex flex-col" style={{ gap: GALLERY_GAP }}>
+              <div className="flex flex-col" style={{ gap }}>
                 {justifiedRows.map((row, rowIdx) => (
-                  <div key={rowIdx} className="flex" style={{ gap: GALLERY_GAP }}>
+                  <div key={rowIdx} className="flex" style={{ gap }}>
                     {row.map((img) => (
                       <JustifiedSortableItem
                         key={img.filename}
                         image={img}
                         width={img.width}
                         height={img.height}
+                        gap={gap}
                         isDragActive={activeId !== null}
                         insertIndicator={
                           overInfo?.id === img.filename ? overInfo.side : null
@@ -606,7 +614,7 @@ export function PersonGallery({
           if (!open) setDeleteTarget(null);
         }}
       >
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{tPerson("deletePhoto")}</DialogTitle>
             <DialogDescription>{tPerson("confirmDeletePhoto")}</DialogDescription>

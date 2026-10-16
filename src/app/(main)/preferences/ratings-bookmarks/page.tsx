@@ -406,7 +406,7 @@ export default function PersonalMetadataPage() {
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-      <div className="flex w-full max-w-[720px] items-center justify-between">
+      <div className="flex w-full max-w-[45rem] items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
         <button
           type="button"
@@ -422,7 +422,7 @@ export default function PersonalMetadataPage() {
       {domain !== "tv" && (
         <>
       {/* Movie Rating Dimensions */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("movieRatingDimensions")}
         </h2>
@@ -434,8 +434,8 @@ export default function PersonalMetadataPage() {
             {/* Column headers */}
             <div className="flex items-center gap-2 px-3 pb-1">
               <span className="w-5" />
-              <span className="flex-1 text-[11px] text-muted-foreground/50">{t("dimName")}</span>
-              <span className="w-[5.5rem] text-center text-[11px] text-muted-foreground/50">{t("dimWeight")}</span>
+              <span className="flex-1 text-[0.6875rem] text-muted-foreground/50">{t("dimName")}</span>
+              <span className="w-[5.5rem] text-center text-[0.6875rem] text-muted-foreground/50">{t("dimWeight")}</span>
               <span className="w-[6.5rem]" />
             </div>
             {movieDims.map((dim, i) => (
@@ -547,7 +547,7 @@ export default function PersonalMetadataPage() {
       </div>
 
       {/* Person Rating Dimensions */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("personRatingDimensions")}
         </h2>
@@ -559,8 +559,8 @@ export default function PersonalMetadataPage() {
             {/* Column headers */}
             <div className="flex items-center gap-2 px-3 pb-1">
               <span className="w-5" />
-              <span className="flex-1 text-[11px] text-muted-foreground/50">{t("dimName")}</span>
-              <span className="w-[5.5rem] text-center text-[11px] text-muted-foreground/50">{t("dimWeight")}</span>
+              <span className="flex-1 text-[0.6875rem] text-muted-foreground/50">{t("dimName")}</span>
+              <span className="w-[5.5rem] text-center text-[0.6875rem] text-muted-foreground/50">{t("dimWeight")}</span>
               <span className="w-[6.5rem]" />
             </div>
             {personDims.map((dim, i) => (
@@ -675,7 +675,7 @@ export default function PersonalMetadataPage() {
 
       {/* TV domain → TV Show Rating Dimensions only. */}
       {domain === "tv" && (
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <h2 className="text-lg font-semibold text-foreground">
           {t("tvShowRatingDimensions")}
         </h2>
@@ -687,8 +687,8 @@ export default function PersonalMetadataPage() {
             {/* Column headers */}
             <div className="flex items-center gap-2 px-3 pb-1">
               <span className="w-5" />
-              <span className="flex-1 text-[11px] text-muted-foreground/50">{t("dimName")}</span>
-              <span className="w-[5.5rem] text-center text-[11px] text-muted-foreground/50">{t("dimWeight")}</span>
+              <span className="flex-1 text-[0.6875rem] text-muted-foreground/50">{t("dimName")}</span>
+              <span className="w-[5.5rem] text-center text-[0.6875rem] text-muted-foreground/50">{t("dimWeight")}</span>
               <span className="w-[6.5rem]" />
             </div>
             {tvShowDims.map((dim, i) => (
@@ -869,7 +869,7 @@ export default function PersonalMetadataPage() {
 
       {/* Reset to Defaults Confirmation */}
       <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[26.25rem]">
           <DialogHeader>
             <DialogTitle>{t("resetDefaultsTitle")}</DialogTitle>
             <DialogDescription>{t("resetDefaultsDesc")}</DialogDescription>
@@ -894,7 +894,7 @@ export default function PersonalMetadataPage() {
       </Dialog>
 
       {/* Bookmark Icons */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
             {t("bookmarkIcons")}
@@ -907,7 +907,7 @@ export default function PersonalMetadataPage() {
         {/* Built-in icons */}
         <div className="flex items-center gap-3">
           <div className="flex-1 border-t border-white/[0.06]" />
-          <span className="text-[11px] text-muted-foreground/50">{t("builtinIcons")}</span>
+          <span className="text-[0.6875rem] text-muted-foreground/50">{t("builtinIcons")}</span>
           <div className="flex-1 border-t border-white/[0.06]" />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -944,7 +944,7 @@ export default function PersonalMetadataPage() {
           <>
             <div className="flex items-center gap-3">
               <div className="flex-1 border-t border-white/[0.06]" />
-              <span className="text-[11px] text-muted-foreground/50">{t("customIcons")}</span>
+              <span className="text-[0.6875rem] text-muted-foreground/50">{t("customIcons")}</span>
               <div className="flex-1 border-t border-white/[0.06]" />
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1097,7 +1097,7 @@ export default function PersonalMetadataPage() {
           <div className="mt-3 grid grid-cols-2 gap-4">
             {/* Normal preview */}
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] text-muted-foreground/60">{t("subtleMarkersOff")}</span>
+              <span className="text-[0.625rem] text-muted-foreground/60">{t("subtleMarkersOff")}</span>
               <div className="relative flex h-10 w-full items-end justify-center rounded bg-zinc-800">
                 <div className="absolute bottom-1 left-1/3 flex flex-col items-center">
                   {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[0].icon; return <Icon className="h-4 w-4" style={{ color: BUILTIN_BOOKMARK_ICONS[0].hexColor }} />; })()}
@@ -1107,12 +1107,12 @@ export default function PersonalMetadataPage() {
                   {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[2].icon; return <Icon className="h-4 w-4" style={{ color: BUILTIN_BOOKMARK_ICONS[2].hexColor }} />; })()}
                   <div className="mt-0.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: BUILTIN_BOOKMARK_ICONS[2].hexColor }} />
                 </div>
-                <div className="absolute bottom-0 h-[3px] w-full rounded-full bg-white/30" />
+                <div className="absolute bottom-0 h-[0.1875rem] w-full rounded-full bg-white/30" />
               </div>
             </div>
             {/* Subtle preview */}
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] text-muted-foreground/60">{t("subtleMarkersOn")}</span>
+              <span className="text-[0.625rem] text-muted-foreground/60">{t("subtleMarkersOn")}</span>
               <div className="relative flex h-10 w-full items-end justify-center rounded bg-zinc-800">
                 <div className="absolute bottom-1 left-1/3 flex flex-col items-center opacity-40">
                   {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[0].icon; return <Icon className="h-4 w-4 text-white" />; })()}
@@ -1122,7 +1122,7 @@ export default function PersonalMetadataPage() {
                   {(() => { const Icon = BUILTIN_BOOKMARK_ICONS[2].icon; return <Icon className="h-4 w-4 text-white" />; })()}
                   <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white" />
                 </div>
-                <div className="absolute bottom-0 h-[3px] w-full rounded-full bg-white/30" />
+                <div className="absolute bottom-0 h-[0.1875rem] w-full rounded-full bg-white/30" />
               </div>
             </div>
           </div>
@@ -1130,7 +1130,7 @@ export default function PersonalMetadataPage() {
       </div>
 
       {/* Quick Bookmark Template */}
-      <div className="flex w-full max-w-[720px] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <div>
           <h2 className="text-lg font-semibold text-foreground">
             {t("quickBookmarkTemplate")}
@@ -1143,7 +1143,7 @@ export default function PersonalMetadataPage() {
         {/* Icon type */}
         <div>
           <label className="mb-1.5 block text-sm text-muted-foreground">{t("templateType")}</label>
-          <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto p-0.5">
+          <div className="flex flex-wrap gap-2 max-h-[10rem] overflow-y-auto p-0.5">
             {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIcons.has(bi.id)).map((bi) => {
               const BiIcon = bi.icon;
               return (
@@ -1236,7 +1236,7 @@ export default function PersonalMetadataPage() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full max-w-[720px] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
+        className="w-full max-w-[45rem] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
       >
         {saving ? tCommon("loading") : tCommon("save")}
       </button>

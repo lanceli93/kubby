@@ -412,7 +412,7 @@ function SearchContent() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="h-10 w-full max-w-[800px] rounded-md border border-white/[0.08] bg-white/[0.05] backdrop-blur-sm px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            className="h-10 w-full max-w-[50rem] rounded-md border border-white/[0.08] bg-white/[0.05] backdrop-blur-sm px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             autoFocus
           />
         </div>
@@ -446,7 +446,7 @@ function SearchContent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="center"
-                  className="min-w-[160px] border-white/10 bg-black/70 backdrop-blur-xl"
+                  className="min-w-[10rem] border-white/10 bg-black/70 backdrop-blur-xl"
                 >
                   <DropdownMenuItem onClick={() => setLibraryId("")} className="flex items-center justify-between">
                     <span className={!libraryId ? "text-primary font-medium" : ""}>{t("allLibraries")}</span>
@@ -475,7 +475,7 @@ function SearchContent() {
                 <Link
                   key={movie.id}
                   href={`/movies/${movie.id}`}
-                  className="max-w-[560px] text-sm font-semibold text-primary transition-colors hover:text-primary hover:underline truncate text-center"
+                  className="max-w-[35rem] text-sm font-semibold text-primary transition-colors hover:text-primary hover:underline truncate text-center"
                   title={movie.title}
                 >
                   {movie.title}
@@ -903,7 +903,7 @@ function SearchContent() {
                       href={`/tv/episodes/${ep.id}/play`}
                       className="group flex-shrink-0"
                     >
-                      <div className="relative w-[280px] aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
+                      <div className="relative w-[17.5rem] aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
                         {ep.stillPath ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img
@@ -923,10 +923,10 @@ function SearchContent() {
                           </span>
                         </div>
                       </div>
-                      <p className="mt-1 max-w-[280px] truncate text-sm font-medium text-foreground">
+                      <p className="mt-1 max-w-[17.5rem] truncate text-sm font-medium text-foreground">
                         {ep.title ?? `S${ep.seasonNumber}E${ep.episodeNumber}`}
                       </p>
-                      <p className="max-w-[280px] truncate text-xs text-muted-foreground">
+                      <p className="max-w-[17.5rem] truncate text-xs text-muted-foreground">
                         {ep.showTitle}
                       </p>
                     </Link>
@@ -970,7 +970,7 @@ function SearchContent() {
                         ? resolveImageSrc(bookmark.showPosterPath, 360)
                         : null;
                     const isPortrait = (bookmark.thumbnailAspect ?? 1.78) < 1;
-                    const cardWidth = isPortrait ? "w-[140px]" : "w-[280px]";
+                    const cardWidth = isPortrait ? "w-[8.75rem]" : "w-[17.5rem]";
                     const aspectClass = isPortrait ? "aspect-[2/3]" : "aspect-video";
                     const h = Math.floor(bookmark.timestampSeconds / 3600);
                     const m = Math.floor((bookmark.timestampSeconds % 3600) / 60);
@@ -1004,7 +1004,7 @@ function SearchContent() {
                               {bookmark.tags.slice(0, 2).map((tag) => (
                                 <span
                                   key={tag}
-                                  className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm"
+                                  className="rounded bg-white/20 px-1.5 py-0.5 text-[0.625rem] font-medium text-white backdrop-blur-sm"
                                 >
                                   {tag}
                                 </span>
@@ -1012,14 +1012,14 @@ function SearchContent() {
                             </div>
                           )}
                         </div>
-                        <p className={`mt-1 truncate text-sm font-medium text-foreground ${isPortrait ? "max-w-[140px]" : "max-w-[280px]"}`}>
+                        <p className={`mt-1 truncate text-sm font-medium text-foreground ${isPortrait ? "max-w-[8.75rem]" : "max-w-[17.5rem]"}`}>
                           {bookmark.showTitle}
                           <span className="text-muted-foreground">
                             {" "}S{bookmark.seasonNumber}E{bookmark.episodeNumber}
                           </span>
                         </p>
                         {bookmark.note && (
-                          <p className={`truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[140px]" : "max-w-[280px]"}`}>
+                          <p className={`truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[8.75rem]" : "max-w-[17.5rem]"}`}>
                             {bookmark.note}
                           </p>
                         )}

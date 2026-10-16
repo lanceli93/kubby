@@ -9,7 +9,7 @@ interface VinylDiscProps {
   coverBlur?: string | null; // base64 blur data URL
   title: string; // for alt text
   isPlaying: boolean;
-  className?: string; // sizing, e.g. "w-full max-w-[360px] aspect-square"
+  className?: string; // sizing, e.g. "w-full max-w-[22.5rem] aspect-square"
 }
 
 /**

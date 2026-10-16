@@ -172,10 +172,10 @@ export default function PersonDetailPage() {
     <div className="h-full overflow-y-scroll scrollbar-hide animate-fade-in">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — matches movie detail layout */}
-      <div className="relative md:min-h-[750px] w-full overflow-hidden">
+      <div className="relative md:min-h-[46.875rem] w-full overflow-hidden">
         {/* Fanart Background */}
         {person.fanartPath && !fanartError && (
-          <div className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto">
+          <div className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto">
             <Image
               src={resolveImageSrc(person.fanartPath)}
               alt=""
@@ -204,7 +204,7 @@ export default function PersonDetailPage() {
         {/* Content row: poster + person info */}
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
           {/* Poster — 350×525 (2:3), same as movie detail */}
-          <div className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+          <div className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
             {person.photoPath && !photoError ? (
               <Image
                 src={resolveImageSrc(person.photoPath)}
@@ -311,7 +311,7 @@ export default function PersonDetailPage() {
 
             {/* Overview / Biography */}
             {person.overview && (
-              <p className="max-w-full md:max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
+              <p className="max-w-full md:max-w-[80%] text-[0.9375rem] leading-relaxed text-white/80 line-clamp-5">
                 {person.overview}
               </p>
             )}
@@ -413,7 +413,7 @@ export default function PersonDetailPage() {
 
       <div className="stagger-children">
       {/* Filmography */}
-      <section className="flex flex-col gap-4 px-4 md:px-20 mt-[10px] pb-12">
+      <section className="flex flex-col gap-4 px-4 md:px-20 mt-[0.625rem] pb-12">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-foreground">
             {tPerson("filmography")}
@@ -431,7 +431,7 @@ export default function PersonDetailPage() {
 
         <div className="flex gap-4 overflow-hidden pb-0.5">
           {person.movies.map((movie) => (
-            <div key={movie.id} className="flex-shrink-0" style={{ width: 180 }}>
+            <div key={movie.id} className="flex-shrink-0" style={{ width: "11.25rem" }}>
               <MovieCard
                 id={movie.id}
                 title={movie.title}
@@ -487,7 +487,7 @@ export default function PersonDetailPage() {
 
       {/* Delete person confirmation dialog */}
       <Dialog open={deletePersonOpen} onOpenChange={(open) => { setDeletePersonOpen(open); if (!open) setDeletePersonFiles(false); }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{tPerson("deletePerson")}</DialogTitle>
             <DialogDescription>{tPerson("confirmDeletePerson")}</DialogDescription>

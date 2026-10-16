@@ -46,7 +46,7 @@ export function ContinueWatchingCard({
     : `/movies/${id}/play`;
 
   return (
-    <div className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.02]" style={{ width: 320 }}>
+    <div className="group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.02]" style={{ width: "20rem" }}>
       <Link href={`/movies/${id}`}>
         {/* Landscape card shell — 16:9, NOT overflow-hidden so tilt can bleed.
             The tilting subtree (image + title overlay + play button + progress

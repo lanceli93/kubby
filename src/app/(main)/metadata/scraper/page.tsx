@@ -129,7 +129,7 @@ export default function MetadataProvidersPage() {
       <div className="flex max-w-xl flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl p-6">
         {/* TMDB API Key */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("tmdbApiKey")}
           </label>
           <div className="flex gap-2">
@@ -178,7 +178,7 @@ export default function MetadataProvidersPage() {
 
         {/* Remove key confirmation */}
         <Dialog open={removeOpen} onOpenChange={setRemoveOpen}>
-          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
             <DialogHeader>
               <DialogTitle>{t("removeApiKeyConfirmTitle")}</DialogTitle>
               <DialogDescription>{t("removeApiKeyConfirmDesc")}</DialogDescription>

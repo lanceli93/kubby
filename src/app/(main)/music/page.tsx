@@ -174,7 +174,7 @@ function SortDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
+        <div className="absolute left-1/2 top-full z-50 mt-1 w-[13.75rem] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
           {options.map((option) => {
             const Icon = option.icon;
             const isActive = sort === option.value;
@@ -182,7 +182,7 @@ function SortDropdown({
               <button
                 key={option.value}
                 onClick={() => onSortChange(option.value)}
-                className={`focus-ring flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                className={`focus-ring flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                   isActive
                     ? "bg-primary/[0.08] text-foreground"
                     : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -194,12 +194,12 @@ function SortDropdown({
             );
           })}
           <div className="my-1.5 border-t border-white/[0.06]" />
-          <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          <p className="px-4 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
             {t("sortOrder")}
           </p>
           <button
             onClick={() => onOrderChange("asc")}
-            className={`focus-ring flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+            className={`focus-ring flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
               sortOrder === "asc" ? "bg-primary/[0.08] text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"
             }`}
           >
@@ -208,7 +208,7 @@ function SortDropdown({
           </button>
           <button
             onClick={() => onOrderChange("desc")}
-            className={`focus-ring flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+            className={`focus-ring flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
               sortOrder === "desc" ? "bg-primary/[0.08] text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"
             }`}
           >
@@ -295,8 +295,8 @@ function AlbumsTabContent({ libraryId }: { libraryId: string }) {
       {/* Full album grid. Left-aligned (no justify-center) so the first column
           lines up with the "recently added" band + section heading above it;
           minmax columns stretch to fill the row so there's no centered gap. */}
-      <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,minmax(150px,180px))] md:gap-x-4 md:gap-y-6">
-        <div className="col-span-full relative py-[18px] flex items-center justify-center">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,minmax(9.375rem,11.25rem))] md:gap-x-4 md:gap-y-6">
+        <div className="col-span-full relative py-[1.125rem] flex items-center justify-center">
           <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
             {t("albumsCount", { count: totalCount || albums.length })}
           </span>
@@ -379,8 +379,8 @@ function ArtistsTabContent({ libraryId }: { libraryId: string }) {
   const { sentinelRef } = useInfiniteScroll({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return (
-    <div className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,minmax(150px,180px))] md:gap-x-4 md:gap-y-6">
-      <div className="col-span-full relative py-[18px] flex items-center justify-center">
+    <div className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,minmax(9.375rem,11.25rem))] md:gap-x-4 md:gap-y-6">
+      <div className="col-span-full relative py-[1.125rem] flex items-center justify-center">
         <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
           {t("artistsCount", { count: totalCount || artists.length })}
         </span>
@@ -498,7 +498,7 @@ function SongsTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div className="animate-fade-in-up flex flex-col pb-6">
-      <div className="relative py-[18px] flex items-center justify-center">
+      <div className="relative py-[1.125rem] flex items-center justify-center">
         <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
           {t("songsCount", { count: totalCount || songs.length })}
         </span>

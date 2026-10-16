@@ -420,11 +420,11 @@ export default function ShowDetailPage() {
     <div ref={scrollRef} className="h-full overflow-y-scroll scrollbar-hide">
       <div className="flex flex-col">
         {/* Hero Section with Fanart */}
-        <div ref={heroRef} className="relative md:min-h-[750px] w-full overflow-hidden">
+        <div ref={heroRef} className="relative md:min-h-[46.875rem] w-full overflow-hidden">
           {show.fanartPath && !imgErrors.has(show.fanartPath) && (
             <div
               ref={fanartRef}
-              className="relative h-[220px] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform"
+              className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform"
             >
               <Image
                 src={resolveImageSrc(show.fanartPath, 1920)}
@@ -442,7 +442,7 @@ export default function ShowDetailPage() {
 
           {/* Content row: poster + show info */}
           <div className="relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24">
-            <div ref={posterRef} className="hidden md:block relative h-[525px] w-[350px] flex-shrink-0 will-change-transform">
+            <div ref={posterRef} className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0 will-change-transform">
               {show.posterPath && !imgErrors.has(show.posterPath) && (
                 <div
                   aria-hidden
@@ -667,7 +667,7 @@ export default function ShowDetailPage() {
 
               {/* Overview */}
               {show.overview && (
-                <p className="max-w-full md:max-w-[80%] text-[15px] leading-relaxed text-white/80 line-clamp-5">
+                <p className="max-w-full md:max-w-[80%] text-[0.9375rem] leading-relaxed text-white/80 line-clamp-5">
                   {show.overview}
                 </p>
               )}
@@ -751,7 +751,7 @@ export default function ShowDetailPage() {
                         className="flex gap-4 rounded-lg p-3 transition-colors hover:bg-white/[0.04]"
                       >
                         {/* Still thumbnail */}
-                        <div className="relative h-[90px] w-[160px] flex-shrink-0 overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
+                        <div className="relative h-[5.625rem] w-[10rem] flex-shrink-0 overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
                           {ep.stillPath && !imgErrors.has(ep.stillPath) ? (
                             <Image
                               src={resolveImageSrc(ep.stillPath, 320)}
@@ -984,7 +984,7 @@ export default function ShowDetailPage() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={(open) => { setDeleteOpen(open); if (!open) setDeleteFiles(false); }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{t("deleteShow")}</DialogTitle>
             <DialogDescription>{t("confirmDeleteShow")}</DialogDescription>

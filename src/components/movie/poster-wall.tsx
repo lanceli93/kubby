@@ -23,6 +23,7 @@ import {
   Vector2,
 } from "three";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { getRootScale } from "@/hooks/use-root-scale";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -508,7 +509,9 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
     // Reserve pixel bands top (sort pills) and bottom (HUD) so the focused
     // poster never collides with them; scale the camera distance so the focused
     // poster exactly fills the usable band, and offset it into that band's
-    // center (straight-on — no downward tilt).
+    // center (straight-on — no downward tilt). The reserves are design px at a
+    // 16px root; the overlays are rem-sized, so refit() scales them by the
+    // current root font-size.
     const TOP_RESERVE_PX = 96; // sort pills
     const BOTTOM_RESERVE_PX = 150; // HUD + margin
     const FILL = 1.0; // focused poster exactly fills the usable band
@@ -517,7 +520,10 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
       const W = container.clientWidth;
       const H = container.clientHeight;
       camera.aspect = W / H;
-      const usable = Math.max(300, H - TOP_RESERVE_PX - BOTTOM_RESERVE_PX);
+      const rootScale = getRootScale();
+      const topReserve = TOP_RESERVE_PX * rootScale;
+      const bottomReserve = BOTTOM_RESERVE_PX * rootScale;
+      const usable = Math.max(300, H - topReserve - bottomReserve);
       // Focused poster world height at plane z = FOCUS_Z.
       const hW = POSTER_H * FOCUS_SCALE * FILL;
       // Frustum height (world units) that must be visible at the focus plane so
@@ -526,7 +532,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
       const camZ = FOCUS_Z + visH / (2 * Math.tan(fovRad / 2));
       // Shift the poster into the usable band's center: that center sits
       // (TOP_RESERVE - BOTTOM_RESERVE)/2 px below the viewport center.
-      const yW = (visH * (TOP_RESERVE_PX - BOTTOM_RESERVE_PX)) / (2 * H);
+      const yW = (visH * (topReserve - bottomReserve)) / (2 * H);
       camera.position.set(0, yW, camZ);
       camera.lookAt(0, yW, 0);
       camera.updateProjectionMatrix();
@@ -1300,7 +1306,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
       {/* "Loading more" indicator — subtle glass chip beside the close button
           while the parent's progressive fetch is still pulling pages. */}
       {loadingMore && (
-        <div className="glass-btn pointer-events-none absolute right-16 top-4 z-10 flex h-10 items-center gap-2 rounded-full px-3 text-[13px] text-muted-foreground">
+        <div className="glass-btn pointer-events-none absolute right-16 top-4 z-10 flex h-10 items-center gap-2 rounded-full px-3 text-[0.8125rem] text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span>{t("loadingMore")}</span>
         </div>
@@ -1316,7 +1322,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
                 <button
                   key={key}
                   onClick={() => handleSort(key)}
-                  className={`glass-btn flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] transition-fluid cursor-pointer ${
+                  className={`glass-btn flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-[0.8125rem] transition-fluid cursor-pointer ${
                     active
                       ? "!bg-primary/25 !border-primary/50 text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -1344,7 +1350,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
             {hud.kind === "separator" ? (
               <div className="mt-1 text-sm text-white/55">{hud.sublabel}</div>
             ) : hud.meta ? (
-              <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[13px] text-white/65">
+              <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[0.8125rem] text-white/65">
                 {(() => {
                   const meta = hud.meta;
                   const items: ReactNode[] = [];
@@ -1353,7 +1359,7 @@ export function PosterWall({ movies, onClose, initialSort, loadingMore, hrefBase
                     items.push(
                       <span
                         key="resolution"
-                        className="rounded border border-white/20 px-1.5 py-px text-[10.5px] font-semibold uppercase tracking-wider text-white/85"
+                        className="rounded border border-white/20 px-1.5 py-px text-[0.65625rem] font-semibold uppercase tracking-wider text-white/85"
                       >
                         {meta.resolution}
                       </span>,

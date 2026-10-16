@@ -552,7 +552,7 @@ export default function DashboardPage() {
 
       {/* Clear demo libraries confirmation */}
       <Dialog open={clearOpen} onOpenChange={setClearOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{t("clearDemoConfirmTitle")}</DialogTitle>
             <DialogDescription>{t("clearDemoConfirmDesc")}</DialogDescription>
@@ -579,7 +579,7 @@ export default function DashboardPage() {
 
       {/* Remove demo account confirmation */}
       <Dialog open={removeAccountOpen} onOpenChange={setRemoveAccountOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{t("removeDemoAccountConfirmTitle")}</DialogTitle>
             <DialogDescription>{t("removeDemoAccountConfirmDesc")}</DialogDescription>
@@ -606,7 +606,7 @@ export default function DashboardPage() {
 
       {/* Factory reset confirmation */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{t("factoryResetConfirmTitle")}</DialogTitle>
             <DialogDescription>

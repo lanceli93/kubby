@@ -23,6 +23,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { rem } from "@/hooks/use-root-scale";
 import { extractAmbientColor } from "@/lib/ambient-color";
 import { useMusicPlayer } from "@/providers/music-player-provider";
 import { TrackRow } from "@/components/music/track-row";
@@ -170,11 +171,11 @@ export function NowPlayingBar() {
               </IconBtn>
             </div>
             <div className="flex w-full max-w-xl items-center gap-2">
-              <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
+              <span className="w-10 text-right text-[0.6875rem] tabular-nums text-muted-foreground">
                 {formatDuration(currentTime)}
               </span>
               <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} fillColor={spectrumColor} />
-              <span className="w-10 text-[11px] tabular-nums text-muted-foreground">
+              <span className="w-10 text-[0.6875rem] tabular-nums text-muted-foreground">
                 {formatDuration(duration)}
               </span>
             </div>
@@ -216,7 +217,7 @@ export function NowPlayingBar() {
               aria-label={t("closePlayer")}
               className="focus-ring flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-fluid hover:bg-white/10 hover:text-foreground active:scale-95"
             >
-              <X className="h-4 w-4 md:h-[18px] md:w-[18px]" />
+              <X className="h-4 w-4 md:h-[1.125rem] md:w-[1.125rem]" />
             </button>
           </div>
         </div>
@@ -293,11 +294,11 @@ export function NowPlayingBar() {
               transport bar (desktop) / mobile mini transport. */}
           <div className="flex min-h-0 flex-1 flex-col">
             {/* ── Content row ── two flex-1 halves, the whole row width-capped
-                and centred (`md:mx-auto md:max-w-[2200px]`) so on wide/4K screens
+                and centred (`md:mx-auto md:max-w-[137.5rem]`) so on wide/4K screens
                 the vinyl + lyrics keep a comfortable spread near the middle:
                 wide enough that they don't clump dead-centre (过于靠拢中间), capped
                 enough that they don't fly to the far corners (分散). */}
-            <div className="flex min-h-0 flex-1 md:mx-auto md:w-full md:max-w-[2200px] md:flex-row md:items-stretch md:gap-16 md:px-12 md:pb-6">
+            <div className="flex min-h-0 flex-1 md:mx-auto md:w-full md:max-w-[137.5rem] md:flex-row md:items-stretch md:gap-16 md:px-12 md:pb-6">
               {/* Left half (desktop) / cover view (mobile): vinyl + spectrum + meta.
                   On mobile this pane also carries the seek/transport/volume that the
                   desktop bottom bar owns. */}
@@ -447,11 +448,11 @@ export function NowPlayingBar() {
                 {/* Mobile mini transport so lyrics/queue panes stay controllable.
                     Bottom padding folds in the home-indicator inset. */}
                 <div className="flex flex-shrink-0 items-center gap-3 border-t border-white/[0.06] px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
-                  <span className="w-9 text-right text-[11px] tabular-nums text-muted-foreground">
+                  <span className="w-9 text-right text-[0.6875rem] tabular-nums text-muted-foreground">
                     {formatDuration(currentTime)}
                   </span>
                   <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} fillColor={spectrumColor} />
-                  <span className="w-9 text-[11px] tabular-nums text-muted-foreground">
+                  <span className="w-9 text-[0.6875rem] tabular-nums text-muted-foreground">
                     {formatDuration(duration)}
                   </span>
                   <IconBtn label={t("previous")} onClick={prev}>
@@ -500,7 +501,7 @@ export function NowPlayingBar() {
                   size={48}
                   rounded="rounded-full"
                 />
-                <div className="min-w-0 max-w-[180px]">
+                <div className="min-w-0 max-w-[11.25rem]">
                   <p className="truncate text-sm font-medium text-foreground">{currentTrack.title}</p>
                   {currentTrack.artistName && (
                     <p className="truncate text-xs text-muted-foreground">{currentTrack.artistName}</p>
@@ -545,11 +546,11 @@ export function NowPlayingBar() {
                     />
                   </div>
                   <div className="flex w-full items-center gap-3">
-                    <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground">
+                    <span className="w-10 text-right text-[0.6875rem] tabular-nums text-muted-foreground">
                       {formatDuration(currentTime)}
                     </span>
                     <SeekBar progress={progress} duration={duration} onSeek={seek} label={t("duration")} fillColor={spectrumColor} />
-                    <span className="w-10 text-[11px] tabular-nums text-muted-foreground">
+                    <span className="w-10 text-[0.6875rem] tabular-nums text-muted-foreground">
                       {formatDuration(duration)}
                     </span>
                   </div>
@@ -648,7 +649,7 @@ function Segmented<T extends string>({
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`focus-ring cursor-pointer rounded-full px-3.5 py-1 text-[13px] font-medium transition-fluid active:scale-95 ${
+          className={`focus-ring cursor-pointer rounded-full px-3.5 py-1 text-[0.8125rem] font-medium transition-fluid active:scale-95 ${
             value === opt.value
               ? "bg-white text-black"
               : "text-muted-foreground hover:text-foreground"
@@ -682,7 +683,7 @@ function Cover({
   return (
     <div
       className={`relative flex-shrink-0 overflow-hidden bg-[var(--surface)] ring-1 ring-white/[0.06] ${rounded} ${className ?? ""}`}
-      style={className ? undefined : { width: size, height: size }}
+      style={className ? undefined : { width: rem(size), height: rem(size) }}
     >
       {cover ? (
         <Image

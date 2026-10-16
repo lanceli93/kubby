@@ -100,7 +100,7 @@ export default function NetworkingSettingsPage() {
 
         {/* Currently listening on */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("networkingCurrentlyListening")}
           </label>
           <div className="h-11 flex items-center rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 font-mono text-sm text-muted-foreground">
@@ -110,7 +110,7 @@ export default function NetworkingSettingsPage() {
 
         {/* Port */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("networkingPort")}
           </label>
           <input

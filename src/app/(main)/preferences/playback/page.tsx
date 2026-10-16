@@ -159,7 +159,7 @@ export default function PlaybackPreferencesPage() {
   return (
     <div className="h-full overflow-y-scroll">
     <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-      <div className="flex w-full max-w-[720px] items-center justify-between">
+      <div className="flex w-full max-w-[45rem] items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("playback")}</h1>
         <button
           type="button"
@@ -171,10 +171,10 @@ export default function PlaybackPreferencesPage() {
         </button>
       </div>
 
-      <div className="flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+      <div className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
         <p className="text-sm text-muted-foreground">{t("externalPlayerDesc")}</p>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[13px] font-medium text-muted-foreground">
+          <label className="text-[0.8125rem] font-medium text-muted-foreground">
             {t("playerName")}
           </label>
           <div className="flex flex-col gap-1.5">
@@ -218,7 +218,7 @@ export default function PlaybackPreferencesPage() {
         </div>
         {playerName && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium text-muted-foreground">
+            <label className="text-[0.8125rem] font-medium text-muted-foreground">
               {t("playerMode")}
             </label>
             <Select value={playerMode} onValueChange={handleModeChange}>
@@ -237,7 +237,7 @@ export default function PlaybackPreferencesPage() {
         )}
         {playerName && playerMode === "local" && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium text-muted-foreground">
+            <label className="text-[0.8125rem] font-medium text-muted-foreground">
               {t("playerPath")}
             </label>
             <input
@@ -277,7 +277,7 @@ export default function PlaybackPreferencesPage() {
 
       {/* Reset to Defaults Confirmation */}
       <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[26.25rem]">
           <DialogHeader>
             <DialogTitle>{t("resetDefaultsTitle")}</DialogTitle>
             <DialogDescription>{t("resetDefaultsDesc")}</DialogDescription>

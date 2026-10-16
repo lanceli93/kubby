@@ -6,6 +6,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTranslations, useLocale } from "next-intl";
 import { Play, ImageOff, Check } from "lucide-react";
 import { computeJustifiedLayout } from "@/lib/photos/justified-layout";
+import { useRootScale } from "@/hooks/use-root-scale";
 
 // Reusable month-grouped justified photo grid with row-level virtual scrolling
 // (Google Photos style). Shared by the main timeline and album detail — the
@@ -29,9 +30,10 @@ interface PhotosPage {
 }
 
 const PAGE_SIZE = 200;
+// Design px at a 16px root; multiplied by useRootScale() so the JS-driven
+// layout stays in step with the rem-sized header/padding around it.
 const TILE_GAP = 4;
-const MONTH_HEADER_HEIGHT = 64;
-const H_PADDING = 16; // px each side, matches px-4
+const MONTH_HEADER_HEIGHT = 64; // slot for the pt-6/pb-2/text-sm header (52px content)
 
 type VirtualRow =
   | { kind: "header"; key: string; label: string }
@@ -114,6 +116,9 @@ export function PhotoGrid({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const scale = useRootScale();
+  const tileGap = TILE_GAP * scale;
+  const headerHeight = MONTH_HEADER_HEIGHT * scale;
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useInfiniteQuery<PhotosPage>({
@@ -143,14 +148,18 @@ export function PhotoGrid({
     const el = scrollRef.current;
     if (!el) return;
     const measure = () => {
-      setContainerWidth(el.clientWidth - H_PADDING * 2);
+      // Read the real horizontal padding (px-4 / md:px-6, rem-scaled) rather
+      // than assuming a constant.
+      const cs = getComputedStyle(el);
+      const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+      setContainerWidth(el.clientWidth - padX);
       setIsMobile(window.innerWidth < 640);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [scale]);
 
   const monthLabel = useCallback(
     (millis: number) => {
@@ -165,7 +174,7 @@ export function PhotoGrid({
 
   const rows = useMemo<VirtualRow[]>(() => {
     if (containerWidth <= 0 || items.length === 0) return [];
-    const targetHeight = isMobile ? 120 : 180;
+    const targetHeight = (isMobile ? 120 : 180) * scale;
     const out: VirtualRow[] = [];
     for (const group of groupByMonth(items)) {
       out.push({
@@ -175,7 +184,7 @@ export function PhotoGrid({
       });
       const layoutRows = computeJustifiedLayout(
         group.items.map((it) => ({ aspect: aspectOf(it) })),
-        { containerWidth, targetHeight, gap: TILE_GAP },
+        { containerWidth, targetHeight, gap: tileGap },
       );
       for (let r = 0; r < layoutRows.length; r++) {
         const lr = layoutRows[r];
@@ -192,15 +201,15 @@ export function PhotoGrid({
       }
     }
     return out;
-  }, [items, containerWidth, isMobile, monthLabel]);
+  }, [items, containerWidth, isMobile, monthLabel, scale, tileGap]);
 
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: (index) => {
       const row = rows[index];
-      if (!row) return MONTH_HEADER_HEIGHT;
-      return row.kind === "header" ? MONTH_HEADER_HEIGHT : row.height + TILE_GAP;
+      if (!row) return headerHeight;
+      return row.kind === "header" ? headerHeight : row.height + tileGap;
     },
     overscan: 4,
     getItemKey: (index) => rows[index]?.key ?? index,
@@ -255,7 +264,7 @@ export function PhotoGrid({
                     {row.label}
                   </div>
                 ) : (
-                  <div className="flex" style={{ gap: TILE_GAP, height: row.height }}>
+                  <div className="flex" style={{ gap: tileGap, height: row.height }}>
                     {row.tiles.map(({ item, width, height }) => (
                       <PhotoTile
                         key={item.id}
@@ -370,7 +379,7 @@ function PhotoTile({
       {/* Bottom scrim + capture date on hover (photos only). */}
       {!errored && !item.isVideo && !selectionMode && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-black/70 via-black/25 to-transparent px-2 pb-1.5 pt-6 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <span className="truncate text-[11px] font-medium leading-none text-white/90 drop-shadow">
+          <span className="truncate text-[0.6875rem] font-medium leading-none text-white/90 drop-shadow">
             {tileDateLabel(item.takenAt, locale)}
           </span>
         </div>
@@ -383,7 +392,7 @@ function PhotoTile({
             <Play className="h-8 w-8 fill-white/85 text-white/85 drop-shadow transition-transform duration-200 group-hover:scale-110" />
           </span>
           {item.durationSeconds != null && (
-            <span className="pointer-events-none absolute bottom-1 right-1 rounded bg-black/60 px-1 py-0.5 text-[11px] font-medium leading-none text-white">
+            <span className="pointer-events-none absolute bottom-1 right-1 rounded bg-black/60 px-1 py-0.5 text-[0.6875rem] font-medium leading-none text-white">
               {formatDuration(item.durationSeconds)}
             </span>
           )}

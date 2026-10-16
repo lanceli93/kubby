@@ -401,7 +401,7 @@ export function FrameScrubber({
         </div>
 
         {/* Right column: bookmark form */}
-        <div className="w-[380px] flex-shrink-0 flex flex-col">
+        <div className="w-[23.75rem] flex-shrink-0 flex flex-col">
           {/* Disc tabs + close */}
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -574,7 +574,7 @@ export function FrameScrubber({
                   <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${actorDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
                 {actorDropdownOpen && (
-                  <div className="absolute z-20 mt-1 max-h-[200px] w-full overflow-y-auto rounded-md border border-white/10 bg-neutral-900/95 py-1 backdrop-blur-lg">
+                  <div className="absolute z-20 mt-1 max-h-[12.5rem] w-full overflow-y-auto rounded-md border border-white/10 bg-neutral-900/95 py-1 backdrop-blur-lg">
                     {cast.map((person) => (
                       <button
                         key={person.id}
@@ -595,7 +595,7 @@ export function FrameScrubber({
                             onError={() => setActorImgErrors(prev => new Set(prev).add(person.id))}
                           />
                         ) : (
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[10px] text-white/50">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[0.625rem] text-white/50">
                             {person.name[0]?.toUpperCase()}
                           </div>
                         )}

@@ -229,7 +229,7 @@ export function PlayerControls({
             </button>
             <button
               onClick={onToggle360Mode}
-              className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm text-[11px] font-semibold active:scale-95 transition-all ${
+              className={`flex items-center justify-center h-11 w-11 rounded-full backdrop-blur-sm text-[0.6875rem] font-semibold active:scale-95 transition-all ${
                 is360Mode ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
               }`}
               aria-label={is360Mode ? tPlayer("mode360On") : tPlayer("mode360Off")}
@@ -259,7 +259,7 @@ export function PlayerControls({
         {is360Mode && (
           <button
             onClick={(e) => { e.stopPropagation(); setShowVrLayoutMenu((v) => !v); }}
-            className={`flex items-center justify-center min-w-[44px] h-11 px-2 rounded-full backdrop-blur-sm text-[11px] font-semibold active:scale-95 transition-all ${
+            className={`flex items-center justify-center min-w-[2.75rem] h-11 px-2 rounded-full backdrop-blur-sm text-[0.6875rem] font-semibold active:scale-95 transition-all ${
               vrLayout !== "mono" ? "bg-primary/30 text-primary" : "bg-black/30 text-white/80 active:bg-white/10"
             }`}
             aria-label={tPlayer("vrLayoutLabel")}
@@ -270,7 +270,7 @@ export function PlayerControls({
         {playbackMode === "transcode" && (
           <button
             onClick={(e) => { e.stopPropagation(); setShowResMenu((v) => !v); }}
-            className="flex items-center justify-center min-w-[44px] h-11 px-3 rounded-full bg-black/30 backdrop-blur-sm text-[11px] font-semibold text-white/80 active:scale-95 active:bg-white/10 transition-all"
+            className="flex items-center justify-center min-w-[2.75rem] h-11 px-3 rounded-full bg-black/30 backdrop-blur-sm text-[0.6875rem] font-semibold text-white/80 active:scale-95 active:bg-white/10 transition-all"
             aria-label="Transcode resolution"
           >
             {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}
@@ -304,7 +304,7 @@ export function PlayerControls({
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
-            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[200px]"
+            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[12.5rem]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-4 py-2 text-xs text-white/40 font-medium">{tPlayer("speedLabel")}</div>
@@ -332,7 +332,7 @@ export function PlayerControls({
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
-            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[200px]"
+            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[12.5rem]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-4 py-2 text-xs text-white/40 font-medium">{tPlayer("vrLayoutLabel")}</div>
@@ -360,7 +360,7 @@ export function PlayerControls({
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
-            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-4 px-6 shadow-2xl border border-white/10 min-w-[260px]"
+            className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-4 px-6 shadow-2xl border border-white/10 min-w-[16.25rem]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-xs text-white/40 font-medium mb-4">{tPlayer("skipDurationLabel")}</div>
@@ -378,11 +378,11 @@ export function PlayerControls({
               onChange={(e) => onSkipSecondsChange(parseInt(e.target.value))}
               className="w-full h-1 cursor-pointer appearance-none rounded-full bg-white/30 accent-primary"
             />
-            <div className="flex justify-between text-[10px] text-white/30 mt-1 mb-3">
+            <div className="flex justify-between text-[0.625rem] text-white/30 mt-1 mb-3">
               <span>1s</span>
               <span>60s</span>
             </div>
-            <div className="text-[11px] text-white/30 text-center">
+            <div className="text-[0.6875rem] text-white/30 text-center">
               {tPlayer("skipDurationHint")}
             </div>
           </div>
@@ -401,7 +401,7 @@ export function PlayerControls({
           >
             <div className="absolute inset-0 bg-black/50" />
             <div
-              className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[200px]"
+              className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl py-2 shadow-2xl border border-white/10 min-w-[12.5rem]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-4 py-2 text-xs text-white/40 font-medium">{tPlayer("resolutionLabel")}</div>
@@ -616,7 +616,7 @@ export function PlayerControls({
           <div className="flex items-center gap-1 md:gap-1.5">
             <button
               onClick={onToggle360Mode}
-              className={`text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
+              className={`text-[0.6875rem] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
                 is360Mode
                   ? "bg-primary/25 text-primary"
                   : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
@@ -629,7 +629,7 @@ export function PlayerControls({
               <div className="relative flex items-center">
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowVrLayoutMenu((v) => !v); }}
-                  className={`text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
+                  className={`text-[0.6875rem] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 transition-colors cursor-pointer ${
                     vrLayout !== "mono"
                       ? "bg-primary/25 text-primary"
                       : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
@@ -690,7 +690,7 @@ export function PlayerControls({
                       e.stopPropagation();
                       setShowResMenu((v) => !v);
                     }}
-                    className="text-[11px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 bg-white/10 text-white/60 hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
+                    className="text-[0.6875rem] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 rounded leading-5 bg-white/10 text-white/60 hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
                     title="Transcode resolution"
                   >
                     {tPlayer(RESOLUTION_OPTIONS.find((r) => r.maxWidth === selectedMaxWidth)?.labelKey ?? "resOriginal")}

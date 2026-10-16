@@ -220,7 +220,7 @@ export function AppHeader() {
               // of two competing pill groups (see the home Tabs island).
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  className={`flex items-center gap-1.5 rounded-lg px-1 text-[22px] font-bold outline-none transition-colors ${
+                  className={`flex items-center gap-1.5 rounded-lg px-1 text-[1.375rem] font-bold outline-none transition-colors ${
                     isTransparent
                       ? "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                       : "text-foreground"
@@ -275,7 +275,7 @@ export function AppHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href="/" className="flex items-center gap-2 text-[22px] font-bold text-foreground">
+              <Link href="/" className="flex items-center gap-2 text-[1.375rem] font-bold text-foreground">
                 <KubbyLogo className="h-7 w-7" />
                 Kubby
               </Link>
@@ -289,7 +289,7 @@ export function AppHeader() {
             href="/dashboard#demo-data"
             title={tNav("demoBadgeTitle")}
             aria-label={tNav("demoBadgeTitle")}
-            className="hidden items-center rounded-full border border-amber-300/25 bg-amber-300/[0.08] px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-amber-200/90 backdrop-blur-sm transition-colors hover:border-amber-300/40 hover:bg-amber-300/15 hover:text-amber-100 sm:inline-flex"
+            className="hidden items-center rounded-full border border-amber-300/25 bg-amber-300/[0.08] px-2.5 py-0.5 text-[0.6875rem] font-medium uppercase tracking-wider text-amber-200/90 backdrop-blur-sm transition-colors hover:border-amber-300/40 hover:bg-amber-300/15 hover:text-amber-100 sm:inline-flex"
           >
             {tNav("demoBadge")}
           </Link>

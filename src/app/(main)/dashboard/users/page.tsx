@@ -317,7 +317,7 @@ export default function UsersPage() {
 
       {/* Add User Dialog */}
       <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) resetAddForm(); }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[440px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[27.5rem]">
           <DialogHeader>
             <DialogTitle>{t("addUserTitle")}</DialogTitle>
           </DialogHeader>
@@ -326,7 +326,7 @@ export default function UsersPage() {
             className="flex flex-col gap-4 pt-2"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{t("username")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{t("username")}</label>
               <input
                 type="text"
                 value={newUsername}
@@ -337,7 +337,7 @@ export default function UsersPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{t("password")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{t("password")}</label>
               <input
                 type="password"
                 value={newPassword}
@@ -347,7 +347,7 @@ export default function UsersPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{t("displayName")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{t("displayName")}</label>
               <input
                 type="text"
                 value={newDisplayName}
@@ -386,7 +386,7 @@ export default function UsersPage() {
 
       {/* Edit User Dialog */}
       <Dialog open={!!editTarget} onOpenChange={(v) => { if (!v) setEditTarget(null); }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[440px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[27.5rem]">
           <DialogHeader>
             <DialogTitle>{t("editUserTitle")}</DialogTitle>
           </DialogHeader>
@@ -395,7 +395,7 @@ export default function UsersPage() {
             className="flex flex-col gap-4 pt-2"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{t("displayName")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{t("displayName")}</label>
               <input
                 type="text"
                 value={editDisplayName}
@@ -405,7 +405,7 @@ export default function UsersPage() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{t("username")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{t("username")}</label>
               <input
                 type="text"
                 value={editUsername}
@@ -457,7 +457,7 @@ export default function UsersPage() {
 
       {/* Delete User Dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{t("deleteUser")}</DialogTitle>
             <DialogDescription>
@@ -484,7 +484,7 @@ export default function UsersPage() {
 
       {/* Reset Password Dialog */}
       <Dialog open={!!resetTarget} onOpenChange={(v) => { if (!v) { setResetTarget(null); setResetPw(""); } }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
           <DialogHeader>
             <DialogTitle>{t("resetPassword")}</DialogTitle>
             <DialogDescription>
@@ -499,7 +499,7 @@ export default function UsersPage() {
             className="flex flex-col gap-4 pt-2"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{t("newPassword")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{t("newPassword")}</label>
               <input
                 type="password"
                 value={resetPw}

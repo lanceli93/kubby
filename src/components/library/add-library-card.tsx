@@ -84,11 +84,11 @@ export function AddLibraryCard() {
           setOpen(true);
         }}
         className="group flex-shrink-0 flex flex-col items-center cursor-pointer"
-        style={{ width: 360 }}
+        style={{ width: "22.5rem" }}
       >
         <div
           className="flex w-full items-center justify-center rounded-lg border-2 border-dashed border-white/[0.12] bg-white/[0.02] transition-fluid group-hover:border-primary/40 group-hover:bg-white/[0.04]"
-          style={{ height: 200 }}
+          style={{ height: "12.5rem" }}
         >
           <div className="flex flex-col items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
@@ -103,7 +103,7 @@ export function AddLibraryCard() {
 
       {/* Add Library Dialog */}
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
-        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[500px]">
+        <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[31.25rem]">
           <DialogHeader>
             <DialogTitle>{t("addLibrary")}</DialogTitle>
           </DialogHeader>
@@ -115,7 +115,7 @@ export function AddLibraryCard() {
             className="flex flex-col gap-5 pt-4 overflow-hidden"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("libraryName")}
               </label>
               <input
@@ -128,7 +128,7 @@ export function AddLibraryCard() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 Library Type
               </label>
               <Select value={type} onValueChange={setType}>
@@ -143,7 +143,7 @@ export function AddLibraryCard() {
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("folderPaths")}
               </label>
               <div className="flex flex-col gap-2">
@@ -218,7 +218,7 @@ export function AddLibraryCard() {
               <>
             {/* Metadata downloaders */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 Metadata downloaders (Movies)
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -242,7 +242,7 @@ export function AddLibraryCard() {
             {/* Metadata language */}
             {scraperEnabled && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-muted-foreground">
+                <label className="text-[0.8125rem] font-medium text-muted-foreground">
                   Metadata Language
                 </label>
                 <Select value={metadataLanguage} onValueChange={setMetadataLanguage}>
@@ -272,7 +272,7 @@ export function AddLibraryCard() {
 
             {/* Jellyfin Compatibility Mode */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("jellyfinCompat")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -295,7 +295,7 @@ export function AddLibraryCard() {
 
             {/* Jellyfin compat confirmation dialog */}
             <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
-              <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]">
+              <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]">
                 <DialogHeader>
                   <DialogTitle>{t("jellyfinCompatDialogTitle")}</DialogTitle>
                 </DialogHeader>

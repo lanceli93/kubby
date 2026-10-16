@@ -99,7 +99,7 @@ function SegButton({
 /** A section divider heading — reads as a labelled group above a batch of cards. */
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex w-full max-w-[720px] items-center gap-3 pt-2">
+    <div className="flex w-full max-w-[45rem] items-center gap-3 pt-2">
       <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {children}
       </h2>
@@ -109,7 +109,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 }
 
 const cardClass =
-  "flex w-full max-w-[720px] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7";
+  "flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7";
 
 /** The poster-wall config editor — preview + layout + per-library weights +
  *  filters. Shared by the Movie Wall and the TV Wall (both persist a
@@ -143,7 +143,7 @@ function WallEditor({
   return (
     <>
       {/* Live preview */}
-      <div className={`${cardClass} max-w-[900px]`}>
+      <div className={`${cardClass} max-w-[56.25rem]`}>
         <h2 className="text-lg font-semibold text-foreground">{t("preview")}</h2>
         <div className="relative aspect-[21/9] overflow-hidden rounded-lg bg-[#0a0a0f]">
           {previewMovies.length >= 8 ? (
@@ -241,7 +241,7 @@ function WallEditor({
                   className="flex flex-col items-center gap-1.5 cursor-pointer"
                 >
                   <div
-                    className={`h-[40px] w-[64px] overflow-hidden rounded-md border transition-fluid ${
+                    className={`h-[2.5rem] w-[4rem] overflow-hidden rounded-md border transition-fluid ${
                       active
                         ? "border-primary/50 ring-2 ring-primary/50"
                         : "border-white/10 hover:border-white/20"
@@ -659,7 +659,7 @@ export default function HeroMosaicPage() {
   return (
     <div className="h-full overflow-y-scroll">
       <div className="stagger-children flex flex-col items-center gap-6 px-4 md:px-0 py-8">
-        <div className="flex w-full max-w-[720px] items-center justify-between">
+        <div className="flex w-full max-w-[45rem] items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("title")}</h1>
           <button
             type="button"
@@ -717,7 +717,7 @@ export default function HeroMosaicPage() {
         <SectionHeader>{t("peopleWallSection")}</SectionHeader>
 
         {/* People live preview */}
-        <div className={`${cardClass} max-w-[900px]`}>
+        <div className={`${cardClass} max-w-[56.25rem]`}>
           <h2 className="text-lg font-semibold text-foreground">{t("preview")}</h2>
           <div className="relative aspect-[21/9] overflow-hidden rounded-lg bg-[#0a0a0f]">
             {previewPeopleMovies.length >= 8 ? (
@@ -793,7 +793,7 @@ export default function HeroMosaicPage() {
                     className="flex flex-col items-center gap-1.5 cursor-pointer"
                   >
                     <div
-                      className={`h-[40px] w-[64px] overflow-hidden rounded-md border transition-fluid ${
+                      className={`h-[2.5rem] w-[4rem] overflow-hidden rounded-md border transition-fluid ${
                         active
                           ? "border-primary/50 ring-2 ring-primary/50"
                           : "border-white/10 hover:border-white/20"
@@ -961,7 +961,7 @@ export default function HeroMosaicPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full max-w-[720px] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
+          className="w-full max-w-[45rem] rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
         >
           {saving ? tCommon("loading") : tCommon("save")}
         </button>
@@ -972,7 +972,7 @@ export default function HeroMosaicPage() {
 
         {/* Reset to Defaults Confirmation */}
         <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+          <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[26.25rem]">
             <DialogHeader>
               <DialogTitle>{t("resetDefaultsTitle")}</DialogTitle>
               <DialogDescription>{t("resetDefaultsDesc")}</DialogDescription>

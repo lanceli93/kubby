@@ -117,14 +117,14 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
     <Link
       href={`${hrefBase}?libraryId=${id}`}
       className={`group flex-shrink-0 cursor-pointer transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"}`}
-      style={{ width: 360 }}
+      style={{ width: "22.5rem" }}
     >
       {/* Cover image area — shell NOT overflow-hidden so tilt can bleed. The
           tilting subtree (image + name/status overlays + hover menu bar) is
           wrapped in TiltCard so it all tilts as one object; the menu bar uses
           a gradient scrim, not backdrop-blur (preserve-3d breaks
           backdrop-filter on descendants in Chromium). */}
-      <div className="relative w-full" style={{ height: 200 }}>
+      <div className="relative w-full" style={{ height: "12.5rem" }}>
         {/* Ambient glow (ambilight) — blurred cover bleeding behind, hover-only.
             Mirrors movie-card.tsx; uses the cover image itself (already cached
             by the card render) since libraries have no posterBlur. */}
@@ -160,7 +160,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
 
             {/* Library name overlay — lifts on tilt */}
             <div className="tilt-lift absolute inset-0 z-[2] flex items-center justify-center bg-black/40 pointer-events-none" style={{ "--tilt-lift": "24px" } as React.CSSProperties}>
-              <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: 40 }}>{name}</h2>
+              <h2 className="font-bold text-white drop-shadow-lg px-4 text-center leading-tight" style={{ fontSize: "2.5rem" }}>{name}</h2>
             </div>
 
             {/* Scanning overlay with progress — lifts on tilt */}
@@ -305,7 +305,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       {/* Edit library dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent
-          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[440px]"
+          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[27.5rem]"
           onClick={(e) => { e.stopPropagation(); }}
         >
           <DialogHeader>
@@ -316,7 +316,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
             className="flex flex-col gap-4 pt-2 overflow-hidden"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{tHome("libraryName")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{tHome("libraryName")}</label>
               <input
                 type="text"
                 value={editName}
@@ -327,7 +327,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">{tHome("folderPaths")}</label>
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">{tHome("folderPaths")}</label>
               <div className="flex flex-col gap-2">
                 {editFolderPaths.map((p, idx) => (
                   <div key={idx} className="flex items-center gap-2 min-w-0">
@@ -397,7 +397,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 Metadata downloaders (Movies)
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5">
@@ -419,7 +419,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
             </div>
             {editScraperEnabled && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-muted-foreground">
+                <label className="text-[0.8125rem] font-medium text-muted-foreground">
                   Metadata Language
                 </label>
                 <Select value={editMetadataLanguage} onValueChange={setEditMetadataLanguage}>
@@ -496,7 +496,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
               </div>
             )}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {tHome("jellyfinCompat")}
               </label>
               <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.05] px-3.5 py-2.5" onClick={(e) => e.stopPropagation()}>
@@ -536,7 +536,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       {/* Jellyfin compat confirmation dialog */}
       <Dialog open={jellyfinCompatConfirmOpen} onOpenChange={setJellyfinCompatConfirmOpen}>
         <DialogContent
-          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]"
+          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
           <DialogHeader>
@@ -580,7 +580,7 @@ export function LibraryCard({ id, name, type, folderPaths, scraperEnabled, jelly
       {/* Delete confirmation dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent
-          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[400px]"
+          className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[25rem]"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

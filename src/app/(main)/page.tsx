@@ -354,19 +354,19 @@ export default function HomePage() {
           <TabsList className="flex h-auto gap-1.5 rounded-full border-0 bg-transparent p-1">
             <TabsTrigger
               value="home"
-              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
+              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[0.8125rem] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
             >
               {t("homeTab")}
             </TabsTrigger>
             <TabsTrigger
               value="favorites"
-              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
+              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[0.8125rem] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
             >
               {t("favoritesTab")}
             </TabsTrigger>
             <TabsTrigger
               value="people"
-              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
+              className="glass-btn flex h-auto flex-none items-center whitespace-nowrap rounded-full px-4 py-1.5 text-[0.8125rem] text-muted-foreground transition-fluid cursor-pointer hover:text-foreground data-[state=active]:!border-primary/50 data-[state=active]:!bg-primary/25 data-[state=active]:!text-foreground data-[state=active]:!shadow-none data-[state=active]:after:opacity-0"
             >
               {t("peopleTab")}
             </TabsTrigger>

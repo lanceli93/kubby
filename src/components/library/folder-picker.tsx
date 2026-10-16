@@ -57,7 +57,7 @@ export function FolderPicker({ open, onOpenChange, onSelect }: FolderPickerProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[560px]">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[35rem]">
         <DialogHeader>
           <DialogTitle>Select Folder</DialogTitle>
         </DialogHeader>
@@ -75,7 +75,7 @@ export function FolderPicker({ open, onOpenChange, onSelect }: FolderPickerProps
         </div>
 
         {/* Directory listing */}
-        <div className="h-[320px] overflow-y-auto rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
+        <div className="h-[20rem] overflow-y-auto rounded-lg border border-white/[0.06] bg-[var(--input-bg)]">
           {loading && (
             <div className="flex h-full items-center justify-center">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

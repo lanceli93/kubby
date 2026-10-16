@@ -21,7 +21,7 @@ export function CenterPlayButton({ isPlaying, osdMessage }: CenterPlayButtonProp
   if (isPlaying || osdMessage) return null;
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-white/20">
+      <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white/20">
         <Play className="h-8 w-8 text-white" />
       </div>
     </div>
@@ -59,7 +59,7 @@ export function HelpOverlay({ show, onClose }: HelpOverlayProps) {
       }}
     >
       <div
-        className="relative max-h-[80vh] w-[480px] overflow-y-auto rounded-xl bg-zinc-900 p-6 shadow-2xl"
+        className="relative max-h-[80vh] w-[30rem] overflow-y-auto rounded-xl bg-zinc-900 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -152,7 +152,7 @@ export function BookmarkPanel({
       }}
     >
       <div
-        className="w-[400px] rounded-xl border border-white/10 bg-black/70 p-6 shadow-2xl backdrop-blur-xl"
+        className="w-[25rem] rounded-xl border border-white/10 bg-black/70 p-6 shadow-2xl backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="mb-4 text-lg font-semibold text-white">Add Bookmark</h3>
@@ -168,7 +168,7 @@ export function BookmarkPanel({
         {/* Icon type */}
         <div className="mb-4">
           <label className="mb-1 block text-sm text-white/60">Type</label>
-          <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto p-0.5">
+          <div className="flex flex-wrap gap-2 max-h-[8.75rem] overflow-y-auto p-0.5">
             {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIconIds.has(bi.id)).map((bi) => {
               const BiIcon = bi.icon;
               return (

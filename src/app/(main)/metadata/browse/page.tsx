@@ -8,6 +8,7 @@ import { resolveImageSrc } from "@/lib/image-utils";
 import { MovieMetadataEditor } from "@/components/movie/movie-metadata-editor";
 import { PersonMetadataEditor } from "@/components/people/person-metadata-editor";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { rem } from "@/hooks/use-root-scale";
 import { useQueryClient } from "@tanstack/react-query";
 
 type TabType = "movies" | "people";
@@ -30,6 +31,7 @@ interface BrowsePerson {
   missingFields: string[];
 }
 
+// Design px; rendered via rem() so cards scale with the root font-size.
 const CARD_WIDTH = 140;
 const POSTER_HEIGHT = 210;
 
@@ -317,12 +319,12 @@ const BrowseMovieCard = memo(function BrowseMovieCard({ item, onSelect }: { item
     <div
       onClick={() => onSelect(item.id)}
       className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
-      style={{ width: CARD_WIDTH, contentVisibility: "auto", containIntrinsicSize: `${CARD_WIDTH}px ${POSTER_HEIGHT + 40}px` }}
+      style={{ width: rem(CARD_WIDTH), contentVisibility: "auto", containIntrinsicSize: `${rem(CARD_WIDTH)} ${rem(POSTER_HEIGHT + 40)}` }}
     >
       {/* Poster */}
       <div
         className="relative overflow-hidden rounded-lg bg-white/[0.04]"
-        style={{ height: POSTER_HEIGHT }}
+        style={{ height: rem(POSTER_HEIGHT) }}
       >
         {hasPoster ? (
           <Image
@@ -343,9 +345,9 @@ const BrowseMovieCard = memo(function BrowseMovieCard({ item, onSelect }: { item
         <MissingIndicators fields={item.missingFields} />
       </div>
       {/* Title */}
-      <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.title}</p>
+      <p className="mt-1.5 truncate text-center text-[0.8125rem] text-foreground">{item.title}</p>
       {item.year && (
-        <p className="truncate text-center text-[11px] text-muted-foreground">{item.year}</p>
+        <p className="truncate text-center text-[0.6875rem] text-muted-foreground">{item.year}</p>
       )}
     </div>
   );
@@ -361,12 +363,12 @@ const BrowsePersonCard = memo(function BrowsePersonCard({ item, onSelect }: { it
     <div
       onClick={() => onSelect(item.id)}
       className="group cursor-pointer transition-[scale] duration-200 ease-out hover:scale-[1.03]"
-      style={{ width: CARD_WIDTH, contentVisibility: "auto", containIntrinsicSize: `${CARD_WIDTH}px ${POSTER_HEIGHT + 40}px` }}
+      style={{ width: rem(CARD_WIDTH), contentVisibility: "auto", containIntrinsicSize: `${rem(CARD_WIDTH)} ${rem(POSTER_HEIGHT + 40)}` }}
     >
       {/* Photo */}
       <div
         className="relative overflow-hidden rounded-lg bg-white/[0.04]"
-        style={{ height: POSTER_HEIGHT }}
+        style={{ height: rem(POSTER_HEIGHT) }}
       >
         {hasPhoto ? (
           <Image
@@ -387,7 +389,7 @@ const BrowsePersonCard = memo(function BrowsePersonCard({ item, onSelect }: { it
         <MissingIndicators fields={item.missingFields} />
       </div>
       {/* Name */}
-      <p className="mt-1.5 truncate text-center text-[13px] text-foreground">{item.name}</p>
+      <p className="mt-1.5 truncate text-center text-[0.8125rem] text-foreground">{item.name}</p>
     </div>
   );
 });

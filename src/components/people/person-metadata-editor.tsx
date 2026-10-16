@@ -311,7 +311,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[700px] sm:rounded-lg overflow-y-auto overflow-x-hidden">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl max-h-[100dvh] w-full rounded-none sm:max-w-[43.75rem] sm:rounded-lg overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>{t("editMetadata")}</DialogTitle>
         </DialogHeader>
@@ -513,7 +513,7 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
           <TabsContent value="images" className="pt-4">
             <div className="flex flex-col sm:flex-row items-start gap-4">
               {/* Photo */}
-              <div className="flex w-1/2 sm:w-[180px] flex-shrink-0 flex-col gap-2">
+              <div className="flex w-1/2 sm:w-[11.25rem] flex-shrink-0 flex-col gap-2">
                 <h3 className="text-xs font-medium text-white/50">{t("poster")}</h3>
                 <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
                   {person?.photoPath ? (
@@ -558,13 +558,13 @@ export function PersonMetadataEditor({ personId, open, onOpenChange }: PersonMet
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-medium text-white/50">{t("fanart")}</h3>
                   {isMovieDerivedFanart && (
-                    <span className="inline-flex items-center gap-1 rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px] text-white/40">
+                    <span className="inline-flex items-center gap-1 rounded bg-white/[0.06] px-1.5 py-0.5 text-[0.6875rem] text-white/40">
                       <Info className="h-3 w-3" />
                       {t("usingMovieFanart")}
                     </span>
                   )}
                 </div>
-                <div className="relative aspect-video sm:h-[250px] sm:aspect-auto w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
+                <div className="relative aspect-video sm:h-[15.625rem] sm:aspect-auto w-full overflow-hidden rounded-md bg-white/[0.04] border border-white/[0.06]">
                   {person?.fanartPath ? (
                     <Image
                       src={resolveImageSrc(person.fanartPath)}

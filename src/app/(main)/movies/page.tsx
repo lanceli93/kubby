@@ -486,10 +486,10 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center"
+      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,11.25rem)] md:gap-x-4 md:gap-y-6 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
-      <div className="col-span-full relative py-[18px] flex items-center justify-center">
+      <div className="col-span-full relative py-[1.125rem] flex items-center justify-center">
         <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
           {t("moviesCount", { count: totalCount || movies.length })}
         </span>
@@ -508,7 +508,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
           </button>
 
           {showSortDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[13.75rem] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
                 const isActive = sort === option.value && !sortDimension;
@@ -520,7 +520,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                     <div key={option.value}>
                       <button
                         onClick={() => setPersonalRatingExpanded(!personalRatingExpanded)}
-                        className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                        className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                           isGroupActive
                             ? "bg-primary/[0.08] text-foreground"
                             : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -548,7 +548,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                               setSortDimension(null);
                               setSortOrder("desc");
                             }}
-                            className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                            className={`flex h-[2.125rem] w-full items-center gap-2.5 pl-10 pr-4 text-[0.8125rem] transition-colors ${
                               sort === "personalRating" && !sortDimension
                                 ? "bg-primary/[0.08] text-foreground"
                                 : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -564,7 +564,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                                 setSortDimension(dim);
                                 setSortOrder("desc");
                               }}
-                              className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                              className={`flex h-[2.125rem] w-full items-center gap-2.5 pl-10 pr-4 text-[0.8125rem] transition-colors ${
                                 sort === "personalRating" && sortDimension === dim
                                   ? "bg-primary/[0.08] text-foreground"
                                   : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -586,7 +586,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                       setSort(option.value);
                       setSortDimension(null);
                     }}
-                    className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                    className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                       isActive
                         ? "bg-primary/[0.08] text-foreground"
                         : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -602,12 +602,12 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                 );
               })}
               <div className="my-1.5 border-t border-white/[0.06]" />
-              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="px-4 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {t("sortOrder")}
               </p>
               <button
                 onClick={() => setSortOrder("asc")}
-                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                   sortOrder === "asc"
                     ? "bg-primary/[0.08] text-foreground"
                     : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -618,7 +618,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
               </button>
               <button
                 onClick={() => setSortOrder("desc")}
-                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                   sortOrder === "desc"
                     ? "bg-primary/[0.08] text-foreground"
                     : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -643,19 +643,19 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
             <Filter className="h-4 w-4" />
             {t("filter")}
             {activeFilterCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-medium text-primary-foreground">
                 {activeFilterCount}
               </span>
             )}
           </button>
 
           {showFilterDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[16.25rem] max-h-[25rem] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
               {/* Clear all */}
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-red-400 transition-colors hover:bg-white/[0.04]"
+                  className="flex w-full items-center gap-2 px-4 py-2 text-[0.8125rem] text-red-400 transition-colors hover:bg-white/[0.04]"
                 >
                   <X className="h-3.5 w-3.5" />
                   {t("clearFilters")}
@@ -667,7 +667,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                 <>
                   <button
                     onClick={() => setGenresExpanded(!genresExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {genresExpanded ? (
                       <ChevronDown className="h-3 w-3" />
@@ -683,7 +683,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                         <button
                           key={genre}
                           onClick={() => toggleGenre(genre)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                             checked
                               ? "text-foreground"
                               : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -715,7 +715,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                   <div className="my-1.5 border-t border-white/[0.06]" />
                   <button
                     onClick={() => setYearsExpanded(!yearsExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {yearsExpanded ? (
                       <ChevronDown className="h-3 w-3" />
@@ -731,7 +731,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                         <button
                           key={year}
                           onClick={() => toggleYear(year)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                             checked
                               ? "text-foreground"
                               : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -763,7 +763,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                   <div className="my-1.5 border-t border-white/[0.06]" />
                   <button
                     onClick={() => setTagsExpanded(!tagsExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {tagsExpanded ? (
                       <ChevronDown className="h-3 w-3" />
@@ -779,7 +779,7 @@ function MoviesTabContent({ libraryId }: { libraryId: string }) {
                         <button
                           key={tag}
                           onClick={() => toggleTag(tag)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                             checked
                               ? "text-foreground"
                               : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1150,10 +1150,10 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center"
+      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,11.25rem)] md:gap-x-4 md:gap-y-6 justify-center"
     >
       {/* Sort & Filter Toolbar — spans full grid width, count aligns with first card */}
-      <div className="col-span-full relative py-[18px] flex items-center justify-center">
+      <div className="col-span-full relative py-[1.125rem] flex items-center justify-center">
         <span className="absolute left-0 text-sm text-muted-foreground whitespace-nowrap">
           {t("actorsCount", { count: actorsTotalCount || actors.length })}
         </span>
@@ -1172,7 +1172,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
           </button>
 
           {showSortDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[13.75rem] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
                 const isActive = sort === option.value && !sortDimension;
@@ -1184,7 +1184,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                     <div key={option.value}>
                       <button
                         onClick={() => setPersonalRatingExpanded(!personalRatingExpanded)}
-                        className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                        className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                           isGroupActive
                             ? "bg-primary/[0.08] text-foreground"
                             : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1212,7 +1212,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                               setSortDimension(null);
                               setSortOrder("desc");
                             }}
-                            className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                            className={`flex h-[2.125rem] w-full items-center gap-2.5 pl-10 pr-4 text-[0.8125rem] transition-colors ${
                               sort === "personalRating" && !sortDimension
                                 ? "bg-primary/[0.08] text-foreground"
                                 : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1228,7 +1228,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                                 setSortDimension(dim);
                                 setSortOrder("desc");
                               }}
-                              className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                              className={`flex h-[2.125rem] w-full items-center gap-2.5 pl-10 pr-4 text-[0.8125rem] transition-colors ${
                                 sort === "personalRating" && sortDimension === dim
                                   ? "bg-primary/[0.08] text-foreground"
                                   : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1251,7 +1251,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                       setSortDimension(null);
                       setSortOrder(option.value === "name" ? "asc" : "desc");
                     }}
-                    className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                    className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                       isActive
                         ? "bg-primary/[0.08] text-foreground"
                         : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1267,12 +1267,12 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                 );
               })}
               <div className="my-1.5 border-t border-white/[0.06]" />
-              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="px-4 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {t("sortOrder")}
               </p>
               <button
                 onClick={() => setSortOrder("asc")}
-                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                   sortOrder === "asc"
                     ? "bg-primary/[0.08] text-foreground"
                     : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1283,7 +1283,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
               </button>
               <button
                 onClick={() => setSortOrder("desc")}
-                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                   sortOrder === "desc"
                     ? "bg-primary/[0.08] text-foreground"
                     : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1308,19 +1308,19 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
             <Filter className="h-4 w-4" />
             {t("filter")}
             {activeFilterCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-medium text-primary-foreground">
                 {activeFilterCount}
               </span>
             )}
           </button>
 
           {showFilterDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[16.25rem] max-h-[25rem] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
               {/* Clear all */}
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-red-400 transition-colors hover:bg-white/[0.04]"
+                  className="flex w-full items-center gap-2 px-4 py-2 text-[0.8125rem] text-red-400 transition-colors hover:bg-white/[0.04]"
                 >
                   <X className="h-3.5 w-3.5" />
                   {t("clearFilters")}
@@ -1332,7 +1332,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                 <>
                   <button
                     onClick={() => setTypesExpanded(!typesExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {typesExpanded ? (
                       <ChevronDown className="h-3 w-3" />
@@ -1348,7 +1348,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                         <button
                           key={type}
                           onClick={() => toggleType(type)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                             checked
                               ? "text-foreground"
                               : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1380,7 +1380,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                   <div className="my-1.5 border-t border-white/[0.06]" />
                   <button
                     onClick={() => setTagsExpanded(!tagsExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {tagsExpanded ? (
                       <ChevronDown className="h-3 w-3" />
@@ -1396,7 +1396,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                         <button
                           key={tag}
                           onClick={() => toggleTag(tag)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                             checked
                               ? "text-foreground"
                               : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1427,7 +1427,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                 <div className="my-1.5 border-t border-white/[0.06]" />
                 <button
                   onClick={() => setTiersExpanded(!tiersExpanded)}
-                  className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                  className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                 >
                   {tiersExpanded ? (
                     <ChevronDown className="h-3 w-3" />
@@ -1444,7 +1444,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                         <button
                           key={tier}
                           onClick={() => toggleTier(tier)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                             checked
                               ? "text-foreground"
                               : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1469,7 +1469,7 @@ function ActorsTabContent({ libraryId }: { libraryId: string }) {
                     })}
                     <button
                       onClick={() => toggleTier("unrated")}
-                      className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                      className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                         selectedTiers.includes("unrated")
                           ? "text-foreground"
                           : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1664,11 +1664,11 @@ function PersonMoviesContent({ personId }: { personId: string }) {
 
   return (
     <div
-      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,180px)] md:gap-x-4 md:gap-y-6 justify-center"
+      className="animate-fade-in-up grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-[repeat(auto-fill,11.25rem)] md:gap-x-4 md:gap-y-6 justify-center"
     >
       {/* Sort & Filter Toolbar */}
-      <div className="col-span-full py-[18px] flex items-center">
-        <span className="min-w-[80px] text-sm text-muted-foreground whitespace-nowrap">
+      <div className="col-span-full py-[1.125rem] flex items-center">
+        <span className="min-w-[5rem] text-sm text-muted-foreground whitespace-nowrap">
           {t("moviesCount", { count: movies.length })}
         </span>
         <div className="flex flex-1 items-center justify-center gap-3">
@@ -1685,7 +1685,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
           </button>
 
           {showSortDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[220px] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[13.75rem] -translate-x-1/2 rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
               {sortOptions.map((option) => {
                 const Icon = option.icon;
                 const isActive = sort === option.value && !sortDimension;
@@ -1697,7 +1697,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                     <div key={option.value}>
                       <button
                         onClick={() => setPersonalRatingExpanded(!personalRatingExpanded)}
-                        className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                        className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                           isGroupActive
                             ? "bg-primary/[0.08] text-foreground"
                             : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1725,7 +1725,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                               setSortDimension(null);
                               setSortOrder("desc");
                             }}
-                            className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                            className={`flex h-[2.125rem] w-full items-center gap-2.5 pl-10 pr-4 text-[0.8125rem] transition-colors ${
                               sort === "personalRating" && !sortDimension
                                 ? "bg-primary/[0.08] text-foreground"
                                 : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1741,7 +1741,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                                 setSortDimension(dim);
                                 setSortOrder("desc");
                               }}
-                              className={`flex h-[34px] w-full items-center gap-2.5 pl-10 pr-4 text-[13px] transition-colors ${
+                              className={`flex h-[2.125rem] w-full items-center gap-2.5 pl-10 pr-4 text-[0.8125rem] transition-colors ${
                                 sort === "personalRating" && sortDimension === dim
                                   ? "bg-primary/[0.08] text-foreground"
                                   : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1763,7 +1763,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                       setSort(option.value);
                       setSortDimension(null);
                     }}
-                    className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                    className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                       isActive
                         ? "bg-primary/[0.08] text-foreground"
                         : "text-[#d0d0e0] hover:bg-white/[0.04]"
@@ -1775,12 +1775,12 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                 );
               })}
               <div className="my-1.5 border-t border-white/[0.06]" />
-              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="px-4 pb-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {t("sortOrder")}
               </p>
               <button
                 onClick={() => setSortOrder("asc")}
-                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                   sortOrder === "asc" ? "bg-primary/[0.08] text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"
                 }`}
               >
@@ -1789,7 +1789,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
               </button>
               <button
                 onClick={() => setSortOrder("desc")}
-                className={`flex h-[38px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${
+                className={`flex h-[2.375rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${
                   sortOrder === "desc" ? "bg-primary/[0.08] text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"
                 }`}
               >
@@ -1811,18 +1811,18 @@ function PersonMoviesContent({ personId }: { personId: string }) {
             <Filter className="h-4 w-4" />
             {t("filter")}
             {activeFilterCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-medium text-primary-foreground">
                 {activeFilterCount}
               </span>
             )}
           </button>
 
           {showFilterDropdown && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[260px] max-h-[400px] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
+            <div className="absolute left-1/2 top-full z-50 mt-1 w-[16.25rem] max-h-[25rem] -translate-x-1/2 overflow-y-auto rounded-[10px] border border-white/[0.08] bg-[rgba(10,10,15,0.78)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_0.5px_0_rgba(255,255,255,0.1)] py-1.5">
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-[13px] text-red-400 transition-colors hover:bg-white/[0.04]"
+                  className="flex w-full items-center gap-2 px-4 py-2 text-[0.8125rem] text-red-400 transition-colors hover:bg-white/[0.04]"
                 >
                   <X className="h-3.5 w-3.5" />
                   {t("clearFilters")}
@@ -1833,7 +1833,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                 <>
                   <button
                     onClick={() => setGenresExpanded(!genresExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {genresExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     {t("genres")}
@@ -1845,7 +1845,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                         <button
                           key={genre}
                           onClick={() => toggleGenre(genre)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
                         >
                           <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? "border-primary bg-primary text-white" : "border-[#666680]"}`}>
                             {checked && <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
@@ -1862,7 +1862,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                   <div className="my-1.5 border-t border-white/[0.06]" />
                   <button
                     onClick={() => setYearsExpanded(!yearsExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {yearsExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     {t("year")}
@@ -1874,7 +1874,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                         <button
                           key={year}
                           onClick={() => toggleYear(year)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
                         >
                           <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? "border-primary bg-primary text-white" : "border-[#666680]"}`}>
                             {checked && <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
@@ -1891,7 +1891,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                   <div className="my-1.5 border-t border-white/[0.06]" />
                   <button
                     onClick={() => setTagsExpanded(!tagsExpanded)}
-                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
+                    className="flex w-full items-center gap-1.5 px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {tagsExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     {t("tags")}
@@ -1903,7 +1903,7 @@ function PersonMoviesContent({ personId }: { personId: string }) {
                         <button
                           key={tag}
                           onClick={() => toggleTag(tag)}
-                          className={`flex h-[34px] w-full items-center gap-2.5 px-4 text-[13px] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
+                          className={`flex h-[2.125rem] w-full items-center gap-2.5 px-4 text-[0.8125rem] transition-colors ${checked ? "text-foreground" : "text-[#d0d0e0] hover:bg-white/[0.04]"}`}
                         >
                           <span className={`flex h-4 w-4 items-center justify-center rounded border ${checked ? "border-primary bg-primary text-white" : "border-[#666680]"}`}>
                             {checked && <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}

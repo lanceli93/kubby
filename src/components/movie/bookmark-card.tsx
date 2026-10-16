@@ -128,7 +128,7 @@ export function BookmarkCard({
   }
 
   const isPortrait = (bookmark.thumbnailAspect ?? 1.78) < 1;
-  const cardWidth = isPortrait ? "w-[120px] md:w-[180px]" : "w-[200px] md:w-[320px]";
+  const cardWidth = isPortrait ? "w-[7.5rem] md:w-[11.25rem]" : "w-[12.5rem] md:w-[20rem]";
   const aspectClass = isPortrait ? "aspect-[2/3]" : "aspect-video";
 
   const card = (
@@ -172,7 +172,7 @@ export function BookmarkCard({
             {bookmark.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm"
+                className="rounded bg-white/20 px-1.5 py-0.5 text-[0.625rem] font-medium text-white backdrop-blur-sm"
               >
                 {tag}
               </span>
@@ -182,7 +182,7 @@ export function BookmarkCard({
 
         {/* Disc badge - top left */}
         {bookmark.discNumber && bookmark.discNumber > 1 && (
-          <span className="absolute left-2 top-2 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+          <span className="absolute left-2 top-2 rounded bg-white/20 px-1.5 py-0.5 text-[0.625rem] font-medium text-white backdrop-blur-sm">
             {t("disc")} {bookmark.discNumber}
           </span>
         )}
@@ -255,7 +255,7 @@ export function BookmarkCard({
 
       {/* Note below card */}
       {bookmark.note && (
-        <p className={`mt-1 truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[120px] md:max-w-[180px]" : "max-w-[200px] md:max-w-[320px]"}`}>
+        <p className={`mt-1 truncate text-xs text-muted-foreground ${isPortrait ? "max-w-[7.5rem] md:max-w-[11.25rem]" : "max-w-[12.5rem] md:max-w-[20rem]"}`}>
           {bookmark.note}
         </p>
       )}
@@ -284,7 +284,7 @@ export function BookmarkCard({
       {/* Edit bookmark dialog — rendered outside Link/button via portal */}
       {editOpen && (
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="border-white/10 bg-black/70 backdrop-blur-xl sm:max-w-[440px]">
+          <DialogContent className="border-white/10 bg-black/70 backdrop-blur-xl sm:max-w-[27.5rem]">
             <DialogHeader>
               <DialogTitle>{t("editBookmark")}</DialogTitle>
             </DialogHeader>
@@ -300,7 +300,7 @@ export function BookmarkCard({
             {/* Icon type - scrollable grid */}
             <div>
               <label className="mb-1 block text-sm text-muted-foreground">{t("bookmarkType")}</label>
-              <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto p-0.5">
+              <div className="flex flex-wrap gap-2 max-h-[10rem] overflow-y-auto p-0.5">
                 {BUILTIN_BOOKMARK_ICONS.filter((bi) => !disabledIconIds?.includes(bi.id)).map((bi) => {
                   const BiIcon = bi.icon;
                   return (

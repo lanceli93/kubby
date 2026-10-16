@@ -141,7 +141,7 @@ export function MusicMetadataEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[460px]">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[28.75rem]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>

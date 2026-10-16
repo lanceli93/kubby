@@ -92,7 +92,7 @@ export function TvHero({
   // Wall pool loading and nothing to show — hold the box with a dark shell.
   if (!display && wallPending) {
     return (
-      <div className="relative h-[52vh] min-h-[380px] w-full overflow-hidden bg-[#0a0a0f] md:h-[calc(100vh-340px)] md:min-h-[480px]">
+      <div className="relative h-[52vh] min-h-[23.75rem] w-full overflow-hidden bg-[#0a0a0f] md:h-[calc(100vh-21.25rem)] md:min-h-[30rem]">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[55%] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/55 to-transparent" />
       </div>
     );
@@ -127,7 +127,7 @@ export function TvHero({
     );
 
   return (
-    <div className="group/hero relative h-[52vh] min-h-[380px] w-full overflow-hidden md:h-[calc(100vh-340px)] md:min-h-[480px]">
+    <div className="group/hero relative h-[52vh] min-h-[23.75rem] w-full overflow-hidden md:h-[calc(100vh-21.25rem)] md:min-h-[30rem]">
       {/* Backdrop layer (z-0, non-interactive) */}
       {wallMode ? (
         <div className="absolute inset-0 z-0">
@@ -163,7 +163,7 @@ export function TvHero({
       {/* Left text block */}
       <div className="pointer-events-none absolute inset-x-0 bottom-[10%] z-[2] px-4 md:px-12">
         <div key={id} className="animate-fade-in max-w-xl md:max-w-3xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.3em] text-white/50">
             {t("title")}
           </p>
           <h2 className="mt-2 truncate text-3xl font-bold leading-[1.25] tracking-wide text-white/95 [text-shadow:0_2px_24px_rgba(0,0,0,0.9)] md:text-5xl">
@@ -175,7 +175,7 @@ export function TvHero({
             </p>
           )}
           {metaItems.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-white/65">
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.8125rem] text-white/65">
               {metaItems.flatMap((node, i) =>
                 i === 0
                   ? [node]

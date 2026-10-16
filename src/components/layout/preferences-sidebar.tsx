@@ -33,14 +33,14 @@ export function PreferencesSidebar() {
     <>
       <aside className="hidden md:flex w-60 flex-col gap-4 border-r border-white/[0.06] bg-black/30 backdrop-blur-xl py-6 ring-1 ring-white/[0.06]">
         <div>
-          <span className="mb-2 px-5 text-[11px] font-semibold uppercase tracking-wider text-[#555568]">
+          <span className="mb-2 px-5 text-[0.6875rem] font-semibold uppercase tracking-wider text-[#555568]">
             {t("title")}
           </span>
           <div className="mx-3 mt-2 h-px bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-transparent" />
         </div>
         {sidebarGroups.map((group) => (
           <div key={group.label} className="flex flex-col gap-1">
-            <span className="mb-1 px-5 text-[10px] font-medium uppercase tracking-wider text-[#444458]">
+            <span className="mb-1 px-5 text-[0.625rem] font-medium uppercase tracking-wider text-[#444458]">
               {group.label}
             </span>
             {group.items.map((item) => {
@@ -57,10 +57,10 @@ export function PreferencesSidebar() {
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />
+                    <div className="absolute left-0 top-1/2 h-5 w-[0.1875rem] -translate-y-1/2 rounded-r-full bg-primary" />
                   )}
                   <Icon
-                    className={`h-[18px] w-[18px] transition-colors ${
+                    className={`h-[1.125rem] w-[1.125rem] transition-colors ${
                       isActive ? "text-primary" : "text-[#666680] group-hover:text-muted-foreground"
                     }`}
                   />

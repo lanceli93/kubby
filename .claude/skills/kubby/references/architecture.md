@@ -630,13 +630,18 @@ decideAudioPlayback({ codec, ext })
 | --foreground | #f0f0f5 | Primary text |
 | --surface/--card | #1a1a2e | Cards, surfaces |
 | --header/--muted | #111118 | Nav bar, sidebar |
-| --primary | #3b82f6 | Blue accent |
+| --primary | #6366f1 | Indigo accent |
 | --muted-foreground | #8888a0 | Secondary text |
-| --gold | #f5c518 | Ratings |
+| --gold | #ca8a04 | Ratings |
 | --destructive | #ef4444 | Danger actions |
 | --border | rgba(255,255,255,0.06) | Borders |
 
 Font: Inter (next/font/google), CJK fallback: PingFang SC → Microsoft YaHei → Noto Sans SC
+
+**Fluid UI scale:** `html { font-size: clamp(16px, calc(0.625vw + 4px), 24px) }` — 16px up to a
+1920px viewport, 20px (1.25×) at 2560px (4K @150%), capped at 24px. Everything sized in rem
+scales with it; breakpoints don't (media-query rem = initial 16px). See feature-patterns →
+UI Design System → Sizing.
 
 ## i18n
 

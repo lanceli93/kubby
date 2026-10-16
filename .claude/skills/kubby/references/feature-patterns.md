@@ -838,6 +838,21 @@ cards `rounded-xl` (12px).
 UX: `cursor-pointer` on clickables, `active:scale-95` on action buttons,
 `role="alert"` on errors, `aria-label` on icon buttons.
 
+### Sizing: rem, never raw px (fluid UI scale)
+
+`<html>` has a fluid font-size (16px ≤1920px viewport → 20px at 2560 → 24px cap) so the UI
+isn't tiny on 4K/1440p screens. **Anything sized in raw px won't follow it** and drifts out
+of proportion. Rules:
+- Tailwind arbitrary values in rem: `text-[0.8125rem]` (13px), `h-[2.125rem]` (34px),
+  `max-w-[25rem]` — never `text-[13px]`. Hairlines ≤2px, `blur-`, `ring-`, `rounded-`,
+  shadows and 3D `perspective`/`--tilt-lift` stay px.
+- Inline styles: `style={{ width: rem(180) }}` (`rem()` from `src/hooks/use-root-scale.ts`),
+  not `width: 180`.
+- JS-computed layouts working in measured px (photo-grid justified rows + virtualizer
+  `estimateSize`, person-gallery rows, poster-wall overlay reserves) multiply their design-px
+  constants by `useRootScale()` (React; 1 during hydration) / `getRootScale()` (effects).
+- Viewport breakpoints (`matchMedia`, `innerWidth < 640`) stay in px — they're unscaled.
+
 ### Accessibility primitives (`globals.css`)
 
 - **`.focus-ring`** — keyboard-only focus indicator (`:focus-visible` → double

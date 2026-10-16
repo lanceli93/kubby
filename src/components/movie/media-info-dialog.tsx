@@ -216,7 +216,7 @@ export function MediaInfoDialog({ movieId, open, onOpenChange, apiBase = "/api/m
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[600px] max-h-[85vh] overflow-hidden flex flex-col"
+        className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[37.5rem] max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <DialogHeader>

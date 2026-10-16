@@ -81,16 +81,16 @@ function LoginFormInner() {
 
   return (
     <div className="flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_center,#111128,#0a0a0f)]">
-      <div className="w-full max-w-[480px] mx-4 md:mx-0 animate-fade-in-up rounded-2xl border border-white/[0.06] glass-cinema px-6 py-8 md:px-10 md:py-12">
+      <div className="w-full max-w-[30rem] mx-4 md:mx-0 animate-fade-in-up rounded-2xl border border-white/[0.06] glass-cinema px-6 py-8 md:px-10 md:py-12">
         <div className="flex flex-col items-center gap-6">
           <h1 className="brand-glow text-4xl font-bold tracking-tight text-primary">Kubby</h1>
-          <p className="text-[15px] text-muted-foreground">
+          <p className="text-[0.9375rem] text-muted-foreground">
             {t("signInToAccount")}
           </p>
 
           <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("username")}
               </label>
               <input
@@ -104,7 +104,7 @@ function LoginFormInner() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-muted-foreground">
+              <label className="text-[0.8125rem] font-medium text-muted-foreground">
                 {t("password")}
               </label>
               <div className="relative">
@@ -122,9 +122,9 @@ function LoginFormInner() {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#555568] hover:text-muted-foreground cursor-pointer"
                 >
                   {showPassword ? (
-                    <Eye className="h-[18px] w-[18px]" />
+                    <Eye className="h-[1.125rem] w-[1.125rem]" />
                   ) : (
-                    <EyeOff className="h-[18px] w-[18px]" />
+                    <EyeOff className="h-[1.125rem] w-[1.125rem]" />
                   )}
                 </button>
               </div>
@@ -137,7 +137,7 @@ function LoginFormInner() {
             <button
               type="submit"
               disabled={loading}
-              className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
+              className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-fluid hover:bg-primary/90 active:scale-95 cursor-pointer disabled:opacity-50"
             >
               {loading ? t("signingIn") : t("signIn")}
             </button>
@@ -146,12 +146,12 @@ function LoginFormInner() {
           {needsSetup === true ? (
             <Link
               href="/setup"
-              className="text-[13px] font-semibold text-primary hover:underline"
+              className="text-[0.8125rem] font-semibold text-primary hover:underline"
             >
               {t("goToSetup")}
             </Link>
           ) : needsSetup === false ? (
-            <span className="text-[13px] text-[#666680]">
+            <span className="text-[0.8125rem] text-[#666680]">
               {t("accountsCreatedByAdmin")}
             </span>
           ) : null}

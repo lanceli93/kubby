@@ -118,7 +118,7 @@ export function PeopleHero({ entries, pending, config }: PeopleHeroProps) {
   // (same surface + bottom dissolve as HomeHero's pending branch, but full height).
   if (pending) {
     return (
-      <div className="relative h-full min-h-[480px] w-full overflow-hidden bg-[#0a0a0f]">
+      <div className="relative h-full min-h-[30rem] w-full overflow-hidden bg-[#0a0a0f]">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[55%] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/55 to-transparent" />
       </div>
     );
@@ -128,7 +128,7 @@ export function PeopleHero({ entries, pending, config }: PeopleHeroProps) {
   // wall's own predicate for "both"), so show a centered empty-state prompt.
   if (usableWallCount(mapped, "both") < 8) {
     return (
-      <div className="relative flex h-full min-h-[480px] w-full items-center justify-center overflow-hidden bg-[#0a0a0f] px-8 text-center">
+      <div className="relative flex h-full min-h-[30rem] w-full items-center justify-center overflow-hidden bg-[#0a0a0f] px-8 text-center">
         <p className="max-w-md text-sm text-white/50">{tPH("notEnough")}</p>
       </div>
     );
@@ -161,7 +161,7 @@ export function PeopleHero({ entries, pending, config }: PeopleHeroProps) {
     );
 
   return (
-    <div className="relative h-full min-h-[480px] w-full overflow-hidden">
+    <div className="relative h-full min-h-[30rem] w-full overflow-hidden">
       {/* Backdrop layer (z-0, non-interactive): the animated people poster wall
           that drives the featured person. */}
       <div className="absolute inset-0 z-0">
@@ -195,7 +195,7 @@ export function PeopleHero({ entries, pending, config }: PeopleHeroProps) {
         <div className="pointer-events-none absolute inset-x-0 bottom-[10%] z-[2] px-4 md:px-12">
           {/* Re-fades on spotlight change (keyed by the featured person id). */}
           <div key={featuredId} className="animate-fade-in max-w-xl md:max-w-3xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.3em] text-white/50">
               NOW SHOWING · {tPH(TYPE_KEYS[displayEntry.type] ?? "typeActor")}
             </p>
             {/* Single line, ellipsis for very long names. Explicit leading:
@@ -205,7 +205,7 @@ export function PeopleHero({ entries, pending, config }: PeopleHeroProps) {
               {displayEntry.name}
             </h2>
             {metaItems.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-white/65">
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.8125rem] text-white/65">
                 {metaItems.flatMap((node, i) =>
                   i === 0
                     ? [node]

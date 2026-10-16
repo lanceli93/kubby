@@ -138,7 +138,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
               switch. Only shown as a group when >1 domain exists; a single-domain
               install still renders the lone Cinema row so the label reads clearly. */}
           <div className="flex flex-col gap-0.5">
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            <p className="px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
               {tNav("media")}
             </p>
             {domainItems.map((item) => {
@@ -167,7 +167,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
           {/* Metadata (admin only, cinema domain only) */}
           {isAdmin && domain === "cinema" && (
             <div className="flex flex-col gap-0.5">
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {tNav("metadata")}
               </p>
               {metadataItems.map(renderItem)}
@@ -177,7 +177,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
           {/* Admin (admin only) */}
           {isAdmin && (
             <div className="flex flex-col gap-0.5">
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {tNav("admin")}
               </p>
               {adminItems.map(renderItem)}
@@ -186,7 +186,7 @@ export function NavSidebar({ open, onClose }: NavSidebarProps) {
 
           {/* User */}
           <div className="flex flex-col gap-0.5">
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            <p className="px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-muted-foreground/60">
               {tNav("user")}
             </p>
             {userItems.map(renderItem)}

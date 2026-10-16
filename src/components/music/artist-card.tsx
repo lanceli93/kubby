@@ -34,7 +34,7 @@ export function ArtistCard({
   return (
     <div
       className={`group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03] ${responsive ? "w-full" : ""}`}
-      style={responsive ? undefined : { width: 180 }}
+      style={responsive ? undefined : { width: "11.25rem" }}
     >
       <Link href={`/music/artists/${id}`} className="focus-ring block rounded-md">
 

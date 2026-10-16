@@ -119,7 +119,7 @@ export default function AlbumDetailPage() {
         {/* Hero: cover + metadata */}
         <div className="flex flex-col gap-6 md:flex-row md:items-end">
           {/* Cover with ambient blur glow behind it */}
-          <div className="relative mx-auto h-[240px] w-[240px] flex-shrink-0 md:mx-0 md:h-[280px] md:w-[280px]">
+          <div className="relative mx-auto h-[15rem] w-[15rem] flex-shrink-0 md:mx-0 md:h-[17.5rem] md:w-[17.5rem]">
             {album.coverBlur && (
               <div
                 aria-hidden

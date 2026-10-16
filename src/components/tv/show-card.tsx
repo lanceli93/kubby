@@ -86,7 +86,7 @@ export function ShowCard({
   return (
     <div
       className={`group flex-shrink-0 transition-[scale] duration-200 ease-out hover:scale-[1.03] ${responsive ? "w-full" : ""}`}
-      style={responsive ? undefined : { width: 180 }}
+      style={responsive ? undefined : { width: "11.25rem" }}
     >
       <Link
         href={`/tv/${id}`}
@@ -106,7 +106,7 @@ export function ShowCard({
         }}
       >
         {/* Poster shell — NOT overflow-hidden so tilt + ambient glow can bleed. */}
-        <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: 270 }}>
+        <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: "16.875rem" }}>
           {/* Ambient glow (ambilight) — blurred poster bleeding behind, hover-only */}
           {posterBlur && (
             <div
@@ -140,7 +140,7 @@ export function ShowCard({
               {showResBadge && (() => {
                 const res = getResolutionLabel(videoWidth, videoHeight);
                 return res ? (
-                  <div className="tilt-lift absolute left-1.5 top-1.5 z-[4] rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black/80 shadow-sm" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
+                  <div className="tilt-lift absolute left-1.5 top-1.5 z-[4] rounded-sm bg-white/30 backdrop-blur-md px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-black/80 shadow-sm" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
                     {res}
                   </div>
                 ) : null;
@@ -151,7 +151,7 @@ export function ShowCard({
               {showRatingBadge && personalRating != null && personalRating > 0 && (
                 <div className="tilt-lift absolute right-1.5 top-1.5 z-[4] flex items-center gap-0.5 glass-badge rounded-full px-1.5 py-0.5" style={{ "--tilt-lift": "22px" } as React.CSSProperties}>
                   <Star className="h-3 w-3 fill-[var(--gold)] text-[var(--gold)]" />
-                  <span className="text-[11px] font-medium text-[var(--gold)]">
+                  <span className="text-[0.6875rem] font-medium text-[var(--gold)]">
                     {personalRating.toFixed(1)}
                   </span>
                 </div>

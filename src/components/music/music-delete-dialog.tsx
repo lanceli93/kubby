@@ -43,7 +43,7 @@ export function MusicDeleteDialog({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[420px]">
+      <DialogContent className="!bg-black/40 border-white/[0.06] backdrop-blur-xl sm:max-w-[26.25rem]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
