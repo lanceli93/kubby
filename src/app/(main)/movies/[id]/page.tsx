@@ -431,7 +431,7 @@ export default function MovieDetailPage() {
                 style={{ backgroundImage: `url(${resolveImageSrc(movie.posterPath, 200)})` }}
               />
             )}
-            <TiltCard maxTilt={4} className="h-full w-full">
+            <TiltCard maxTilt={4} rounded="rounded-lg" shadow={false} className="h-full w-full">
               <div
                 {...{ [POSTER_VT_ATTR]: "" }}
                 className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10"

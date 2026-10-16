@@ -121,7 +121,21 @@ app. On hover the card composes several affordances at once:
 - **3D tilt + glare** via `TiltCard` (`components/ui/tilt-card.tsx`) wrapping the
   poster: pointer-driven rotateX/rotateY (`[transform-style:preserve-3d]`) + a
   cursor-following radial glare (`group-hover/tilt:opacity-100`). Disabled while the
-  menu is open.
+  menu is open. The rotation is a **two-mode spring**, not a lerp: stiff and about
+  critically damped while hovered (k170/c26, tracks briskly), soft with ζ≈0.7 on
+  leave (k60/c11, drifts flat in ~0.55s with ~3% overshoot). Using one fast lerp
+  for both made the release snap. The glare brightens the pointer side and shades
+  the far corner (`farthest-corner` gradient ending in `rgb(0 0 0/.22)`), so it
+  doesn't wash the poster white. A 1px **rim light** (`.tilt-rim` in globals.css,
+  a padding ring cut out by a two-layer mask) lights the edge nearest the pointer.
+  Both read `--glare-x/y`, written on the tilting element. A **lift shadow** (flat
+  sibling, stacked box-shadows) fades in and slides opposite the tilt, and the glow
+  eases up with the individual `scale` property (safe to transition, unlike the
+  per-frame `transform`). Props: `rounded` (default `rounded-md`, so
+  glare/rim/shadow match the frame) and `shadow` (detail-page posters pass
+  `rounded="rounded-lg" shadow={false}` because they already have a static
+  shadow). Dimming the other cards in a row was tried and rejected: the user found
+  it stiff.
 - **Ambient glow, tilt-reactive** — rendered BY `TiltCard` via its `glow` prop
   (image URL, usually `posterBlur`; `glowActive` pins it lit, e.g. LibraryCard's
   open menu; `glowClassName` for shape). A blurred, `saturate-150` copy at

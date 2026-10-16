@@ -450,7 +450,7 @@ export default function ShowDetailPage() {
                   style={{ backgroundImage: `url(${resolveImageSrc(show.posterPath, 200)})` }}
                 />
               )}
-              <TiltCard maxTilt={4} className="h-full w-full">
+              <TiltCard maxTilt={4} rounded="rounded-lg" shadow={false} className="h-full w-full">
                 <div
                   {...{ [POSTER_VT_ATTR]: "" }}
                   style={{ viewTransitionName: "movie-poster" }}

@@ -271,6 +271,21 @@
   transform: translateZ(var(--tilt-lift, 28px));
 }
 
+/* TiltCard rim light: a 1px edge highlight nearest the pointer (--glare-x/y are
+   written by TiltCard's loop). The two-layer mask cuts the content box out of the
+   border box, leaving only the 1px padding ring. */
+.tilt-rim {
+  padding: 1px;
+  background: radial-gradient(
+    7.5rem circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgb(255 255 255 / 0.38),
+    transparent 70%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
 /* ── UI Polish: Animations ────────────────────────────── */
 
 /* Stagger-fade entrance for page children */

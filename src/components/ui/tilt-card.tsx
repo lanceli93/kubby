@@ -11,11 +11,19 @@ import { cn } from "@/lib/utils";
  * follows the cursor. Children lift with `translateZ` by adding the `.tilt-lift`
  * utility class (or reading the exposed `--tilt-lift` distance) — see globals.css.
  *
- * Motion: the tilt is critically-damped — each pointer move sets a target and a
- * self-terminating rAF loop lerps the current rotation/glare toward it (τ 90ms,
- * framerate-independent), so a fast entry eases in instead of snapping. Applied
- * via direct ref DOM mutation (transform + CSS custom props), never React state,
- * so hovering never re-renders the child tree.
+ * Motion: the rotation is a damped spring — each pointer move sets a target and
+ * a self-terminating rAF loop integrates toward it. While hovered the spring is
+ * stiff and ~critically damped (tracks the pointer briskly, no wobble); on leave
+ * it switches to a soft, under-damped spring (ζ≈0.7), so the card drifts back to
+ * flat over ~0.5s with a hint of overshoot instead of snapping. The glare/rim
+ * position lerps (τ 90ms). Applied via direct ref DOM mutation (transform + CSS
+ * custom props), never React state, so hovering never re-renders the child tree.
+ *
+ * Light: a glare that brightens the pointer side and faintly shades the far
+ * corner (contrast, not a milky white wash), plus a 1px rim light on the edge
+ * nearest the pointer (`.tilt-rim`, globals.css). Lift: a soft drop shadow (flat
+ * sibling, opt out with `shadow={false}`) fades in under the card and slides away
+ * from the edge that tilts toward the viewer.
  *
  * Ambient glow: pass `glow` (an image URL — usually the tiny blurred placeholder)
  * and TiltCard paints the hover ambilight behind the card. It lives OUTSIDE the
@@ -45,12 +53,25 @@ interface TiltCardProps {
   glowActive?: boolean;
   /** Extra classes for the glow layer (e.g. `rounded-full` for round cards). */
   glowClassName?: string;
+  /** Corner radius class matching the child's frame (glare/rim/shadow follow it). */
+  rounded?: string;
+  /** Hover drop shadow under the card. Default true. */
+  shadow?: boolean;
 }
 
-// Damping time constant (ms): current eases toward target at 1 - exp(-dt/TAU).
+// Glare/rim position lerp time constant (ms): eases at 1 - exp(-dt/TAU).
 const TAU = 90;
+// Rotation springs (stiffness k, damping c; unit mass, seconds).
+// Tracking: ζ = c / 2√k ≈ 1 — brisk, no wobble. Release: ζ ≈ 0.7 — slow and soft
+// with a small overshoot. Keep ζ ≥ ~0.7 or the settle reads as a toy bounce.
+const SPRING_TRACK = { k: 170, c: 26 };
+const SPRING_RELEASE = { k: 60, c: 11 };
+// Integration step cap (s) so a dropped frame / background tab can't blow it up.
+const MAX_DT = 1 / 30;
 // How far (px) the ambient glow drifts at full tilt.
 const GLOW_SHIFT = 16;
+// How far (px) the drop shadow slides away from the lifted edge at full tilt.
+const SHADOW_SHIFT = 6;
 
 interface TiltState {
   rx: number; // rotateX (deg)
@@ -67,15 +88,21 @@ export function TiltCard({
   glow,
   glowActive,
   glowClassName,
+  rounded = "rounded-md",
+  shadow = true,
 }: TiltCardProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef<HTMLDivElement>(null);
   const glowLayerRef = useRef<HTMLDivElement>(null);
-  const glareRef = useRef<HTMLDivElement>(null);
-  // Where the tilt is heading vs. where it currently sits; the loop lerps one
+  const shadowLayerRef = useRef<HTMLDivElement>(null);
+  // Where the tilt is heading vs. where it currently sits; the loop moves one
   // toward the other and writes `current` to the DOM.
   const targetRef = useRef<TiltState>({ rx: 0, ry: 0, gx: 50, gy: 50 });
   const currentRef = useRef<TiltState>({ rx: 0, ry: 0, gx: 50, gy: 50 });
+  // Rotation velocity (deg/s) for the spring integrator.
+  const velRef = useRef({ rx: 0, ry: 0 });
+  // Pointer is over the card → stiff tracking spring; else soft release spring.
+  const hoveringRef = useRef(false);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
   // Whether interactive tilt is allowed (fine pointer + motion not reduced).
@@ -97,7 +124,14 @@ export function TiltCard({
     };
   }, []);
 
-  // Time-based lerp toward target; self-terminates once everything settles.
+  // Toggle compositor-layer hints on the tilting element and its flat siblings.
+  const setLayerHints = (value: string) => {
+    if (tiltRef.current) tiltRef.current.style.willChange = value;
+    if (glowLayerRef.current) glowLayerRef.current.style.willChange = value;
+    if (shadowLayerRef.current) shadowLayerRef.current.style.willChange = value;
+  };
+
+  // Spring/lerp toward target; self-terminates once everything settles.
   const tick = (ts: number) => {
     const el = tiltRef.current;
     if (!el) {
@@ -108,22 +142,29 @@ export function TiltCard({
     // Promote to its own compositor layer only while the loop is live; cleared
     // below the instant it settles (see the `settled` branch), so idle cards
     // never hold a GPU layer.
-    el.style.willChange = "transform";
-    if (glowLayerRef.current) glowLayerRef.current.style.willChange = "transform";
+    setLayerHints("transform");
     const last = lastTsRef.current ?? ts;
-    const dt = ts - last;
+    const dtMs = ts - last;
     lastTsRef.current = ts;
-    const k = 1 - Math.exp(-dt / TAU);
+    const dt = Math.min(dtMs / 1000, MAX_DT);
     const target = targetRef.current;
     const cur = currentRef.current;
-    cur.rx += (target.rx - cur.rx) * k;
-    cur.ry += (target.ry - cur.ry) * k;
+    const vel = velRef.current;
+    // Semi-implicit Euler spring step on each rotation axis.
+    const { k: sk, c: sc } = hoveringRef.current ? SPRING_TRACK : SPRING_RELEASE;
+    vel.rx += (sk * (target.rx - cur.rx) - sc * vel.rx) * dt;
+    vel.ry += (sk * (target.ry - cur.ry) - sc * vel.ry) * dt;
+    cur.rx += vel.rx * dt;
+    cur.ry += vel.ry * dt;
+    const k = 1 - Math.exp(-dtMs / TAU);
     cur.gx += (target.gx - cur.gx) * k;
     cur.gy += (target.gy - cur.gy) * k;
-    // Snap and stop once the residual is imperceptible.
+    // Snap and stop once the residual (and spring velocity) is imperceptible.
     const settled =
       Math.abs(target.rx - cur.rx) < 0.02 &&
       Math.abs(target.ry - cur.ry) < 0.02 &&
+      Math.abs(vel.rx) < 0.05 &&
+      Math.abs(vel.ry) < 0.05 &&
       Math.abs(target.gx - cur.gx) < 0.1 &&
       Math.abs(target.gy - cur.gy) < 0.1;
     if (settled) {
@@ -131,23 +172,22 @@ export function TiltCard({
       cur.ry = target.ry;
       cur.gx = target.gx;
       cur.gy = target.gy;
+      vel.rx = 0;
+      vel.ry = 0;
     }
     el.style.transform = `rotateX(${cur.rx}deg) rotateY(${cur.ry}deg)`;
+    // Glare + rim read these from the tilting element (inherited).
+    el.style.setProperty("--glare-x", `${cur.gx}%`);
+    el.style.setProperty("--glare-y", `${cur.gy}%`);
     const root = rootRef.current;
     if (root && maxTilt > 0) {
       root.style.setProperty("--tilt-nx", `${cur.ry / maxTilt}`);
       root.style.setProperty("--tilt-ny", `${-cur.rx / maxTilt}`);
     }
-    const glare = glareRef.current;
-    if (glare) {
-      glare.style.setProperty("--glare-x", `${cur.gx}%`);
-      glare.style.setProperty("--glare-y", `${cur.gy}%`);
-    }
     if (settled) {
       // Settle-back is done (this also fires after pointerleave, once the
-      // ease-to-flat finishes) — release the compositor layer.
-      el.style.willChange = "";
-      if (glowLayerRef.current) glowLayerRef.current.style.willChange = "";
+      // ease-to-flat finishes) — release the compositor layers.
+      setLayerHints("");
       rafRef.current = null;
       lastTsRef.current = null;
       return;
@@ -168,6 +208,7 @@ export function TiltCard({
     if (!el) return;
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
+    hoveringRef.current = true;
     // Normalized pointer position within the card: 0..1 on each axis.
     const px = (e.clientX - rect.left) / rect.width;
     const py = (e.clientY - rect.top) / rect.height;
@@ -181,8 +222,10 @@ export function TiltCard({
     startLoop();
   };
 
-  // Ease back to flat; glare position stays put (its opacity is CSS-driven).
+  // Ease back to flat on the soft release spring; glare position stays put (its
+  // opacity is CSS-driven).
   const resetTilt = () => {
+    hoveringRef.current = false;
     targetRef.current = { ...targetRef.current, rx: 0, ry: 0 };
     startLoop();
   };
@@ -197,8 +240,7 @@ export function TiltCard({
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       // If we unmount mid-animation the node is torn down anyway, but clear the
       // hint defensively so no layer is ever left dangling.
-      if (tiltRef.current) tiltRef.current.style.willChange = "";
-      if (glowLayerRef.current) glowLayerRef.current.style.willChange = "";
+      setLayerHints("");
     };
   }, []);
 
@@ -218,17 +260,40 @@ export function TiltCard({
       onPointerMove={handlePointerMove}
       onPointerLeave={resetTilt}
     >
+      {/* Lift shadow — flat sibling under everything (like the glow, outside the
+          preserve-3d subtree). Fades in on hover and slides away from the edge
+          that tilts toward the viewer; opacity-only transition for the same
+          reason as the glow. Stacked layers read as one soft light source. */}
+      {shadow && (
+        <div
+          ref={shadowLayerRef}
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-0 -z-10 transition-opacity duration-300 ease-out",
+            glowActive ? "opacity-100" : "opacity-0 group-hover/tilt:opacity-100",
+            rounded,
+          )}
+          style={{
+            boxShadow:
+              "0 0.25rem 0.5rem rgb(0 0 0 / 0.22), 0 0.75rem 1.5rem rgb(0 0 0 / 0.28), 0 1.5rem 3rem rgb(0 0 0 / 0.32)",
+            transform: `translate(calc(var(--tilt-nx, 0) * ${-SHADOW_SHIFT}px), calc(0.375rem + var(--tilt-ny, 0) * ${-SHADOW_SHIFT}px))`,
+          }}
+        />
+      )}
       {/* Ambient glow (ambilight) — blurred image bleeding behind, hover-only.
           Its offset tracks --tilt-nx/ny, which the rAF loop writes every frame,
-          so it must transition opacity ONLY: a transform transition would chase
-          each frame's value and smear the motion. */}
+          so it must not transition `transform`: that would chase each frame's
+          value and smear the motion. The individual `scale` property is separate
+          from `transform`, so it can ease the glow up as the card "rises". */}
       {glow && (
         <div
           ref={glowLayerRef}
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-0 -z-10 rounded-md bg-cover bg-center blur-[24px] saturate-150 transition-opacity duration-300 ease-out",
-            glowActive ? "opacity-55" : "opacity-0 group-hover:opacity-55",
+            "pointer-events-none absolute inset-0 -z-10 rounded-md bg-cover bg-center blur-[24px] saturate-150 transition-[opacity,scale] duration-300 ease-out",
+            glowActive
+              ? "opacity-55"
+              : "scale-[0.94] opacity-0 group-hover:scale-100 group-hover:opacity-55",
             glowClassName,
           )}
           style={{
@@ -239,14 +304,20 @@ export function TiltCard({
       )}
       <div
         ref={tiltRef}
-        className="relative h-full w-full [transform-style:preserve-3d]"
+        className={cn("relative h-full w-full [transform-style:preserve-3d]", rounded)}
       >
         {children}
-        {/* Glare — rides above the poster, ignores pointer, fades in on hover. */}
+        {/* Glare — rides above the poster, ignores pointer, fades in on hover.
+            Brightens the pointer side and faintly shades the far corner, so it
+            reads as light raking across a print rather than a white wash. */}
         <div
-          ref={glareRef}
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-[6] rounded-[inherit] opacity-0 transition-opacity duration-300 ease-out group-hover/tilt:opacity-100 [background:radial-gradient(circle_at_var(--glare-x,50%)_var(--glare-y,50%),rgba(255,255,255,0.18),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 z-[6] rounded-[inherit] opacity-0 transition-opacity duration-300 ease-out group-hover/tilt:opacity-100 [background:radial-gradient(farthest-corner_circle_at_var(--glare-x,50%)_var(--glare-y,50%),rgb(255_255_255/0.13),rgb(255_255_255/0.04)_30%,transparent_55%,rgb(0_0_0/0.22))]"
+        />
+        {/* Rim light — 1px edge highlight nearest the pointer (globals.css). */}
+        <div
+          aria-hidden
+          className="tilt-rim pointer-events-none absolute inset-0 z-[9] rounded-[inherit] opacity-0 transition-opacity duration-300 ease-out group-hover/tilt:opacity-100"
         />
       </div>
     </div>
