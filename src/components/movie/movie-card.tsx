@@ -144,16 +144,7 @@ export function MovieCard({
           bars use a gradient scrim, not backdrop-blur (preserve-3d breaks
           backdrop-filter on descendants in Chromium). */}
       <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: "16.875rem" }}>
-        {/* Ambient glow (ambilight) — blurred poster bleeding behind, hover-only */}
-        {posterBlur && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55"
-            style={{ backgroundImage: `url(${posterBlur})` }}
-          />
-        )}
-
-        <TiltCard disabled={menuOpen} className="h-full w-full">
+        <TiltCard glow={posterBlur} disabled={menuOpen} className="h-full w-full">
           <div ref={posterRef} className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
             {posterPath && !imgError ? (
               <Image

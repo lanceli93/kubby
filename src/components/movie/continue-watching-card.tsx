@@ -52,16 +52,7 @@ export function ContinueWatchingCard({
             The tilting subtree (image + title overlay + play button + progress
             bar) is wrapped in TiltCard so it all tilts as one object. */}
         <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-          {/* Ambient glow (ambilight) — blurred poster bleeding behind, hover-only.
-              Mirrors movie-card.tsx. */}
-          {posterBlur && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55"
-              style={{ backgroundImage: `url(${posterBlur})` }}
-            />
-          )}
-          <TiltCard className="h-full w-full">
+          <TiltCard glow={posterBlur} className="h-full w-full">
             <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
               {imageSrc && !imgError ? (
                 <Image

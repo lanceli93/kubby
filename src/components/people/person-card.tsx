@@ -103,16 +103,7 @@ export function PersonCard({
           scrim, not backdrop-blur (preserve-3d breaks backdrop-filter on
           descendants in Chromium). */}
       <div className="relative" style={{ width: rem(width), height: rem(height) }}>
-        {/* Ambient glow (ambilight) — blurred photo bleeding behind, hover-only */}
-        {photoBlur && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55"
-            style={{ backgroundImage: `url(${photoBlur})` }}
-          />
-        )}
-
-        <TiltCard disabled={menuOpen} className="h-full w-full">
+        <TiltCard glow={photoBlur} disabled={menuOpen} className="h-full w-full">
           <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
             {photoPath && !imgError ? (
               <Image

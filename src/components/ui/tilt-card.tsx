@@ -17,6 +17,13 @@ import { cn } from "@/lib/utils";
  * via direct ref DOM mutation (transform + CSS custom props), never React state,
  * so hovering never re-renders the child tree.
  *
+ * Ambient glow: pass `glow` (an image URL — usually the tiny blurred placeholder)
+ * and TiltCard paints the hover ambilight behind the card. It lives OUTSIDE the
+ * tilting subtree (a flat sibling, so its blur isn't flattened by preserve-3d) but
+ * still reacts to the tilt: the loop publishes the normalized tilt as
+ * `--tilt-nx` / `--tilt-ny` (−1..1) on the wrapper and the glow drifts away from
+ * the pointer, spilling out from under the edge that lifts toward the viewer.
+ *
  * Degradation: no tilt/glare on coarse pointers (touch) or when the user prefers
  * reduced motion — in those cases (and when `disabled`) children render unchanged
  * and flat, preserving current behavior.
@@ -32,10 +39,18 @@ interface TiltCardProps {
   maxTilt?: number;
   /** Freeze flat and skip all pointer handling (e.g. while a menu is open). */
   disabled?: boolean;
+  /** Image URL for the hover ambient glow behind the card; omit for none. */
+  glow?: string | null;
+  /** Keep the glow lit without hover (e.g. while the card's menu is open). */
+  glowActive?: boolean;
+  /** Extra classes for the glow layer (e.g. `rounded-full` for round cards). */
+  glowClassName?: string;
 }
 
 // Damping time constant (ms): current eases toward target at 1 - exp(-dt/TAU).
 const TAU = 90;
+// How far (px) the ambient glow drifts at full tilt.
+const GLOW_SHIFT = 16;
 
 interface TiltState {
   rx: number; // rotateX (deg)
@@ -44,8 +59,18 @@ interface TiltState {
   gy: number; // glare y (%)
 }
 
-export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCardProps) {
+export function TiltCard({
+  children,
+  className,
+  maxTilt = 6,
+  disabled,
+  glow,
+  glowActive,
+  glowClassName,
+}: TiltCardProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef<HTMLDivElement>(null);
+  const glowLayerRef = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
   // Where the tilt is heading vs. where it currently sits; the loop lerps one
   // toward the other and writes `current` to the DOM.
@@ -84,6 +109,7 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
     // below the instant it settles (see the `settled` branch), so idle cards
     // never hold a GPU layer.
     el.style.willChange = "transform";
+    if (glowLayerRef.current) glowLayerRef.current.style.willChange = "transform";
     const last = lastTsRef.current ?? ts;
     const dt = ts - last;
     lastTsRef.current = ts;
@@ -107,6 +133,11 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
       cur.gy = target.gy;
     }
     el.style.transform = `rotateX(${cur.rx}deg) rotateY(${cur.ry}deg)`;
+    const root = rootRef.current;
+    if (root && maxTilt > 0) {
+      root.style.setProperty("--tilt-nx", `${cur.ry / maxTilt}`);
+      root.style.setProperty("--tilt-ny", `${-cur.rx / maxTilt}`);
+    }
     const glare = glareRef.current;
     if (glare) {
       glare.style.setProperty("--glare-x", `${cur.gx}%`);
@@ -116,6 +147,7 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
       // Settle-back is done (this also fires after pointerleave, once the
       // ease-to-flat finishes) — release the compositor layer.
       el.style.willChange = "";
+      if (glowLayerRef.current) glowLayerRef.current.style.willChange = "";
       rafRef.current = null;
       lastTsRef.current = null;
       return;
@@ -166,6 +198,7 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
       // If we unmount mid-animation the node is torn down anyway, but clear the
       // hint defensively so no layer is ever left dangling.
       if (tiltRef.current) tiltRef.current.style.willChange = "";
+      if (glowLayerRef.current) glowLayerRef.current.style.willChange = "";
     };
   }, []);
 
@@ -179,11 +212,31 @@ export function TiltCard({ children, className, maxTilt = 6, disabled }: TiltCar
 
   return (
     <div
+      ref={rootRef}
       className={cn("group/tilt relative [perspective:900px]", className)}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetTilt}
     >
+      {/* Ambient glow (ambilight) — blurred image bleeding behind, hover-only.
+          Its offset tracks --tilt-nx/ny, which the rAF loop writes every frame,
+          so it must transition opacity ONLY: a transform transition would chase
+          each frame's value and smear the motion. */}
+      {glow && (
+        <div
+          ref={glowLayerRef}
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-0 -z-10 rounded-md bg-cover bg-center blur-[24px] saturate-150 transition-opacity duration-300 ease-out",
+            glowActive ? "opacity-55" : "opacity-0 group-hover:opacity-55",
+            glowClassName,
+          )}
+          style={{
+            backgroundImage: `url("${glow}")`,
+            transform: `translate(calc(var(--tilt-nx, 0) * ${-GLOW_SHIFT}px), calc(var(--tilt-ny, 0) * ${-GLOW_SHIFT}px)) scale(1.1)`,
+          }}
+        />
+      )}
       <div
         ref={tiltRef}
         className="relative h-full w-full [transform-style:preserve-3d]"

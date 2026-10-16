@@ -86,16 +86,7 @@ export function AlbumCard({
             it all tilts as one object; the play overlay uses no backdrop-blur
             (preserve-3d breaks backdrop-filter on descendants in Chromium). */}
         <div className="relative aspect-square w-full">
-          {/* Ambient glow (ambilight) — blurred cover bleeding behind, hover-only */}
-          {coverBlur && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55"
-              style={{ backgroundImage: `url(${coverBlur})` }}
-            />
-          )}
-
-          <TiltCard className="h-full w-full">
+          <TiltCard glow={coverBlur} className="h-full w-full">
             <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
               {coverPath && !imgError ? (
                 <Image

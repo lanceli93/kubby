@@ -44,15 +44,7 @@ export function NextUpCard({
       <Link href={`/tv/episodes/${episodeId}/play`} className="focus-ring block rounded-md">
         {/* Still shell — 16:9 landscape. NOT overflow-hidden so tilt + glow bleed. */}
         <div className="relative w-full aspect-video">
-          {stillBlur && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -z-10 scale-110 rounded-md bg-cover bg-center opacity-0 blur-[24px] saturate-150 transition-fluid group-hover:opacity-55"
-              style={{ backgroundImage: `url(${stillBlur})` }}
-            />
-          )}
-
-          <TiltCard className="h-full w-full">
+          <TiltCard glow={stillBlur} className="h-full w-full">
             <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
               {image ? (
                 <Image

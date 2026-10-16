@@ -122,8 +122,16 @@ app. On hover the card composes several affordances at once:
   poster: pointer-driven rotateX/rotateY (`[transform-style:preserve-3d]`) + a
   cursor-following radial glare (`group-hover/tilt:opacity-100`). Disabled while the
   menu is open.
-- **Ambient glow** — a blurred, `saturate-150` copy of the poster bleeds behind at
-  `scale-110`, `opacity-0 group-hover:opacity-55` (only when `posterBlur` exists).
+- **Ambient glow, tilt-reactive** — rendered BY `TiltCard` via its `glow` prop
+  (image URL, usually `posterBlur`; `glowActive` pins it lit, e.g. LibraryCard's
+  open menu; `glowClassName` for shape). A blurred, `saturate-150` copy at
+  `scale(1.1)`, `opacity-0 group-hover:opacity-55`, sitting as a flat sibling of
+  the preserve-3d subtree. The tilt loop writes `--tilt-nx/--tilt-ny` (−1..1) on
+  the TiltCard root each frame and the glow translates up to 16px *away* from the
+  pointer (light spilling from under the lifted edge). It transitions **opacity
+  only** — a transform transition would chase the per-frame var and smear. All 7
+  TiltCard cards use the prop; ArtistCard/bookmark cards (no tilt) keep a static
+  inline glow div.
 - **Centered play button** `scale-75 opacity-0 group-hover:scale-100
   group-hover:opacity-100`, lifted toward the viewer in 3D (`--tilt-lift: 40px`).
 - **Gradient-scrim overlay bar** (`bg-gradient-to-t from-black/85…`, NOT
