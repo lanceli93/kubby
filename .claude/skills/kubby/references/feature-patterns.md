@@ -816,6 +816,17 @@ movies + ScrollRows for libraries/continue-watching/favorites), Favorites
   height class as the real hero; keep them in sync or the rows jump when the wall
   pops in. (Home header is transparent/`absolute`, so the scroll viewport ≈ full
   `100vh` — the math assumes that.)
+- **Ambilight field** (`components/home/ambient-field.tsx`, also on `/tv`): a
+  viewport-pinned layer of blurred blobs colored by `--ambient`, which eases toward
+  the displayed hero item's tint (`setBase`, from `extractAmbientColor(posterBlur)`
+  in `lib/ambient-color.ts`). Tuning was hard to get right: first too faint, then
+  the 2fe0dd5 boost read as a whole-page color cast. What fixed it: (1) clamp the
+  tint in **OKLCH** (L 0.32–0.48, C 0.05–0.13), not HSL, because HSL let
+  yellow/orange posters blaze far brighter than blue at the same "L"; (2) a
+  top-anchored `mask-image` fade (opaque to 30%, transparent at 80%) so the light
+  comes from the hero and the content rows stay near-neutral black; (3) blob
+  opacities ≈0.24/0.20/0.16/0.12. Tune intensity with these knobs, and don't add
+  more full-viewport blobs.
 - **Preferences UI**: `/preferences/hero-mosaic/page.tsx` — two sections (Movie
   wall / Actor wall) separated by a divider, each with live preview. Single Save
   button PUTs both configs in one request and invalidates both hero-wall queries.
