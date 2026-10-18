@@ -8,6 +8,7 @@ import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
 import { Dices } from "lucide-react";
 import { useAmbient } from "@/components/home/ambient-field";
+import { clearRecommendReturn } from "@/components/recommend/session";
 import { extractAmbientColor } from "@/lib/ambient-color";
 import {
   HeroMosaic,
@@ -417,7 +418,10 @@ export function HomeHero({
             {/* 今晚看什么 — draw-a-hand recommendations */}
             <Link
               href="/movies/recommend"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                clearRecommendReturn(); // a fresh visit: the user draws the first hand
+              }}
               aria-label={t("heroTonight")}
               title={t("heroTonight")}
               className="flex h-11 items-center gap-2 rounded-full border border-[#facc15]/30 bg-gradient-to-r from-[#6366f1]/25 to-[#ca8a04]/20 px-4 text-sm sm:px-5 font-medium text-[#fde68a] shadow-[0_0_24px_-8px_rgba(202,138,4,0.55)] transition-fluid hover:scale-[1.03] hover:border-[#facc15]/55 hover:from-[#6366f1]/40 hover:to-[#ca8a04]/30 active:scale-95"

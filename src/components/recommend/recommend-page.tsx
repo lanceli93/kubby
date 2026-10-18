@@ -30,6 +30,7 @@ import type {
 } from "@/lib/recommend/types";
 import { AmbientBackdrop, type AmbientBackdropHandle } from "./ambient-backdrop";
 import { FilterBar } from "./filter-bar";
+import { clearRecommendReturn, isRecommendReturn, markRecommendReturn } from "./session";
 import { fetchPool, poolQueryString, postDraw, postHistory } from "./recommend-api";
 import { cardKey, type DrawPhase, type HandSlot, type RecommendSceneDef } from "./scene-types";
 import { TABLETOP_SCENE } from "./tabletop-scene";
@@ -72,7 +73,10 @@ function loadSaved(): Saved | null {
     if (!raw) return null;
     const s = JSON.parse(raw) as Saved;
     if (!s || typeof s !== "object" || !Array.isArray(s.hand) || s.hand.length !== HAND_SIZE) return null;
-    return { filters: s.filters ?? DEFAULT_FILTERS, hand: s.hand, locked: Array.isArray(s.locked) ? s.locked : [] };
+    const filters = s.filters ?? DEFAULT_FILTERS;
+    // Filters always survive; the hand only on a return trip from a card.
+    if (!isRecommendReturn()) return { filters, hand: emptyHand(), locked: [] };
+    return { filters, hand: s.hand, locked: Array.isArray(s.locked) ? s.locked : [] };
   } catch {
     return null;
   }
@@ -163,6 +167,9 @@ export function RecommendPage() {
   const { open: drawerOpen } = useNavDrawer();
 
   const [saved] = useState(loadSaved);
+  // consume the return-trip flag (read by loadSaved) once mounted — not in the
+  // initializer, which StrictMode runs twice
+  useEffect(() => clearRecommendReturn(), []);
   const [filters, setFilters] = useState<RecommendFilters>(saved?.filters ?? DEFAULT_FILTERS);
   const debouncedFilters = useDebounced(filters, POOL_DEBOUNCE_MS);
   // Theme = the per-user preference (user_preferences.recommend_theme). The
@@ -450,12 +457,25 @@ export function RecommendPage() {
 
   const onOpenMovie = useCallback(
     (card: MovieCardData, poster: HTMLElement | null) => {
+      markRecommendReturn();
       startPosterViewTransition(`/movies/${card.id}`, poster, (href) => router.push(href));
     },
     [router]
   );
-  const onPlay = useCallback((card: MovieCardData) => router.push(`/movies/${card.id}/play`), [router]);
-  const onOpenPerson = useCallback((card: ActorCardData) => router.push(`/people/${card.id}`), [router]);
+  const onPlay = useCallback(
+    (card: MovieCardData) => {
+      markRecommendReturn();
+      router.push(`/movies/${card.id}/play`);
+    },
+    [router]
+  );
+  const onOpenPerson = useCallback(
+    (card: ActorCardData) => {
+      markRecommendReturn();
+      router.push(`/people/${card.id}`);
+    },
+    [router]
+  );
 
   // ── filters ──
   const onPreset = useCallback((p: RecommendPreset) => {
