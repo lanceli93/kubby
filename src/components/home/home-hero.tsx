@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { useTranslations } from "next-intl";
+import { Dices } from "lucide-react";
 import { useAmbient } from "@/components/home/ambient-field";
 import { extractAmbientColor } from "@/lib/ambient-color";
 import {
@@ -412,6 +413,18 @@ export function HomeHero({
               className="flex h-11 items-center rounded-full border border-white/25 bg-white/5 px-7 text-sm font-medium text-white/90 transition-fluid hover:scale-[1.03] hover:border-white/40 hover:bg-white/15 active:scale-95"
             >
               {t("heroDetails")}
+            </Link>
+            {/* 今晚看什么 — draw-a-hand recommendations */}
+            <Link
+              href="/movies/recommend"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={t("heroTonight")}
+              title={t("heroTonight")}
+              className="flex h-11 items-center gap-2 rounded-full border border-[#facc15]/30 bg-gradient-to-r from-[#6366f1]/25 to-[#ca8a04]/20 px-4 text-sm sm:px-5 font-medium text-[#fde68a] shadow-[0_0_24px_-8px_rgba(202,138,4,0.55)] transition-fluid hover:scale-[1.03] hover:border-[#facc15]/55 hover:from-[#6366f1]/40 hover:to-[#ca8a04]/30 active:scale-95"
+            >
+              <Dices className="h-4 w-4" />
+              {/* icon-only on phones so the three pills fit one row */}
+              <span className="hidden sm:inline">{t("heroTonight")}</span>
             </Link>
           </div>
         </div>
