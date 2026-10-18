@@ -3,7 +3,7 @@
 ## Contents
 - [Project Structure](#project-structure)
 - [Domains (Cinema + TV + Photos + Music)](#domains-cinema--tv--photos--music)
-- [Database Schema (32 tables)](#database-schema-32-tables)
+- [Database Schema (34 tables)](#database-schema-34-tables)
 - [API Endpoints](#api-endpoints)
 - [Authentication](#authentication)
 - [Library Scanner](#library-scanner)
@@ -44,6 +44,7 @@ kubby/
 │   │   │   │   └── artists/[id]/page.tsx # Artist detail (header + album grid)
 │   │   │   ├── movies/
 │   │   │   │   ├── page.tsx              # Library browse (Tabs: Movies/Favorites/Genres/Actors)
+│   │   │   │   ├── recommend/page.tsx    # 今晚看什么 draw-a-hand recommendations (static segment beside [id]; loads RecommendPage ssr:false)
 │   │   │   │   └── [id]/
 │   │   │   │       ├── page.tsx          # Movie detail (fanart + poster + metadata + bookmark mode/FrameScrubber + cast)
 │   │   │   │       └── play/page.tsx     # Video player (HLS.js, bookmarks, progress save)
@@ -51,7 +52,7 @@ kubby/
 │   │   │   ├── search/page.tsx           # Search (movies + people + bookmarks)
 │   │   │   ├── profile/page.tsx          # Profile (displayName/password/account type)
 │   │   │   ├── preferences/              # User preferences (PreferencesSidebar)
-│   │   │   │   ├── card-badges/page.tsx        # Card badge toggles
+│   │   │   │   ├── card-badges/page.tsx        # Card badge toggles + tier rarity FX toggle (show_tier_effects, live previews)
 │   │   │   │   ├── ratings-bookmarks/page.tsx  # Rating dimensions / bookmark icons
 │   │   │   │   ├── hero-mosaic/page.tsx        # Home hero mosaic + people mosaic config, live preview
 │   │   │   │   ├── playback/page.tsx           # External player settings
@@ -61,7 +62,7 @@ kubby/
 │   │   │       ├── libraries/page.tsx    # Library CRUD + scan + folder picker
 │   │   │       ├── scraper/page.tsx      # TMDB API key management
 │   │   │       └── users/page.tsx        # User management
-│   │   └── api/                          # ~30 API route files
+│   │   └── api/                          # ~100 API route files
 │   ├── components/
 │   │   ├── layout/                       # AppHeader (brand domain-switcher dropdown), BottomTabs, AdminSidebar, NavSidebar, GlobalScanBar, DomainCookieSync, PreferencesSidebar
 │   │   ├── photos/                       # lightbox-video.tsx (iOS/HEVC-aware inline playback), lightbox-info-panel.tsx (EXIF)
@@ -71,20 +72,27 @@ kubby/
 │   │   │   ├── bookmark-card.tsx         # Bookmark thumbnail card (320px, hover ambilight glow)
 │   │   │   ├── favorites-browser.tsx     # Favorites tab (Movies/Actors sub-tabs, full responsive grid + infinite scroll)
 │   │   │   └── frame-scrubber.tsx        # Frame browser panel (two-column: preview+overlay/form, screenshot to gallery)
-│   │   ├── home/                         # home-hero.tsx, hero-mosaic.tsx (movie wall), people-hero.tsx (actor wall)
+│   │   ├── home/                         # home-hero.tsx (+ 今晚看什么 entry pill → /movies/recommend), hero-mosaic.tsx (movie wall), people-hero.tsx (actor wall)
+│   │   ├── recommend/                    # 今晚看什么: recommend-page.tsx (shell: filters/pool/hand/draw), filter-bar.tsx, scene-types.ts (scene contract + draw protocol), vortex-scene.tsx (default), tabletop-scene.tsx, card-faces.tsx (shared hand-card faces), ambient-backdrop.tsx, recommend-api.ts, recommend.css
 │   │   ├── people/person-card.tsx        # Person card (sm/md/lg sizes)
 │   │   ├── library/
 │   │   │   ├── library-card.tsx          # Library card (360x200)
 │   │   │   ├── add-library-card.tsx      # Dashed "+" card with inline add dialog
 │   │   │   └── folder-picker.tsx         # Server filesystem browser dialog
-│   │   └── ui/                           # 13 shadcn/ui components
+│   │   └── ui/                           # shadcn/ui primitives + TiltCard, GlassToast, ScrollRow, TierFx (tier-fx.tsx/.css — tier rarity card FX)
 │   ├── lib/
 │   │   ├── auth.ts                       # NextAuth full config (DB queries, bcrypt)
 │   │   ├── auth.config.ts                # NextAuth lightweight (Edge-compatible, no DB)
 │   │   ├── db/
-│   │   │   ├── schema.ts                 # Drizzle schema (32 tables, incl. photo_items + photo_albums/photo_album_items + 6 music tables + 10 TV tables)
+│   │   │   ├── schema.ts                 # Drizzle schema (34 tables, incl. photo_items + photo_albums/photo_album_items + 6 music tables + 10 TV tables + recommendation_history + data_versions)
 │   │   │   └── index.ts                  # Proxy lazy-init DB connection (WAL + FK + auto-migrate)
 │   │   ├── paths.ts                      # Centralized path management (KUBBY_DATA_DIR; incl. getMusicArtDir → metadata/music-art)
+│   │   ├── recommend/                    # 今晚看什么 (cinema only)
+│   │   │   ├── types.ts                  # Client/server contract (filters, PoolResponse, card data, reason codes, Draw/History requests)
+│   │   │   ├── presets.ts                # Client-safe presets, DEFAULT_FILTERS, HAND_SIZE=5, handComposition(mix)
+│   │   │   ├── parse.ts                  # Lenient input sanitizers for the 3 routes (pure, no DB)
+│   │   │   └── engine.ts                 # Server-only: SQL hard filters → scoring + reasons → weighted sampling + diversity → history de-dup
+│   │   ├── tv/user-data.ts               # touchShowLastPlayed() — bump user_tv_show_data.lastPlayedAt (in-app save + external launch)
 │   │   ├── music/
 │   │   │   ├── audio-decider.ts          # direct vs transcode decision by ext (primary) + codec hint (ALAC→transcode)
 │   │   │   └── queries.ts                # Batched album/track artist-name + album track-count helpers (GROUP_CONCAT, no N+1) + album track ordering
@@ -110,7 +118,7 @@ kubby/
 │   ├── i18n/
 │   │   ├── config.ts                     # locales: ["en", "zh"]
 │   │   ├── request.ts                    # Server: read locale from NEXT_LOCALE cookie
-│   │   └── messages/{en,zh}.json         # 22 namespaces (incl. photos, music, tv)
+│   │   └── messages/{en,zh}.json         # 23 namespaces (incl. photos, music, tv, recommend)
 │   ├── providers/
 │   │   ├── query-provider.tsx            # TanStack React Query
 │   │   ├── session-provider.tsx          # NextAuth session
@@ -189,7 +197,7 @@ pipeline, auth, i18n) is reused, not forked.
 - **Theme is shared** — photos and music both use the same dark cinema tokens, not a
   separate light theme (explicit user decision).
 
-## Database Schema (32 tables)
+## Database Schema (34 tables)
 
 ### Core tables
 
@@ -214,7 +222,13 @@ pipeline, auth, i18n) is reused, not forked.
 
 **user_person_data**: id, user_id (FK), person_id (FK), personal_rating, dimension_ratings (JSON)
 
-**user_preferences**: id, user_id (FK UNIQUE), movie_rating_dimensions (JSON array), person_rating_dimensions (JSON array), show_movie_rating_badge, show_person_tier_badge, show_person_rating_badge, show_resolution_badge, external_player_enabled, external_player_name, external_player_path, external_player_mode, disabled_bookmark_icons (JSON), quick_bookmark_template (JSON), subtle_bookmark_markers, player_360_mode, movie_dimension_weights (JSON), person_dimension_weights (JSON), hero_mosaic_config (JSON — home movie wall), people_mosaic_config (JSON — home actor wall)
+**user_preferences**: id, user_id (FK UNIQUE), movie_rating_dimensions (JSON array), person_rating_dimensions (JSON array), show_movie_rating_badge, show_person_tier_badge, show_person_rating_badge, show_resolution_badge, external_player_enabled, external_player_name, external_player_path, external_player_mode, disabled_bookmark_icons (JSON), quick_bookmark_template (JSON), subtle_bookmark_markers, player_360_mode, movie_dimension_weights (JSON), person_dimension_weights (JSON), hero_mosaic_config (JSON — home movie wall), people_mosaic_config (JSON — home actor wall), recommend_theme (`vortex`|`tabletop`, default `vortex` — 今晚看什么 scene), show_tier_effects (bool, default true — tier rarity card FX master toggle). TV columns: see TV domain tables below.
+
+### Recommendation tables (migration 0043)
+
+**recommendation_history**: id, user_id (FK CASCADE), item_type (`movie`|`person`|`bookmark`), item_id (**NOT a FK** — movie, cinema person or movie_bookmarks id; rows for deleted items are simply ignored by the engine), action (`shown`|`dismissed`), created_at (default `datetime('now')`, UTC text). Indexes `idx_rh_user_created` (user_id, created_at), `idx_rh_user_item` (user_id, item_type, item_id). Drives the 今晚看什么 de-dup: `shown` < 30 days / `dismissed` < 90 days are held back; rows > 120 days are pruned on each draw. Created only via `CREATE TABLE IF NOT EXISTS` + `CREATE INDEX IF NOT EXISTS` statements in the `pending` array of `db/index.ts` (the same 0043 block ALTERs in `recommend_theme` / `show_tier_effects`).
+
+**data_versions** (migration 0044): name (PK), version (int). Change counters for in-memory caches; row `cinema_library` is bumped by 12 `CREATE TRIGGER IF NOT EXISTS trg_dv_<table>_<op>` triggers (AFTER INSERT/UPDATE/DELETE on movies, movie_people, people, media_libraries) declared in the `pending` array of `db/index.ts` (triggers are NOT in schema.ts). Read with `readDataVersion()` (`lib/db/data-versions.ts`); keys the 今晚看什么 library snapshot and the `/api/filters` response cache.
 
 ### Media info tables
 
@@ -291,6 +305,7 @@ Migration 0041 also adds three `user_preferences` columns: `show_tv_show_rating_
 users ──1:N──> user_movie_data ──N:1──> movies
 users ──1:N──> user_person_data ──N:1──> people
 users ──1:1──> user_preferences
+users ──1:N──> recommendation_history ··> movies | people (item_id, no FK)
 users ──1:N──> movie_bookmarks ──N:1──> movies
 users ──1:N──> bookmark_icons
 media_libraries ──1:N──> movies ──1:N──> movie_people ──N:1──> people
@@ -324,6 +339,11 @@ users ──1:N──> tv_episode_bookmarks ──N:1──> tv_episodes
 - `GET /api/movies/genres` — Genre list by library
 - `GET /api/domains/preview` — Up to 3 preview image URLs per domain (`cinema`/`tv`/`photos`/`music`, key omitted when empty) for the domain-switcher `DomainCard`s; each domain reads only its own table inner-joined to an allowlisted `media_libraries.type`. Note `movies`/`tv_shows` `posterPath` is relative to the item's `folderPath` — `path.join` before `resolveImageSrc`.
 - `GET /api/movies/hero-wall` — Home hero mosaic pool (reads/overrides `hero_mosaic_config`)
+- **今晚看什么 recommendations** (`requireUser`, per-user, cinema only — engine inner-joins `media_libraries.type = 'movie'`; contract in `lib/recommend/types.ts`, see feature-patterns → 今晚看什么):
+  - `GET /api/movies/recommend/pool?genres=&tags=&minRating=&yearFrom=&yearTo=&maxRuntime=&watched=&libraryId=&preset=&mix=` — the visual pile: `{movieCount, actorCount, items: PoolItem[]}` (uniform random sample ≤ 120, no de-dup). genres/tags comma-separated
+  - `POST /api/movies/recommend/draw` — body `{filters, movies, actors, exclude?}` (counts 0–10 each, `exclude` = locked/remaining hand refs) → `{cards: RecommendCard[], repeatsAllowed}`; writes one `shown` history row per card + prunes rows > 120 days
+  - `POST /api/movies/recommend/history` — body `{type, id, action:"dismissed"}` → `{success}`; held back 90 days
+  - Theme persists via the existing `PUT /api/settings/personal-metadata {recommendTheme}` (theme-only fast path)
 - `GET /api/people/hero-wall` — Home People-tab mosaic pool (reads/overrides `people_mosaic_config`; flattens photo+fanart+gallery entries)
 - `GET /api/tv/hero-wall` — `/tv` home hero mosaic pool (random-samples shows with a poster/fanart). Honors `libraryId`/`genre`/`studio`/`tag` so the wall follows the page's active filter, and now honors the saved `tv_hero_mosaic_config` (peer of the movie wall config).
 - `GET /api/tv/genres` — TV genre list by library (peer of `/api/movies/genres`, `tv_shows` only)
@@ -336,21 +356,21 @@ users ──1:N──> tv_episode_bookmarks ──N:1──> tv_episodes
 - `POST/DELETE /api/tv/[id]/images?type=poster|fanart` — Upload/remove show poster/fanart (fork of the movie images route against `tv_shows`)
 - `GET /api/tv/[id]/bookmarks` — Aggregate the user's bookmarks across ALL episodes of a show (read-only; edit/delete stay on the per-episode `/api/tv/episodes/[id]/bookmarks/[bookmarkId]` routes)
 - `GET /api/tv/episodes/[id]/media-info` (+ `/raw`) — Episode technical media info (peer of the movie media-info; `tv_media_streams`/`tv_episodes` only)
-- `POST /api/tv/episodes/[id]/play-external` — Launch external player for an episode (peer of the movie route; resolves `tv_episodes.file_path`)
+- `POST /api/tv/episodes/[id]/play-external` — Launch external player for an episode (peer of the movie route; resolves `tv_episodes.file_path`); successful launch = one play on `user_episode_data` + `touchShowLastPlayed()` (`lib/tv/user-data.ts`) so the show surfaces in Next Up
 - `GET /api/tv` list also honors `genre`/`studio`/`tag` (JSON-text LIKE, mirroring movies) on the grid/count/recently-added, `libraryId` on `filter=next-up`, plus NEW `personId` (filmography — shows a TV person appears in) and `filter=favorites` (favorited shows) branches
 - `GET/DELETE /api/movies/[id]` — Detail (with cast/directors/userData) / Delete
 - `GET /api/movies/[id]/stream` — Video stream (HTTP 206 Range)
 - `GET /api/movies/[id]/stream/decide` — Playback decision (direct/remux/transcode)
-- `GET/PUT /api/movies/[id]/user-data` — Progress/favorite/watched/ratings
+- `GET/PUT /api/movies/[id]/user-data` — Progress/favorite/watched/ratings; PUT `{countPlay:true}` → `playCount + 1` (ignored if an explicit `playCount` is sent). Any playback field (position/isPlayed/countPlay) bumps `lastPlayedAt`. Same contract on `/api/tv/episodes/[id]/user-data` (also bumps the show's `user_tv_show_data.lastPlayedAt`)
 - `GET/POST /api/movies/[id]/bookmarks` — Bookmark list / create
 - `PUT/DELETE /api/movies/[id]/bookmarks/[bookmarkId]` — Update/delete bookmark
 - `GET /api/movies/[id]/frame` — Single frame extraction (FFmpeg -ss, JPEG, params: t, disc, maxWidth)
-- `POST /api/movies/[id]/play-external` — Launch external player
+- `POST /api/movies/[id]/play-external` — Launch external player; on a successful launch upserts `user_movie_data` `playCount + 1`, `lastPlayedAt = now` (position/isPlayed untouched; a bookkeeping failure is logged, never fails the launch)
 - `GET /api/people` — List (params: search, sort, limit, offset, filter=favorites, type)
 - `GET/PUT /api/people/[id]` — Person detail + filmography
 - `GET/PUT /api/people/[id]/user-data` — Person ratings
 - `GET/POST/DELETE /api/people/[id]/gallery` — Photo gallery
-- `GET/PUT /api/settings/personal-metadata` — User preferences
+- `GET/PUT /api/settings/personal-metadata` — User preferences (incl. `recommendTheme` validated to `vortex`|`tabletop` → 400 otherwise, `showTierEffects`). A body of ONLY `{recommendTheme}` takes a fast path that writes just that column and skips the dimension-rename / personalRating-recalc passes
 - `GET/POST /api/settings/bookmark-icons` — Custom bookmark icons
 - `PUT/DELETE /api/settings/bookmark-icons/[iconId]`
 - `GET/PUT /api/users/me` — Profile (displayName, locale)
@@ -564,6 +584,7 @@ GET /api/movies/{id}/stream/decide?disc=N
 - Mode badge: Direct/Remux/HW/SW with encoder detail popover
 - Resolution selector: 原画/1080p/720p/480p (transcode mode only), smart filtering by source width
 - Progress saved every 10s via `PUT /api/movies/{id}/user-data`
+- **Play counting** (`hooks/use-progress-save.ts`, shared by movie + TV players via `basePath`): one playback session = one play. A session is keyed by `basePath` (a new episode in the same mounted player = new session; a disc switch is not). The FIRST save of a session carries `countPlay: true` — normally the first 10s interval save (a natural "actually watched" threshold); an exit/ended `mutate()` before that carries it instead, but only if playback actually started. External players can't report back, so the successful `play-external` launch counts the play server-side. Both update `lastPlayedAt` (continue watching / recently played ordering).
 - Bookmarks: B (quick) / Shift+B (detailed with icon/tags/note)
 
 ## Audio Playback
@@ -609,7 +630,7 @@ decideAudioPlayback({ codec, ext })
 | Component | Size | Key features |
 |-----------|------|-------------|
 | MovieCard | 180x270 (responsive: w-full+aspect-[2/3]) | Poster, rating/resolution badges; hover: whole-card `scale-[1.03]` + `TiltCard` 3D tilt/glare + ambient glow + centered play + gradient-scrim overlay bar (watched/favorite/more), badges lift on tilt. See feature-patterns → Movie poster card hover |
-| PersonCard | sm:140x210, md:160x240, lg:240x340 | Photo, tier badge |
+| PersonCard | sm:140x210, md:160x240, lg:240x340 | Photo, tier badge, `TierFx` rarity rim by personal-rating tier (same on MovieCard / ShowCard — see feature-patterns → Tier rarity effects) |
 | LibraryCard | 360x200 | Cover image, name overlay, scan progress, hover menu |
 | AddLibraryCard | 360x200 | Dashed border, "+" icon, opens add library dialog |
 | BookmarkCard | 280px mobile / 320px desktop | Thumbnail, icon, tags, edit/delete |
@@ -646,7 +667,7 @@ UI Design System → Sizing.
 
 ## i18n
 
-Cookie-driven (`NEXT_LOCALE`), 22 namespaces: common, auth, setup, nav, home, settings, dashboard, movies, search, person, metadata, cardBadges, heroMosaic, peopleHero, preferences, personalMetadata, mediaInfoDialog, player, folderPicker, photos, music, tv.
+Cookie-driven (`NEXT_LOCALE`), 23 namespaces: common, auth, setup, nav, home, settings, dashboard, movies, search, person, metadata, cardBadges, heroMosaic, peopleHero, preferences, personalMetadata, mediaInfoDialog, player, folderPicker, photos, tv, music, recommend.
 
 Language switch: `setLocale()` server action writes cookie → `router.refresh()`. User locale persisted in DB via `PUT /api/users/me`.
 

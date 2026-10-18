@@ -208,6 +208,33 @@ export const userPreferences = sqliteTable("user_preferences", {
   showTvShowRatingBadge: integer("show_tv_show_rating_badge", { mode: "boolean" }).notNull().default(true),
   showTvResolutionBadge: integer("show_tv_resolution_badge", { mode: "boolean" }).notNull().default(true),
   tvHeroMosaicConfig: text("tv_hero_mosaic_config"), // JSON HeroMosaicConfig — TV home poster wall settings
+  recommendTheme: text("recommend_theme").default("vortex"), // "vortex" | "tabletop" — 今晚看什么 scene
+  showTierEffects: integer("show_tier_effects", { mode: "boolean" }).notNull().default(true), // tier rarity FX on person/movie cards
+});
+
+// ─── Recommendation History (今晚看什么 de-dup / dismiss) ─────────
+// itemId is not a FK (movie OR person); rows for deleted items are ignored by
+// the engine and pruned after 120 days.
+export const recommendationHistory = sqliteTable("recommendation_history", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  itemType: text("item_type", { enum: ["movie", "person", "bookmark"] }).notNull(),
+  itemId: text("item_id").notNull(),
+  action: text("action", { enum: ["shown", "dismissed"] }).notNull(),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_rh_user_created").on(table.userId, table.createdAt),
+  index("idx_rh_user_item").on(table.userId, table.itemType, table.itemId),
+]);
+
+// ─── Data Versions (change counters for in-memory caches) ─────────
+// One row per counter, bumped by SQLite triggers (created in db/index.ts, not
+// declared here): 'cinema_library' ← any write to movies / movie_people /
+// people / media_libraries. Read via lib/db/data-versions.ts (今晚看什么
+// library snapshot, /api/filters cache).
+export const dataVersions = sqliteTable("data_versions", {
+  name: text("name").primaryKey(),
+  version: integer("version").notNull().default(0),
 });
 
 // ─── Movie Discs ──────────────────────────────────────────────

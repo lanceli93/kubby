@@ -14,6 +14,7 @@ import { ImageEditorDialog } from "@/components/shared/image-editor-dialog";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { TiltCard } from "@/components/ui/tilt-card";
+import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -119,6 +120,7 @@ export function MovieCard({
   const isAdmin = useIsAdmin();
   const showRatingBadge = prefs?.showMovieRatingBadge !== false;
   const showResBadge = prefs?.showResolutionBadge !== false;
+  const showTierFx = prefs?.showTierEffects !== false;
 
   return (
     <div className={`group flex-shrink-0 transition-[scale] duration-200 ease-out ${menuOpen ? "scale-[1.03]" : "hover:scale-[1.03]"} ${responsive ? "w-full" : ""}`} style={responsive ? undefined : { width: "11.25rem" }}>
@@ -145,6 +147,8 @@ export function MovieCard({
           backdrop-filter on descendants in Chromium). */}
       <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: "16.875rem" }}>
         <TiltCard glow={posterBlur} disabled={menuOpen} className="h-full w-full">
+          {/* Tier rarity FX (personal rating) — rim/glow behind the poster box, rides the tilt */}
+          <TierFx rating={personalRating} enabled={showTierFx} seed={id} />
           <div ref={posterRef} className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
             {posterPath && !imgError ? (
               <Image
@@ -162,6 +166,7 @@ export function MovieCard({
                 {tMeta("noImage")}
               </div>
             )}
+            <TierFxSurface rating={personalRating} enabled={showTierFx} seed={id} />
 
             {/* Resolution badge — top-left, lifts on tilt */}
             {showResBadge && (() => {

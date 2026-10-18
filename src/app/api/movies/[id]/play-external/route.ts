@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { execFile } from "child_process";
 import { existsSync } from "fs";
 import os from "os";
+import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { movies, movieDiscs, userPreferences, userMovieData } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 export async function POST(
@@ -109,6 +110,38 @@ export async function POST(
         { error: "Failed to launch external player" },
         { status: 500 }
       );
+    }
+
+    // Launch succeeded — count the play (the external player never reports
+    // back, so the launch is the play). Position / isPlayed are left alone.
+    // A bookkeeping failure must not turn a successful launch into an error.
+    try {
+      const now = new Date().toISOString();
+      if (userData) {
+        db.update(userMovieData)
+          .set({
+            playCount: sql`coalesce(${userMovieData.playCount}, 0) + 1`,
+            lastPlayedAt: now,
+          })
+          .where(eq(userMovieData.id, userData.id))
+          .run();
+      } else {
+        db.insert(userMovieData)
+          .values({
+            id: uuidv4(),
+            userId: session.user.id,
+            movieId,
+            playbackPositionSeconds: 0,
+            currentDisc: 1,
+            playCount: 1,
+            isPlayed: false,
+            isFavorite: false,
+            lastPlayedAt: now,
+          })
+          .run();
+      }
+    } catch (countError) {
+      console.error("[play-external] failed to record play:", countError);
     }
 
     return NextResponse.json({

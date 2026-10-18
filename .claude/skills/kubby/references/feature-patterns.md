@@ -23,6 +23,8 @@ every task.
 - [ageAtRelease auto-calculation](#ageatrelease-auto-calculation)
 - [Dimension management](#dimension-management)
 - [Home hero mosaic wall (movies + people)](#home-hero-mosaic-wall-movies--people)
+- [今晚看什么 recommendations](#今晚看什么-recommendations)
+- [Tier rarity effects](#tier-rarity-effects)
 - [Favorites browser](#favorites-browser)
 - [UI Design System](#ui-design-system)
 
@@ -191,6 +193,8 @@ app. On hover the card composes several affordances at once:
   watched / favorite / more-menu buttons.
 - **Badges lift on tilt** — resolution/rating badges use `tilt-lift`
   (`--tilt-lift: 22px`) so they float above the poster plane.
+- **Tier rarity FX** (personal-rating rim/glow) sit inside the TiltCard so they ride
+  the tilt — see Tier rarity effects.
 
 The photo timeline tile (see below) is a deliberately **contained** cousin of this:
 it borrows the language (inner image zoom + ring + scrim) but the tile itself must
@@ -622,6 +626,12 @@ its delete path owns removing them.**
   vice versa. Verified at runtime: a TV scan left cinema `people` count unchanged. When
   a domain has an isolated copy of a shared concept, give it a parallel gated sweep —
   do not widen the existing sweep.
+- **Cross-library aggregation features allowlist in SQL.** The 今晚看什么 engine reads
+  movies with `INNER JOIN media_libraries ml ON ... AND ml.type = 'movie'` in every
+  query (candidates AND the taste-profile signals), and its cast join reads only cinema
+  `people`/`movie_people` (never `tv_people`); the page gates on
+  `libraries.some(l => l.type === "movie")`. A `libraryId` of another domain just
+  yields an empty pool rather than leaking.
 
 ## Demo Mode (seed + clear/factory-reset)
 
@@ -888,6 +898,237 @@ movies + ScrollRows for libraries/continue-watching/favorites), Favorites
 - **Preferences UI**: `/preferences/hero-mosaic/page.tsx` — two sections (Movie
   wall / Actor wall) separated by a divider, each with live preview. Single Save
   button PUTs both configs in one request and invalidates both hero-wall queries.
+
+## 今晚看什么 recommendations
+
+"What to watch tonight" for cinema: set a few filters, then draw a hand of 5 out of a
+card pile. **The pile is the filtered candidate pool** (non-matching cards leave it
+live as filters change); **the draw is the recommendation** (weighted-random,
+personal, diverse, explained). Entry: a gold `Dices` pill in the home hero
+(`home-hero.tsx`, `home.heroTonight`, icon-only on phones) → `/movies/recommend`. The
+route is a static segment beside `[id]` and loads `RecommendPage` with `ssr:false`.
+`sessionStorage` `kubby-recommend` keeps filters + the pile seed + the hand, but **the
+hand is restored only on a return trip**: opening a card (movie / person / play /
+clip) sets a flag (`components/recommend/session.ts`), the next mount reads it in
+`loadSaved` and clears it in an effect (not the `useState` initializer — StrictMode
+runs that twice); the hero button clears it, so entering from home always shows an
+empty table and the user presses Draw. Prerequisite fix shipped with it:
+play counting (architecture.md → Video Playback → Play counting), since the engine
+reads `playCount`/`lastPlayedAt`.
+
+**Contract** — `src/lib/recommend/types.ts` is shared by server + client (no server
+imports). Routes (all `requireUser`, see architecture.md → API): `GET pool` (query
+params + optional `seed`) → `{movieCount, actorCount, clipCount, items}`; `POST draw
+{filters, movies, actors, clips?, clipWildcard?, exclude}` → `{cards, repeatsAllowed}`;
+`POST history {type: movie|person|bookmark, id, action:"dismissed"}` (a bookmark must
+belong to the caller, else 404).
+Input goes through `lib/recommend/parse.ts` — lenient (unknown values dropped, counts
+clamped 0–10, ≤ 50 genres/tags/excludes), so a stale client never gets a 400 over a
+typo. The client asks for `movies`/`actors` counts itself (`handComposition(mix)` in
+`presets.ts`: movies 5/0, mixed 4+1, actors 0/5, clips 0/0/5, minus locked cards);
+`mix` in the filters only shapes the pool.
+
+**Engine** (`lib/recommend/engine.ts`, server-only). **Library snapshot cache:** per-movie
+metadata (genres/tags parsed once, actor cast in billing order with main-cast flags,
+library genre counts) lives on `globalThis`, keyed by the `data_versions`
+`'cinema_library'` counter — bumped by SQLite **triggers** on every insert/update/delete
+of `movies` / `movie_people` / `people` / `media_libraries` (created in db/index.ts's
+migration list; read via `lib/db/data-versions.ts`, null → don't cache). Triggers catch
+every write path (scanner, scraper, edits, cascades, other connections); **if the
+snapshot ever reads another table, add it to that trigger list.** Per-user data
+(ratings, plays, favorites, history, bookmarks) is NEVER cached — read per request.
+`/api/filters` (body in `lib/filter-options.ts`) caches its serialized response per
+libraryId on the same counter. `scripts/bench-recommend.ts` inflates a COPY of the DB
+(5k movies / 45k cast / 600 bookmarks) and times pool/draw/filters + asserts seeded-pile
+stability and clip rules — run it after touching the engine (p95 at 5k: pool ~14ms,
+draw ~45ms, filters < 1ms; ~400ms before the snapshot).
+1. **Hard filters → one SQL pass** over `movies` INNER JOIN `media_libraries ... AND
+   ml.type = 'movie'` (allowlist) LEFT JOIN the caller's `user_movie_data`. Poster
+   required; genres/tags are JSON-text `LIKE '%"x"%'` any-of; unknown runtime is kept
+   under `maxRuntime`; `watched` defaults to `unwatched`. A non-movie `libraryId`
+   simply yields nothing.
+2. **Personal scoring in JS**, score = `1 + Σ terms × recency factor` (term table in
+   the `scoreMovie` doc comment). Signals from `loadSignals`: per-genre affinity
+   (shrunk avg personal rating vs the user's mean + engagement lift over the genre's
+   library share — so "Drama is everywhere" doesn't count), loved-tag affinity, and
+   favorited/rated cast (billing-weighted). Personal rating falls back to the mean of
+   dimension ratings. **"Highly rated" is relative**: 8/10 by default, but with ≥ 5
+   ratings it drops to the user's own 75th percentile (never above 8) so users who
+   rate on a compressed scale still trigger it. Presets (`blind` near-uniform,
+   `hiddenGems`, `rewatch`, `quick`, `actorSpotlight`) are filter sets in
+   `presets.ts` + a scoring bias in the engine. Played < 60 days ago is damped
+   (except `rewatch`).
+3. **Reasons are codes, not strings.** Every term carries the `RecommendReason` it
+   would explain; a card's 1–3 chips are its strongest positive terms (one per code).
+   The client localizes them via `recommend.reasons.*` (`useReasonLabel` in
+   `card-faces.tsx`). Never send display text from the server.
+4. **Weighted sampling without replacement** — Efraimidis–Spirakis keys in log space
+   (`log(1−u)/w`, sort desc), not top-k, so a re-draw varies. Then a **greedy
+   diversity pass** with 3 relaxation levels: ≤ 2 per primary genre and no shared
+   lead actor (first 2 billed) → drop the lead rule → drop both. Locked cards seed
+   the diversity state so new cards fit around them.
+5. **Cross-session de-dup** from `recommendation_history`: `shown` < 30 days or
+   `dismissed` < 90 days are held back. If fresh candidates can't fill the hand they
+   are re-admitted (shown-only before dismissed, oldest first) and the response sets
+   `repeatsAllowed` (client toasts it) — never an empty hand. Each draw writes one
+   `shown` row per returned card and prunes rows > 120 days. The pool has no de-dup.
+6. **Actor cards**: eligible with a photo and ≥ 1 film in the filtered set where they
+   are **main cast (first 6 billed)** — otherwise every bit part qualifies; people the
+   user favorited/rated qualify via any credit (a movie with no `sort_order` data at
+   all counts everyone as main). Score ≈ log of billing-weighted matching films +
+   unwatched count + favorite/rating. An actor prefers ≥ 2 matching films not
+   already in the hand (and not being a lead of a hand movie), relaxing to ≥ 1; their
+   films are reserved so later cards don't duplicate them.
+   Too few actors → the remaining slots are filled with movies. Actor cards link
+   straight to `/people/{id}` (no film fan — the person page lists the films).
+   Mixed piles keep ~4:1 movies:actors (≥ 6 actors) — proportional would bury the
+   movies, since each film brings a dozen cast.
+7. **Pool sample**: ≤ `POOL_CAP` 64 items (both scenes show ≤ 64). With the client's
+   per-session `seed` the sample is deterministic — candidates ranked by
+   `seedRank(seed, type:id)`, top N — so a filter change only swaps real leavers /
+   newcomers (narrowing keeps every still-matching card) instead of re-rolling ~all
+   pile images. No seed → random shuffle.
+8. **Clips** (video bookmarks, `type: "bookmark"`): the caller's `movie_bookmarks`
+   rows WITH a thumbnail whose movie is in a movie library. Filters go through the
+   parent movie (library/genres/minRating/years); tags match the movie's OR the
+   bookmark's own tags (→ `bookmarkTag`); `watched` and `maxRuntime` are ignored (a
+   bookmark implies a viewing). Weight `1 + min(1, age/180d)` (rediscovery) `+ 0.5`
+   favorited/loved parent `+ 0.25` bookmark-tag match; same Efraimidis–Spirakis +
+   history de-dup (item_type `bookmark`). ≤ 1 clip per film per hand, and never a clip
+   of a film that is also a movie card in the hand (either direction, locks included).
+   Reasons: `bookmarkMoment` first, then bookmarkTag / favorite / highRating (=
+   community rating, same meaning as on movie cards). **Wildcard:** mixed draws send
+   `clipWildcard`; with p ≈ 0.3 and ≥ 3 fresh clips one movie slot becomes a clip
+   (never forces a repeat). Mixed piles carry ≤ 6 clip items; mix `clips` (preset
+   `clipRewind` 片段重温, watched "any") is all clips. Bookmark thumbnails are absolute
+   paths under the data dir served by `/api/images` unstamped (written once per id).
+
+**Page shell vs scene** (`components/recommend/scene-types.ts` is the contract —
+read its header). The shell (`recommend-page.tsx`) owns all data and decisions:
+filters (300ms-debounced pool query, `keepPreviousData`), the 5-slot hand, locks,
+dismiss, draw timing, navigation (movie card → poster-morph `startPosterViewTransition`,
+play → `/movies/{id}/play`), toasts, and the ambient fanart backdrop (hovered card,
+idle drift every 9s). A scene owns only presentation. **Draw protocol:** shell bumps
+`drawToken`, sets `phase:"drawing"` and nulls unlocked slots → scene returns them to
+the pile and shuffles; shell waits for BOTH the API and the scene's `drawLeadMs`, then
+fills free slots + `phase:"dealt"` → scene deals every card whose key is new; the draw
+button stays busy `dealMs` more. A dismiss writes history, empties that slot and
+refills it with a 1-card draw while `phase` stays `dealt` (no shuffle); removal after
+`onDismiss` animates as "thrown away", any other removal as back-to-pile. Hand cards
+that no longer match changed filters are flagged `staleKeys` (client mirror of the
+hard filters), not removed. Both scenes render the SHARED `HandCardFace`
+(`card-faces.tsx`) so content is identical across themes. A short deal (e.g. only 3
+clips exist) takes the slots nearest the centre.
+
+**Filter bar** (`filter-bar.tsx`): row 1 = presets · deck mix (movies / mixed / actors /
+clips) · count · theme; row 2 = [library picker — only with ≥ 2 movie libraries,
+single-select on `filters.libraryId`, kept across presets, cleared by reset; genre/tag
+options then come from `/api/filters?libraryId=`] · Genres / Tags `FacetPicker`s
+(`facet-picker.tsx`: radix Popover, search, options sorted by movie count from the
+`genreCounts`/`tagCounts` maps, ≤ 150 rendered + "+N more", Enter toggles the first
+match) · a strip of removable selected chips · watched · rating · runtime · reset. Built
+for real libraries with dozens of genres and hundreds of TMDB-keyword tags — never
+render every option inline.
+
+**Clip card face** (`ClipFace` in card-faces.tsx + `clip-layout.ts`, design "D1 大幅插入"
+from the gitignored prototype `data/demos/clips/index.html`): 2:3 like every card — the
+parent poster is a dimmed envelope and the bookmark still (any aspect) is tucked into a
+compact info pocket (top 1.22cw: icon · title · year row + one chip row). **No note** —
+most bookmarks have none (user call). Still ≤ 0.88cw wide, tall stills up to 0.98cw
+high, never below 0.42cw (centre-crop past that); 360° = a 16:9 window panning from
+`viewState.lon` (transform-only, stops under reduced motion). The timecode is printed
+ONCE (orange date-stamp); hover shows only "▶ Play clip". Click = play from the mark
+(`/movies/{id}/play?t=&disc=&vs=` — same format as `bookmark-card.tsx`). No tier FX.
+Pile minis = poster + small tucked still, plain elements only.
+
+**Themes**: 星云漩涡 `vortex` (default; 3D card nebula in 5 depth layers over a canvas
+of spiral dust, spin-up then curved deal) and 牌桌洗牌 `tabletop` (tilted felt table,
+gather → two riffles → fanned face-down deal → left-to-right flips; damped springs,
+loop sleeps at rest). Per-user `user_preferences.recommend_theme`; switching swaps
+only the scene, filters + hand persist. The shell waits ≤ 800ms for prefs before
+falling back to Vortex (no flash of the wrong scene) and writes the switch
+optimistically into the `["userPreferences"]` cache. **To add a theme:** add the id to
+`RecommendTheme` (types.ts) + `RECOMMEND_THEMES` in `api/settings/personal-metadata`
+(validated) + `SCENES` in `recommend-page.tsx`; export a `RecommendSceneDef {id,
+Component, drawLeadMs, dealMs}`; render `HandCardFace` in a wrapper carrying `rc-card`
++ `--cw`; follow the scene perf rules (refs + ONE rAF loop, transform/opacity only,
+pause when `document.hidden`, honour `reducedMotion`, no backdrop-filter in a
+preserve-3d subtree); add `recommend.themes.<id>` in en + zh.
+
+Pitfalls found building it:
+- **Custom class names that equal a Tailwind utility get the utility.** Tailwind v4
+  scans every source file for class tokens, so a ported demo class like `static`
+  (→ `position: static`) or `ring` (→ a box-shadow ring) silently picks up utility
+  CSS. Prefix everything (`rc-*`, `tfx-*`; the demo's `fx-rim static` became
+  `tfx-rim-static`). Custom CSS lives in `@layer components` so real Tailwind
+  utilities on the same node still win (unlayered CSS overrides them).
+- **No `::before`/`::after` on the many per-frame-moving cards.** A pseudo-element per
+  nebula card made each style recalc ~15ms (Tailwind's universal `*, ::before,
+  ::after` rules match every one). Hairlines are `outline` with negative offset;
+  actor glows are a real child element (`.rc-nc-glow`). Pile cards carry no
+  pseudo-elements and no filters (tabletop shadows are baked gradients).
+- **Theme-only PUT.** The theme switch PUTs `{recommendTheme}` alone; the prefs route
+  detects a single-key body and writes just that column, skipping the full-row
+  rewrite and the personalRating recalculation, which otherwise runs on EVERY PUT
+  over all the user's rated movie/person/show rows — far too heavy for a toggle.
+  Reuse this fast-path shape for any future high-frequency single pref.
+- All glass UI (filter bar, draw button, toasts) lives outside the preserve-3d
+  subtree (preserve-3d kills backdrop-filter).
+- **Hover tilt goes on an inner layer with its own `perspective()`**, never on the
+  hit-box element under the scene's shared perspective: the tabletop layer's
+  perspective origin sits far above the hand, so tilting the outer card skewed it into
+  a trapezoid and moved its hit area under the pointer. Tabletop now tilts
+  `.rc-tt-flip` with `perspective(900px) rotateX/Y` (as the vortex `.rc-hin`), and the
+  release spring is near-critical (no wobble).
+
+## Tier rarity effects
+
+Card-face "rarity" treatment by the user's **personal rating** tier (`lib/tier.ts`
+`getTier`: SSS ≥ 9.5, SS ≥ 9.0, S ≥ 8.5, A ≥ 8.0, B ≥ 7.0; colours follow the tier
+badge palette). `src/components/ui/tier-fx.tsx` + `tier-fx.css`, ported from the
+prototype `data/demos/tier-fx/index.html` (local) at intensity 标准:
+- **SSS** gold: two-comet flowing rim + bloom + inner-edge flow + breathing glow;
+  6 sparkles **on hover only** (so touch never shows them). No rainbow foil.
+- **SS** orange: one-comet flowing rim + half bloom + soft glow.
+- **S** red: static metallic rim + glow.
+- **A** purple / **B** blue: 1px hairline, brighter + small glow on hover.
+- C and below, unrated, or pref off → renders nothing.
+- **Kept quiet at rest** (user feedback: the resting halo read as too loud in a
+  grid): bloom/glow opacities are low at rest and reach full strength on hover
+  (SSS switches to a stronger `tfx-breath-hover`). The prototype's diagonal light
+  sweep was dropped entirely (too glaring) — don't re-add it.
+- **Slow motion on purpose** (user feedback): SSS rim (two comets) spins once per 14s
+  (a pass every ~7s; SS is one comet per 7s), sparkles twinkle on a 7s
+  cycle with their delays spread across it (`SPARK_TIME` in tier-fx.tsx).
+
+**Two parts per card**, same `seed` (item id → stable spin phase so a grid doesn't
+pulse in sync) and `radius`: `<TierFx>` (frame: glow/bloom/rim/sparkles) as a sibling
+**before** the media box inside whatever transforms with the card (TiltCard's
+children), so it paints behind the opaque media, shows only around the edge, and
+rides the tilt; `<TierFxSurface>` (SSS inner-edge flow; null for other tiers) inside
+the media box after the image, below the badges. Hover is read off the parent (`:hover > .tfx`), so it works
+in any host. `tierFxOf(rating, enabled)` tells a host whether a tier applies.
+
+**Where**: `MovieCard`, `PersonCard` (cinema + TV cast), `ShowCard`, and the
+今晚看什么 **hand** cards (`card-faces.tsx`; on actor cards a tier rim replaces the
+default gold `.rc-rim`) — never on pile/nebula cards. Not on album/artist/bookmark
+cards. The TV detail cast row needed the glow-clipping fix (`overflow-x` forces
+`overflow-y` clipping): pad the scroll box `pt-10 pb-10` with cancelling negative
+margins, make the padded box `pointer-events-none` and its children `auto`.
+
+**Perf** (grids of hundreds of cards must stay smooth): compositor-only motion — the
+rim is an `overflow:hidden` ring behind the media holding an oversized conic square
+spun with `transform: rotate()` (no per-frame paint, no registered `@property`);
+bloom + inner flow reuse the same spin; glow breathes on opacity, sparkles on
+transform + opacity. ONE shared `IntersectionObserver` (rootMargin 120px) watches only
+animated (SSS/SS) frames and sets `data-tfx-off` on the frame's parent →
+`animation-play-state: paused` (covers the surface layer too). `prefers-reduced-motion`
+→ static rim + glow, no sparkles. CSS in `@layer components`.
+
+**Toggle**: per-user `user_preferences.show_tier_effects` (default on) — card hosts read
+`prefs?.showTierEffects !== false`. Master switch + live previews of all five tiers
+on `/preferences/card-badges`, rendered for BOTH domains (person cards appear in TV
+cast too); saved with the other badge prefs, included in "Reset to defaults".
 
 ## Favorites browser
 

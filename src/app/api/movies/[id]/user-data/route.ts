@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { userMovieData } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 // GET /api/movies/[id]/user-data
@@ -83,6 +83,12 @@ export async function PUT(
     const resetsResume =
       body.isPlayed !== undefined && body.playbackPositionSeconds === undefined;
 
+    // `countPlay: true` is sent by the player on the first progress save of a
+    // playback session — it counts one play (playCount + 1).
+    const countPlay = body.countPlay === true;
+    const touchesPlayback =
+      body.playbackPositionSeconds !== undefined || body.isPlayed !== undefined || countPlay;
+
     if (existing) {
       const updateData: Record<string, unknown> = {};
       if (body.playbackPositionSeconds !== undefined)
@@ -99,14 +105,16 @@ export async function PUT(
         updateData.isFavorite = body.isFavorite;
       if (body.playCount !== undefined)
         updateData.playCount = body.playCount;
+      else if (countPlay)
+        updateData.playCount = sql`coalesce(${userMovieData.playCount}, 0) + 1`;
       if (body.personalRating !== undefined)
         updateData.personalRating = body.personalRating;
       if (body.dimensionRatings !== undefined)
         updateData.dimensionRatings = body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null;
       if (body.vrLayout !== undefined)
         updateData.vrLayout = body.vrLayout;
-      // Update lastPlayedAt on any playback-related save (progress or completion)
-      if (body.playbackPositionSeconds !== undefined || body.isPlayed !== undefined)
+      // Update lastPlayedAt on any playback-related save (progress, completion, play count)
+      if (touchesPlayback)
         updateData.lastPlayedAt = new Date().toISOString();
 
       db.update(userMovieData)
@@ -121,13 +129,13 @@ export async function PUT(
           movieId,
           playbackPositionSeconds: body.playbackPositionSeconds || 0,
           currentDisc: body.currentDisc || 1,
-          playCount: body.playCount || 0,
+          playCount: body.playCount !== undefined ? body.playCount || 0 : countPlay ? 1 : 0,
           isPlayed: body.isPlayed || false,
           isFavorite: body.isFavorite || false,
           personalRating: body.personalRating ?? null,
           dimensionRatings: body.dimensionRatings ? JSON.stringify(body.dimensionRatings) : null,
           vrLayout: body.vrLayout ?? null,
-          lastPlayedAt: (body.playbackPositionSeconds !== undefined || body.isPlayed) ? new Date().toISOString() : null,
+          lastPlayedAt: (body.playbackPositionSeconds !== undefined || body.isPlayed || countPlay) ? new Date().toISOString() : null,
         })
         .run();
     }

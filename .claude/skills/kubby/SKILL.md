@@ -13,7 +13,8 @@ user_invocable: true
 
 Self-hosted media server built with Next.js. Dark cinema theme (shared across all
 domains). Multi-domain: **🎬 Cinema** (Jellyfin-compatible movie libraries — NFO +
-folder structure, TMDB scraping, HLS transcoding, multi-dimension ratings),
+folder structure, TMDB scraping, HLS transcoding, multi-dimension ratings, 今晚看什么
+draw-a-hand recommendations),
 **📺 TV** (series/anime libraries — three-tier shows→seasons→episodes, SxxExx +
 `Season NN`/`Specials` folder parsing, TMDB `/tv` scrape, per-episode progress + Next
 Up, shared player), **📷 Photos** (photo + video timeline library — EXIF,
@@ -196,8 +197,8 @@ manual edits. Release flow: push `v0.x.y` tag → CI extracts version → passes
 
 | File | When to read |
 |------|-------------|
-| `references/architecture.md` | Project structure, DB schema (32 tables), API endpoints, scanner (movie + tv + photo + music branches), playback internals (video HLS + audio direct/transcode), theme, i18n, data dirs, mobile responsive. Read when implementing features or fixing bugs that touch these. |
-| `references/feature-patterns.md` | How a specific feature is built — 360° player, player controls, navigation, domain switcher, photos timeline/albums/lightbox, music library + global player, GlassToast, metadata browser/editor, people body metadata, dimension management, UI design system. Read the one section matching your task. |
+| `references/architecture.md` | Project structure, DB schema (34 tables), API endpoints, scanner (movie + tv + photo + music branches), playback internals (video HLS + audio direct/transcode, play counting), theme, i18n, data dirs, mobile responsive. Read when implementing features or fixing bugs that touch these. |
+| `references/feature-patterns.md` | How a specific feature is built — 360° player, player controls, navigation, domain switcher, photos timeline/albums/lightbox, music library + global player, 今晚看什么 recommendations (engine + swappable 3D scenes), tier rarity card FX, GlassToast, metadata browser/editor, people body metadata, dimension management, UI design system. Read the one section matching your task. |
 | `references/release-workflow.md` | Packaging, testing builds, creating and publishing releases. |
 | `references/readme-media-capture.md` | (Re)generating README screenshots + animated demos: ffmpeg ddagrab recording, mp4→animated-WebP, chrome-devtools MCP screenshots, seeding demo data (ratings/bookmarks/gallery) via API, prod-build-on-8665 setup. Read when updating `docs/screenshots/`. |
 | `docs/multi-model-workflow.md` | The Fable-orchestrates / opus-sonnet-executes workflow in full. |

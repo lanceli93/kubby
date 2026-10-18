@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { HeroMosaicConfig } from "@/lib/hero-mosaic-config";
 import type { PeopleMosaicConfig } from "@/lib/people-mosaic-config";
+import type { RecommendTheme } from "@/lib/recommend/types";
 
 export interface UserPreferences {
   movieRatingDimensions: string[];
@@ -26,6 +27,8 @@ export interface UserPreferences {
   showTvShowRatingBadge: boolean;
   showTvResolutionBadge: boolean;
   tvHeroMosaicConfig: HeroMosaicConfig;
+  recommendTheme: RecommendTheme; // 今晚看什么 scene
+  showTierEffects: boolean; // tier rarity FX on person/movie cards (TierFx)
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 
