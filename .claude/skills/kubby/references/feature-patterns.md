@@ -1087,7 +1087,8 @@ Card-face "rarity" treatment by the user's **personal rating** tier (`lib/tier.t
 `getTier`: SSS ≥ 9.5, SS ≥ 9.0, S ≥ 8.5, A ≥ 8.0, B ≥ 7.0; colours follow the tier
 badge palette). `src/components/ui/tier-fx.tsx` + `tier-fx.css`, ported from the
 prototype `data/demos/tier-fx/index.html` (local) at intensity 标准:
-- **SSS** gold: two-comet flowing rim + bloom + inner-edge flow + breathing glow;
+- **SSS** gold: two-comet flowing rim + bloom + breathing glow; a faint 7px inner-edge
+  flow (screened) **on hover only** — at rest it read as a stray glow on dark posters;
   6 sparkles **on hover only** (so touch never shows them). No rainbow foil.
 - **SS** orange: one-comet flowing rim + half bloom + soft glow.
 - **S** red: static metallic rim + glow.

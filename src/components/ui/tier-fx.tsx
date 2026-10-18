@@ -8,7 +8,7 @@ import "./tier-fx.css";
  * Tier rarity FX — the card-face treatment for a personal-rating tier
  * (lib/tier.ts thresholds). Styles + rationale: tier-fx.css.
  *
- *   SSS  gold two-comet rim + bloom + inner-edge flow + breathing glow
+ *   SSS  gold two-comet rim + bloom + breathing glow; faint inner-edge flow on hover
  *        (animated, glow kept soft at rest); 6 sparkles on hover only
  *   SS   orange one-comet rim + half bloom + soft glow   (animated)
  *   S    red static rim + glow

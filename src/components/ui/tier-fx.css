@@ -151,20 +151,27 @@
     var(--c1) 255deg, var(--c2) 305deg, #fff 325deg, var(--c2) 331deg, transparent 344deg);
 }
 
-/* ── inner-edge flow (SSS): the same comets, masked to a soft band just
-   inside the media edge, screened over the image ── */
+/* ── inner-edge flow (SSS): the same comets, masked to a thin soft band just
+   inside the media edge, screened over the image. Hover-only and faint: at
+   rest a screened gold band read as a stray glow on dark posters (user
+   feedback). The surface sits in the media box, a later sibling of the
+   .tfx frame, hence `:hover > .tfx-sss ~ *` ── */
 .tfx-inner {
   position: absolute;
   inset: 0;
   overflow: hidden;
   mix-blend-mode: screen;
-  opacity: 0.6;
+  opacity: 0;
+  transition: opacity 0.35s ease;
   -webkit-mask:
-    linear-gradient(to right, #000, transparent 12px, transparent calc(100% - 12px), #000),
-    linear-gradient(to bottom, #000, transparent 12px, transparent calc(100% - 12px), #000);
+    linear-gradient(to right, #000, transparent 7px, transparent calc(100% - 7px), #000),
+    linear-gradient(to bottom, #000, transparent 7px, transparent calc(100% - 7px), #000);
   mask:
-    linear-gradient(to right, #000, transparent 12px, transparent calc(100% - 12px), #000),
-    linear-gradient(to bottom, #000, transparent 12px, transparent calc(100% - 12px), #000);
+    linear-gradient(to right, #000, transparent 7px, transparent calc(100% - 7px), #000),
+    linear-gradient(to bottom, #000, transparent 7px, transparent calc(100% - 7px), #000);
+}
+:hover > .tfx-sss ~ * .tfx-inner {
+  opacity: 0.38;
 }
 
 /* ── outer glow (opacity-only animation) ── */
