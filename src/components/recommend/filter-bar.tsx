@@ -2,13 +2,18 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown, RotateCcw, SlidersHorizontal, Sparkles, Tag } from "lucide-react";
+import { Popover } from "radix-ui";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Check,
+  ChevronDown,
+  Clapperboard,
+  Library,
+  RotateCcw,
+  SlidersHorizontal,
+  Sparkles,
+  Tag,
+  X,
+} from "lucide-react";
 import { RECOMMEND_PRESET_ORDER } from "@/lib/recommend/presets";
 import type {
   RecommendFilters,
@@ -16,11 +21,14 @@ import type {
   RecommendPreset,
   RecommendTheme,
 } from "@/lib/recommend/types";
+import { FacetPicker, type FacetOption } from "./facet-picker";
 
 /**
  * Glass filter bar for the recommend page. Lives OUTSIDE the scene's 3D
- * subtree (backdrop-filter dies under preserve-3d). Two rows on desktop;
- * collapses to a one-line summary + toggle on phones.
+ * subtree (backdrop-filter dies under preserve-3d). Two rows on desktop —
+ * row 1 "what to draw" (presets, deck mix, count, theme), row 2 "filters"
+ * (library, genre/tag pickers + the active selection as removable chips, watched,
+ * rating, runtime); collapses to a one-line summary + toggle on phones.
  */
 
 const RUNTIME_OPTIONS = [0, 90, 120, 150] as const;
@@ -56,13 +64,83 @@ function AnimatedNumber({ value }: { value: number }) {
   return <b ref={ref} className="mx-0.5 text-[0.9375rem] font-bold tabular-nums text-foreground" />;
 }
 
+interface LibraryOption {
+  id: string;
+  name: string;
+}
+
+/** Single-select movie-library picker ("All libraries" + each library). */
+function LibraryPicker({
+  libraries,
+  value,
+  onPick,
+}: {
+  libraries: LibraryOption[];
+  value: string | undefined;
+  onPick: (id: string | undefined) => void;
+}) {
+  const t = useTranslations("recommend");
+  const [open, setOpen] = useState(false);
+  const current = libraries.find((l) => l.id === value);
+  const options: { id: string | undefined; name: string }[] = [
+    { id: undefined, name: t("allLibraries") },
+    ...libraries,
+  ];
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger
+        className="rc-chip-btn focus-ring inline-flex max-w-[12rem] items-center gap-1 outline-none"
+        data-on={!!current}
+        aria-label={`${t("library")}: ${current?.name ?? t("allLibraries")}`}
+      >
+        <Library className="h-3.5 w-3.5 flex-none" />
+        <span className="min-w-0 truncate">{current?.name ?? t("allLibraries")}</span>
+        <ChevronDown className={`h-3.5 w-3.5 flex-none transition-transform ${open ? "rotate-180" : ""}`} />
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          align="start"
+          sideOffset={8}
+          collisionPadding={12}
+          aria-label={t("library")}
+          className="z-50 max-h-[min(20rem,60vh,var(--radix-popover-content-available-height))] w-56 origin-(--radix-popover-content-transform-origin) overflow-y-auto rounded-xl border border-white/10 bg-black/80 p-1.5 text-foreground shadow-2xl backdrop-blur-xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        >
+          <div role="radiogroup" aria-label={t("library")} className="flex flex-col">
+            {options.map((o) => {
+              const on = o.id === current?.id;
+              return (
+                <button
+                  key={o.id ?? ""}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  className={`focus-ring flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-white/10 ${on ? "text-foreground" : "text-[#c4c4d6]"}`}
+                  onClick={() => {
+                    onPick(o.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={`h-3.5 w-3.5 flex-none text-[#818cf8] ${on ? "" : "invisible"}`} />
+                  <span className="min-w-0 truncate">{o.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
 interface FilterBarProps {
   filters: RecommendFilters;
   onChange: (next: RecommendFilters) => void;
   onPreset: (preset: RecommendPreset) => void;
   onReset: () => void;
-  genres: string[];
-  tags: string[];
+  /** movie libraries only; the picker shows when there are 2+ */
+  libraries: LibraryOption[];
+  genres: FacetOption[];
+  tags: FacetOption[];
   movieCount: number | null;
   actorCount: number | null;
   theme: RecommendTheme;
@@ -74,6 +152,7 @@ export function FilterBar({
   onChange,
   onPreset,
   onReset,
+  libraries,
   genres,
   tags,
   movieCount,
@@ -83,17 +162,15 @@ export function FilterBar({
 }: FilterBarProps) {
   const t = useTranslations("recommend");
   const [open, setOpen] = useState(false);
-  const selectedGenres = new Set(filters.genres ?? []);
-  const selectedTags = new Set(filters.tags ?? []);
+  const selectedGenres = filters.genres ?? [];
+  const selectedTags = filters.tags ?? [];
   const mix = filters.mix ?? "mixed";
   const watched = filters.watched ?? "unwatched";
   const minRating = filters.minRating ?? 0;
 
-  const toggleIn = (list: string[] | undefined, v: string) => {
-    const s = new Set(list ?? []);
-    if (s.has(v)) s.delete(v);
-    else s.add(v);
-    return s.size ? [...s] : undefined;
+  const without = (list: string[], v: string) => {
+    const next = list.filter((x) => x !== v);
+    return next.length ? next : undefined;
   };
 
   const presetChips = RECOMMEND_PRESET_ORDER.map((p) => (
@@ -168,9 +245,23 @@ export function FilterBar({
     </div>
   );
 
+  const activeChip = (key: string, label: string, onRemove: () => void) => (
+    <button
+      key={key}
+      type="button"
+      className="rc-chip-btn focus-ring inline-flex items-center gap-1"
+      data-on
+      aria-label={t("removeFilter", { name: label })}
+      onClick={onRemove}
+    >
+      {label}
+      <X className="h-3 w-3 opacity-70" />
+    </button>
+  );
+
   return (
     <div className="rc-glass pointer-events-auto mx-auto flex w-full max-w-[84rem] flex-col gap-2 rounded-2xl px-3 py-2 md:px-4">
-      {/* Row 1 — presets, mix, watched, count, theme */}
+      {/* Row 1 — what to draw: presets, mix, count, theme */}
       <div className="flex items-center gap-3">
         <div className="flex flex-none items-center gap-1.5 whitespace-nowrap text-sm font-extrabold tracking-wide">
           <Sparkles className="h-4 w-4 text-[#818cf8]" />
@@ -182,7 +273,6 @@ export function FilterBar({
         </div>
         <div className="ml-auto flex flex-none items-center gap-2 md:ml-0">
           {mixSeg("hidden md:inline-flex")}
-          {watchedSeg("hidden md:inline-flex")}
           {count}
           {themeSeg("hidden lg:inline-flex")}
           <button
@@ -198,67 +288,59 @@ export function FilterBar({
         </div>
       </div>
 
-      {/* Row 2 — genres, tags, rating, runtime (collapsible on phones) */}
+      {/* Row 2 — filters: pickers + active chips, watched, rating, runtime (collapsible on phones) */}
       <div className={`${open ? "flex" : "hidden"} flex-wrap items-center gap-x-3 gap-y-2 md:flex lg:flex-nowrap`}>
-        {/* phones: row 1 only carries the summary, so the rest lives here */}
+        {/* phones: row 1 only carries the summary, so presets + mix live here */}
         <div className="flex w-full flex-wrap gap-1.5 md:hidden">{presetChips}</div>
-        <div className="flex w-full flex-wrap gap-2 md:hidden">
-          {mixSeg("")}
-          {watchedSeg("")}
-        </div>
+        {mixSeg("md:hidden")}
 
-        <div className="rc-scroll-mask flex w-full min-w-0 items-center gap-1.5 overflow-x-auto px-0.5 py-1 lg:w-auto lg:flex-1">
-          <button
-            type="button"
-            className="rc-chip-btn focus-ring"
-            data-on={selectedGenres.size === 0}
-            onClick={() => onChange({ ...filters, genres: undefined })}
-          >
-            {t("allGenres")}
-          </button>
-          {genres.map((g) => (
-            <button
-              key={g}
-              type="button"
-              className="rc-chip-btn focus-ring"
-              data-on={selectedGenres.has(g)}
-              aria-pressed={selectedGenres.has(g)}
-              onClick={() => onChange({ ...filters, genres: toggleIn(filters.genres, g) })}
-            >
-              {g}
-            </button>
-          ))}
+        <div className="flex w-full min-w-0 items-center gap-1.5 max-md:flex-wrap lg:w-auto lg:flex-1">
+          {libraries.length > 1 && (
+            <LibraryPicker
+              libraries={libraries}
+              value={filters.libraryId}
+              onPick={(id) => onChange({ ...filters, libraryId: id })}
+            />
+          )}
+          <FacetPicker
+            icon={<Clapperboard className="h-3.5 w-3.5" />}
+            label={t("genres")}
+            searchPlaceholder={t("searchGenres")}
+            options={genres}
+            selected={filters.genres}
+            onChange={(next) => onChange({ ...filters, genres: next })}
+          />
+          {(tags.length > 0 || selectedTags.length > 0) && (
+            <FacetPicker
+              icon={<Tag className="h-3.5 w-3.5" />}
+              label={t("tags")}
+              searchPlaceholder={t("searchTags")}
+              options={tags}
+              selected={filters.tags}
+              onChange={(next) => onChange({ ...filters, tags: next })}
+              prefix="#"
+            />
+          )}
+          {/* -my-1 keeps the row height stable once chips (and their glow padding) appear */}
+          <div className="rc-scroll-mask -my-1 flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto px-0.5 py-1">
+            {selectedGenres.length + selectedTags.length === 0 ? (
+              <span className="whitespace-nowrap px-1 text-xs text-muted-foreground/50">{t("noFilters")}</span>
+            ) : (
+              <>
+                {selectedGenres.map((g) =>
+                  activeChip(`g:${g}`, g, () => onChange({ ...filters, genres: without(selectedGenres, g) }))
+                )}
+                {selectedTags.map((tag) =>
+                  activeChip(`t:${tag}`, `#${tag}`, () => onChange({ ...filters, tags: without(selectedTags, tag) }))
+                )}
+              </>
+            )}
+          </div>
         </div>
-
-        {tags.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className="rc-chip-btn focus-ring inline-flex items-center gap-1 outline-none"
-              data-on={selectedTags.size > 0}
-            >
-              <Tag className="h-3.5 w-3.5" />
-              {selectedTags.size ? t("tagsCount", { count: selectedTags.size }) : t("tags")}
-              <ChevronDown className="h-3.5 w-3.5" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="max-h-[min(24rem,60vh)] w-56 overflow-y-auto border-white/10 bg-black/80 backdrop-blur-xl"
-            >
-              {tags.map((tag) => (
-                <DropdownMenuCheckboxItem
-                  key={tag}
-                  checked={selectedTags.has(tag)}
-                  onSelect={(e) => e.preventDefault()}
-                  onCheckedChange={() => onChange({ ...filters, tags: toggleIn(filters.tags, tag) })}
-                >
-                  {tag}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
 
         <span className="hidden h-5 w-px flex-none bg-white/10 lg:block" />
+
+        {watchedSeg("")}
 
         <label className="flex flex-none items-center gap-2 whitespace-nowrap text-xs text-muted-foreground">
           {t("minRating")}
@@ -282,7 +364,8 @@ export function FilterBar({
         </label>
 
         <div className="flex flex-none items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="whitespace-nowrap">{t("runtime")}</span>
+          {/* label dropped on narrow desktops so the chip strip keeps some room */}
+          <span className="whitespace-nowrap lg:hidden xl:inline">{t("runtime")}</span>
           {segment<number>(
             t("runtime"),
             RUNTIME_OPTIONS,

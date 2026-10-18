@@ -222,7 +222,7 @@ interface Vis {
   shade: HTMLDivElement | null;
   body: Spring;
   _o: number;
-  _ry: number;
+  _flipTf: string;
   _lift: number;
 }
 
@@ -431,16 +431,26 @@ class TabletopEngine {
     const p = c.body.p;
     // cards lean slightly into their direction of travel (air drag) — reads as weight
     const lean = clamp((c.body.v.X + c.body.v.u) * 0.0042, -9, 9);
-    c.el.style.transform = `translate3d(${f2(p.X)}px,${f2(p.Y)}px,${f2(p.Z)}px) rotateX(${f2(p.T + p.tx)}deg) rotateY(${f2(p.ty)}deg) translate3d(${f2(p.u)}px,${f2(p.v)}px,${f2(p.h)}px) rotateZ(${f2(p.rz + lean)}deg) scale(${p.s.toFixed(4)})`;
+    c.el.style.transform = `translate3d(${f2(p.X)}px,${f2(p.Y)}px,${f2(p.Z)}px) rotateX(${f2(p.T)}deg) translate3d(${f2(p.u)}px,${f2(p.v)}px,${f2(p.h)}px) rotateZ(${f2(p.rz + lean)}deg) scale(${p.s.toFixed(4)})`;
     const o = clamp(p.o, 0, 1);
     if (o !== c._o) {
       c.el.style.opacity = o.toFixed(3);
       c.el.style.visibility = o < 0.01 ? "hidden" : "visible";
       c._o = o;
     }
-    if (c.flip && p.ry !== c._ry) {
-      c.flip.style.transform = `rotateY(${f2(p.ry)}deg)`;
-      c._ry = p.ry;
+    if (c.flip) {
+      // Hover tilt lives on the inner flip with its own card-centred
+      // perspective (as the vortex hand does): tilting the outer box under the
+      // layer's shared perspective — origin far above the hand — skewed the
+      // card into a trapezoid and shifted its hit area under the pointer.
+      const tilted = Math.abs(p.tx) + Math.abs(p.ty) > 0.005;
+      const tf = tilted
+        ? `perspective(900px) rotateX(${f2(p.tx)}deg) rotateY(${f2(p.ty + p.ry)}deg)`
+        : `rotateY(${f2(p.ry)}deg)`;
+      if (tf !== c._flipTf) {
+        c.flip.style.transform = tf;
+        c._flipTf = tf;
+      }
     }
     const lift = Math.max(0, p.Z + p.h);
     if (c.shade && Math.abs(lift - c._lift) > 0.05) {
@@ -621,7 +631,7 @@ class TabletopEngine {
       dk: { u: 0, v: 0, h: 0, rz: 0, ry: 180 },
       outAt: 0,
       _o: -1,
-      _ry: NaN,
+      _flipTf: "",
       _lift: -1,
     } as Omit<PileCard, "body"> as PileCard;
     c.body = this.newBody(c, { s: 1, o: 0, T: TILT });
@@ -795,7 +805,7 @@ class TabletopEngine {
       sweep: el.querySelector<HTMLDivElement>(".rc-tt-sweep"),
       gen: 0,
       _o: -1,
-      _ry: NaN,
+      _flipTf: "",
       _lift: -1,
     } as Omit<HandEntry, "body"> as HandEntry;
     e.body = this.newBody(e, { o: 0, s: 1 });
@@ -1046,7 +1056,7 @@ class TabletopEngine {
     c.body.p.s = e.body.p.s * this.L.k;
     c.body.v.s = e.body.v.s * this.L.k;
     c._o = -1;
-    c._ry = NaN;
+    c._flipTf = "";
     this.renderVis(c);
     this.placePile(c, 105, 15);
     this.dropEntry(e);
@@ -1065,8 +1075,8 @@ class TabletopEngine {
       this.placeHand(e, 260, 24);
     } else {
       this.setLayer(e, 100 + e.slot * 10);
-      e.body.to({ tx: 0, ty: 0 }, 120, 11); // soft springy release
       this.placeHand(e, 170, 19);
+      e.body.to({ tx: 0, ty: 0 }, 150, 22); // after placeHand: near-critical, settles flat with no wobble
     }
   }
   /** Pointer over a hand card — tilt toward it. Uses the engine's own slot

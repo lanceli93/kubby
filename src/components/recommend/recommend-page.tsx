@@ -152,6 +152,7 @@ function fanartOf(c: RecommendCard): string | null {
 
 interface LibraryLite {
   id: string;
+  name: string;
   type: string;
 }
 
@@ -218,15 +219,46 @@ export function RecommendPage() {
     queryFn: () => fetch("/api/libraries").then((r) => r.json()),
   });
   // Cinema-only feature: allowlist movie libraries (cross-domain rule).
-  const hasLibrary = libraries ? libraries.some((l) => l.type === "movie") : undefined;
+  const movieLibraries = useMemo(
+    () => libraries?.filter((l) => l.type === "movie").map(({ id, name }) => ({ id, name })),
+    [libraries]
+  );
+  const hasLibrary = movieLibraries ? movieLibraries.length > 0 : undefined;
+  // a restored libraryId that is no longer a movie library means "all"
+  const isStaleLibrary = useCallback(
+    (id: string | undefined) => !!id && !!movieLibraries && !movieLibraries.some((l) => l.id === id),
+    [movieLibraries]
+  );
+  // (adjusted during render, not in an effect — React re-renders at once)
+  if (isStaleLibrary(filters.libraryId)) setFilters({ ...filters, libraryId: undefined });
+  const libraryId = isStaleLibrary(filters.libraryId) ? undefined : filters.libraryId;
 
-  const { data: filterOptions } = useQuery<{ genres: string[]; tags: string[] }>({
-    queryKey: ["filters", null],
-    queryFn: () => fetch("/api/filters").then((r) => r.json()),
+  const { data: filterOptions } = useQuery<{
+    genres: string[];
+    tags: string[];
+    genreCounts?: Record<string, number>;
+    tagCounts?: Record<string, number>;
+  }>({
+    queryKey: ["filters", libraryId ?? null],
+    queryFn: () =>
+      fetch(libraryId ? `/api/filters?libraryId=${encodeURIComponent(libraryId)}` : "/api/filters").then((r) =>
+        r.json()
+      ),
     enabled: hasLibrary === true,
   });
+  // picker options with per-option movie counts (the picker sorts them)
+  const facetOptions = useMemo(() => {
+    const withCounts = (names: string[] | undefined, counts: Record<string, number> | undefined) =>
+      (names ?? []).map((name) => ({ name, count: counts?.[name] ?? 0 }));
+    return {
+      genres: withCounts(filterOptions?.genres, filterOptions?.genreCounts),
+      tags: withCounts(filterOptions?.tags, filterOptions?.tagCounts),
+    };
+  }, [filterOptions]);
 
-  const qs = poolQueryString(debouncedFilters);
+  const qs = poolQueryString(
+    isStaleLibrary(debouncedFilters.libraryId) ? { ...debouncedFilters, libraryId: undefined } : debouncedFilters
+  );
   const { data: pool } = useQuery({
     queryKey: ["recommend-pool", qs],
     queryFn: ({ signal }) => fetchPool(qs, signal),
@@ -427,7 +459,8 @@ export function RecommendPage() {
 
   // ── filters ──
   const onPreset = useCallback((p: RecommendPreset) => {
-    setFilters((f) => (f.preset === p ? DEFAULT_FILTERS : { ...RECOMMEND_PRESETS[p] }));
+    // a preset changes the kind of pick, not the library — keep that choice
+    setFilters((f) => ({ ...(f.preset === p ? DEFAULT_FILTERS : RECOMMEND_PRESETS[p]), libraryId: f.libraryId }));
   }, []);
   const onReset = useCallback(() => setFilters(DEFAULT_FILTERS), []);
 
@@ -553,8 +586,9 @@ export function RecommendPage() {
           onChange={setFilters}
           onPreset={onPreset}
           onReset={onReset}
-          genres={filterOptions?.genres ?? []}
-          tags={filterOptions?.tags ?? []}
+          libraries={movieLibraries ?? []}
+          genres={facetOptions.genres}
+          tags={facetOptions.tags}
           movieCount={pool?.movieCount ?? null}
           actorCount={pool?.actorCount ?? null}
           theme={theme}
