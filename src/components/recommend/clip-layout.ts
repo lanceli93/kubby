@@ -47,7 +47,7 @@ export const D1_MIN_H = 0.42;
 /** the still's paper border */
 export const D1_PAD = 0.016;
 /** top of the info pocket, and how far the still tucks into it */
-export const D1_POCKET_TOP = 1.06;
+export const D1_POCKET_TOP = 1.22; // no note line (most bookmarks have none): title row + chips only
 export const D1_TUCK = 0.06;
 /** 360° panning loop (s) — one full turn of the equirect */
 export const PANO_LOOP_S = 70;

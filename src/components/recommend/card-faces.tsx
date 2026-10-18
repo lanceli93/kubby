@@ -357,9 +357,6 @@ function ActorFace({
 /** `calc(var(--cw) * k)` — clip-face geometry is in card widths. */
 const cwU = (k: number) => `calc(var(--cw, 200px) * ${k.toFixed(4)})`;
 
-/** Wrap a note in curly quotes unless it already starts with a quote. */
-const quoted = (n: string) => (/^["“「『]/.test(n) ? n : `“${n}”`);
-
 /**
  * Video-bookmark "clip" face — design D1 大幅插入 "Big tuck"
  * (data/demos/clips/index.html?v=d1): the parent poster is the dimmed
@@ -504,7 +501,6 @@ function ClipFace({
           <b>{card.movieTitle}</b>
           {card.year != null && <span className="rc-clip-yr">{card.year}</span>}
         </div>
-        {card.note && <div className="rc-clip-note">{quoted(card.note)}</div>}
         <div className="rc-clip-chips">
           {momentShort && (
             <span className="rc-chip" data-cyan="true" title={momentLong}>
