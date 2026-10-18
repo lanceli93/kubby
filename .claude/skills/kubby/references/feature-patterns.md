@@ -906,23 +906,42 @@ card pile. **The pile is the filtered candidate pool** (non-matching cards leave
 live as filters change); **the draw is the recommendation** (weighted-random,
 personal, diverse, explained). Entry: a gold `Dices` pill in the home hero
 (`home-hero.tsx`, `home.heroTonight`, icon-only on phones) → `/movies/recommend`. The
-route is a static segment beside `[id]` and loads `RecommendPage` with `ssr:false`
-(the hand is restored from `sessionStorage` `kubby-recommend` on first render, so
-going to a movie and back finds the same hand). Prerequisite fix shipped with it:
+route is a static segment beside `[id]` and loads `RecommendPage` with `ssr:false`.
+`sessionStorage` `kubby-recommend` keeps filters + the pile seed + the hand, but **the
+hand is restored only on a return trip**: opening a card (movie / person / play /
+clip) sets a flag (`components/recommend/session.ts`), the next mount reads it in
+`loadSaved` and clears it in an effect (not the `useState` initializer — StrictMode
+runs that twice); the hero button clears it, so entering from home always shows an
+empty table and the user presses Draw. Prerequisite fix shipped with it:
 play counting (architecture.md → Video Playback → Play counting), since the engine
 reads `playCount`/`lastPlayedAt`.
 
 **Contract** — `src/lib/recommend/types.ts` is shared by server + client (no server
 imports). Routes (all `requireUser`, see architecture.md → API): `GET pool` (query
-params) → `{movieCount, actorCount, items}`; `POST draw {filters, movies, actors,
-exclude}` → `{cards, repeatsAllowed}`; `POST history {type, id, action:"dismissed"}`.
+params + optional `seed`) → `{movieCount, actorCount, clipCount, items}`; `POST draw
+{filters, movies, actors, clips?, clipWildcard?, exclude}` → `{cards, repeatsAllowed}`;
+`POST history {type: movie|person|bookmark, id, action:"dismissed"}` (a bookmark must
+belong to the caller, else 404).
 Input goes through `lib/recommend/parse.ts` — lenient (unknown values dropped, counts
 clamped 0–10, ≤ 50 genres/tags/excludes), so a stale client never gets a 400 over a
 typo. The client asks for `movies`/`actors` counts itself (`handComposition(mix)` in
-`presets.ts`: movies 5/0, mixed 4+1, actors 0/5, minus locked cards); `mix` in the
-filters only shapes the pool.
+`presets.ts`: movies 5/0, mixed 4+1, actors 0/5, clips 0/0/5, minus locked cards);
+`mix` in the filters only shapes the pool.
 
-**Engine** (`lib/recommend/engine.ts`, server-only):
+**Engine** (`lib/recommend/engine.ts`, server-only). **Library snapshot cache:** per-movie
+metadata (genres/tags parsed once, actor cast in billing order with main-cast flags,
+library genre counts) lives on `globalThis`, keyed by the `data_versions`
+`'cinema_library'` counter — bumped by SQLite **triggers** on every insert/update/delete
+of `movies` / `movie_people` / `people` / `media_libraries` (created in db/index.ts's
+migration list; read via `lib/db/data-versions.ts`, null → don't cache). Triggers catch
+every write path (scanner, scraper, edits, cascades, other connections); **if the
+snapshot ever reads another table, add it to that trigger list.** Per-user data
+(ratings, plays, favorites, history, bookmarks) is NEVER cached — read per request.
+`/api/filters` (body in `lib/filter-options.ts`) caches its serialized response per
+libraryId on the same counter. `scripts/bench-recommend.ts` inflates a COPY of the DB
+(5k movies / 45k cast / 600 bookmarks) and times pool/draw/filters + asserts seeded-pile
+stability and clip rules — run it after touching the engine (p95 at 5k: pool ~14ms,
+draw ~45ms, filters < 1ms; ~400ms before the snapshot).
 1. **Hard filters → one SQL pass** over `movies` INNER JOIN `media_libraries ... AND
    ml.type = 'movie'` (allowlist) LEFT JOIN the caller's `user_movie_data`. Poster
    required; genres/tags are JSON-text `LIKE '%"x"%'` any-of; unknown runtime is kept
@@ -964,6 +983,25 @@ filters only shapes the pool.
    straight to `/people/{id}` (no film fan — the person page lists the films).
    Mixed piles keep ~4:1 movies:actors (≥ 6 actors) — proportional would bury the
    movies, since each film brings a dozen cast.
+7. **Pool sample**: ≤ `POOL_CAP` 64 items (both scenes show ≤ 64). With the client's
+   per-session `seed` the sample is deterministic — candidates ranked by
+   `seedRank(seed, type:id)`, top N — so a filter change only swaps real leavers /
+   newcomers (narrowing keeps every still-matching card) instead of re-rolling ~all
+   pile images. No seed → random shuffle.
+8. **Clips** (video bookmarks, `type: "bookmark"`): the caller's `movie_bookmarks`
+   rows WITH a thumbnail whose movie is in a movie library. Filters go through the
+   parent movie (library/genres/minRating/years); tags match the movie's OR the
+   bookmark's own tags (→ `bookmarkTag`); `watched` and `maxRuntime` are ignored (a
+   bookmark implies a viewing). Weight `1 + min(1, age/180d)` (rediscovery) `+ 0.5`
+   favorited/loved parent `+ 0.25` bookmark-tag match; same Efraimidis–Spirakis +
+   history de-dup (item_type `bookmark`). ≤ 1 clip per film per hand, and never a clip
+   of a film that is also a movie card in the hand (either direction, locks included).
+   Reasons: `bookmarkMoment` first, then bookmarkTag / favorite / highRating (=
+   community rating, same meaning as on movie cards). **Wildcard:** mixed draws send
+   `clipWildcard`; with p ≈ 0.3 and ≥ 3 fresh clips one movie slot becomes a clip
+   (never forces a repeat). Mixed piles carry ≤ 6 clip items; mix `clips` (preset
+   `clipRewind` 片段重温, watched "any") is all clips. Bookmark thumbnails are absolute
+   paths under the data dir served by `/api/images` unstamped (written once per id).
 
 **Page shell vs scene** (`components/recommend/scene-types.ts` is the contract —
 read its header). The shell (`recommend-page.tsx`) owns all data and decisions:
@@ -979,7 +1017,29 @@ refills it with a 1-card draw while `phase` stays `dealt` (no shuffle); removal 
 `onDismiss` animates as "thrown away", any other removal as back-to-pile. Hand cards
 that no longer match changed filters are flagged `staleKeys` (client mirror of the
 hard filters), not removed. Both scenes render the SHARED `HandCardFace`
-(`card-faces.tsx`) so content is identical across themes.
+(`card-faces.tsx`) so content is identical across themes. A short deal (e.g. only 3
+clips exist) takes the slots nearest the centre.
+
+**Filter bar** (`filter-bar.tsx`): row 1 = presets · deck mix (movies / mixed / actors /
+clips) · count · theme; row 2 = [library picker — only with ≥ 2 movie libraries,
+single-select on `filters.libraryId`, kept across presets, cleared by reset; genre/tag
+options then come from `/api/filters?libraryId=`] · Genres / Tags `FacetPicker`s
+(`facet-picker.tsx`: radix Popover, search, options sorted by movie count from the
+`genreCounts`/`tagCounts` maps, ≤ 150 rendered + "+N more", Enter toggles the first
+match) · a strip of removable selected chips · watched · rating · runtime · reset. Built
+for real libraries with dozens of genres and hundreds of TMDB-keyword tags — never
+render every option inline.
+
+**Clip card face** (`ClipFace` in card-faces.tsx + `clip-layout.ts`, design "D1 大幅插入"
+from the gitignored prototype `data/demos/clips/index.html`): 2:3 like every card — the
+parent poster is a dimmed envelope and the bookmark still (any aspect) is tucked into a
+compact info pocket (top 1.22cw: icon · title · year row + one chip row). **No note** —
+most bookmarks have none (user call). Still ≤ 0.88cw wide, tall stills up to 0.98cw
+high, never below 0.42cw (centre-crop past that); 360° = a 16:9 window panning from
+`viewState.lon` (transform-only, stops under reduced motion). The timecode is printed
+ONCE (orange date-stamp); hover shows only "▶ Play clip". Click = play from the mark
+(`/movies/{id}/play?t=&disc=&vs=` — same format as `bookmark-card.tsx`). No tier FX.
+Pile minis = poster + small tucked still, plain elements only.
 
 **Themes**: 星云漩涡 `vortex` (default; 3D card nebula in 5 depth layers over a canvas
 of spiral dust, spin-up then curved deal) and 牌桌洗牌 `tabletop` (tilted felt table,
@@ -1014,6 +1074,12 @@ Pitfalls found building it:
   Reuse this fast-path shape for any future high-frequency single pref.
 - All glass UI (filter bar, draw button, toasts) lives outside the preserve-3d
   subtree (preserve-3d kills backdrop-filter).
+- **Hover tilt goes on an inner layer with its own `perspective()`**, never on the
+  hit-box element under the scene's shared perspective: the tabletop layer's
+  perspective origin sits far above the hand, so tilting the outer card skewed it into
+  a trapezoid and moved its hit area under the pointer. Tabletop now tilts
+  `.rc-tt-flip` with `perspective(900px) rotateX/Y` (as the vortex `.rc-hin`), and the
+  release spring is near-critical (no wobble).
 
 ## Tier rarity effects
 

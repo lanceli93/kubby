@@ -3,7 +3,7 @@
 ## Contents
 - [Project Structure](#project-structure)
 - [Domains (Cinema + TV + Photos + Music)](#domains-cinema--tv--photos--music)
-- [Database Schema (33 tables)](#database-schema-33-tables)
+- [Database Schema (34 tables)](#database-schema-34-tables)
 - [API Endpoints](#api-endpoints)
 - [Authentication](#authentication)
 - [Library Scanner](#library-scanner)
@@ -84,7 +84,7 @@ kubby/
 │   │   ├── auth.ts                       # NextAuth full config (DB queries, bcrypt)
 │   │   ├── auth.config.ts                # NextAuth lightweight (Edge-compatible, no DB)
 │   │   ├── db/
-│   │   │   ├── schema.ts                 # Drizzle schema (33 tables, incl. photo_items + photo_albums/photo_album_items + 6 music tables + 10 TV tables + recommendation_history)
+│   │   │   ├── schema.ts                 # Drizzle schema (34 tables, incl. photo_items + photo_albums/photo_album_items + 6 music tables + 10 TV tables + recommendation_history + data_versions)
 │   │   │   └── index.ts                  # Proxy lazy-init DB connection (WAL + FK + auto-migrate)
 │   │   ├── paths.ts                      # Centralized path management (KUBBY_DATA_DIR; incl. getMusicArtDir → metadata/music-art)
 │   │   ├── recommend/                    # 今晚看什么 (cinema only)
@@ -197,7 +197,7 @@ pipeline, auth, i18n) is reused, not forked.
 - **Theme is shared** — photos and music both use the same dark cinema tokens, not a
   separate light theme (explicit user decision).
 
-## Database Schema (33 tables)
+## Database Schema (34 tables)
 
 ### Core tables
 
@@ -226,7 +226,9 @@ pipeline, auth, i18n) is reused, not forked.
 
 ### Recommendation tables (migration 0043)
 
-**recommendation_history**: id, user_id (FK CASCADE), item_type (`movie`|`person`), item_id (**NOT a FK** — movie OR cinema person id; rows for deleted items are simply ignored by the engine), action (`shown`|`dismissed`), created_at (default `datetime('now')`, UTC text). Indexes `idx_rh_user_created` (user_id, created_at), `idx_rh_user_item` (user_id, item_type, item_id). Drives the 今晚看什么 de-dup: `shown` < 30 days / `dismissed` < 90 days are held back; rows > 120 days are pruned on each draw. Created only via `CREATE TABLE IF NOT EXISTS` + `CREATE INDEX IF NOT EXISTS` statements in the `pending` array of `db/index.ts` (the same 0043 block ALTERs in `recommend_theme` / `show_tier_effects`).
+**recommendation_history**: id, user_id (FK CASCADE), item_type (`movie`|`person`|`bookmark`), item_id (**NOT a FK** — movie, cinema person or movie_bookmarks id; rows for deleted items are simply ignored by the engine), action (`shown`|`dismissed`), created_at (default `datetime('now')`, UTC text). Indexes `idx_rh_user_created` (user_id, created_at), `idx_rh_user_item` (user_id, item_type, item_id). Drives the 今晚看什么 de-dup: `shown` < 30 days / `dismissed` < 90 days are held back; rows > 120 days are pruned on each draw. Created only via `CREATE TABLE IF NOT EXISTS` + `CREATE INDEX IF NOT EXISTS` statements in the `pending` array of `db/index.ts` (the same 0043 block ALTERs in `recommend_theme` / `show_tier_effects`).
+
+**data_versions** (migration 0044): name (PK), version (int). Change counters for in-memory caches; row `cinema_library` is bumped by 12 `CREATE TRIGGER IF NOT EXISTS trg_dv_<table>_<op>` triggers (AFTER INSERT/UPDATE/DELETE on movies, movie_people, people, media_libraries) declared in the `pending` array of `db/index.ts` (triggers are NOT in schema.ts). Read with `readDataVersion()` (`lib/db/data-versions.ts`); keys the 今晚看什么 library snapshot and the `/api/filters` response cache.
 
 ### Media info tables
 
