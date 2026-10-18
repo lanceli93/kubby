@@ -2,7 +2,8 @@
 //
 // Pipeline per request:
 //   1. Hard filters → one SQL pass over `movies` (movie-type libraries only —
-//      allowlist, never a blocklist) left-joined with the caller's user data.
+//      allowlist, never a blocklist); the watched filter + user fields come
+//      from the caller's user_movie_data rows (LEFT JOIN semantics).
 //   2. Personal signals (genre / tag affinity, liked cast) → per-movie score in
 //      JS. Every scoring term carries the reason it would explain, so the card
 //      "why" chips are simply the strongest contributing terms.
@@ -14,13 +15,18 @@
 //      hand they are re-admitted oldest-first (dismissed last) and the
 //      response says `repeatsAllowed`.
 //
-// Personal libraries are hundreds–low-thousands of movies, so everything is a
-// handful of batched queries + in-memory scoring (no N+1).
+// Library-only data (metadata, parsed genres/tags, the cast of every movie) is
+// an in-memory snapshot invalidated by a trigger-maintained version counter;
+// per request it's two light indexed reads of the caller's data + one id-only
+// filter pass + in-memory scoring (no N+1). `scripts/bench-recommend.ts`
+// times it on a 5k-movie copy of the DB: pool ≈ 10 ms, draw ≈ 35 ms warm
+// (≈ +90 ms once after a library write, to rebuild the snapshot).
 
 import path from "path";
 import { and, eq, lt, sql, type SQL } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
+import { readDataVersion } from "@/lib/db/data-versions";
 import { recommendationHistory } from "@/lib/db/schema";
 import { resolveDataPath } from "@/lib/paths";
 import type {
@@ -141,9 +147,20 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-// ─── data loading ───────────────────────────────────────────────
+// ─── library snapshot (cached) ──────────────────────────────────
+//
+// Everything that depends only on the library — per-movie metadata with
+// genres/tags parsed and image paths stamped, the billing-ordered actor cast
+// of every movie, and the genre distribution — is built once and kept in
+// memory, keyed by the `data_versions` 'cinema_library' counter that SQLite
+// triggers bump on any write to movies / movie_people / people /
+// media_libraries (db/index.ts). A scan, scrape or edit is therefore picked up
+// on the very next request. Per-user data (ratings, plays, favorites,
+// history) is NEVER cached — it is re-read on every call, so a new rating
+// counts immediately. At 5k movies / 40k cast rows this replaces ~250 ms of
+// SQL + JSON + path work per request with map lookups.
 
-interface Candidate {
+interface MovieStatic {
   id: string;
   title: string;
   year: number | null;
@@ -151,25 +168,206 @@ interface Candidate {
   runtimeMinutes: number | null;
   genres: string[];
   tags: string[];
-  posterPath: string | null; // stamped
-  posterBlur: string | null;
-  fanartPath: string | null; // stamped
+  lowerTags: string[];
+  primaryGenre: string | null; // lowercase
+  hasFanart: boolean;
+  /** raw image columns; use posterOf / fanartOf for the stamped paths */
+  img: LazyImages;
   dateAddedMs: number | null;
+}
+
+/**
+ * Image paths are joined + stamped on first use only: win32 path.join costs
+ * ~1.5 µs, and only the ≤ 120 returned items ever need one. The object is
+ * shared by reference with every per-request Candidate, so the memo sticks.
+ */
+interface LazyImages {
+  folder: string;
+  poster: string | null;
+  posterMtime: number | null;
+  fanart: string | null;
+  fanartMtime: number | null;
+  posterPath?: string | null;
+  fanartPath?: string | null;
+}
+
+interface ActorInfo {
+  name: string;
+  photo: string | null; // raw DB value; use photoOf for the resolved + stamped path
+  photoMtime: number | null;
+  photoPath?: string | null;
+}
+
+const posterOf = (m: MovieStatic) => {
+  const i = m.img;
+  if (i.posterPath === undefined) i.posterPath = i.poster ? stampPath(path.join(i.folder, i.poster), i.posterMtime) : null;
+  return i.posterPath;
+};
+
+const fanartOf = (m: MovieStatic) => {
+  const i = m.img;
+  if (i.fanartPath === undefined) i.fanartPath = stampPath(i.fanart ? path.join(i.folder, i.fanart) : null, i.fanartMtime);
+  return i.fanartPath;
+};
+
+const photoOf = (a: ActorInfo) => {
+  if (a.photoPath === undefined) a.photoPath = stampPath(a.photo ? resolveDataPath(a.photo) : null, a.photoMtime);
+  return a.photoPath;
+};
+
+interface CastEntry {
+  personId: string;
+  name: string;
+  actor: ActorInfo;
+  /** among the first MAIN_CAST billed (NULL sortOrder = not main, unless the movie has no order data at all) */
+  main: boolean;
+}
+
+interface Library {
+  version: number | null;
+  /** every movie in a movie-type library (poster or not) */
+  movies: Map<string, MovieStatic>;
+  /** actor cast per movie, billing order, one entry per person — read-only */
+  cast: Map<string, CastEntry[]>;
+  /** lowercase genre → number of library movies carrying it */
+  libGenre: Map<string, number>;
+}
+
+/** Bump when the Library shape changes so a dev hot reload drops the old cache. */
+const LIBRARY_CACHE_KEY = "__kubby_recommend_library_v1__";
+
+function buildLibrary(version: number | null): Library {
+  const movieRows = db.all<{
+    id: string;
+    title: string;
+    year: number | null;
+    community_rating: number | null;
+    runtime_minutes: number | null;
+    genres: string | null;
+    tags: string | null;
+    folder_path: string;
+    poster_path: string | null;
+    poster_mtime: number | null;
+    fanart_path: string | null;
+    fanart_mtime: number | null;
+    date_added: string | null;
+  }>(sql`
+    SELECT m.id, m.title, m.year, m.community_rating, m.runtime_minutes, m.genres, m.tags,
+      m.folder_path, m.poster_path, m.poster_mtime, m.fanart_path, m.fanart_mtime, m.date_added
+    FROM movies m
+    INNER JOIN media_libraries ml ON ml.id = m.media_library_id AND ml.type = 'movie'
+  `);
+  const movies = new Map<string, MovieStatic>();
+  const libGenre = new Map<string, number>();
+  for (const r of movieRows) {
+    const genres = parseStringArray(r.genres);
+    const tags = parseStringArray(r.tags);
+    for (const g of genres) libGenre.set(g.toLowerCase(), (libGenre.get(g.toLowerCase()) ?? 0) + 1);
+    movies.set(r.id, {
+      id: r.id,
+      title: r.title,
+      year: r.year,
+      communityRating: r.community_rating,
+      runtimeMinutes: r.runtime_minutes && r.runtime_minutes > 0 ? r.runtime_minutes : null,
+      genres,
+      tags,
+      lowerTags: tags.map((t) => t.toLowerCase()),
+      primaryGenre: genres[0]?.toLowerCase() ?? null,
+      hasFanart: !!r.fanart_path,
+      img: {
+        folder: r.folder_path,
+        poster: r.poster_path,
+        posterMtime: r.poster_mtime,
+        fanart: r.fanart_path,
+        fanartMtime: r.fanart_mtime,
+      },
+      dateAddedMs: parseDbDate(r.date_added),
+    });
+  }
+
+  // Actors (cinema `people` only).
+  const actors = new Map<string, ActorInfo>();
+  const actorRows = db.all<{ id: string; name: string; photo_path: string | null; photo_mtime: number | null }>(sql`
+    SELECT id, name, photo_path, photo_mtime FROM people WHERE type = 'actor'
+  `);
+  for (const p of actorRows) actors.set(p.id, { name: p.name, photo: p.photo_path, photoMtime: p.photo_mtime });
+
+  // Cast links grouped per movie, billing-ordered in JS (cheaper than an ORDER
+  // BY over every link): COALESCE(sort_order, 999999), then link id.
+  type Link = { id: string; personId: string; order: number | null };
+  const links = new Map<string, Link[]>();
+  // Array rows (`values`): ~40% cheaper than objects at 40k+ rows.
+  const linkRows = db.values<[string, string, string, number | null]>(sql`
+    SELECT id, movie_id, person_id, sort_order FROM movie_people
+  `);
+  for (const [id, movieId, personId, order] of linkRows) {
+    if (!movies.has(movieId) || !actors.has(personId)) continue;
+    let list = links.get(movieId);
+    if (!list) links.set(movieId, (list = []));
+    list.push({ id, personId, order });
+  }
+  const cast = new Map<string, CastEntry[]>();
+  for (const [movieId, list] of links) {
+    list.sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const out: CastEntry[] = [];
+    let hasOrder = false;
+    for (const l of list) {
+      if (l.order != null) hasOrder = true;
+      if (out.some((e) => e.personId === l.personId)) continue; // same actor, two roles
+      const a = actors.get(l.personId)!;
+      // The list is billing-ordered with NULLs last, so the index is the billing rank.
+      out.push({ personId: l.personId, name: a.name, actor: a, main: out.length < MAIN_CAST && l.order != null });
+    }
+    // A movie with no sortOrder data at all: we can't tell who's main → everyone counts.
+    if (!hasOrder) for (const e of out) e.main = true;
+    cast.set(movieId, out);
+  }
+
+  return { version, movies, cast, libGenre };
+}
+
+/** The cached snapshot, rebuilt when the library version moved (or on `force`). */
+function getLibrary(force = false): Library {
+  const g = globalThis as Record<string, unknown>;
+  const version = readDataVersion("cinema_library"); // null (unmigrated DB) → never cache
+  const cached = g[LIBRARY_CACHE_KEY] as Library | undefined;
+  if (!force && cached && version != null && cached.version === version) return cached;
+  const lib = buildLibrary(version);
+  // Never cache a snapshot read inside an open transaction (it could roll back).
+  const client = (db as unknown as { $client?: { inTransaction?: boolean } }).$client;
+  if (version != null && !client?.inTransaction) g[LIBRARY_CACHE_KEY] = lib;
+  else delete g[LIBRARY_CACHE_KEY];
+  return lib;
+}
+
+/** Blur placeholders for just the items returned (kept out of the snapshot: ~0.5 KB each). */
+function loadBlurs(movieIds: string[], personIds: string[]) {
+  const movieBlur = new Map<string, string | null>();
+  const personBlur = new Map<string, string | null>();
+  for (const ids of chunk(Array.from(new Set(movieIds)), 500)) {
+    const rows = db.all<{ id: string; poster_blur: string | null }>(sql`
+      SELECT id, poster_blur FROM movies WHERE id IN (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
+    `);
+    for (const r of rows) movieBlur.set(r.id, r.poster_blur);
+  }
+  for (const ids of chunk(Array.from(new Set(personIds)), 500)) {
+    const rows = db.all<{ id: string; photo_blur: string | null }>(sql`
+      SELECT id, photo_blur FROM people WHERE id IN (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
+    `);
+    for (const r of rows) personBlur.set(r.id, r.photo_blur);
+  }
+  return { movieBlur, personBlur };
+}
+
+// ─── per-request data ───────────────────────────────────────────
+
+interface Candidate extends MovieStatic {
   isPlayed: boolean;
   isFavorite: boolean;
   playCount: number;
   personalRating: number | null; // effective (dims fallback)
   lastPlayedAt: string | null;
   lastPlayedMs: number | null;
-}
-
-interface CastEntry {
-  personId: string;
-  name: string;
-  photoPath: string | null; // stamped
-  photoBlur: string | null;
-  /** among the first MAIN_CAST billed (NULL sortOrder = not main, unless the movie has no order data at all) */
-  main: boolean;
 }
 
 interface PersonSignal {
@@ -191,8 +389,32 @@ interface Signals {
   highPerson: number;
 }
 
-/** Throws nothing; an invalid / non-movie libraryId just yields no candidates. */
-function loadCandidates(userId: string, f: RecommendFilters): Candidate[] {
+interface UserMovieRow {
+  movie_id: string;
+  is_played: number | null;
+  is_favorite: number | null;
+  play_count: number | null;
+  personal_rating: number | null;
+  dimension_ratings: string | null;
+  last_played_at: string | null;
+}
+
+/** All of the caller's user_movie_data — one indexed read, shared by the filters and the taste profile. */
+function loadUserMovieData(userId: string): UserMovieRow[] {
+  return db.all<UserMovieRow>(sql`
+    SELECT movie_id, is_played, is_favorite, play_count, personal_rating, dimension_ratings, last_played_at
+    FROM user_movie_data WHERE user_id = ${userId}
+  `);
+}
+
+/**
+ * Hard filters → one SQL pass over movies returning ids (metadata comes from
+ * the snapshot; the watched filter + user fields from the caller's rows —
+ * same semantics as LEFT JOIN user_movie_data). Throws nothing; an invalid /
+ * non-movie libraryId just yields no candidates. Returns null when a match is
+ * missing from `lib` (stale snapshot — the caller rebuilds and retries).
+ */
+function loadCandidates(f: RecommendFilters, lib: Library, umdRows: UserMovieRow[]): Candidate[] | null {
   const where: SQL[] = [sql`m.poster_path IS NOT NULL`, sql`m.poster_path != ''`];
   if (f.libraryId) where.push(sql`m.media_library_id = ${f.libraryId}`);
   if (f.genres?.length) where.push(jsonArrayAnyOf(sql`m.genres`, f.genres));
@@ -205,135 +427,47 @@ function loadCandidates(userId: string, f: RecommendFilters): Candidate[] {
     where.push(sql`(m.runtime_minutes IS NULL OR m.runtime_minutes <= 0 OR m.runtime_minutes <= ${f.maxRuntime})`);
   }
   const watched = f.watched ?? "unwatched";
-  if (watched === "unwatched") where.push(sql`COALESCE(umd.is_played, 0) = 0`);
-  else if (watched === "watched") where.push(sql`umd.is_played = 1`);
 
-  const rows = db.all<{
-    id: string;
-    title: string;
-    year: number | null;
-    community_rating: number | null;
-    runtime_minutes: number | null;
-    genres: string | null;
-    tags: string | null;
-    folder_path: string;
-    poster_path: string;
-    poster_mtime: number | null;
-    poster_blur: string | null;
-    fanart_path: string | null;
-    fanart_mtime: number | null;
-    date_added: string | null;
-    is_played: number | null;
-    is_favorite: number | null;
-    play_count: number | null;
-    personal_rating: number | null;
-    dimension_ratings: string | null;
-    last_played_at: string | null;
-  }>(sql`
-    SELECT m.id, m.title, m.year, m.community_rating, m.runtime_minutes, m.genres, m.tags,
-      m.folder_path, m.poster_path, m.poster_mtime, m.poster_blur, m.fanart_path, m.fanart_mtime,
-      m.date_added, umd.is_played, umd.is_favorite, umd.play_count, umd.personal_rating,
-      umd.dimension_ratings, umd.last_played_at
+  const ids = db.values<[string]>(sql`
+    SELECT m.id
     FROM movies m
     INNER JOIN media_libraries ml ON ml.id = m.media_library_id AND ml.type = 'movie'
-    LEFT JOIN user_movie_data umd ON umd.movie_id = m.id AND umd.user_id = ${userId}
     WHERE ${sql.join(where, sql` AND `)}
   `);
 
-  return rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    year: r.year,
-    communityRating: r.community_rating,
-    runtimeMinutes: r.runtime_minutes && r.runtime_minutes > 0 ? r.runtime_minutes : null,
-    genres: parseStringArray(r.genres),
-    tags: parseStringArray(r.tags),
-    posterPath: stampPath(path.join(r.folder_path, r.poster_path), r.poster_mtime),
-    posterBlur: r.poster_blur,
-    fanartPath: stampPath(r.fanart_path ? path.join(r.folder_path, r.fanart_path) : null, r.fanart_mtime),
-    dateAddedMs: parseDbDate(r.date_added),
-    isPlayed: !!r.is_played,
-    isFavorite: !!r.is_favorite,
-    playCount: r.play_count ?? 0,
-    personalRating: effectiveRating(r.personal_rating, r.dimension_ratings),
-    lastPlayedAt: r.last_played_at,
-    lastPlayedMs: parseDbDate(r.last_played_at),
-  }));
-}
-
-/** Cast (actors only), billing order, for a batch of movie ids. */
-function loadCast(movieIds: string[]): Map<string, CastEntry[]> {
-  const out = new Map<string, CastEntry[]>();
-  for (const ids of chunk(movieIds, 500)) {
-    const rows = db.all<{
-      movie_id: string;
-      person_id: string;
-      name: string;
-      photo_path: string | null;
-      photo_mtime: number | null;
-      photo_blur: string | null;
-      sort_order: number | null;
-    }>(sql`
-      SELECT mp.movie_id, mp.person_id, p.name, p.photo_path, p.photo_mtime, p.photo_blur, mp.sort_order
-      FROM movie_people mp
-      INNER JOIN people p ON p.id = mp.person_id AND p.type = 'actor'
-      WHERE mp.movie_id IN (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
-      ORDER BY mp.movie_id, COALESCE(mp.sort_order, 999999), mp.id
-    `);
-    const hasOrder = new Set<string>();
-    for (const r of rows) {
-      if (r.sort_order != null) hasOrder.add(r.movie_id);
-      let list = out.get(r.movie_id);
-      if (!list) out.set(r.movie_id, (list = []));
-      if (list.some((e) => e.personId === r.person_id)) continue; // same actor, two roles
-      list.push({
-        personId: r.person_id,
-        name: r.name,
-        photoPath: stampPath(r.photo_path ? resolveDataPath(r.photo_path) : null, r.photo_mtime),
-        photoBlur: r.photo_blur,
-        // Rows are billing-ordered with NULLs last, so the list index is the billing rank.
-        main: list.length < MAIN_CAST && r.sort_order != null,
-      });
-    }
-    // A movie with no sortOrder data at all: we can't tell who's main → everyone counts.
-    for (const id of ids) {
-      if (!hasOrder.has(id)) for (const e of out.get(id) ?? []) e.main = true;
-    }
+  const umd = new Map(umdRows.map((r) => [r.movie_id, r]));
+  const none: Partial<UserMovieRow> = {};
+  const out: Candidate[] = [];
+  for (const [id] of ids) {
+    const s = lib.movies.get(id);
+    if (!s) return null;
+    const r = umd.get(id) ?? none;
+    // = SQL `COALESCE(umd.is_played, 0) = 0` / `umd.is_played = 1`
+    if (watched === "unwatched" && (r.is_played ?? 0) !== 0) continue;
+    if (watched === "watched" && r.is_played !== 1) continue;
+    out.push({
+      ...s,
+      isPlayed: !!r.is_played,
+      isFavorite: !!r.is_favorite,
+      playCount: r.play_count ?? 0,
+      personalRating: effectiveRating(r.personal_rating ?? null, r.dimension_ratings ?? null),
+      lastPlayedAt: r.last_played_at ?? null,
+      lastPlayedMs: parseDbDate(r.last_played_at ?? null),
+    });
   }
   return out;
 }
 
-/** Library-wide taste profile for one user (cinema only). */
-function loadSignals(userId: string): Signals {
-  const libRows = db.all<{ genres: string | null }>(sql`
-    SELECT m.genres FROM movies m
-    INNER JOIN media_libraries ml ON ml.id = m.media_library_id AND ml.type = 'movie'
-  `);
-  const libGenre = new Map<string, number>();
-  for (const r of libRows) {
-    for (const g of parseStringArray(r.genres)) libGenre.set(g.toLowerCase(), (libGenre.get(g.toLowerCase()) ?? 0) + 1);
+/** Library-wide taste profile for one user (cinema only). Always read fresh. */
+function loadSignals(userId: string, lib: Library, umdRows: UserMovieRow[]): Signals {
+  // Movie-type libraries only: rows whose movie isn't in the snapshot are skipped.
+  const umd: { r: UserMovieRow; m: MovieStatic; rating: number | null }[] = [];
+  for (const r of umdRows) {
+    const m = lib.movies.get(r.movie_id);
+    if (m) umd.push({ r, m, rating: effectiveRating(r.personal_rating, r.dimension_ratings) });
   }
 
-  const umdRows = db.all<{
-    is_played: number | null;
-    is_favorite: number | null;
-    play_count: number | null;
-    personal_rating: number | null;
-    dimension_ratings: string | null;
-    genres: string | null;
-    tags: string | null;
-  }>(sql`
-    SELECT umd.is_played, umd.is_favorite, umd.play_count, umd.personal_rating, umd.dimension_ratings,
-      m.genres, m.tags
-    FROM user_movie_data umd
-    INNER JOIN movies m ON m.id = umd.movie_id
-    INNER JOIN media_libraries ml ON ml.id = m.media_library_id AND ml.type = 'movie'
-    WHERE umd.user_id = ${userId}
-  `);
-
-  const rated = umdRows
-    .map((r) => effectiveRating(r.personal_rating, r.dimension_ratings))
-    .filter((v): v is number => v != null);
+  const rated = umd.map((x) => x.rating).filter((v): v is number => v != null);
   const userMean = rated.length ? rated.reduce((a, b) => a + b, 0) / rated.length : 0;
   const highMovie = highThreshold(rated);
 
@@ -341,12 +475,11 @@ function loadSignals(userId: string): Signals {
   const acc = new Map<string, { name: string; sum: number; n: number; engaged: number }>();
   const tagCount = new Map<string, number>();
   let totalEngaged = 0;
-  for (const r of umdRows) {
-    const rating = effectiveRating(r.personal_rating, r.dimension_ratings);
+  for (const { r, m, rating } of umd) {
     const engaged = !!r.is_played || (r.play_count ?? 0) > 0 || !!r.is_favorite || rating != null;
     if (!engaged) continue;
     totalEngaged++;
-    for (const g of parseStringArray(r.genres)) {
+    for (const g of m.genres) {
       const k = g.toLowerCase();
       const a = acc.get(k) ?? { name: g, sum: 0, n: 0, engaged: 0 };
       a.engaged++;
@@ -357,11 +490,11 @@ function loadSignals(userId: string): Signals {
       acc.set(k, a);
     }
     const loved = !!r.is_favorite || (rating != null && rating >= highMovie && rating > userMean);
-    if (loved) for (const t of parseStringArray(r.tags)) tagCount.set(t.toLowerCase(), (tagCount.get(t.toLowerCase()) ?? 0) + 1);
+    if (loved) for (const t of m.lowerTags) tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
   }
 
   const genres = new Map<string, GenreStat>();
-  const totalLib = libRows.length || 1;
+  const totalLib = lib.movies.size || 1;
   for (const [k, a] of acc) {
     // Rating term: shrunk (k=2 toward the user's mean) avg vs. the user's mean.
     const shrunk = a.n ? (a.sum + userMean * 2) / (a.n + 2) : userMean;
@@ -369,7 +502,7 @@ function loadSignals(userId: string): Signals {
     // Engagement term: lift of the genre's share of what you engaged with over
     // its share of the library (so "Drama is everywhere" doesn't count),
     // damped for tiny samples.
-    const lift = totalEngaged ? (a.engaged / totalEngaged) / ((libGenre.get(k) ?? 1) / totalLib) : 0;
+    const lift = totalEngaged ? (a.engaged / totalEngaged) / ((lib.libGenre.get(k) ?? 1) / totalLib) : 0;
     const engagementTerm = clamp((lift - 1) / 1.5, -0.5, 1) * Math.min(1, a.engaged / 3);
     genres.set(k, {
       affinity: 0.6 * ratingTerm + 0.4 * engagementTerm,
@@ -506,7 +639,7 @@ function scoreMovie(c: Candidate, cast: CastEntry[], sig: Signals, f: RecommendF
   if (extraLiked > 1) terms.push({ v: Math.min(0.45, 0.15 * (extraLiked - 1)) });
 
   // Tags: explicit filter tags explain the match; otherwise personal loved-tag affinity.
-  const lowerTags = c.tags.map((t) => t.toLowerCase());
+  const lowerTags = c.lowerTags;
   if (f.tags?.length) {
     const matched = f.tags.filter((t) => lowerTags.includes(t.toLowerCase()));
     if (matched.length) {
@@ -576,7 +709,7 @@ function scoreMovie(c: Candidate, cast: CastEntry[], sig: Signals, f: RecommendF
     c,
     weight,
     reasons: pickReasons(terms, fallback),
-    primaryGenre: c.genres[0]?.toLowerCase() ?? null,
+    primaryGenre: c.primaryGenre,
     leads: cast.slice(0, LEAD_CAST).map((e) => e.personId),
   };
 }
@@ -584,8 +717,7 @@ function scoreMovie(c: Candidate, cast: CastEntry[], sig: Signals, f: RecommendF
 interface ActorAgg {
   personId: string;
   name: string;
-  photoPath: string;
-  photoBlur: string | null;
+  actor: ActorInfo;
   films: { m: ScoredMovie; billing: number }[];
   matchingCount: number;
   unwatchedCount: number;
@@ -602,20 +734,25 @@ interface ActorAgg {
  * Score = 1 + 0.9·log2(1 + billing-weighted film count) + 0.4·log2(1 + unwatched)
  *         + favorite 1.2 + rated ≥ bar 0.4–0.8. Blind: 1 + 0.3·log2(1 + count).
  */
-function buildActors(scored: ScoredMovie[], castMap: Map<string, CastEntry[]>, sig: Signals, f: RecommendFilters): ActorAgg[] {
+function buildActors(
+  scored: ScoredMovie[],
+  castMap: Map<string, CastEntry[]>,
+  sig: Signals,
+  f: RecommendFilters,
+  ranked = true
+): ActorAgg[] {
   const byId = new Map<string, ActorAgg>();
   for (const m of scored) {
     const cast = castMap.get(m.c.id) ?? [];
     cast.forEach((e, i) => {
-      if (!e.photoPath) return;
+      if (!e.actor.photo) return;
       if (!e.main && !sig.people.has(e.personId)) return;
       let a = byId.get(e.personId);
       if (!a) {
         a = {
           personId: e.personId,
           name: e.name,
-          photoPath: e.photoPath,
-          photoBlur: e.photoBlur,
+          actor: e.actor,
           films: [],
           matchingCount: 0,
           unwatchedCount: 0,
@@ -630,6 +767,8 @@ function buildActors(scored: ScoredMovie[], castMap: Map<string, CastEntry[]>, s
       if (!m.c.isPlayed) a.unwatchedCount++;
     });
   }
+  // The pool only needs who qualifies (and in what order) — skip weights / reasons.
+  if (!ranked) return [...byId.values()];
 
   for (const a of byId.values()) {
     const weighted = a.films.reduce((s, x) => s + x.billing, 0);
@@ -662,14 +801,23 @@ interface Context {
   castMap: Map<string, CastEntry[]>;
 }
 
-function buildContext(userId: string, filters: RecommendFilters, withActors: boolean, extraCastIds: string[] = []): Context {
+/** `ranked: false` (the pool) skips scoring: the pile is a uniform sample, so only the sets matter. */
+function buildContext(userId: string, filters: RecommendFilters, withActors: boolean, ranked = true): Context {
   const now = Date.now();
-  const candidates = loadCandidates(userId, filters);
-  const ids = candidates.map((c) => c.id);
-  const castMap = loadCast(Array.from(new Set([...ids, ...extraCastIds])));
-  const sig = loadSignals(userId);
-  const scored = candidates.map((c) => scoreMovie(c, castMap.get(c.id) ?? [], sig, filters, now));
-  const actors = withActors ? buildActors(scored, castMap, sig, filters) : [];
+  let lib = getLibrary();
+  const umdRows = loadUserMovieData(userId);
+  let candidates = loadCandidates(filters, lib, umdRows);
+  if (!candidates) {
+    // A movie the snapshot doesn't know (written by another connection) → rebuild once.
+    lib = getLibrary(true);
+    candidates = loadCandidates(filters, lib, umdRows) ?? [];
+  }
+  const castMap = lib.cast;
+  const sig = loadSignals(userId, lib, umdRows);
+  const scored = ranked
+    ? candidates.map((c) => scoreMovie(c, castMap.get(c.id) ?? [], sig, filters, now))
+    : candidates.map((c): ScoredMovie => ({ c, weight: 1, reasons: [], primaryGenre: c.primaryGenre, leads: [] }));
+  const actors = withActors ? buildActors(scored, castMap, sig, filters, ranked) : [];
   return { filters, scored, actors, castMap };
 }
 
@@ -683,7 +831,7 @@ function buildContext(userId: string, filters: RecommendFilters, withActors: boo
  * are fewer than POOL_CAP actors (the hand falls back to movies the same way).
  */
 export function getPool(userId: string, filters: RecommendFilters, rng: Rng = Math.random): PoolResponse {
-  const ctx = buildContext(userId, filters, (filters.mix ?? "mixed") !== "movies");
+  const ctx = buildContext(userId, filters, (filters.mix ?? "mixed") !== "movies", false);
   const M = ctx.scored.length;
   const A = ctx.actors.length;
   const mix = filters.mix ?? "mixed";
@@ -693,12 +841,26 @@ export function getPool(userId: string, filters: RecommendFilters, rng: Rng = Ma
   else if (mix === "mixed") actorSlots = Math.min(A, Math.max(6, Math.round(Math.min(POOL_CAP, M + A) * 0.2)));
   const movieSlots = Math.min(M, POOL_CAP - actorSlots);
 
-  const movieItems: PoolItem[] = shuffle([...ctx.scored], rng)
-    .slice(0, movieSlots)
-    .map((m) => ({ type: "movie", id: m.c.id, title: m.c.title, image: m.c.posterPath, blur: m.c.posterBlur }));
-  const actorItems: PoolItem[] = shuffle([...ctx.actors], rng)
-    .slice(0, actorSlots)
-    .map((a) => ({ type: "person", id: a.personId, title: a.name, image: a.photoPath, blur: a.photoBlur }));
+  const movies = shuffle([...ctx.scored], rng).slice(0, movieSlots);
+  const actors = shuffle([...ctx.actors], rng).slice(0, actorSlots);
+  const { movieBlur, personBlur } = loadBlurs(
+    movies.map((m) => m.c.id),
+    actors.map((a) => a.personId)
+  );
+  const movieItems: PoolItem[] = movies.map((m) => ({
+    type: "movie",
+    id: m.c.id,
+    title: m.c.title,
+    image: posterOf(m.c),
+    blur: movieBlur.get(m.c.id) ?? null,
+  }));
+  const actorItems: PoolItem[] = actors.map((a) => ({
+    type: "person",
+    id: a.personId,
+    title: a.name,
+    image: photoOf(a.actor),
+    blur: personBlur.get(a.personId) ?? null,
+  }));
 
   return { movieCount: M, actorCount: A, items: shuffle([...movieItems, ...actorItems], rng) };
 }
@@ -733,10 +895,21 @@ function loadHistory(userId: string): HistoryState {
   return { blocked };
 }
 
-/** Re-admission order: shown-only before dismissed, then oldest first. */
-function readmitOrder(h: HistoryState, key: string): [number, string] {
-  const b = h.blocked.get(key)!;
-  return [b.dismissed ? 1 : 0, b.at];
+/** Same ordering as `a.localeCompare(b)`, without re-resolving the locale per call. */
+const collator = new Intl.Collator();
+
+/**
+ * Re-admission order: shown-only before dismissed, then oldest first. Sort
+ * keys are looked up once per item, not per comparison (thousands of blocked
+ * items at scale).
+ */
+function sortReadmit<T>(items: T[], h: HistoryState, key: (item: T) => string): T[] {
+  const keyed = items.map((item) => {
+    const b = h.blocked.get(key(item))!;
+    return { item, d: b.dismissed ? 1 : 0, at: b.at };
+  });
+  keyed.sort((a, b) => a.d - b.d || collator.compare(a.at, b.at));
+  return keyed.map((x) => x.item);
 }
 
 function writeShown(userId: string, cards: RecommendCard[]) {
@@ -790,6 +963,7 @@ function greedyPick<T>(
   return out;
 }
 
+/** posterBlur is filled in by attachBlurs once the hand is final. */
 function movieCard(m: ScoredMovie): MovieCardData {
   const c = m.c;
   return {
@@ -800,14 +974,26 @@ function movieCard(m: ScoredMovie): MovieCardData {
     rating: c.communityRating,
     personalRating: c.personalRating,
     runtimeMinutes: c.runtimeMinutes,
-    genres: c.genres,
-    posterPath: c.posterPath,
-    posterBlur: c.posterBlur,
-    fanartPath: c.fanartPath,
+    genres: [...c.genres], // the snapshot's array is shared — never hand it out
+    posterPath: posterOf(c),
+    posterBlur: null,
+    fanartPath: fanartOf(c),
     isPlayed: c.isPlayed,
     isFavorite: c.isFavorite,
     reasons: m.reasons,
   };
+}
+
+/** Fills the blur placeholders of a final hand (incl. actor cards' films) in one lookup. */
+function attachBlurs(cards: RecommendCard[]) {
+  const movieCards = cards.flatMap((c) => (c.type === "movie" ? [c] : c.films));
+  const actorCards = cards.filter((c): c is ActorCardData => c.type === "person");
+  const { movieBlur, personBlur } = loadBlurs(
+    movieCards.map((c) => c.id),
+    actorCards.map((c) => c.id)
+  );
+  for (const c of movieCards) c.posterBlur = movieBlur.get(c.id) ?? null;
+  for (const c of actorCards) c.photoBlur = personBlur.get(c.id) ?? null;
 }
 
 export interface DrawOptions {
@@ -822,7 +1008,7 @@ export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {
   const excluded = new Set((req.exclude ?? []).map((r: RecommendItemRef) => refKey(r.type, r.id)));
   const excludedMovieIds = (req.exclude ?? []).filter((r) => r.type === "movie").map((r) => r.id);
   // The request's movies/actors counts (not filters.mix) decide the hand's shape.
-  const ctx = buildContext(userId, filters, req.actors > 0, excludedMovieIds);
+  const ctx = buildContext(userId, filters, req.actors > 0);
   const history = loadHistory(userId);
 
   // ── Diversity state, seeded with locked movies so the new cards fit around them.
@@ -864,11 +1050,7 @@ export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {
   const keyed = freshMovies.map((m) => ({ m, k: esKey(m.weight, rng) }));
   keyed.sort((a, b) => b.k - a.k);
   const freshOrder = keyed.map((x) => x.m);
-  const blockedOrder = blockedMovies.sort((a, b) => {
-    const [da, ta] = readmitOrder(history, refKey("movie", a.c.id));
-    const [db_, tb] = readmitOrder(history, refKey("movie", b.c.id));
-    return da - db_ || ta.localeCompare(tb);
-  });
+  const blockedOrder = sortReadmit(blockedMovies, history, (m) => refKey("movie", m.c.id));
   for (const m of blockedOrder) isRepeat.add(m.c.id);
 
   const takenMovies = new Set<string>(excludedMovieIds);
@@ -901,11 +1083,7 @@ export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {
       (history.blocked.has(k) ? blockedA : freshA).push(a);
     }
     const keyedA = freshA.map((a) => ({ a, k: esKey(a.weight, rng) })).sort((x, y) => y.k - x.k);
-    const blockedOrderA = blockedA.sort((a, b) => {
-      const [da, ta] = readmitOrder(history, refKey("person", a.personId));
-      const [db_, tb] = readmitOrder(history, refKey("person", b.personId));
-      return da - db_ || ta.localeCompare(tb);
-    });
+    const blockedOrderA = sortReadmit(blockedA, history, (a) => refKey("person", a.personId));
     const repeatActors = new Set(blockedOrderA.map((a) => a.personId));
     const handLeads = new Set(handMovies.flatMap((m) => m.leads));
     const availableFilms = (a: ActorAgg) => a.films.filter((x) => !usedMovieIds.has(x.m.c.id));
@@ -925,13 +1103,14 @@ export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {
         const films = availableFilms(a).slice(0, ACTOR_FILMS);
         for (const x of films) usedMovieIds.add(x.m.c.id);
         if (repeatActors.has(a.personId)) repeats = true;
-        const topFanart = films.find((x) => x.m.c.fanartPath)?.m.c.fanartPath ?? a.films.find((x) => x.m.c.fanartPath)?.m.c.fanartPath ?? null;
+        const withFanart = films.find((x) => x.m.c.hasFanart) ?? a.films.find((x) => x.m.c.hasFanart);
+        const topFanart = withFanart ? fanartOf(withFanart.m.c) : null;
         actorCards.push({
           type: "person",
           id: a.personId,
           name: a.name,
-          photoPath: a.photoPath,
-          photoBlur: a.photoBlur,
+          photoPath: photoOf(a.actor),
+          photoBlur: null,
           fanartPath: topFanart,
           personalRating: a.signal?.rating ?? null,
           isFavorite: a.signal?.isFavorite ?? false,
@@ -951,6 +1130,7 @@ export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {
 
   const cards: RecommendCard[] = [...handMovies, ...filler].map(movieCard);
   cards.push(...actorCards);
+  attachBlurs(cards);
 
   if (opts.record !== false) writeShown(userId, cards);
   return { cards, repeatsAllowed: repeats };

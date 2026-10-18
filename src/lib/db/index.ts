@@ -652,6 +652,23 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "ALTER TABLE `user_preferences` ADD `recommend_theme` text DEFAULT 'vortex'",
     // tier rarity FX master toggle (card-badges preferences)
     "ALTER TABLE `user_preferences` ADD `show_tier_effects` integer NOT NULL DEFAULT 1",
+    // 0044: change counters for in-memory caches. Triggers bump 'cinema_library'
+    // on ANY write to the tables the 今晚看什么 library snapshot is built from
+    // (lib/recommend/engine.ts; also /api/filters), so a scan / scrape / edit — from any code path
+    // or connection — invalidates it on the next request. If you add a table
+    // to that snapshot, add it to this list too.
+    `CREATE TABLE IF NOT EXISTS \`data_versions\` (
+    \`name\` text PRIMARY KEY NOT NULL,
+    \`version\` integer NOT NULL DEFAULT 0
+  )`,
+    "INSERT OR IGNORE INTO `data_versions` (`name`, `version`) VALUES ('cinema_library', 0)",
+    ...["movies", "movie_people", "people", "media_libraries"].flatMap((table) =>
+      ["INSERT", "UPDATE", "DELETE"].map(
+        (op) =>
+          `CREATE TRIGGER IF NOT EXISTS \`trg_dv_${table}_${op.toLowerCase()}\` AFTER ${op} ON \`${table}\`
+    BEGIN UPDATE \`data_versions\` SET \`version\` = \`version\` + 1 WHERE \`name\` = 'cinema_library'; END`
+      )
+    ),
   ];
   for (const stmt of pending) {
     try {

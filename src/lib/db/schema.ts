@@ -227,6 +227,16 @@ export const recommendationHistory = sqliteTable("recommendation_history", {
   index("idx_rh_user_item").on(table.userId, table.itemType, table.itemId),
 ]);
 
+// ─── Data Versions (change counters for in-memory caches) ─────────
+// One row per counter, bumped by SQLite triggers (created in db/index.ts, not
+// declared here): 'cinema_library' ← any write to movies / movie_people /
+// people / media_libraries. Read via lib/db/data-versions.ts (今晚看什么
+// library snapshot, /api/filters cache).
+export const dataVersions = sqliteTable("data_versions", {
+  name: text("name").primaryKey(),
+  version: integer("version").notNull().default(0),
+});
+
 // ─── Movie Discs ──────────────────────────────────────────────
 export const movieDiscs = sqliteTable("movie_discs", {
   id: text("id").primaryKey(),
