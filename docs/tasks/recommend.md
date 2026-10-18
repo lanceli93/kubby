@@ -1,6 +1,7 @@
 # 今晚看什么 — draw-a-hand recommendations (cinema)
 
-Branch: `feat/recommend`. Spec + decisions: `docs/feature-request.md`.
+Branch: `feat/recommend`. Spec + decisions now live in the kubby skill
+(`references/feature-patterns.md` → 今晚看什么 recommendations / Tier rarity effects).
 Shared contract: `src/lib/recommend/types.ts` (owned by the orchestrator — ask
 before changing it). Visual references (local only, gitignored):
 `data/demos/recommend/b-vortex.html` (default theme) and `a-tabletop.html`.
@@ -45,6 +46,6 @@ before changing it). Visual references (local only, gitignored):
   *Accept:* grids of hundreds of cards stay smooth (compositor-only rim
   animation, offscreen pause); tilt/glare still works; glows not clipped;
   tsc clean.
-- [ ] **R5 — Docs.** Kubby skill (SKILL.md table count, architecture.md
+- [x] **R5 — Docs.** Kubby skill (SKILL.md table count, architecture.md
   schema/API, feature-patterns.md section); remove the feature from
   `docs/feature-request.md`.
