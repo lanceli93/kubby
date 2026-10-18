@@ -2,8 +2,9 @@
  * Tier rarity FX (TierFx / TierFxSurface in tier-fx.tsx). Ported from the
  * approved prototype data/demos/tier-fx/index.html at intensity 标准 (int-2):
  * SSS = scheme 1's gold (two-comet rim + bloom + inner-edge flow + breathing
- * glow at rest; the periodic sweep + sparkles only while hovered — user
- * change vs the prototype, so touch devices never show them; no foil);
+ * glow, all softened at rest; sparkles only while hovered — so touch devices
+ * never show them; no foil). The prototype's diagonal light sweep was dropped
+ * on user feedback (too glaring).
  * SS/S/A/B = scheme 2's tier colours (orange flowing rim / red static rim /
  * purple + blue hairlines).
  * Colours follow the tier badge palette in lib/tier.ts.
@@ -12,7 +13,7 @@
  * (opaque) card media, with an oversized conic layer inside that spins via
  * `transform: rotate()` — no per-frame paint, no registered @property. The
  * bloom and the inner-edge flow reuse the same spin (same duration + phase)
- * so the highlights line up. Glow breathes on opacity, sweep/sparkles on
+ * so the highlights line up. Glow breathes on opacity, sparkles on
  * transform + opacity.
  *
  * Hover reads the layer's PARENT (`:hover > .tfx`), so it reacts to whichever
@@ -43,8 +44,8 @@
   --cb: rgba(202, 138, 4, 0.42);
   --gl: rgba(252, 211, 77, 0.55);
   --rw: 3px; /* 2px × 1.5 */
-  --rs: 4s;
-  --bo: 0.85;
+  --rs: 9s;
+  --bo: 0.5;
   --bo-h: 0.85;
 }
 .tfx-ss {
@@ -56,7 +57,7 @@
   --rw: 2.25px; /* 1.5px × 1.5 */
   --rs: 7s;
   --ro: 0.85;
-  --bo: 0.425;
+  --bo: 0.3;
   --bo-h: 0.574;
 }
 .tfx-s {
@@ -173,15 +174,20 @@
   border-radius: inherit;
   transition: opacity 0.35s ease;
 }
+/* Glow is kept soft at rest and only reaches full strength on hover (user
+   feedback: the resting halo read as too loud in a grid). */
 .tfx-sss .tfx-glow {
   box-shadow: 0 0 27.5px 2.5px var(--gl), 0 0 60px 7.5px var(--gl);
-  opacity: 0.5;
+  opacity: 0.3;
   animation: tfx-breath 3.4s ease-in-out infinite;
+}
+:hover > .tfx-sss .tfx-glow {
+  animation-name: tfx-breath-hover;
 }
 .tfx-ss .tfx-glow,
 .tfx-s .tfx-glow {
   box-shadow: 0 0 20px 1.25px var(--gl);
-  opacity: 0.7;
+  opacity: 0.4;
 }
 :hover > .tfx .tfx-glow {
   opacity: 1;
@@ -189,54 +195,19 @@
 @keyframes tfx-breath {
   0%,
   100% {
-    opacity: 0.3;
+    opacity: 0.15;
   }
   50% {
-    opacity: 0.85;
+    opacity: 0.45;
   }
 }
-
-/* ── diagonal light sweep (transform-only) ── */
-.tfx-sweep {
-  position: absolute;
-  top: -25%;
-  bottom: -25%;
-  left: 0;
-  width: 46%;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 244, 214, 0) 18%, rgba(255, 240, 200, var(--sa, 0.63)) 50%, rgba(255, 244, 214, 0) 82%, transparent 100%);
-  transform: translateX(-170%) rotate(18deg);
-}
-/* SSS: hover-only. No animation at rest; on hover enter it starts from frame 0
-   (first pass immediately) and repeats on its cycle; fades in/out. */
-.tfx-surface.tfx-sss .tfx-sweep {
-  --sa: 0.675;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-:hover > .tfx-surface.tfx-sss .tfx-sweep {
-  opacity: 1;
-  animation: tfx-sweep 4.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
-}
-:hover > .tfx-surface.tfx-s .tfx-sweep {
-  animation: tfx-sweep-once 0.95s cubic-bezier(0.45, 0.05, 0.35, 1) both;
-}
-@keyframes tfx-sweep {
-  0% {
-    transform: translateX(-170%) rotate(18deg);
-  }
-  18% {
-    transform: translateX(330%) rotate(18deg);
-  }
+@keyframes tfx-breath-hover {
+  0%,
   100% {
-    transform: translateX(330%) rotate(18deg);
+    opacity: 0.4;
   }
-}
-@keyframes tfx-sweep-once {
-  from {
-    transform: translateX(-170%) rotate(18deg);
-  }
-  to {
-    transform: translateX(330%) rotate(18deg);
+  50% {
+    opacity: 0.9;
   }
 }
 
@@ -260,7 +231,7 @@
   width: var(--s);
   height: var(--s);
   opacity: 0;
-  animation: tfx-twinkle 3.23s ease-in-out infinite;
+  animation: tfx-twinkle 7s ease-in-out infinite;
   animation-delay: var(--d);
   animation-play-state: paused;
 }
@@ -287,11 +258,11 @@
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
   }
-  9% {
+  11% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1) rotate(45deg);
   }
-  20% {
+  24% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.3) rotate(90deg);
   }
@@ -306,12 +277,11 @@
 [data-tfx-off] .tfx-anim {
   animation-play-state: paused;
 }
-/* reduced motion → static rim + static glow, no sweep / sparkles */
+/* reduced motion → static rim + static glow, no sparkles */
 @media (prefers-reduced-motion: reduce) {
   .tfx-anim {
     animation: none !important;
   }
-  .tfx-sweep,
   .tfx-sparkles {
     display: none;
   }

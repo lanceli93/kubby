@@ -9,9 +9,9 @@ import "./tier-fx.css";
  * (lib/tier.ts thresholds). Styles + rationale: tier-fx.css.
  *
  *   SSS  gold two-comet rim + bloom + inner-edge flow + breathing glow
- *        (animated); diagonal sweep + 6 sparkles on hover only
+ *        (animated, glow kept soft at rest); 6 sparkles on hover only
  *   SS   orange one-comet rim + half bloom + soft glow   (animated)
- *   S    red static rim + glow, sweep on hover
+ *   S    red static rim + glow
  *   A/B  purple / blue hairline
  *   C and below, unrated, or `enabled === false` → renders nothing at all.
  *
@@ -20,7 +20,7 @@ import "./tier-fx.css";
  *   (inside whatever transforms with the card, e.g. TiltCard's children), so
  *   the rim / bloom / glow paint behind the opaque media and only show around
  *   its edge; sparkles lift above it via z-index.
- * - `<TierFxSurface>` — the in-media layers (inner-edge flow, sweep). Put it
+ * - `<TierFxSurface>` — the in-media layer (SSS inner-edge flow). Put it
  *   inside the media box, right after the image and below the badges.
  * Pass the same `seed` (the item id) to both so the spin phase matches.
  *
@@ -54,9 +54,10 @@ const SPARKS = [
   { l: 72, t: 99, s: 9, d: 0.7 },
   { l: 30, t: 88, s: 6, d: 1.9 },
 ];
-// 标准 intensity: sparkle size ×1.35, twinkle period ×0.85.
+// 标准 intensity: sparkle size ×1.35; delays stretched to spread the 6 glints
+// across the slow 7s twinkle cycle (user feedback: slower + sparser).
 const SPARK_SIZE = 1.35;
-const SPARK_TIME = 0.85;
+const SPARK_TIME = 2;
 
 /** Stable 0..1 hash so a card's spin phase survives re-renders + SSR. */
 function phase(seed: string, salt: number): number {
@@ -169,25 +170,14 @@ export function TierFx({ rating, enabled, seed = "", radius }: TierFxProps) {
   );
 }
 
-/** In-media layers (SSS inner-edge flow + sweep, S hover sweep) — inside the media box. */
+/** In-media layer (SSS inner-edge flow) — inside the media box. */
 export function TierFxSurface({ rating, enabled, seed = "", radius }: TierFxProps) {
-  const tier = tierFxOf(rating, enabled);
-  if (tier === "SSS") {
-    return (
-      <div aria-hidden className="tfx-surface tfx-sss" style={phaseVars(seed, radius)}>
-        <div className="tfx-inner">
-          <i className="tfx-spin tfx-anim" />
-        </div>
-        <div className="tfx-sweep" />
+  if (tierFxOf(rating, enabled) !== "SSS") return null;
+  return (
+    <div aria-hidden className="tfx-surface tfx-sss" style={phaseVars(seed, radius)}>
+      <div className="tfx-inner">
+        <i className="tfx-spin tfx-anim" />
       </div>
-    );
-  }
-  if (tier === "S") {
-    return (
-      <div aria-hidden className="tfx-surface tfx-s" style={radius ? ({ "--tfx-r": radius } as React.CSSProperties) : undefined}>
-        <div className="tfx-sweep" />
-      </div>
-    );
-  }
-  return null;
+    </div>
+  );
 }
