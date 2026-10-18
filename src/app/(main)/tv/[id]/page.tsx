@@ -881,7 +881,11 @@ export default function ShowDetailPage() {
           {(show.cast?.length ?? 0) > 0 && (
             <section className="px-4 md:px-20 mt-8 pb-4">
               <h2 className="text-xl font-semibold text-foreground mb-4">{tMovies("cast")}</h2>
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {/* overflow-x forces overflow-y clipping: pad the scroll box 40px
+                  vertically (cancelled by negative margins, so layout is
+                  unchanged) so the tier glow / hover glow isn't cut off. The
+                  padded box is click-through; the cards stay clickable. */}
+              <div className="pointer-events-none -mt-10 -mb-8 flex gap-4 overflow-x-auto pt-10 pb-10 scrollbar-hide [&>*]:pointer-events-auto">
                 {show.cast.map((person) => (
                   <PersonCard
                     key={person.id}

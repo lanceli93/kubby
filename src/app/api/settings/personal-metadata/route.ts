@@ -66,6 +66,7 @@ export async function GET() {
         showTvResolutionBadge: true,
         tvHeroMosaicConfig: DEFAULT_HERO_MOSAIC_CONFIG,
         recommendTheme: "vortex",
+        showTierEffects: true,
         serverPlatform,
       });
     }
@@ -111,6 +112,7 @@ export async function GET() {
       showTvResolutionBadge: row.showTvResolutionBadge,
       tvHeroMosaicConfig: normalizeHeroMosaicConfig(parseJsonSafe(row.tvHeroMosaicConfig)),
       recommendTheme: isRecommendTheme(row.recommendTheme) ? row.recommendTheme : "vortex",
+      showTierEffects: row.showTierEffects,
       serverPlatform,
     });
   } catch (error) {
@@ -259,6 +261,9 @@ export async function PUT(request: NextRequest) {
       recommendTheme: body.recommendTheme !== undefined
         ? body.recommendTheme
         : existing?.recommendTheme ?? "vortex",
+      showTierEffects: body.showTierEffects !== undefined
+        ? body.showTierEffects
+        : existing?.showTierEffects ?? true,
     };
 
     if (existing) {

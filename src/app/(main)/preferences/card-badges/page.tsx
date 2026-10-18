@@ -23,6 +23,7 @@ import {
   getTierGlow,
   type Tier,
 } from "@/lib/tier";
+import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
 
 /* ── Resolution rules (mirrors getResolutionLabel in movie-card.tsx) ── */
 const RESOLUTION_RULES: { min: number; unit: "width" | "height"; label: string }[] = [
@@ -153,6 +154,42 @@ function PersonCardPreview({
   );
 }
 
+/* ── Tier rarity FX preview — one small card per FX tier ── */
+const TIER_FX_PREVIEWS: { tier: Tier; rating: number; icon: "movie" | "person" }[] = [
+  { tier: "SSS", rating: 9.7, icon: "person" },
+  { tier: "SS", rating: 9.2, icon: "movie" },
+  { tier: "S", rating: 8.7, icon: "person" },
+  { tier: "A", rating: 8.2, icon: "movie" },
+  { tier: "B", rating: 7.5, icon: "person" },
+];
+
+function TierFxPreview({
+  tier,
+  rating,
+  icon,
+  enabled,
+}: {
+  tier: Tier;
+  rating: number;
+  icon: "movie" | "person";
+  enabled: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative" style={{ width: "5rem", height: "7.5rem" }}>
+        <TierFx rating={rating} enabled={enabled} seed={tier} radius="0.5rem" />
+        <div className="absolute inset-0 overflow-hidden rounded-lg">
+          <PosterPlaceholder icon={icon} className="h-full w-full" />
+          <TierFxSurface rating={rating} enabled={enabled} seed={tier} radius="0.5rem" />
+        </div>
+      </div>
+      <span className={`text-xs font-black tracking-wider ${getTierColor(tier)} ${getTierGlow(tier)}`}>
+        {tier}
+      </span>
+    </div>
+  );
+}
+
 /* ── Expandable rules section ── */
 function ExpandableRules({
   children,
@@ -204,6 +241,7 @@ export default function CardBadgesPage() {
   const [showPersonRatingBadge, setShowPersonRatingBadge] = useState(true);
   const [showTvBadge, setShowTvBadge] = useState(true);
   const [showTvResolutionBadge, setShowTvResolutionBadge] = useState(true);
+  const [showTierEffects, setShowTierEffects] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [toast, setToast] = useState<{
@@ -226,6 +264,7 @@ export default function CardBadgesPage() {
       setShowPersonRatingBadge(prefs.showPersonRatingBadge);
       setShowTvBadge(prefs.showTvShowRatingBadge);
       setShowTvResolutionBadge(prefs.showTvResolutionBadge);
+      setShowTierEffects(prefs.showTierEffects !== false);
     }
   }, [prefs]);
 
@@ -242,6 +281,7 @@ export default function CardBadgesPage() {
           showPersonRatingBadge: showPersonRatingBadge,
           showTvShowRatingBadge: showTvBadge,
           showTvResolutionBadge: showTvResolutionBadge,
+          showTierEffects: showTierEffects,
         }),
       });
       if (res.ok) {
@@ -257,7 +297,7 @@ export default function CardBadgesPage() {
     }
   };
 
-  // Reset to defaults — every badge toggle on this page defaults to shown.
+  // Reset to defaults — every badge / effect toggle on this page defaults to on.
   const handleResetDefaults = async () => {
     setResetConfirmOpen(false);
     setSaving(true);
@@ -272,6 +312,7 @@ export default function CardBadgesPage() {
           showPersonRatingBadge: true,
           showTvShowRatingBadge: true,
           showTvResolutionBadge: true,
+          showTierEffects: true,
         }),
       });
       if (res.ok) {
@@ -281,6 +322,7 @@ export default function CardBadgesPage() {
         setShowPersonRatingBadge(true);
         setShowTvBadge(true);
         setShowTvResolutionBadge(true);
+        setShowTierEffects(true);
         showToast(t("saved"), true);
         queryClient.invalidateQueries({ queryKey: ["userPreferences"] });
       } else {
@@ -612,6 +654,46 @@ export default function CardBadgesPage() {
         </div>
       </div>
       )}
+
+      {/* Tier rarity FX — both domains (person cards appear in TV cast too) */}
+      <div className="flex w-full max-w-[45rem] flex-col gap-5 rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-[0_2px_16px_rgba(0,0,0,0.15)] backdrop-blur-xl ring-1 ring-white/[0.06] p-7">
+        <h2 className="text-lg font-semibold text-foreground">
+          {t("tierEffects")}
+        </h2>
+
+        {/* Tier FX previews (follow the local toggle before saving) */}
+        <div className="flex items-center justify-center gap-6 rounded-lg border border-white/[0.06] bg-white/[0.02] py-7">
+          {TIER_FX_PREVIEWS.map((p) => (
+            <TierFxPreview key={p.tier} {...p} enabled={showTierEffects} />
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {t("showTierEffects")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("showTierEffectsDesc")}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowTierEffects(!showTierEffects)}
+            role="switch"
+            aria-checked={showTierEffects}
+            aria-label={t("showTierEffects")}
+            className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-fluid cursor-pointer ${
+              showTierEffects ? "bg-primary" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                showTierEffects ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
 
       {/* Save button */}
       <button

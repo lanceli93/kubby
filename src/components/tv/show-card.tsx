@@ -9,6 +9,7 @@ import { resolveImageSrc } from "@/lib/image-utils";
 import { startPosterViewTransition, startDimNavigation } from "@/lib/view-transition";
 import { useTranslations } from "next-intl";
 import { TiltCard } from "@/components/ui/tilt-card";
+import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 
 // Duplicated from movie-card.tsx — the repo idiom is to inline this small helper
@@ -82,6 +83,7 @@ export function ShowCard({
   const { data: prefs } = useUserPreferences();
   const showRatingBadge = prefs?.showTvShowRatingBadge !== false;
   const showResBadge = prefs?.showTvResolutionBadge !== false;
+  const showTierFx = prefs?.showTierEffects !== false;
 
   return (
     <div
@@ -108,6 +110,8 @@ export function ShowCard({
         {/* Poster shell — NOT overflow-hidden so tilt + ambient glow can bleed. */}
         <div className={`relative w-full ${responsive ? "aspect-[2/3]" : ""}`} style={responsive ? undefined : { height: "16.875rem" }}>
           <TiltCard glow={posterBlur} className="h-full w-full">
+            {/* Tier rarity FX (personal rating) — rim/glow behind the poster box */}
+            <TierFx rating={personalRating} enabled={showTierFx} seed={id} />
             <div ref={posterRef} className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
               {posterPath && !imgError ? (
                 <Image
@@ -125,6 +129,7 @@ export function ShowCard({
                   <Tv className="h-8 w-8" />
                 </div>
               )}
+              <TierFxSurface rating={personalRating} enabled={showTierFx} seed={id} />
 
               {/* Resolution badge — top-left, lifts on tilt. Only when a caller
                   supplies dimensions (TV shows usually have none). */}

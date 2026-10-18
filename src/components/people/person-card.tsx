@@ -11,6 +11,7 @@ import { useIsAdmin } from "@/hooks/use-is-admin";
 import { rem } from "@/hooks/use-root-scale";
 import { useTranslations } from "next-intl";
 import { TiltCard } from "@/components/ui/tilt-card";
+import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -85,6 +86,7 @@ export function PersonCard({
   const showMenu = !readonly && isAdmin;
   const showTierBadge = prefs?.showPersonTierBadge !== false;
   const showRatingBadge = prefs?.showPersonRatingBadge !== false;
+  const showTierFx = prefs?.showTierEffects !== false;
   const [imgError, setImgError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
@@ -104,6 +106,8 @@ export function PersonCard({
           descendants in Chromium). */}
       <div className="relative" style={{ width: rem(width), height: rem(height) }}>
         <TiltCard glow={photoBlur} disabled={menuOpen} className="h-full w-full">
+          {/* Tier rarity FX — rim/glow behind the photo box, rides the tilt */}
+          <TierFx rating={personalRating} enabled={showTierFx} seed={id} />
           <div className="relative h-full w-full overflow-hidden rounded-md bg-[var(--surface)] ring-1 ring-white/[0.06]">
             {photoPath && !imgError ? (
               <Image
@@ -120,6 +124,7 @@ export function PersonCard({
                 {name[0]?.toUpperCase()}
               </div>
             )}
+            <TierFxSurface rating={personalRating} enabled={showTierFx} seed={id} />
 
             {/* Tier badge — top-left, lifts on tilt */}
             {showTierBadge && personalRating != null && personalRating > 0 && (() => {

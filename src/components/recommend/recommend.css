@@ -733,7 +733,7 @@
 }
 /* a hand card tossed back onto the pile sheds its info layer so it lands as a
    plain pile card (the engine swaps it for one) */
-.rc-tt-hand[data-returning="true"] :is(.rc-meta, .rc-shade, .rc-btn, .rc-play, .rc-badge, .rc-holo, .rc-stale-tag, .rc-glare) {
+.rc-tt-hand[data-returning="true"] :is(.rc-meta, .rc-shade, .rc-btn, .rc-play, .rc-badge, .rc-holo, .rc-stale-tag, .rc-glare, .tfx, .tfx-surface) {
   opacity: 0 !important;
   transition: opacity 0.3s ease;
 }

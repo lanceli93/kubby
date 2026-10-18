@@ -644,6 +644,9 @@
     "showPersonRatingBadgeDesc": "Display your personal rating on person card thumbnails",
     "showPersonTierBadge": "Show tier badge",
     "showPersonTierBadgeDesc": "Display the tier badge (SSS, S, A, etc.) on person card thumbnails",
+    "tierEffects": "Tier Rarity Effects",
+    "showTierEffects": "Show tier rarity effects",
+    "showTierEffectsDesc": "Flowing rims and glows on person, movie and TV show cards by personal-rating tier (SSS, SS, S, A, B)",
     "saved": "Settings saved",
     "failedToSave": "Failed to save settings",
     "viewRules": "View rules",
@@ -653,7 +656,7 @@
     "height": "H",
     "tierRulesTitle": "Tier is determined by personal rating:",
     "resetDefaultsTitle": "Reset to Defaults?",
-    "resetDefaultsDesc": "This resets all badge-visibility toggles back to shown (the default)."
+    "resetDefaultsDesc": "This resets all badge and effect toggles back to on (the default)."
   },
   "heroMosaic": {
     "title": "Home Poster Wall",

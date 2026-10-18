@@ -34,6 +34,17 @@ before changing it). Visual references (local only, gitignored):
 - [x] **R4 — Tabletop scene** ported from demo A, behind the same scene
   interface; theme switch persists per user.
   *Accept:* switching themes keeps filters + hand; tsc clean.
+- [x] **R6 — Tier rarity FX on cards.** Prototype: `data/demos/tier-fx/index.html`.
+  Chosen: scheme 2 (等级色系) palette for SS/S/A/B, but SSS uses scheme 1's
+  gold-only SSS (no rainbow foil) — at rest only rim + bloom + inner flow +
+  breathing glow; sparkles + light sweep appear on hover only; intensity 标准; always-on (paused offscreen,
+  static under reduced motion). Tier from PERSONAL rating (lib/tier.ts
+  thresholds) for person cards AND movie cards, site-wide; on 今晚看什么 only
+  the hand cards (not the pile). Master on/off toggle on the card-badges
+  preferences page (new per-user pref, default on).
+  *Accept:* grids of hundreds of cards stay smooth (compositor-only rim
+  animation, offscreen pause); tilt/glare still works; glows not clipped;
+  tsc clean.
 - [ ] **R5 — Docs.** Kubby skill (SKILL.md table count, architecture.md
   schema/API, feature-patterns.md section); remove the feature from
   `docs/feature-request.md`.

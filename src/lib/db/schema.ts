@@ -209,6 +209,7 @@ export const userPreferences = sqliteTable("user_preferences", {
   showTvResolutionBadge: integer("show_tv_resolution_badge", { mode: "boolean" }).notNull().default(true),
   tvHeroMosaicConfig: text("tv_hero_mosaic_config"), // JSON HeroMosaicConfig — TV home poster wall settings
   recommendTheme: text("recommend_theme").default("vortex"), // "vortex" | "tabletop" — 今晚看什么 scene
+  showTierEffects: integer("show_tier_effects", { mode: "boolean" }).notNull().default(true), // tier rarity FX on person/movie cards
 });
 
 // ─── Recommendation History (今晚看什么 de-dup / dismiss) ─────────

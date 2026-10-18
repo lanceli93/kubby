@@ -644,6 +644,9 @@
     "showPersonRatingBadgeDesc": "在人物卡片缩略图上显示你的个人评分",
     "showPersonTierBadge": "显示评级标记",
     "showPersonTierBadgeDesc": "在人物卡片缩略图上显示评级标记（SSS、S、A 等）",
+    "tierEffects": "评级稀有度特效",
+    "showTierEffects": "显示评级稀有度特效",
+    "showTierEffectsDesc": "按个人评分等级（SSS、SS、S、A、B）为人物、电影和剧集卡片添加流光边框与光晕",
     "saved": "设置已保存",
     "failedToSave": "保存设置失败",
     "viewRules": "查看规则",
@@ -653,7 +656,7 @@
     "height": "高",
     "tierRulesTitle": "评级由个人评分决定：",
     "resetDefaultsTitle": "恢复默认设置？",
-    "resetDefaultsDesc": "将把所有徽章显示开关恢复为默认的「显示」状态。"
+    "resetDefaultsDesc": "将把所有标记与特效开关恢复为默认的「开启」状态。"
   },
   "heroMosaic": {
     "title": "首页海报墙",

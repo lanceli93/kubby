@@ -4,6 +4,8 @@ import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Lock, LockOpen, X, Play } from "lucide-react";
 import { resolveImageSrc } from "@/lib/image-utils";
+import { useUserPreferences } from "@/hooks/use-user-preferences";
+import { TierFx, TierFxSurface, tierFxOf } from "@/components/ui/tier-fx";
 import type {
   ActorCardData,
   MovieCardData,
@@ -17,7 +19,15 @@ import type {
  * and carry the `rc-card` class for the hover affordances); the face fills it
  * edge to edge. Corner buttons stop propagation so the wrapper's click (open
  * the movie / person detail page) never fires for them.
+ *
+ * Tier rarity FX (personal rating, `showTierEffects` pref) render on hand cards
+ * only — never on pile / nebula cards. The frame sits before `.rc-face` (inside
+ * the scene's `.rc-hin`, so it rides the card transform); the surface layers sit
+ * inside `.rc-face`. For actors a tier rim replaces the default gold `.rc-rim`.
  */
+
+// Hand-card corner radius (matches .rc-face in recommend.css).
+const FACE_RADIUS = "14px";
 
 const DAY_MS = 86_400_000;
 
@@ -111,6 +121,8 @@ export interface HandCardFaceProps {
   width: number;
   /** Disable the corner buttons (e.g. while a draw is resolving). */
   interactive?: boolean;
+  /** The user's `showTierEffects` pref — set by `HandCardFace`. */
+  tierFx?: boolean;
   onToggleLock: (card: RecommendCard) => void;
   onDismiss: (card: RecommendCard) => void;
   onPlay?: (card: MovieCardData) => void;
@@ -170,6 +182,7 @@ function MovieFace({
   stale,
   width,
   interactive = true,
+  tierFx = true,
   onToggleLock,
   onDismiss,
   onPlay,
@@ -192,45 +205,49 @@ function MovieFace({
   if (card.runtimeMinutes) sub.push(<span key="m">{t("minutes", { min: card.runtimeMinutes })}</span>);
 
   return (
-    <div
-      className="rc-face"
-      style={card.posterBlur ? { backgroundImage: `url(${card.posterBlur})` } : undefined}
-    >
-      <div className="rc-poster" data-rc-poster="">
-        {card.posterPath && (
-          // eslint-disable-next-line @next/next/no-img-element -- transformed per frame; next/image adds nothing here
-          <img src={resolveImageSrc(card.posterPath, imageWidth(width))} alt="" draggable={false} decoding="async" />
+    <>
+      <TierFx rating={card.personalRating} enabled={tierFx} seed={card.id} radius={FACE_RADIUS} />
+      <div
+        className="rc-face"
+        style={card.posterBlur ? { backgroundImage: `url(${card.posterBlur})` } : undefined}
+      >
+        <div className="rc-poster" data-rc-poster="">
+          {card.posterPath && (
+            // eslint-disable-next-line @next/next/no-img-element -- transformed per frame; next/image adds nothing here
+            <img src={resolveImageSrc(card.posterPath, imageWidth(width))} alt="" draggable={false} decoding="async" />
+          )}
+        </div>
+        <div className="rc-shade" />
+        <TierFxSurface rating={card.personalRating} enabled={tierFx} seed={card.id} radius={FACE_RADIUS} />
+        <div className="rc-glare" />
+        {stale && <div className="rc-stale-tag">{t("stale")}</div>}
+        <div className="rc-meta">
+          <div className="rc-title">{card.title}</div>
+          {sub.length > 0 && (
+            <div className="rc-sub">
+              {sub.flatMap((node, i) => (i === 0 ? [node] : [<span key={`d${i}`}>·</span>, node]))}
+            </div>
+          )}
+          <ReasonChips reasons={card.reasons} max={width < 150 ? 1 : 2} />
+        </div>
+        {onPlay && (
+          <button
+            type="button"
+            className="rc-play focus-ring"
+            title={t("play")}
+            aria-label={t("play")}
+            disabled={!interactive}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlay(card);
+            }}
+          >
+            <Play fill="currentColor" />
+          </button>
         )}
+        <CornerButtons card={card} locked={locked} interactive={interactive} onToggleLock={onToggleLock} onDismiss={onDismiss} />
       </div>
-      <div className="rc-shade" />
-      <div className="rc-glare" />
-      {stale && <div className="rc-stale-tag">{t("stale")}</div>}
-      <div className="rc-meta">
-        <div className="rc-title">{card.title}</div>
-        {sub.length > 0 && (
-          <div className="rc-sub">
-            {sub.flatMap((node, i) => (i === 0 ? [node] : [<span key={`d${i}`}>·</span>, node]))}
-          </div>
-        )}
-        <ReasonChips reasons={card.reasons} max={width < 150 ? 1 : 2} />
-      </div>
-      {onPlay && (
-        <button
-          type="button"
-          className="rc-play focus-ring"
-          title={t("play")}
-          aria-label={t("play")}
-          disabled={!interactive}
-          onClick={(e) => {
-            e.stopPropagation();
-            onPlay(card);
-          }}
-        >
-          <Play fill="currentColor" />
-        </button>
-      )}
-      <CornerButtons card={card} locked={locked} interactive={interactive} onToggleLock={onToggleLock} onDismiss={onDismiss} />
-    </div>
+    </>
   );
 }
 
@@ -240,13 +257,19 @@ function ActorFace({
   stale,
   width,
   interactive = true,
+  tierFx = true,
   onToggleLock,
   onDismiss,
 }: HandCardFaceProps & { card: ActorCardData }) {
   const t = useTranslations("recommend");
+  const hasTierFx = tierFxOf(card.personalRating, tierFx) != null;
   return (
     <>
-      <div className="rc-rim" />
+      {hasTierFx ? (
+        <TierFx rating={card.personalRating} enabled={tierFx} seed={card.id} radius={FACE_RADIUS} />
+      ) : (
+        <div className="rc-rim" />
+      )}
       <div
         className="rc-face actor"
         style={card.photoBlur ? { backgroundImage: `url(${card.photoBlur})` } : undefined}
@@ -256,6 +279,7 @@ function ActorFace({
           <img src={resolveImageSrc(card.photoPath, imageWidth(width))} alt="" draggable={false} decoding="async" />
         )}
         <div className="rc-shade" />
+        <TierFxSurface rating={card.personalRating} enabled={tierFx} seed={card.id} radius={FACE_RADIUS} />
         <div className="rc-holo" />
         <div className="rc-glare" />
         <div className="rc-badge">{t("actorBadge")}</div>
@@ -279,9 +303,11 @@ function ActorFace({
 
 /** Face of one hand card — fills its scene wrapper. */
 export function HandCardFace(props: HandCardFaceProps) {
+  const { data: prefs } = useUserPreferences();
+  const tierFx = prefs?.showTierEffects !== false;
   return props.card.type === "movie" ? (
-    <MovieFace {...props} card={props.card} />
+    <MovieFace {...props} tierFx={tierFx} card={props.card} />
   ) : (
-    <ActorFace {...props} card={props.card} />
+    <ActorFace {...props} tierFx={tierFx} card={props.card} />
   );
 }

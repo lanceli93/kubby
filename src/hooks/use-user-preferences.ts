@@ -28,6 +28,7 @@ export interface UserPreferences {
   showTvResolutionBadge: boolean;
   tvHeroMosaicConfig: HeroMosaicConfig;
   recommendTheme: RecommendTheme; // 今晚看什么 scene
+  showTierEffects: boolean; // tier rarity FX on person/movie cards (TierFx)
   serverPlatform: string; // "darwin" | "win32" | "linux"
 }
 

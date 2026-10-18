@@ -1,0 +1,319 @@
+/*
+ * Tier rarity FX (TierFx / TierFxSurface in tier-fx.tsx). Ported from the
+ * approved prototype data/demos/tier-fx/index.html at intensity 标准 (int-2):
+ * SSS = scheme 1's gold (two-comet rim + bloom + inner-edge flow + breathing
+ * glow at rest; the periodic sweep + sparkles only while hovered — user
+ * change vs the prototype, so touch devices never show them; no foil);
+ * SS/S/A/B = scheme 2's tier colours (orange flowing rim / red static rim /
+ * purple + blue hairlines).
+ * Colours follow the tier badge palette in lib/tier.ts.
+ *
+ * Compositor-only motion: the rim is an overflow:hidden ring behind the
+ * (opaque) card media, with an oversized conic layer inside that spins via
+ * `transform: rotate()` — no per-frame paint, no registered @property. The
+ * bloom and the inner-edge flow reuse the same spin (same duration + phase)
+ * so the highlights line up. Glow breathes on opacity, sweep/sparkles on
+ * transform + opacity.
+ *
+ * Hover reads the layer's PARENT (`:hover > .tfx`), so it reacts to whichever
+ * box the card mounts it in (TiltCard's tilting element, a hand card, …).
+ * Offscreen pause: the shared IntersectionObserver sets `data-tfx-off` on the
+ * frame's parent, which also covers the surface layer inside the media.
+ *
+ * Layered as components so Tailwind utilities on the same nodes still win.
+ */
+
+@layer components {
+.tfx,
+.tfx-surface {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: var(--tfx-r, 0.375rem);
+}
+.tfx-surface {
+  overflow: hidden;
+}
+
+/* ── palettes + per-tier knobs (int-2 values baked in) ── */
+.tfx-sss {
+  --c1: #a16207;
+  --c2: #fcd34d;
+  --c3: #fff7d6;
+  --cb: rgba(202, 138, 4, 0.42);
+  --gl: rgba(252, 211, 77, 0.55);
+  --rw: 3px; /* 2px × 1.5 */
+  --rs: 4s;
+  --bo: 0.85;
+  --bo-h: 0.85;
+}
+.tfx-ss {
+  --c1: #c2410c;
+  --c2: #fb923c;
+  --c3: #ffedd5;
+  --cb: rgba(251, 146, 60, 0.34);
+  --gl: rgba(251, 146, 60, 0.45);
+  --rw: 2.25px; /* 1.5px × 1.5 */
+  --rs: 7s;
+  --ro: 0.85;
+  --bo: 0.425;
+  --bo-h: 0.574;
+}
+.tfx-s {
+  --c1: #b91c1c;
+  --c2: #f87171;
+  --c3: #fee2e2;
+  --gl: rgba(248, 113, 113, 0.42);
+  --rw: 2.25px;
+  --ro: 0.85;
+}
+.tfx-a {
+  --hair: rgba(192, 132, 252, 0.55);
+  --hair-h: rgba(192, 132, 252, 0.9);
+  --hair-g: rgba(192, 132, 252, 0.3);
+}
+.tfx-b {
+  --hair: rgba(96, 165, 250, 0.45);
+  --hair-h: rgba(96, 165, 250, 0.85);
+  --hair-g: rgba(96, 165, 250, 0.25);
+}
+
+/* ── hairline tiers: one ring on the frame, nothing else ── */
+.tfx-a,
+.tfx-b {
+  box-shadow: 0 0 0 1px var(--hair);
+  transition: box-shadow 0.35s ease;
+}
+:hover > .tfx-a,
+:hover > .tfx-b {
+  box-shadow: 0 0 0 1px var(--hair-h), 0 0 14px var(--hair-g);
+}
+
+/* ── rim + bloom ── */
+.tfx-rim,
+.tfx-bloom {
+  position: absolute;
+  inset: calc(-1 * var(--rw));
+  border-radius: calc(var(--tfx-r, 0.375rem) + var(--rw));
+  overflow: hidden;
+}
+.tfx-rim {
+  opacity: var(--ro, 1);
+  transition: opacity 0.35s ease;
+}
+.tfx-rim-flow {
+  background: var(--cb);
+}
+.tfx-rim-static {
+  background: linear-gradient(135deg, var(--c3), var(--c2) 16%, var(--c1) 38%, var(--c2) 52%, #fffdf5 60%, var(--c2) 68%, var(--c1) 86%, var(--c3));
+}
+:hover > .tfx .tfx-rim {
+  opacity: 1;
+}
+.tfx-bloom {
+  filter: blur(7px);
+  opacity: var(--bo);
+  transition: opacity 0.35s ease;
+}
+:hover > .tfx .tfx-bloom {
+  opacity: var(--bo-h);
+}
+
+/* Oversized square (≥ the card's diagonal) spun with transform only. */
+.tfx-spin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  animation: tfx-spin var(--rs, 4s) linear infinite;
+  animation-delay: var(--tfx-ph, 0s);
+}
+@keyframes tfx-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+/* SSS: two comets (heads at 140° / 320°), tail 100°, white core */
+.tfx-sss .tfx-spin {
+  background: conic-gradient(
+    transparent 0deg 40deg,
+    var(--c1) 80deg, var(--c2) 118deg, #fff 134deg, var(--c2) 141deg, transparent 152deg,
+    transparent 180deg 220deg,
+    var(--c1) 260deg, var(--c2) 298deg, #fff 314deg, var(--c2) 321deg, transparent 332deg);
+}
+/* SS: one calmer comet */
+.tfx-ss .tfx-spin {
+  background: conic-gradient(
+    transparent 0deg 200deg,
+    var(--c1) 255deg, var(--c2) 305deg, #fff 325deg, var(--c2) 331deg, transparent 344deg);
+}
+
+/* ── inner-edge flow (SSS): the same comets, masked to a soft band just
+   inside the media edge, screened over the image ── */
+.tfx-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  -webkit-mask:
+    linear-gradient(to right, #000, transparent 12px, transparent calc(100% - 12px), #000),
+    linear-gradient(to bottom, #000, transparent 12px, transparent calc(100% - 12px), #000);
+  mask:
+    linear-gradient(to right, #000, transparent 12px, transparent calc(100% - 12px), #000),
+    linear-gradient(to bottom, #000, transparent 12px, transparent calc(100% - 12px), #000);
+}
+
+/* ── outer glow (opacity-only animation) ── */
+.tfx-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transition: opacity 0.35s ease;
+}
+.tfx-sss .tfx-glow {
+  box-shadow: 0 0 27.5px 2.5px var(--gl), 0 0 60px 7.5px var(--gl);
+  opacity: 0.5;
+  animation: tfx-breath 3.4s ease-in-out infinite;
+}
+.tfx-ss .tfx-glow,
+.tfx-s .tfx-glow {
+  box-shadow: 0 0 20px 1.25px var(--gl);
+  opacity: 0.7;
+}
+:hover > .tfx .tfx-glow {
+  opacity: 1;
+}
+@keyframes tfx-breath {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* ── diagonal light sweep (transform-only) ── */
+.tfx-sweep {
+  position: absolute;
+  top: -25%;
+  bottom: -25%;
+  left: 0;
+  width: 46%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 244, 214, 0) 18%, rgba(255, 240, 200, var(--sa, 0.63)) 50%, rgba(255, 244, 214, 0) 82%, transparent 100%);
+  transform: translateX(-170%) rotate(18deg);
+}
+/* SSS: hover-only. No animation at rest; on hover enter it starts from frame 0
+   (first pass immediately) and repeats on its cycle; fades in/out. */
+.tfx-surface.tfx-sss .tfx-sweep {
+  --sa: 0.675;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+:hover > .tfx-surface.tfx-sss .tfx-sweep {
+  opacity: 1;
+  animation: tfx-sweep 4.4s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+}
+:hover > .tfx-surface.tfx-s .tfx-sweep {
+  animation: tfx-sweep-once 0.95s cubic-bezier(0.45, 0.05, 0.35, 1) both;
+}
+@keyframes tfx-sweep {
+  0% {
+    transform: translateX(-170%) rotate(18deg);
+  }
+  18% {
+    transform: translateX(330%) rotate(18deg);
+  }
+  100% {
+    transform: translateX(330%) rotate(18deg);
+  }
+}
+@keyframes tfx-sweep-once {
+  from {
+    transform: translateX(-170%) rotate(18deg);
+  }
+  to {
+    transform: translateX(330%) rotate(18deg);
+  }
+}
+
+/* ── sparkles (SSS, 6, transform + opacity only). z-index lifts them above
+   the media box (which is a later, z-auto sibling). Hover-only: hidden and
+   paused at rest, fade in + twinkle while hovered, fade out on leave ── */
+.tfx-sparkles {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+:hover > .tfx .tfx-sparkles {
+  opacity: 1;
+}
+.tfx-sparkles span {
+  position: absolute;
+  left: var(--l);
+  top: var(--t);
+  width: var(--s);
+  height: var(--s);
+  opacity: 0;
+  animation: tfx-twinkle 3.23s ease-in-out infinite;
+  animation-delay: var(--d);
+  animation-play-state: paused;
+}
+:hover > .tfx .tfx-sparkles span {
+  animation-play-state: running;
+}
+.tfx-sparkles span::before {
+  /* soft halo so the glint reads at normal viewing distance */
+  content: "";
+  position: absolute;
+  inset: -110%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 236, 170, 0.75), rgba(252, 211, 77, 0.25) 35%, transparent 65%);
+}
+.tfx-sparkles span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, #fff 0 22%, #fff3c4 45%, #fbbf24 80%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+@keyframes tfx-twinkle {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+  }
+  9% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(45deg);
+  }
+  20% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) rotate(90deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(90deg);
+  }
+}
+
+/* ── motion policy ── */
+/* offscreen (shared IntersectionObserver marks the host) → pause */
+[data-tfx-off] .tfx-anim {
+  animation-play-state: paused;
+}
+/* reduced motion → static rim + static glow, no sweep / sparkles */
+@media (prefers-reduced-motion: reduce) {
+  .tfx-anim {
+    animation: none !important;
+  }
+  .tfx-sweep,
+  .tfx-sparkles {
+    display: none;
+  }
+}
+}

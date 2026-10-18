@@ -650,6 +650,8 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     "CREATE INDEX IF NOT EXISTS `idx_rh_user_created` ON `recommendation_history` (`user_id`, `created_at`)",
     "CREATE INDEX IF NOT EXISTS `idx_rh_user_item` ON `recommendation_history` (`user_id`, `item_type`, `item_id`)",
     "ALTER TABLE `user_preferences` ADD `recommend_theme` text DEFAULT 'vortex'",
+    // tier rarity FX master toggle (card-badges preferences)
+    "ALTER TABLE `user_preferences` ADD `show_tier_effects` integer NOT NULL DEFAULT 1",
   ];
   for (const stmt of pending) {
     try {
