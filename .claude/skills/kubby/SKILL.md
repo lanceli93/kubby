@@ -151,6 +151,12 @@ npx tsc --noEmit               # Type check without emitting
 npx tsx scripts/package.ts     # Package for current platform
 ```
 
+**Stale CSS after `git stash` / branch switch while `next dev` runs**: Turbopack's
+persistent dev cache (`.next/dev`) can keep serving the reverted `globals.css` even
+after the file is restored AND after a server restart (symptom: new classes exist in
+the source but not in the served `[root-of-the-server]…css`). Fix: stop the server,
+delete `.next/dev`, restart. Avoid stashing while the dev server is up.
+
 **Testing a change in an isolated git worktree** (so it doesn't disturb the main
 dev server / uncommitted WIP). Three gotchas, all learned the hard way:
 - **`.env.local` is gitignored** → `git worktree add` does NOT carry it over, so
