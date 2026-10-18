@@ -40,6 +40,18 @@ The home page opens onto a living mosaic of your library — posters drift in 3D
 
 Movie, actor, and library cards tilt toward your cursor in 3D with an ambient glow behind them, and clicking a poster morphs it into the detail page hero via the View Transitions API instead of a hard cut. The detail page itself has scroll- and pointer-driven parallax on its hero art. Everything degrades cleanly to flat/static on touch devices and when reduced-motion is on.
 
+### What to watch tonight
+
+Can't decide? Hit the gold dice button in the home hero and Kubby draws you a hand of five cards: mostly movies, an actor, and sometimes a clip card (one of your own video bookmarks, ready to play from the mark). The candidate pile comes from your filters: presets like Hidden gems or Quick watch, genre and tag pickers you can search, watched state, rating and runtime. The draw is weighted toward your own taste (genres you rate highly, actors you favorite) and kept varied, and each card says why it was picked. Lock the cards you like and redraw the rest, or throw one away and a fresh card takes its place. There are two themes: a nebula vortex where the pile swirls in 3D space, and a card table that gathers, riffles and deals the hand face down before flipping it.
+
+![What to watch tonight: nebula vortex](docs/screenshots/recommend-vortex.webp)
+
+![What to watch tonight: card table](docs/screenshots/recommend-tabletop.webp)
+
+The Clip rewind preset deals a hand of bookmarked moments instead of movies.
+
+![Clip cards](docs/screenshots/recommend-clips.webp)
+
 ### 360° VR video playback
 
 Watch 360° / VR videos directly in the browser with full panoramic control. Toggle 360° mode from the player controls — the video renders onto a Three.js sphere with mouse/touch drag to look around, scroll wheel or pinch-to-zoom for FOV control, and `R` key to reset the view. The Three.js chunk (~500KB) is code-split and only loaded when 360° mode is active, so normal playback is unaffected. Works on desktop and mobile.
@@ -62,7 +74,7 @@ Define your own rating dimensions for movies (plot, cinematography, soundtrack, 
 
 ### Poster and actor badges
 
-Personal rating, resolution (4K/1080p/etc.), and actor tier show directly on cards. Turn off the ones you don't care about in settings.
+Personal rating, resolution (4K/1080p/etc.), and actor tier show directly on cards. Turn off the ones you don't care about in settings. Highly rated movies and actors also get a rarity frame on their cards: a flowing gold rim with sparkles on hover for SSS, orange for SS, red for S, thin hairlines for A and B. You can switch it off in Preferences → Card Badges.
 
 ![Badge settings](docs/screenshots/badge-settings.webp)
 
