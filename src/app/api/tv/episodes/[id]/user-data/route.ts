@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
-import { tvEpisodes, userEpisodeData, userTvShowData } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { userEpisodeData } from "@/lib/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { touchShowLastPlayed } from "@/lib/tv/user-data";
 
 // GET /api/tv/episodes/[id]/user-data
 export async function GET(
@@ -67,10 +68,14 @@ export async function PUT(
     const userId = session.user.id;
     const now = new Date().toISOString();
 
+    // `countPlay: true` is sent by the player on the first progress save of a
+    // playback session — it counts one play (playCount + 1).
+    const countPlay = body.countPlay === true;
+
     // Playback-related saves bump lastPlayedAt (both on the episode row and,
     // below, on the parent show row that drives next-up ordering).
     const touchesPlayback =
-      body.playbackPositionSeconds !== undefined || body.isPlayed !== undefined;
+      body.playbackPositionSeconds !== undefined || body.isPlayed !== undefined || countPlay;
 
     const existing = db
       .select()
@@ -92,6 +97,8 @@ export async function PUT(
         updateData.playbackPositionSeconds = 0;
       if (body.isPlayed !== undefined) updateData.isPlayed = body.isPlayed;
       if (body.playCount !== undefined) updateData.playCount = body.playCount;
+      else if (countPlay)
+        updateData.playCount = sql`coalesce(${userEpisodeData.playCount}, 0) + 1`;
       if (body.personalRating !== undefined) updateData.personalRating = body.personalRating;
       if (body.vrLayout !== undefined) updateData.vrLayout = body.vrLayout;
       if (touchesPlayback) updateData.lastPlayedAt = now;
@@ -107,7 +114,7 @@ export async function PUT(
           userId,
           episodeId,
           playbackPositionSeconds: body.playbackPositionSeconds || 0,
-          playCount: body.playCount || 0,
+          playCount: body.playCount !== undefined ? body.playCount || 0 : countPlay ? 1 : 0,
           isPlayed: body.isPlayed || false,
           personalRating: body.personalRating ?? null,
           vrLayout: body.vrLayout ?? null,
@@ -118,38 +125,7 @@ export async function PUT(
 
     // On a playback save, bump the parent show's lastPlayedAt so the show
     // surfaces (and orders) in the next-up row.
-    if (touchesPlayback) {
-      const ep = db
-        .select({ showId: tvEpisodes.showId })
-        .from(tvEpisodes)
-        .where(eq(tvEpisodes.id, episodeId))
-        .get();
-
-      if (ep) {
-        const existingShow = db
-          .select()
-          .from(userTvShowData)
-          .where(and(eq(userTvShowData.userId, userId), eq(userTvShowData.showId, ep.showId)))
-          .get();
-
-        if (existingShow) {
-          db.update(userTvShowData)
-            .set({ lastPlayedAt: now })
-            .where(eq(userTvShowData.id, existingShow.id))
-            .run();
-        } else {
-          db.insert(userTvShowData)
-            .values({
-              id: uuidv4(),
-              userId,
-              showId: ep.showId,
-              isFavorite: false,
-              lastPlayedAt: now,
-            })
-            .run();
-        }
-      }
-    }
+    if (touchesPlayback) touchShowLastPlayed(userId, episodeId, now);
 
     return NextResponse.json({ success: true });
   } catch (error) {
