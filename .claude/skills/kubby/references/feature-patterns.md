@@ -1031,8 +1031,8 @@ prototype `data/demos/tier-fx/index.html` (local) at intensity 标准:
   grid): bloom/glow opacities are low at rest and reach full strength on hover
   (SSS switches to a stronger `tfx-breath-hover`). The prototype's diagonal light
   sweep was dropped entirely (too glaring) — don't re-add it.
-- **Slow motion on purpose** (user feedback): SSS rim spins once per 9s (two
-  comets → a pass every ~4.5s; SS is one comet per 7s), sparkles twinkle on a 7s
+- **Slow motion on purpose** (user feedback): SSS rim (two comets) spins once per 14s
+  (a pass every ~7s; SS is one comet per 7s), sparkles twinkle on a 7s
   cycle with their delays spread across it (`SPARK_TIME` in tier-fx.tsx).
 
 **Two parts per card**, same `seed` (item id → stable spin phase so a grid doesn't
