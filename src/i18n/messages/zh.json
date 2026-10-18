@@ -1034,17 +1034,22 @@
     "introTitle": "今晚看什么？",
     "introSub": "星云里漂着 {count} 部候选 · 抽一手看看",
     "introSubTable": "牌桌上摊着 {count} 部候选 · 洗牌抽一手",
+    "introSubClips": "星云里漂着 {count} 个片段 · 抽一手看看",
+    "introSubTableClips": "牌桌上摊着 {count} 个片段 · 洗牌抽一手",
     "draw": "抽",
     "redraw": "再抽",
     "hint": "<k>空格</k> 抽牌 · 悬停卡片点 <k>🔒</k> 锁定保留",
     "candidates": "候选 <b>{count}</b> 部",
     "actorsCount": "演员 {count}",
+    "candidatesClips": "片段 <b>{count}</b> 个",
+    "clipsCount": "片段 {count}",
     "presets": {
       "blind": "盲盒",
       "hiddenGems": "冷门佳作",
       "rewatch": "重温最爱",
       "quick": "短平快",
-      "actorSpotlight": "演员专场"
+      "actorSpotlight": "演员专场",
+      "clipRewind": "片段重温"
     },
     "library": "媒体库",
     "allLibraries": "全部媒体库",
@@ -1071,7 +1076,8 @@
     "mix": {
       "movies": "只要电影",
       "mixed": "混合",
-      "actors": "演员专场"
+      "actors": "演员专场",
+      "clips": "片段"
     },
     "theme": "主题",
     "themes": {
@@ -1084,6 +1090,10 @@
     "locked": "已锁定 · 重抽时保留",
     "dismiss": "不想看",
     "play": "播放",
+    "playClip": "播放片段",
+    "clipAria": "片段：{title} {time}",
+    "clipsEmptyTitle": "还没有片段",
+    "clipsEmptyHint": "看片时把播放器切到书签模式，标记下的精彩瞬间就会作为片段出现在这里。",
     "minutes": "{min} 分钟",
     "stale": "不符合当前筛选",
     "actorBadge": "演员",
@@ -1117,7 +1127,10 @@
       "newlyAdded": "片库新入",
       "matchesTag": "#{tag}",
       "actorMatching": "{count} 部符合今晚",
-      "actorUnwatched": "还有 {count} 部没看"
+      "actorUnwatched": "还有 {count} 部没看",
+      "bookmarkMoment": "你 {ago} 在 {time} 留下的书签",
+      "bookmarkMomentShort": "{ago}的书签",
+      "bookmarkTag": "#{tag}"
     }
   }
 }

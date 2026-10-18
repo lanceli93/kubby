@@ -14,6 +14,9 @@
 //      dismissed < 90 days are held back; if the fresh pool can't fill the
 //      hand they are re-admitted oldest-first (dismissed last) and the
 //      response says `repeatsAllowed`.
+//   5. Clips (video bookmarks): the caller's own thumbnailed movie_bookmarks,
+//      filtered through the parent movie, weighted toward older marks; never
+//      two of one film, never a clip of a film dealt as a movie card.
 //
 // Library-only data (metadata, parsed genres/tags, the cast of every movie) is
 // an in-memory snapshot invalidated by a trigger-maintained version counter;
@@ -31,6 +34,7 @@ import { recommendationHistory } from "@/lib/db/schema";
 import { resolveDataPath } from "@/lib/paths";
 import type {
   ActorCardData,
+  ClipCardData,
   DrawRequest,
   DrawResponse,
   HistoryRequest,
@@ -70,6 +74,15 @@ const LEAD_CAST = 2;
 const MAIN_CAST = 6;
 /** Films attached to an actor card (only used for its fanart backdrop now). */
 const ACTOR_FILMS = 2;
+/** Mixed piles show up to this many clips (from the movie share) — the wildcard's visual source. */
+const POOL_MIXED_CLIPS = 6;
+/** Mixed hands: chance a draw deals one clip in place of a movie… */
+const CLIP_WILDCARD_P = 0.3;
+/** …and the fresh (not held back) clips needed to even try. */
+const CLIP_WILDCARD_MIN = 3;
+/** Rediscovery boost grows linearly to its max (+1) at this bookmark age. */
+const CLIP_AGE_FULL_DAYS = 180;
+const DEFAULT_STILL_ASPECT = 16 / 9;
 
 // ─── helpers ────────────────────────────────────────────────────
 
@@ -819,17 +832,32 @@ interface Context {
   castMap: Map<string, CastEntry[]>;
 }
 
+/** Per-request reads shared by the movie and clip paths. */
+interface RequestBase {
+  /** may be swapped for a rebuilt snapshot mid-request (see buildContext / buildClips) */
+  lib: Library;
+  umdRows: UserMovieRow[];
+}
+
+const loadBase = (userId: string): RequestBase => ({ lib: getLibrary(), umdRows: loadUserMovieData(userId) });
+
 /** `ranked: false` (the pool) skips scoring: the pile is a uniform sample, so only the sets matter. */
-function buildContext(userId: string, filters: RecommendFilters, withActors: boolean, ranked = true): Context {
+function buildContext(
+  userId: string,
+  filters: RecommendFilters,
+  withActors: boolean,
+  ranked = true,
+  base: RequestBase = loadBase(userId)
+): Context {
   const now = Date.now();
-  let lib = getLibrary();
-  const umdRows = loadUserMovieData(userId);
-  let candidates = loadCandidates(filters, lib, umdRows);
+  const { umdRows } = base;
+  let candidates = loadCandidates(filters, base.lib, umdRows);
   if (!candidates) {
     // A movie the snapshot doesn't know (written by another connection) → rebuild once.
-    lib = getLibrary(true);
-    candidates = loadCandidates(filters, lib, umdRows) ?? [];
+    base.lib = getLibrary(true);
+    candidates = loadCandidates(filters, base.lib, umdRows) ?? [];
   }
+  const lib = base.lib;
   const castMap = lib.cast;
   const sig = loadSignals(userId, lib, umdRows);
   const scored = ranked
@@ -837,6 +865,208 @@ function buildContext(userId: string, filters: RecommendFilters, withActors: boo
     : candidates.map((c): ScoredMovie => ({ c, weight: 1, reasons: [], primaryGenre: c.primaryGenre, leads: [] }));
   const actors = withActors ? buildActors(scored, castMap, sig, filters, ranked) : [];
   return { filters, scored, actors, castMap };
+}
+
+// ─── clips (video bookmarks) ────────────────────────────────────
+//
+// The caller's own movie_bookmarks that have a thumbnail. Bookmarks are
+// per-user data, so they are read on every request (idx_mb_user_movie) and
+// never enter the library snapshot. Filters apply through the parent movie;
+// `watched` and `maxRuntime` are ignored (a bookmark implies a play, and the
+// clip is a moment, not a 2-hour commitment).
+
+interface Clip {
+  id: string;
+  movie: MovieStatic;
+  timestampSeconds: number;
+  discNumber: number;
+  iconType: string;
+  tags: string[];
+  note: string | null;
+  thumbnail: string;
+  thumbnailAspect: number | null;
+  viewState: string | null;
+  createdAt: string;
+  /** the filter tag that matched the bookmark's OWN tags (→ bookmarkTag chip), if any */
+  tagMatch: string | null;
+}
+
+interface ScoredClip {
+  clip: Clip;
+  weight: number;
+  reasons: RecommendReason[];
+  personalRating: number | null; // of the parent movie (effective)
+}
+
+/** The bookmark frame. Thumbnails are written once under the bookmark's own id
+ *  and never replaced, so there is no mtime to stamp (and no stat). */
+const stillOf = (c: Clip) => stampPath(resolveDataPath(c.thumbnail));
+
+function parseViewState(json: string | null): ClipCardData["viewState"] {
+  if (!json) return null;
+  try {
+    const v = JSON.parse(json) as Record<string, unknown>;
+    const { lon, lat, fov } = v ?? {};
+    return typeof lon === "number" && typeof lat === "number" && typeof fov === "number" ? { lon, lat, fov } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Hard filters → one SQL pass over the caller's bookmarks (movie-type
+ * libraries only, allowlist). Tags match the parent movie's tags OR the
+ * bookmark's own. Returns null when a parent is missing from `lib` (stale
+ * snapshot — the caller rebuilds and retries).
+ */
+function loadClips(userId: string, f: RecommendFilters, lib: Library): Clip[] | null {
+  const where: SQL[] = [sql`mb.user_id = ${userId}`, sql`mb.thumbnail_path IS NOT NULL`, sql`mb.thumbnail_path != ''`];
+  if (f.libraryId) where.push(sql`m.media_library_id = ${f.libraryId}`);
+  if (f.genres?.length) where.push(jsonArrayAnyOf(sql`m.genres`, f.genres));
+  if (f.tags?.length) where.push(sql`(${jsonArrayAnyOf(sql`m.tags`, f.tags)} OR ${jsonArrayAnyOf(sql`mb.tags`, f.tags)})`);
+  if (f.minRating !== undefined) where.push(sql`m.community_rating >= ${f.minRating}`);
+  if (f.yearFrom !== undefined) where.push(sql`m.year >= ${f.yearFrom}`);
+  if (f.yearTo !== undefined) where.push(sql`m.year <= ${f.yearTo}`);
+
+  const rows = db.all<{
+    id: string;
+    movie_id: string;
+    timestamp_seconds: number;
+    disc_number: number | null;
+    icon_type: string | null;
+    tags: string | null;
+    note: string | null;
+    thumbnail_path: string;
+    thumbnail_aspect: number | null;
+    view_state: string | null;
+    created_at: string;
+  }>(sql`
+    SELECT mb.id, mb.movie_id, mb.timestamp_seconds, mb.disc_number, mb.icon_type, mb.tags, mb.note,
+      mb.thumbnail_path, mb.thumbnail_aspect, mb.view_state, mb.created_at
+    FROM movie_bookmarks mb
+    INNER JOIN movies m ON m.id = mb.movie_id
+    INNER JOIN media_libraries ml ON ml.id = m.media_library_id AND ml.type = 'movie'
+    WHERE ${sql.join(where, sql` AND `)}
+  `);
+
+  const filterTags = f.tags?.map((t) => ({ t, lower: t.toLowerCase() })) ?? [];
+  const out: Clip[] = [];
+  for (const r of rows) {
+    const movie = lib.movies.get(r.movie_id);
+    if (!movie) return null;
+    const tags = parseStringArray(r.tags);
+    let tagMatch: string | null = null;
+    if (filterTags.length && tags.length) {
+      const lower = tags.map((t) => t.toLowerCase());
+      tagMatch = filterTags.find((x) => lower.includes(x.lower))?.t ?? null;
+    }
+    out.push({
+      id: r.id,
+      movie,
+      timestampSeconds: r.timestamp_seconds,
+      discNumber: r.disc_number ?? 1,
+      iconType: r.icon_type || "bookmark",
+      tags,
+      note: r.note,
+      thumbnail: r.thumbnail_path,
+      thumbnailAspect: r.thumbnail_aspect && r.thumbnail_aspect > 0 ? r.thumbnail_aspect : null,
+      viewState: r.view_state,
+      createdAt: r.created_at,
+      tagMatch,
+    });
+  }
+  return out;
+}
+
+/**
+ * Clip score = 1 + rediscovery min(1, age / 180 days) + 0.5 if the parent is
+ * favorited or rated in the user's high band (highThreshold) + 0.25 for a
+ * bookmark-tag match. Blind: uniform (1). Reasons: bookmarkMoment always
+ * first, then bookmarkTag / favorite / highRating (the parent's community
+ * rating ≥ HIGH_COMMUNITY, as on movie cards), max 3.
+ */
+function scoreClips(clips: Clip[], base: RequestBase, f: RecommendFilters, now: number): ScoredClip[] {
+  const umd = new Map<string, UserMovieRow>();
+  const rated: number[] = [];
+  for (const r of base.umdRows) {
+    if (!base.lib.movies.has(r.movie_id)) continue; // movie-type libraries only (= loadSignals)
+    umd.set(r.movie_id, r);
+    const v = effectiveRating(r.personal_rating, r.dimension_ratings);
+    if (v != null) rated.push(v);
+  }
+  const highMovie = highThreshold(rated);
+
+  return clips.map((clip) => {
+    const r = umd.get(clip.movie.id);
+    const personalRating = r ? effectiveRating(r.personal_rating, r.dimension_ratings) : null;
+    const isFavorite = !!r?.is_favorite;
+    const loved = personalRating != null && personalRating >= highMovie;
+    const createdMs = parseDbDate(clip.createdAt);
+    const ageDays = createdMs != null ? Math.max(0, (now - createdMs) / DAY_MS) : 0;
+
+    const weight =
+      f.preset === "blind"
+        ? 1
+        : 1 + Math.min(1, ageDays / CLIP_AGE_FULL_DAYS) + (isFavorite || loved ? 0.5 : 0) + (clip.tagMatch ? 0.25 : 0);
+
+    const reasons: RecommendReason[] = [
+      { code: "bookmarkMoment", timestampSeconds: clip.timestampSeconds, createdAt: clip.createdAt },
+    ];
+    if (clip.tagMatch) reasons.push({ code: "bookmarkTag", tag: clip.tagMatch });
+    if (isFavorite) reasons.push({ code: "favorite" });
+    // highRating = community rating, same meaning as on movie cards (the
+    // personal-rating boost above stays unexplained rather than mislabelled)
+    const community = clip.movie.communityRating;
+    if (community != null && community >= HIGH_COMMUNITY && reasons.length < 3) {
+      reasons.push({ code: "highRating", rating: round1(community) });
+    }
+
+    return { clip, weight, reasons, personalRating };
+  });
+}
+
+/** Eligible clips for the filters; `ranked: false` (the pool) skips scoring. */
+function buildClips(userId: string, filters: RecommendFilters, base: RequestBase, ranked = true): ScoredClip[] {
+  let clips = loadClips(userId, filters, base.lib);
+  if (!clips) {
+    base.lib = getLibrary(true);
+    clips = loadClips(userId, filters, base.lib) ?? [];
+  }
+  return ranked
+    ? scoreClips(clips, base, filters, Date.now())
+    : clips.map((clip) => ({ clip, weight: 1, reasons: [], personalRating: null }));
+}
+
+/** posterBlur is filled in by attachBlurs once the hand is final. */
+function clipCard(s: ScoredClip): ClipCardData {
+  const c = s.clip;
+  const m = c.movie;
+  return {
+    type: "bookmark",
+    id: c.id,
+    movieId: m.id,
+    movieTitle: m.title,
+    year: m.year,
+    posterPath: posterOf(m),
+    posterBlur: null,
+    fanartPath: fanartOf(m),
+    stillPath: stillOf(c),
+    stillAspect: c.thumbnailAspect ?? DEFAULT_STILL_ASPECT,
+    timestampSeconds: c.timestampSeconds,
+    discNumber: c.discNumber,
+    iconType: c.iconType,
+    tags: [...c.tags],
+    note: c.note,
+    viewState: parseViewState(c.viewState),
+    createdAt: c.createdAt,
+    personalRating: s.personalRating,
+    reasons: s.reasons,
+  };
+}
+
+/** True when bookmark `id` belongs to `userId` (history writes are scoped to own bookmarks). */
+export function ownsBookmark(userId: string, id: string): boolean {
+  return !!db.get<{ one: number }>(sql`SELECT 1 AS one FROM movie_bookmarks WHERE id = ${id} AND user_id = ${userId}`);
 }
 
 // ─── pool ───────────────────────────────────────────────────────
@@ -866,22 +1096,29 @@ function samplePool<T>(items: T[], n: number, key: (t: T) => string, opts: PoolO
  * actors) — proportional to raw counts would bury the movies, since every film
  * contributes a dozen cast members. Actor piles top up with movies when there
  * are fewer than POOL_CAP actors (the hand falls back to movies the same way).
+ * Clip piles hold only clips (no movie top-up — a clip hand doesn't fall back
+ * either); mixed piles carry up to POOL_MIXED_CLIPS clips out of the movie share.
  */
 export function getPool(userId: string, filters: RecommendFilters, opts: PoolOptions = {}): PoolResponse {
-  const ctx = buildContext(userId, filters, (filters.mix ?? "mixed") !== "movies", false);
+  const mix = filters.mix ?? "mixed";
+  const base = loadBase(userId);
+  const ctx = buildContext(userId, filters, mix === "mixed" || mix === "actors", false, base);
+  const clips = mix === "mixed" || mix === "clips" ? buildClips(userId, filters, base, false) : [];
   const M = ctx.scored.length;
   const A = ctx.actors.length;
-  const mix = filters.mix ?? "mixed";
+  const C = clips.length;
 
   let actorSlots = 0;
   if (mix === "actors") actorSlots = Math.min(A, POOL_CAP);
   else if (mix === "mixed") actorSlots = Math.min(A, Math.max(6, Math.round(Math.min(POOL_CAP, M + A) * 0.2)));
-  const movieSlots = Math.min(M, POOL_CAP - actorSlots);
+  const clipSlots = mix === "clips" ? Math.min(C, POOL_CAP) : Math.min(C, POOL_MIXED_CLIPS);
+  const movieSlots = mix === "clips" ? 0 : Math.min(M, POOL_CAP - actorSlots - clipSlots);
 
   const movies = samplePool(ctx.scored, movieSlots, (m) => `movie:${m.c.id}`, opts);
   const actors = samplePool(ctx.actors, actorSlots, (a) => `person:${a.personId}`, opts);
+  const clipSample = samplePool(clips, clipSlots, (s) => `bookmark:${s.clip.id}`, opts);
   const { movieBlur, personBlur } = loadBlurs(
-    movies.map(({ item: m }) => m.c.id),
+    [...movies.map(({ item: m }) => m.c.id), ...clipSample.map(({ item: s }) => s.clip.movie.id)],
     actors.map(({ item: a }) => a.personId)
   );
   const items: { item: PoolItem; rank: number }[] = [
@@ -905,11 +1142,23 @@ export function getPool(userId: string, filters: RecommendFilters, opts: PoolOpt
         blur: personBlur.get(a.personId) ?? null,
       },
     })),
+    ...clipSample.map(({ item: s, rank }) => ({
+      rank,
+      item: {
+        type: "bookmark" as const,
+        id: s.clip.id,
+        title: s.clip.movie.title,
+        image: posterOf(s.clip.movie),
+        blur: movieBlur.get(s.clip.movie.id) ?? null,
+        still: stillOf(s.clip),
+        stillAspect: s.clip.thumbnailAspect ?? DEFAULT_STILL_ASPECT,
+      },
+    })),
   ];
   // seeded: interleave by rank, so the order is stable too (vortex fills its caps in pool order)
   const ordered =
     opts.seed === undefined ? shuffle(items, opts.rng ?? Math.random) : items.sort((a, b) => a.rank - b.rank);
-  return { movieCount: M, actorCount: A, items: ordered.map((x) => x.item) };
+  return { movieCount: M, actorCount: A, clipCount: C, items: ordered.map((x) => x.item) };
 }
 
 // ─── history ────────────────────────────────────────────────────
@@ -1031,16 +1280,18 @@ function movieCard(m: ScoredMovie): MovieCardData {
   };
 }
 
-/** Fills the blur placeholders of a final hand (incl. actor cards' films) in one lookup. */
+/** Fills the blur placeholders of a final hand (incl. actor cards' films, clips' parents) in one lookup. */
 function attachBlurs(cards: RecommendCard[]) {
-  const movieCards = cards.flatMap((c) => (c.type === "movie" ? [c] : c.films));
+  const movieCards = cards.flatMap((c) => (c.type === "movie" ? [c] : c.type === "person" ? c.films : []));
   const actorCards = cards.filter((c): c is ActorCardData => c.type === "person");
+  const clipCards = cards.filter((c): c is ClipCardData => c.type === "bookmark");
   const { movieBlur, personBlur } = loadBlurs(
-    movieCards.map((c) => c.id),
+    [...movieCards.map((c) => c.id), ...clipCards.map((c) => c.movieId)],
     actorCards.map((c) => c.id)
   );
   for (const c of movieCards) c.posterBlur = movieBlur.get(c.id) ?? null;
   for (const c of actorCards) c.photoBlur = personBlur.get(c.id) ?? null;
+  for (const c of clipCards) c.posterBlur = movieBlur.get(c.movieId) ?? null;
 }
 
 export interface DrawOptions {
@@ -1052,16 +1303,35 @@ export interface DrawOptions {
 export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {}): DrawResponse {
   const rng = opts.rng ?? Math.random;
   const filters = req.filters;
-  const excluded = new Set((req.exclude ?? []).map((r: RecommendItemRef) => refKey(r.type, r.id)));
-  const excludedMovieIds = (req.exclude ?? []).filter((r) => r.type === "movie").map((r) => r.id);
-  // The request's movies/actors counts (not filters.mix) decide the hand's shape.
-  const ctx = buildContext(userId, filters, req.actors > 0);
+  const exclude = req.exclude ?? [];
+  const excluded = new Set(exclude.map((r: RecommendItemRef) => refKey(r.type, r.id)));
+  const excludedMovieIds = exclude.filter((r) => r.type === "movie").map((r) => r.id);
+  const excludedClipIds = exclude.filter((r) => r.type === "bookmark").map((r) => r.id);
+  const clipCount = req.clips ?? 0;
+  const tryWildcard = !!req.clipWildcard && req.movies > 0;
+  // The request's movies/actors/clips counts (not filters.mix) decide the hand's shape.
+  const base = loadBase(userId);
+  const ctx: Context =
+    req.movies > 0 || req.actors > 0
+      ? buildContext(userId, filters, req.actors > 0, true, base)
+      : { filters, scored: [], actors: [], castMap: base.lib.cast };
+  const clips = clipCount > 0 || tryWildcard ? buildClips(userId, filters, base) : [];
   const history = loadHistory(userId);
+
+  // Parent films of locked clips: no second clip of them, and no movie card of them.
+  const clipParents = new Set<string>();
+  if (excludedClipIds.length) {
+    const rows = db.all<{ movie_id: string }>(sql`
+      SELECT movie_id FROM movie_bookmarks
+      WHERE user_id = ${userId} AND id IN (${sql.join(excludedClipIds.map((id) => sql`${id}`), sql`, `)})
+    `);
+    for (const r of rows) clipParents.add(r.movie_id);
+  }
 
   // ── Diversity state, seeded with locked movies so the new cards fit around them.
   const genreCount = new Map<string, number>();
   const leadSet = new Set<string>();
-  const usedMovieIds = new Set<string>(excludedMovieIds);
+  const usedMovieIds = new Set<string>([...excludedMovieIds, ...clipParents]);
   const scoredById = new Map(ctx.scored.map((m) => [m.c.id, m]));
   if (excludedMovieIds.length) {
     const lockedGenres = new Map<string, string | null>();
@@ -1117,7 +1387,26 @@ export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {
   const pickMovies = (n: number) =>
     n > 0 ? greedyPick([freshOrder, blockedOrder], n, 3, acceptMovie, commitMovie, (m) => m.c.id, takenMovies) : [];
 
-  const handMovies = pickMovies(req.movies);
+  // ── Clip order: same fresh/blocked split as movies.
+  const freshClips: ScoredClip[] = [];
+  const blockedClips: ScoredClip[] = [];
+  for (const s of clips) {
+    const k = refKey("bookmark", s.clip.id);
+    if (excluded.has(k)) continue;
+    (history.blocked.has(k) ? blockedClips : freshClips).push(s);
+  }
+  const freshClipOrder = freshClips
+    .map((s) => ({ s, k: esKey(s.weight, rng) }))
+    .sort((a, b) => b.k - a.k)
+    .map((x) => x.s);
+  const blockedClipOrder = sortReadmit(blockedClips, history, (s) => refKey("bookmark", s.clip.id));
+  const repeatClips = new Set(blockedClipOrder.map((s) => s.clip.id));
+
+  // Mixed-hand wildcard: sometimes one movie slot holds a clip instead — only
+  // from fresh clips, so it never forces a repeat.
+  const wildcard = tryWildcard && freshClipOrder.length >= CLIP_WILDCARD_MIN && rng() < CLIP_WILDCARD_P;
+
+  const handMovies = pickMovies(req.movies - (wildcard ? 1 : 0));
 
   // ── Actors: same fresh/blocked split; each needs ≥ 1 film not already in the hand.
   const actorCards: ActorCardData[] = [];
@@ -1175,8 +1464,37 @@ export function drawHand(userId: string, req: DrawRequest, opts: DrawOptions = {
   // ── Not enough actors → fill the remaining slots with movies so the hand stays full.
   const filler = pickMovies(req.actors - actorCards.length);
 
+  // ── Clips: ≤ 1 per parent film (relaxed only if the hand can't be filled),
+  // never one whose film is a movie card in this hand (locked or new).
+  const movieCardIds = new Set([...excludedMovieIds, ...handMovies.map((m) => m.c.id), ...filler.map((m) => m.c.id)]);
+  const takenClips = new Set<string>();
+  const acceptClip = (s: ScoredClip, level: number) => {
+    const parent = s.clip.movie.id;
+    if (movieCardIds.has(parent)) return false;
+    return level >= 1 || !clipParents.has(parent);
+  };
+  const commitClip = (s: ScoredClip) => {
+    clipParents.add(s.clip.movie.id);
+    if (repeatClips.has(s.clip.id)) repeats = true;
+  };
+  const clipKey = (s: ScoredClip) => s.clip.id;
+  const handClips =
+    clipCount > 0
+      ? greedyPick([freshClipOrder, blockedClipOrder], clipCount, 2, acceptClip, commitClip, clipKey, takenClips)
+      : [];
+  if (wildcard) {
+    const wild = greedyPick([freshClipOrder], 1, 2, acceptClip, commitClip, clipKey, takenClips);
+    handClips.push(...wild);
+    // No clip fits around the dealt films → the slot goes back to a movie.
+    if (!wild.length) {
+      for (const p of clipParents) usedMovieIds.add(p);
+      filler.push(...pickMovies(1));
+    }
+  }
+
   const cards: RecommendCard[] = [...handMovies, ...filler].map(movieCard);
   cards.push(...actorCards);
+  cards.push(...handClips.map(clipCard));
   attachBlurs(cards);
 
   if (opts.record !== false) writeShown(userId, cards);

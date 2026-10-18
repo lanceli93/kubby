@@ -4,8 +4,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getRootScale } from "@/hooks/use-root-scale";
 import { HAND_SIZE } from "@/lib/recommend/presets";
-import type { PoolItem, RecommendCard } from "@/lib/recommend/types";
-import { HandCardFace } from "./card-faces";
+import type { PoolItem, RecommendCard, RecommendItemType } from "@/lib/recommend/types";
+import { HandCardFace, useCardLabel } from "./card-faces";
+import { appendClipMini } from "./clip-layout";
 import {
   cardKey,
   type HandSlot,
@@ -230,7 +231,7 @@ type PileState = "pile" | "out" | "deck" | "taken";
 
 interface PileCard extends Vis {
   key: string;
-  kind: "movie" | "person";
+  kind: RecommendItemType;
   state: PileState;
   pu: number;
   pv: number;
@@ -594,7 +595,14 @@ class TabletopEngine {
     c.layer = ++this.layerSeq;
     this.setLayer(c, 10 + c.layer);
   }
-  private makePile(key: string, kind: "movie" | "person", image: string | null, blur: string | null): PileCard {
+  private makePile(
+    key: string,
+    kind: RecommendItemType,
+    image: string | null,
+    blur: string | null,
+    still?: string | null,
+    stillAspect?: number | null
+  ): PileCard {
     const el = document.createElement("div");
     el.className = "rc-tt-card";
     const shade = document.createElement("div");
@@ -602,9 +610,10 @@ class TabletopEngine {
     const flip = document.createElement("div");
     flip.className = "rc-tt-flip";
     const front = document.createElement("div");
-    front.className = `rc-tt-face${kind === "person" ? " actor" : ""}`;
+    front.className = `rc-tt-face${kind === "person" ? " actor" : kind === "bookmark" ? " rc-tt-clip" : ""}`;
     if (blur) front.style.backgroundImage = `url(${blur})`;
-    if (image) {
+    if (kind === "bookmark") appendClipMini(front, image, still, stillAspect);
+    else if (image) {
       const img = document.createElement("img");
       img.decoding = "async";
       img.fetchPriority = "low"; // hand + ambient backdrop images load first
@@ -753,7 +762,7 @@ class TabletopEngine {
     }
     const step = first ? Math.min(32, 1600 / Math.max(1, add.length)) : Math.min(28, 700 / Math.max(1, add.length));
     add.forEach((p, i) => {
-      const c = this.makePile(cardKey(p), p.type, p.image, p.blur);
+      const c = this.makePile(cardKey(p), p.type, p.image, p.blur, p.still, p.stillAspect);
       this.tossIn(c, (first ? 200 : 120) + i * step + (first ? 0 : rand(0, 60)));
     });
   }
@@ -1042,7 +1051,9 @@ class TabletopEngine {
       c =
         card.type === "movie"
           ? this.makePile(e.key, "movie", card.posterPath, card.posterBlur)
-          : this.makePile(e.key, "person", card.photoPath, card.photoBlur);
+          : card.type === "person"
+            ? this.makePile(e.key, "person", card.photoPath, card.photoBlur)
+            : this.makePile(e.key, "bookmark", card.posterPath, card.posterBlur, card.stillPath, card.stillAspect);
     }
     c.pu = pu;
     c.pv = pv;
@@ -1379,8 +1390,10 @@ export function TabletopScene({
   onToggleLock,
   onDismiss,
   onOpenPerson,
+  onPlayClip,
   onHover,
 }: RecommendSceneProps) {
+  const cardLabel = useCardLabel();
   const rootRef = useRef<HTMLDivElement>(null);
   const pileRef = useRef<HTMLDivElement>(null);
   const handRef = useRef<HTMLDivElement>(null);
@@ -1512,7 +1525,7 @@ export function TabletopScene({
         {shown.map((s) => {
           const locked = lockedKeys.has(s.key);
           const stale = staleKeys.has(s.key);
-          const label = s.card.type === "movie" ? s.card.title : s.card.name;
+          const label = cardLabel(s.card);
           return (
             <div
               key={s.key}
@@ -1544,7 +1557,8 @@ export function TabletopScene({
                 if (s.leaving || !engineRef.current?.isResting(s.key)) return;
                 if (s.card.type === "movie") {
                   onOpenMovie(s.card, e.currentTarget.querySelector<HTMLElement>("[data-rc-poster]"));
-                } else onOpenPerson(s.card);
+                } else if (s.card.type === "person") onOpenPerson(s.card);
+                else onPlayClip(s.card);
               }}
               onKeyDown={(e) => {
                 if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
@@ -1564,6 +1578,7 @@ export function TabletopScene({
                     onToggleLock={onToggleLock}
                     onDismiss={handleDismiss}
                     onPlay={onPlay}
+                    onPlayClip={onPlayClip}
                   />
                   <div className="rc-tt-sweepbox">
                     <div className="rc-tt-sweep" />

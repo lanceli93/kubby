@@ -6,13 +6,14 @@ import type {
   RecommendMix,
   RecommendPreset,
 } from "./types";
+import { HAND_SIZE } from "./presets";
 
 // Input validation for the recommend routes. Pure (no DB) so it's testable in
 // isolation. Everything is lenient: unknown/invalid values are dropped rather
 // than rejected, so a stale client never gets an empty page over a typo.
 
-const PRESETS: readonly RecommendPreset[] = ["blind", "hiddenGems", "rewatch", "quick", "actorSpotlight"];
-const MIXES: readonly RecommendMix[] = ["movies", "mixed", "actors"];
+const PRESETS: readonly RecommendPreset[] = ["blind", "hiddenGems", "rewatch", "quick", "actorSpotlight", "clipRewind"];
+const MIXES: readonly RecommendMix[] = ["movies", "mixed", "actors", "clips"];
 const WATCHED = ["unwatched", "any", "watched"] as const;
 
 /** Max cards of one kind a single draw may ask for. */
@@ -108,7 +109,7 @@ export function parsePoolSeed(sp: URLSearchParams): string | undefined {
 function parseRef(v: unknown): RecommendItemRef | null {
   if (!v || typeof v !== "object") return null;
   const r = v as Record<string, unknown>;
-  const type = oneOf(r.type, ["movie", "person"] as const);
+  const type = oneOf(r.type, ["movie", "person", "bookmark"] as const);
   if (!type || typeof r.id !== "string" || !r.id || r.id.length > 200) return null;
   return { type, id: r.id };
 }
@@ -124,6 +125,9 @@ export function parseDrawRequest(body: unknown): DrawRequest | null {
     filters: sanitizeFilters(b.filters),
     movies: clampCount(b.movies),
     actors: clampCount(b.actors),
+    // a whole clip hand at most (clip draws scan only the caller's bookmarks)
+    clips: Math.min(HAND_SIZE, clampCount(b.clips)),
+    clipWildcard: b.clipWildcard === true,
     exclude,
   };
 }

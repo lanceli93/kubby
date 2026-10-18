@@ -32,7 +32,7 @@ import { FacetPicker, type FacetOption } from "./facet-picker";
  */
 
 const RUNTIME_OPTIONS = [0, 90, 120, 150] as const;
-const MIX_OPTIONS: RecommendMix[] = ["movies", "mixed", "actors"];
+const MIX_OPTIONS: RecommendMix[] = ["movies", "mixed", "actors", "clips"];
 const WATCHED_OPTIONS = ["unwatched", "any", "watched"] as const;
 const THEMES: RecommendTheme[] = ["vortex", "tabletop"];
 
@@ -143,6 +143,8 @@ interface FilterBarProps {
   tags: FacetOption[];
   movieCount: number | null;
   actorCount: number | null;
+  /** eligible video bookmarks (clips) — counted instead of movies on the clips deck */
+  clipCount: number | null;
   theme: RecommendTheme;
   onTheme: (theme: RecommendTheme) => void;
 }
@@ -157,6 +159,7 @@ export function FilterBar({
   tags,
   movieCount,
   actorCount,
+  clipCount,
   theme,
   onTheme,
 }: FilterBarProps) {
@@ -180,6 +183,7 @@ export function FilterBar({
       className="rc-chip-btn focus-ring"
       data-on={filters.preset === p}
       data-gold={p === "actorSpotlight"}
+      data-cyan={p === "clipRewind"}
       aria-pressed={filters.preset === p}
       onClick={() => onPreset(p)}
     >
@@ -235,12 +239,24 @@ export function FilterBar({
 
   const count = (
     <div className="flex-none whitespace-nowrap rounded-[0.625rem] bg-black/30 px-2.5 py-1.5 text-xs text-muted-foreground">
-      {t.rich("candidates", {
-        count: movieCount ?? 0,
-        b: () => <AnimatedNumber value={movieCount ?? 0} />,
-      })}
-      {mix !== "movies" && actorCount != null && (
-        <span className="text-[#d9c38d]"> · {t("actorsCount", { count: actorCount })}</span>
+      {mix === "clips" ? (
+        t.rich("candidatesClips", {
+          count: clipCount ?? 0,
+          b: () => <AnimatedNumber value={clipCount ?? 0} />,
+        })
+      ) : (
+        <>
+          {t.rich("candidates", {
+            count: movieCount ?? 0,
+            b: () => <AnimatedNumber value={movieCount ?? 0} />,
+          })}
+          {mix !== "movies" && actorCount != null && (
+            <span className="text-[#d9c38d]"> · {t("actorsCount", { count: actorCount })}</span>
+          )}
+          {mix === "mixed" && clipCount != null && clipCount > 0 && (
+            <span className="text-[#67e8f9]"> · {t("clipsCount", { count: clipCount })}</span>
+          )}
+        </>
       )}
     </div>
   );

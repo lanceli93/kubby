@@ -1034,17 +1034,22 @@
     "introTitle": "What to watch tonight?",
     "introSub": "{count, plural, one {# candidate drifts} other {# candidates drift}} in the nebula · draw a hand",
     "introSubTable": "{count, plural, one {# candidate lies} other {# candidates lie}} on the table · draw a hand",
+    "introSubClips": "{count, plural, one {# clip drifts} other {# clips drift}} in the nebula · draw a hand",
+    "introSubTableClips": "{count, plural, one {# clip lies} other {# clips lie}} on the table · draw a hand",
     "draw": "Draw",
     "redraw": "Draw again",
     "hint": "<k>Space</k> to draw · hover a card and <k>🔒</k> to keep it",
     "candidates": "<b>{count}</b> {count, plural, one {candidate} other {candidates}}",
     "actorsCount": "{count, plural, one {# actor} other {# actors}}",
+    "candidatesClips": "<b>{count}</b> {count, plural, one {clip} other {clips}}",
+    "clipsCount": "{count, plural, one {# clip} other {# clips}}",
     "presets": {
       "blind": "Blind box",
       "hiddenGems": "Hidden gems",
       "rewatch": "Old favorites",
       "quick": "Quick watch",
-      "actorSpotlight": "Actor spotlight"
+      "actorSpotlight": "Actor spotlight",
+      "clipRewind": "Clip rewind"
     },
     "library": "Library",
     "allLibraries": "All libraries",
@@ -1071,7 +1076,8 @@
     "mix": {
       "movies": "Movies only",
       "mixed": "Mixed",
-      "actors": "Actors"
+      "actors": "Actors",
+      "clips": "Clips"
     },
     "theme": "Theme",
     "themes": {
@@ -1084,6 +1090,10 @@
     "locked": "Locked — kept on redraw",
     "dismiss": "Not interested",
     "play": "Play",
+    "playClip": "Play clip",
+    "clipAria": "Clip: {title} at {time}",
+    "clipsEmptyTitle": "No clips yet",
+    "clipsEmptyHint": "Bookmark a moment while watching (switch the player to Bookmark mode) and it shows up here as a clip.",
     "minutes": "{min} min",
     "stale": "No longer matches filters",
     "actorBadge": "ACTOR",
@@ -1117,7 +1127,10 @@
       "newlyAdded": "New in your library",
       "matchesTag": "#{tag}",
       "actorMatching": "{count, plural, one {# film} other {# films}} match tonight",
-      "actorUnwatched": "{count} still unwatched"
+      "actorUnwatched": "{count} still unwatched",
+      "bookmarkMoment": "Your bookmark at {time} · {ago}",
+      "bookmarkMomentShort": "Bookmarked {ago}",
+      "bookmarkTag": "#{tag}"
     }
   }
 }

@@ -426,6 +426,310 @@
   margin-top: 0.3em;
 }
 
+/* ---------- clip (video bookmark) face — design D1 大幅插入 "Big tuck" ----------
+   Ported from data/demos/clips/index.html?v=d1. The poster is the dimmed
+   envelope, the still is tucked into its lower half behind a shallow pocket.
+   Stacking inside the face: still 2 · pocket 3 · glare 4 · ribbon 5 ·
+   buttons / stale tag 6. No pseudo-elements, no backdrop-filter (3D subtree);
+   the 360° pan is a transform-only CSS animation. */
+.rc-hc[data-kind="bookmark"] .rc-hin {
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(203, 213, 225, 0.24),
+    0 0 28px -6px rgba(34, 211, 238, 0.38);
+}
+.rc-card[data-kind="bookmark"]:hover .rc-hin {
+  box-shadow:
+    0 34px 64px -20px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(165, 243, 252, 0.55),
+    0 0 36px -4px rgba(34, 211, 238, 0.55);
+}
+.rc-hc[data-kind="bookmark"][data-locked="true"] .rc-hin {
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.85),
+    0 0 0 2px rgba(250, 204, 21, 0.7),
+    0 0 26px rgba(202, 138, 4, 0.35);
+}
+.rc-face.rc-clip {
+  background-color: #12121e;
+}
+.rc-clip .rc-glare {
+  z-index: 4;
+}
+.rc-clip .rc-btn,
+.rc-clip .rc-stale-tag {
+  z-index: 6;
+}
+.rc-clip-dim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(10, 10, 15, 0.25), rgba(10, 10, 15, 0.45) 50%, rgba(10, 10, 15, 0.75));
+}
+.rc-clip-ribbon {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 50%;
+  width: calc(var(--cw, 200px) * 0.12);
+  height: calc(var(--cw, 200px) * 0.17);
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  padding-top: calc(var(--cw, 200px) * 0.035);
+  color: #05222a;
+  pointer-events: none;
+  background: linear-gradient(180deg, #e0fbff, #67e8f9 55%, #22d3ee);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+}
+.rc-clip-ribbon svg {
+  width: calc(var(--cw, 200px) * 0.055);
+  height: calc(var(--cw, 200px) * 0.055);
+}
+.rc-clip-still {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  padding: calc(var(--cw, 200px) * 0.016);
+  background: #ecebe7;
+  border-radius: 2px;
+  box-shadow:
+    0 16px 30px -8px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
+  transform: translateX(-50%) rotate(var(--rot, -3deg));
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rc-card:hover .rc-clip-still {
+  transform: translateX(-50%) translateY(var(--lift, 0px)) rotate(calc(var(--rot, -3deg) * 0.2));
+}
+.rc-clip-frame {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  border-radius: 1px;
+}
+.rc-clip-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rc-clip-pano {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  display: flex;
+  width: max-content;
+  animation: rc-pan var(--pd, 70s) linear infinite;
+  animation-delay: var(--pdel, 0s);
+}
+.rc-clip-pano > img {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  flex: none;
+  display: block;
+}
+/* explicit `from`: the inline transform is only the reduced-motion start pose */
+@keyframes rc-pan {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.rc-clip-360 {
+  position: absolute;
+  z-index: 3;
+  right: calc(var(--cw, 200px) * 0.025);
+  top: calc(var(--cw, 200px) * 0.025);
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  font: 800 calc(var(--cw, 200px) * 0.042) / 1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: #05222a;
+  background: rgba(165, 243, 252, 0.92);
+  padding: 0.3em 0.45em;
+  border-radius: 0.4em;
+}
+.rc-clip-360 svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+/* the film-camera date-stamp — the clip's one and only timecode */
+.rc-clip-stamp {
+  position: absolute;
+  z-index: 3;
+  right: calc(var(--cw, 200px) * 0.03);
+  font: 700 calc(var(--cw, 200px) * 0.05) / 1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: #ffb02e;
+  text-shadow: 0 0 6px rgba(255, 140, 0, 0.85), 0 0 1px #ff8a00;
+}
+.rc-clip-play {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  white-space: nowrap;
+  padding: 0.6em 1em 0.6em 0.75em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0a0a0f;
+  font-weight: 700;
+  font-size: calc(var(--cw, 200px) * 0.056);
+  line-height: 1.1;
+  box-shadow:
+    0 10px 30px -8px rgba(0, 0, 0, 0.85),
+    0 0 0 4px rgba(34, 211, 238, 0.18);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.85);
+  cursor: pointer;
+  transition: opacity 0.25s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+}
+.rc-clip-play svg {
+  width: 1.05em;
+  height: 1.05em;
+}
+.rc-card:hover .rc-clip-play,
+.rc-clip-play:focus-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.rc-clip-play:hover {
+  background: #fff;
+  box-shadow:
+    0 10px 30px -8px rgba(0, 0, 0, 0.85),
+    0 0 0 5px rgba(34, 211, 238, 0.35);
+}
+@media (hover: none) {
+  .rc-clip-play {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+.rc-clip-pocket {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* fixed height (top is set inline, 0.44cw): budgeted so the title row, a
+     2-line note and one chip row always fit (≈0.426cw) */
+  padding: calc(var(--cw, 200px) * 0.05) calc(var(--cw, 200px) * 0.06) calc(var(--cw, 200px) * 0.045);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cw, 200px) * 0.016);
+  background: linear-gradient(180deg, #161b27, #0d1016 70%);
+  box-shadow:
+    0 -12px 26px -6px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(165, 243, 252, 0.45);
+}
+/* stitched pocket seam — a real child, not a ::before (see .rc-nc) */
+.rc-clip-seam {
+  position: absolute;
+  left: calc(var(--cw, 200px) * 0.035);
+  right: calc(var(--cw, 200px) * 0.035);
+  top: calc(var(--cw, 200px) * 0.022);
+  border-top: 1px dashed rgba(165, 243, 252, 0.25);
+}
+.rc-clip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  min-width: 0;
+  font-size: calc(var(--cw, 200px) * 0.05);
+  color: #8d9bb0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.rc-clip-row svg {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+.rc-clip-lab {
+  flex: none;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.rc-clip-row b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  color: #eef2f7;
+}
+.rc-clip-yr {
+  flex: none;
+}
+.rc-clip-note {
+  flex: none; /* never squeezed below its 2 clamped lines */
+  font-size: calc(var(--cw, 200px) * 0.056);
+  line-height: 1.28;
+  color: #e8edf4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* one row of chips; what doesn't fit is clipped */
+.rc-clip-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cw, 200px) * 0.025);
+  margin-top: auto;
+  overflow: hidden;
+  max-height: calc(var(--cw, 200px) * 0.096);
+}
+.rc-clip-chips > .rc-chip {
+  flex: none;
+  line-height: 1.25;
+}
+.rc-clip-chips > .rc-chip:first-child {
+  flex: 0 1 auto;
+}
+.rc-chip[data-cyan="true"] {
+  background: rgba(34, 211, 238, 0.15);
+  color: #a5f3fc;
+  box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.38);
+}
+.rc-chip[data-tag="true"] {
+  background: rgba(148, 163, 184, 0.13);
+  color: #d3dae4;
+  box-shadow: inset 0 0 0 1px rgba(203, 213, 225, 0.22);
+}
+.rc-chip[data-tag="true"][data-hit="true"] {
+  color: #a5f3fc;
+  box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.38);
+}
+
+/* clip pile minis (both scenes): poster + a small tucked still — plain imgs,
+   static border/shadow, no pseudo-elements, no filters */
+.rc-nc.rc-nc-clip,
+.rc-tt-face.rc-tt-clip {
+  outline: 1.5px solid rgba(103, 232, 249, 0.85);
+  outline-offset: -1.5px;
+}
+.rc-nc > img.rc-mini-still,
+.rc-tt-face > img.rc-mini-still {
+  position: absolute;
+  left: 50%;
+  object-fit: cover;
+  border: 2px solid #ecebe7;
+  border-radius: 1px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+  transform: translateX(-50%) rotate(-3deg);
+}
+
 /* ---------- glass UI (outside the 3D subtree) ---------- */
 .rc-glass {
   background: rgba(26, 26, 46, 0.5);
@@ -464,6 +768,12 @@
   box-shadow:
     inset 0 0 0 1px rgba(250, 204, 21, 0.6),
     0 0 14px -2px rgba(202, 138, 4, 0.55);
+}
+.rc-chip-btn[data-cyan="true"][data-on="true"] {
+  background: rgba(34, 211, 238, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(103, 232, 249, 0.6),
+    0 0 14px -2px rgba(34, 211, 238, 0.55);
 }
 .rc-chip-btn:disabled {
   opacity: 0.4;
@@ -733,13 +1043,14 @@
 }
 /* a hand card tossed back onto the pile sheds its info layer so it lands as a
    plain pile card (the engine swaps it for one) */
-.rc-tt-hand[data-returning="true"] :is(.rc-meta, .rc-shade, .rc-btn, .rc-play, .rc-badge, .rc-holo, .rc-stale-tag, .rc-glare, .tfx, .tfx-surface) {
+.rc-tt-hand[data-returning="true"] :is(.rc-meta, .rc-shade, .rc-btn, .rc-play, .rc-badge, .rc-holo, .rc-stale-tag, .rc-glare, .tfx, .tfx-surface, .rc-clip-dim, .rc-clip-ribbon, .rc-clip-pocket, .rc-clip-play, .rc-clip-stamp, .rc-clip-360) {
   opacity: 0 !important;
   transition: opacity 0.3s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rc-rim::before {
+  .rc-rim::before,
+  .rc-clip-pano {
     animation: none;
   }
 }

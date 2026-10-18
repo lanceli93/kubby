@@ -3,7 +3,8 @@
  *
  * Snapshots data/kubby.db (read-only online backup — the real DB is never
  * written) into a temp data dir, inflates it to ~5,000 movies / ~15,000 people
- * / ~40,000 cast rows with user data + history for the first admin user, then
+ * / ~40,000 cast rows with user data, ~600 video bookmarks (fake thumbnail
+ * paths — the engine never stats them) + history for the first admin user, then
  * times the engine entry points (pool / draw) and the /api/filters handler
  * directly — no dev server needed. The temp dir is deleted afterwards.
  *
@@ -29,6 +30,7 @@ const RUNS = argNum("runs", 20);
 const KEEP = args.includes("--keep");
 const CAST_PER_MOVIE = 8;
 const TARGET_PEOPLE = Math.round(TARGET_MOVIES * 3);
+const TARGET_BOOKMARKS = 600;
 
 // Deterministic PRNG (mulberry32) so runs are comparable across code changes.
 function mulberry32(seed: number) {
@@ -103,6 +105,8 @@ function inflate() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const insUpd = d.prepare("INSERT OR REPLACE INTO user_person_data (id, user_id, person_id, personal_rating, is_favorite) VALUES (?, ?, ?, ?, ?)");
   const insHist = d.prepare("INSERT INTO recommendation_history (id, user_id, item_type, item_id, action, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+  const insMb = d.prepare(`INSERT INTO movie_bookmarks (id, user_id, movie_id, timestamp_seconds, disc_number, icon_type, tags, note, thumbnail_path, thumbnail_aspect, view_state, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
   const run = d.transaction(() => {
     // People: clone actors up to TARGET_PEOPLE (85% with a photo) + a director pool.
@@ -177,7 +181,28 @@ function inflate() {
       const pid = i < 200 ? stars[zipf(stars.length)] : pick(actorIds);
       insUpd.run(uuidv4(), user.id, pid, rand() < 0.85 ? Math.round((5 + rand() * 5) * 10) / 10 : null, rand() < 0.25 ? 1 : 0);
     }
+    // Video bookmarks: Zipf over the movies (so some films carry several),
+    // ~10% without a thumbnail (ineligible), ages up to 2 years.
+    const bookmarkIds: string[] = [];
+    const icons = ["bookmark", "action", "music", "dialogue", "funny"];
+    for (let i = 0; i < TARGET_BOOKMARKS; i++) {
+      const id = uuidv4();
+      const mid = movieIds[zipf(movieIds.length, 0.6)];
+      const thumb = rand() < 0.9 ? path.join(tmpDir, "metadata", "bookmarks", user.id, mid, `${id}.jpg`) : null;
+      const aspect = pick([1.7778, 1.7778, 2.39, 0.5625, 2, null]);
+      insMb.run(
+        id, user.id, mid, Math.floor(rand() * 7200), rand() < 0.1 ? 2 : 1, pick(icons),
+        rand() < 0.6 ? JSON.stringify(sample(tags.slice(0, 40), 1 + Math.floor(rand() * 3))) : null,
+        rand() < 0.4 ? `note ${i}` : null, thumb, aspect,
+        aspect === 2 ? JSON.stringify({ lon: 10, lat: 0, fov: 75 }) : null,
+        rand() < 0.5 ? sqlDate(now - Math.floor(rand() * 730) * DAY) : new Date(now - Math.floor(rand() * 730) * DAY).toISOString()
+      );
+      if (thumb) bookmarkIds.push(id);
+    }
     // History: a few thousand rows spread over the 120-day retention window.
+    for (let i = 0; i < 300; i++) {
+      insHist.run(uuidv4(), user.id, "bookmark", pick(bookmarkIds), rand() < 0.1 ? "dismissed" : "shown", sqlDate(now - Math.floor(rand() * 120 * DAY)));
+    }
     for (let i = 0; i < 3000; i++) {
       const person = rand() < 0.2;
       insHist.run(
@@ -191,7 +216,7 @@ function inflate() {
   run();
 
   const counts = Object.fromEntries(
-    ["movies", "people", "movie_people", "user_movie_data", "user_person_data", "recommendation_history"].map((t) => [
+    ["movies", "people", "movie_people", "user_movie_data", "user_person_data", "movie_bookmarks", "recommendation_history"].map((t) => [
       t,
       (d.prepare(`SELECT count(*) c FROM ${t}`).get() as { c: number }).c,
     ])
@@ -245,8 +270,9 @@ async function main() {
 
   const f = (raw: Record<string, unknown>) => engine.sanitizeFilters(raw);
   const pool = engine.getPool(userId, f({}));
-  console.log(`Pool (no filters): movieCount=${pool.movieCount} actorCount=${pool.actorCount} items=${pool.items.length}`);
+  console.log(`Pool (no filters): movieCount=${pool.movieCount} actorCount=${pool.actorCount} clipCount=${pool.clipCount} items=${pool.items.length}`);
   checkSeededPool();
+  checkClips();
   console.log("");
 
   /**
@@ -285,6 +311,45 @@ async function main() {
     }
   }
 
+  /**
+   * Clip invariants: clip piles are clips only (seeded = deterministic), clip
+   * hands hold ≤ 1 clip per film with bookmarkMoment first, and a mixed hand's
+   * wildcard never shares a film with a movie card. Draws here don't record.
+   */
+  function checkClips() {
+    const clipPool = engine.getPool(userId, f({ mix: "clips" }), { seed: "bench-seed" });
+    if (clipPool.items.some((p) => p.type !== "bookmark" || !p.still)) throw new Error("clip pile holds a non-clip / still-less item");
+    if (clipPool.items.length !== Math.min(64, clipPool.clipCount)) throw new Error("clip pile not filled to the cap");
+    const again = engine.getPool(userId, f({ mix: "clips" }), { seed: "bench-seed" });
+    if (again.items.map((p) => p.id).join() !== clipPool.items.map((p) => p.id).join()) throw new Error("seeded clip pile is not deterministic");
+    const mixedClips = engine.getPool(userId, f({})).items.filter((p) => p.type === "bookmark").length;
+    if (mixedClips < 1 || mixedClips > 6) throw new Error(`mixed pile has ${mixedClips} clips (want 1–6)`);
+    if (engine.getPool(userId, f({ mix: "movies" })).clipCount !== 0) throw new Error("movies pile reports clips");
+
+    let wildcards = 0;
+    const N = 200;
+    for (let i = 0; i < 20; i++) {
+      const hand = engine.drawHand(userId, { filters: f({ mix: "clips" }), movies: 0, actors: 0, clips: 5, exclude: [] }, { record: false });
+      const clipCards = hand.cards.filter((c) => c.type === "bookmark");
+      if (clipCards.length !== 5 || hand.cards.length !== 5) throw new Error(`clip hand has ${hand.cards.length} cards`);
+      if (new Set(clipCards.map((c) => c.movieId)).size !== 5) throw new Error("clip hand repeats a film");
+      if (clipCards.some((c) => c.reasons[0]?.code !== "bookmarkMoment" || c.reasons.length > 3)) throw new Error("clip reasons malformed");
+    }
+    for (let i = 0; i < N; i++) {
+      const hand = engine.drawHand(userId, { filters: f({}), movies: 4, actors: 1, clipWildcard: true, exclude: [] }, { record: false });
+      if (hand.cards.length !== 5) throw new Error(`wildcard hand has ${hand.cards.length} cards`);
+      const clipCards = hand.cards.filter((c) => c.type === "bookmark");
+      if (clipCards.length > 1) throw new Error("more than one wildcard clip");
+      if (clipCards.length) {
+        wildcards++;
+        const movieIds = new Set(hand.cards.filter((c) => c.type === "movie").map((c) => c.id));
+        if (movieIds.has(clipCards[0].movieId)) throw new Error("wildcard clip shares a film with a movie card");
+      }
+    }
+    console.log(`Clips: pile ${clipPool.items.length}/${clipPool.clipCount}, mixed pile clips ${mixedClips}, wildcard in ${wildcards}/${N} mixed hands`);
+    if (wildcards < N * 0.15 || wildcards > N * 0.45) throw new Error(`wildcard rate ${wildcards}/${N} is far from 0.3`);
+  }
+
   // Simulates "the user just rated something" — the first request after a write.
   let bump = 0;
   const touchUserData = () => {
@@ -307,9 +372,12 @@ async function main() {
   await time(`pool  (genre ${genres[0]})`, () => engine.getPool(userId, f({ genres: [genres[0]] })));
   await time("pool  (movies only)", () => engine.getPool(userId, f({ mix: "movies" })));
   await time("pool  (no filters, mixed, seeded)", () => engine.getPool(userId, f({}), { seed: "bench-seed" }));
+  await time("pool  (clips)", () => engine.getPool(userId, f({ mix: "clips", watched: "any" })));
   await time("draw  (mixed 4+1)", () => engine.drawHand(userId, { filters: f({}), movies: 4, actors: 1, exclude: [] }));
   await time("draw  (mixed 4+1) after user write", () => engine.drawHand(userId, { filters: f({}), movies: 4, actors: 1, exclude: [] }), touchUserData);
   await time("draw  (movies 5)", () => engine.drawHand(userId, { filters: f({ mix: "movies" }), movies: 5, actors: 0, exclude: [] }));
+  await time("draw  (clips 5)", () => engine.drawHand(userId, { filters: f({ mix: "clips", watched: "any" }), movies: 0, actors: 0, clips: 5, exclude: [] }));
+  await time("draw  (mixed 4+1, clip wildcard)", () => engine.drawHand(userId, { filters: f({}), movies: 4, actors: 1, clipWildcard: true, exclude: [] }));
   await time("draw  (actors 5)", () => engine.drawHand(userId, { filters: f({ mix: "actors" }), movies: 0, actors: 5, exclude: [] }));
   await time("draw  (1-card refill, 4 locked)", () => {
     const hand = engine.drawHand(userId, { filters: f({}), movies: 4, actors: 0, exclude: [] }, { record: false });

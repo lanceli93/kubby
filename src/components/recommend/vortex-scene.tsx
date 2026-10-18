@@ -4,8 +4,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { resolveImageSrc } from "@/lib/image-utils";
 import { getRootScale } from "@/hooks/use-root-scale";
 import { HAND_SIZE } from "@/lib/recommend/presets";
-import type { PoolItem, RecommendCard } from "@/lib/recommend/types";
-import { HandCardFace } from "./card-faces";
+import type { PoolItem, RecommendCard, RecommendItemType } from "@/lib/recommend/types";
+import { HandCardFace, useCardLabel } from "./card-faces";
+import { appendClipMini } from "./clip-layout";
 import {
   cardKey,
   type HandSlot,
@@ -86,7 +87,7 @@ interface Orbit {
 interface CloudCard extends Orbit {
   key: string;
   el: HTMLDivElement;
-  kind: "movie" | "person";
+  kind: RecommendItemType;
   L: number;
   ghost: boolean;
   baseOp: number;
@@ -106,7 +107,7 @@ interface HandAnim {
   el: HTMLDivElement;
   inner: HTMLDivElement | null;
   flash: HTMLDivElement | null;
-  kind: "movie" | "person";
+  kind: RecommendItemType;
   slot: number;
   mode: HandMode;
   t0: number;
@@ -299,12 +300,15 @@ class VortexEngine {
   // ── cloud ──
   private makeCloudCard(item: PoolItem, L: number, ghost: boolean, now: number, delay: number): CloudCard {
     const el = document.createElement("div");
-    el.className = `rc-nc L${L}${item.type === "person" ? " actor" : ""}`;
+    el.className = `rc-nc L${L}${item.type === "person" ? " actor" : item.type === "bookmark" && !ghost ? " rc-nc-clip" : ""}`;
     if (item.blur) {
       el.style.backgroundImage = `url(${item.blur})`;
       el.style.backgroundSize = "cover";
     }
-    if (item.image) {
+    if (item.type === "bookmark") {
+      // ghosts stay plain posters (they're deep and blurred anyway)
+      appendClipMini(el, item.image, ghost ? null : item.still, item.stillAspect);
+    } else if (item.image) {
       const img = document.createElement("img");
       img.decoding = "async";
       img.fetchPriority = "low"; // hand + ambient backdrop images load first
@@ -390,7 +394,11 @@ class VortexEngine {
       if (p.type === "person") actorCount++;
       let L: number;
       if (p.type === "person") L = Math.random() < 0.5 ? 2 : 3;
-      else {
+      else if (p.type === "bookmark") {
+        // clips stay in the readable layers (their still is small)
+        const r = Math.random();
+        L = r < 0.25 ? 1 : r < 0.62 ? 2 : 3;
+      } else {
         const r = Math.random();
         L = r < 0.06 ? 4 : r < 0.3 ? 1 : r < 0.64 ? 2 : 3;
       }
@@ -682,7 +690,11 @@ class VortexEngine {
         }
         ctx.lineWidth = V.cw * head.s * 0.55;
         ctx.strokeStyle =
-          c.kind === "person" ? `rgba(250,204,21,${0.07 * s * c.op})` : `rgba(129,140,248,${0.085 * s * c.op})`;
+          c.kind === "person"
+            ? `rgba(250,204,21,${0.07 * s * c.op})`
+            : c.kind === "bookmark"
+              ? `rgba(103,232,249,${0.075 * s * c.op})`
+              : `rgba(129,140,248,${0.085 * s * c.op})`;
         ctx.stroke();
       }
     }
@@ -1072,8 +1084,10 @@ export function VortexScene({
   onToggleLock,
   onDismiss,
   onOpenPerson,
+  onPlayClip,
   onHover,
 }: RecommendSceneProps) {
+  const cardLabel = useCardLabel();
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const nebulaRef = useRef<HTMLDivElement>(null);
@@ -1196,7 +1210,7 @@ export function VortexScene({
       <div className="pointer-events-none absolute inset-0">
         {shown.map((s) => {
           const locked = lockedKeys.has(s.key);
-          const label = s.card.type === "movie" ? s.card.title : s.card.name;
+          const label = cardLabel(s.card);
           return (
             <div
               key={s.key}
@@ -1227,7 +1241,8 @@ export function VortexScene({
                 if (s.leaving || !engineRef.current?.isResting(s.key)) return;
                 if (s.card.type === "movie") {
                   onOpenMovie(s.card, e.currentTarget.querySelector<HTMLElement>("[data-rc-poster]"));
-                } else onOpenPerson(s.card);
+                } else if (s.card.type === "person") onOpenPerson(s.card);
+                else onPlayClip(s.card);
               }}
               onKeyDown={(e) => {
                 if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
@@ -1246,6 +1261,7 @@ export function VortexScene({
                   onToggleLock={onToggleLock}
                   onDismiss={handleDismiss}
                   onPlay={onPlay}
+                  onPlayClip={onPlayClip}
                 />
               </div>
             </div>

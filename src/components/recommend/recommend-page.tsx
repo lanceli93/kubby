@@ -21,6 +21,7 @@ import {
 } from "@/lib/recommend/presets";
 import type {
   ActorCardData,
+  ClipCardData,
   MovieCardData,
   RecommendCard,
   RecommendFilters,
@@ -29,6 +30,7 @@ import type {
   RecommendTheme,
 } from "@/lib/recommend/types";
 import { AmbientBackdrop, type AmbientBackdropHandle } from "./ambient-backdrop";
+import { clipPlayHref } from "./clip-layout";
 import { FilterBar } from "./filter-bar";
 import { clearRecommendReturn, isRecommendReturn, markRecommendReturn } from "./session";
 import { fetchPool, poolQueryString, postDraw, postHistory } from "./recommend-api";
@@ -72,6 +74,15 @@ interface Saved {
 /** Not crypto.randomUUID: that is missing on plain-http LAN origins. */
 const newSeed = () => Math.random().toString(36).slice(2, 12);
 
+/** A stored hand slot of a known card type (older sessions may hold stale shapes). */
+function isCard(c: unknown): c is RecommendCard {
+  if (!c || typeof c !== "object") return false;
+  const { type, id } = c as { type?: unknown; id?: unknown };
+  if (typeof id !== "string") return false;
+  if (type === "bookmark") return typeof (c as ClipCardData).movieId === "string";
+  return type === "movie" || type === "person";
+}
+
 function loadSaved(): Saved | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -79,11 +90,12 @@ function loadSaved(): Saved | null {
     const s = JSON.parse(raw) as Saved;
     if (!s || typeof s !== "object" || !Array.isArray(s.hand) || s.hand.length !== HAND_SIZE) return null;
     const filters = s.filters ?? DEFAULT_FILTERS;
+    const hand = s.hand.map((c) => (isCard(c) ? c : null));
     // Filters always survive; the hand (and the pile's seed) only on a return trip from a card.
     if (!isRecommendReturn()) return { filters, hand: emptyHand(), locked: [], seed: newSeed() };
     return {
       filters,
-      hand: s.hand,
+      hand,
       locked: Array.isArray(s.locked) ? s.locked : [],
       seed: typeof s.seed === "string" && s.seed ? s.seed : newSeed(),
     };
@@ -128,40 +140,70 @@ function movieMatches(c: MovieCardData, f: RecommendFilters): boolean {
   return true;
 }
 
-/** How many movie / actor cards to ask for given the locked cards kept. */
+/** How many movie / actor / clip cards to ask for given the locked cards kept.
+ *  In a mixed hand a (wildcard) clip holds a movie slot. */
 function computeNeed(kept: HandSlot[], mix: RecommendFilters["mix"], free: number) {
   const comp = handComposition(mix);
-  const lockedMovies = kept.filter((c) => c?.type === "movie").length;
-  const lockedActors = kept.filter((c) => c?.type === "person").length;
-  let actors = Math.min(free, Math.max(0, comp.actors - lockedActors));
-  let movies = Math.min(free - actors, Math.max(0, comp.movies - lockedMovies));
-  const rest = free - actors - movies;
+  const locked = (type: RecommendCard["type"]) => kept.filter((c) => c?.type === type).length;
+  const lockedClips = locked("bookmark");
+  const lockedMovies = locked("movie") + (comp.clips ? 0 : lockedClips);
+  let clips = Math.min(free, Math.max(0, comp.clips - lockedClips));
+  let actors = Math.min(free - clips, Math.max(0, comp.actors - locked("person")));
+  let movies = Math.min(free - clips - actors, Math.max(0, comp.movies - lockedMovies));
+  const rest = free - clips - actors - movies;
   if (rest > 0) {
     if (mix === "actors") actors += rest;
+    else if (mix === "clips") clips += rest;
     else movies += rest;
   }
-  return { movies, actors };
+  // a mixed hand may get ONE wildcard clip in a movie slot — never a second
+  const clipWildcard = (mix ?? "mixed") === "mixed" && movies > 0 && lockedClips === 0;
+  return { movies, actors, clips, clipWildcard };
 }
 
-/** Put new cards into the free slots: actors anywhere, movies left → right. */
-function placeCards(kept: HandSlot[], cards: RecommendCard[]): HandSlot[] {
+/** Put new cards into the free slots: actors and wildcard clips anywhere,
+ *  movies (and a clips-only hand) left → right. */
+function placeCards(kept: HandSlot[], cards: RecommendCard[], mix: RecommendFilters["mix"]): HandSlot[] {
   const next = [...kept];
   const free = next.flatMap((c, i) => (c ? [] : [i]));
-  for (const a of cards.filter((c) => c.type === "person")) {
+  const scattered = cards.filter((c) => c.type === "person" || (c.type === "bookmark" && mix !== "clips"));
+  for (const a of scattered) {
     if (!free.length) break;
     const i = (Math.random() * free.length) | 0;
     next[free[i]] = a;
     free.splice(i, 1);
   }
-  for (const m of cards.filter((c) => c.type === "movie")) {
-    if (!free.length) break;
-    next[free.shift()!] = m;
-  }
+  const ordered = cards.filter((c) => !scattered.includes(c));
+  // a short deal (e.g. only 3 clips exist) takes the slots nearest the
+  // centre, still left → right, instead of leaving the right end empty
+  const mid = (HAND_SIZE - 1) / 2;
+  const slots =
+    ordered.length < free.length
+      ? [...free].sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid)).slice(0, ordered.length).sort((a, b) => a - b)
+      : free;
+  ordered.forEach((m, i) => {
+    if (i < slots.length) next[slots[i]] = m;
+  });
   return next;
 }
 
 function fanartOf(c: RecommendCard): string | null {
-  return c.type === "movie" ? c.fanartPath ?? c.posterPath : c.fanartPath ?? c.photoPath;
+  if (c.type === "movie") return c.fanartPath ?? c.posterPath;
+  if (c.type === "person") return c.fanartPath ?? c.photoPath;
+  return c.fanartPath ?? c.stillPath;
+}
+
+/** Any filter that narrows the pool beyond the deck / watched choice. */
+function isNarrowed(f: RecommendFilters): boolean {
+  return !!(
+    f.genres?.length ||
+    f.tags?.length ||
+    f.minRating ||
+    f.maxRuntime ||
+    f.yearFrom != null ||
+    f.yearTo != null ||
+    f.libraryId
+  );
 }
 
 interface LibraryLite {
@@ -290,11 +332,23 @@ export function RecommendPage() {
   });
   const poolItems = useMemo(() => pool?.items ?? [], [pool]);
   const mix = filters.mix ?? "mixed";
-  const poolEmpty = !!pool && (pool.movieCount === 0 || (mix === "actors" && pool.actorCount === 0));
+  // (`?? 0`: a pool response from before clips existed has no clipCount)
+  const clipCount = pool?.clipCount ?? 0;
+  const poolEmpty =
+    !!pool &&
+    (mix === "clips"
+      ? clipCount === 0
+      : pool.movieCount === 0 || (mix === "actors" && pool.actorCount === 0));
 
   const staleKeys = useMemo(() => {
     const s = new Set<string>();
-    for (const c of hand) if (c?.type === "movie" && !movieMatches(c, filters)) s.add(cardKey(c));
+    const m = filters.mix ?? "mixed";
+    for (const c of hand) {
+      if (!c) continue;
+      if (c.type === "movie" && !movieMatches(c, filters)) s.add(cardKey(c));
+      // clips carry no genres / runtime to check — only a deck without clips rules them out
+      else if (c.type === "bookmark" && (m === "movies" || m === "actors")) s.add(cardKey(c));
+    }
     return s;
   }, [hand, filters]);
 
@@ -340,14 +394,16 @@ export function RecommendPage() {
   useEffect(() => {
     if (seededAmbient.current || !poolItems.length) return;
     seededAmbient.current = true;
-    const first = hand.find((c) => c?.type === "movie");
+    const first = hand.find((c) => c?.type === "movie" || c?.type === "bookmark");
     showAmbient(first ? fanartOf(first) : poolItems[(Math.random() * poolItems.length) | 0].image);
   }, [poolItems, hand, showAmbient]);
   useEffect(() => {
     const id = setInterval(() => {
       const { hand: h, poolItems: items, busy: b } = latest.current;
       if (b || document.hidden || performance.now() - lastHoverAt.current < IDLE_AMBIENT_MS) return;
-      const movies = h.filter((c): c is MovieCardData => c?.type === "movie");
+      const movies = h.filter(
+        (c): c is MovieCardData | ClipCardData => c?.type === "movie" || c?.type === "bookmark"
+      );
       if (movies.length) showAmbient(fanartOf(movies[(Math.random() * movies.length) | 0]));
       else if (items.length) showAmbient(items[(Math.random() * items.length) | 0].image);
     }, IDLE_AMBIENT_MS);
@@ -387,17 +443,19 @@ export function RecommendPage() {
         filters,
         movies: need.movies,
         actors: need.actors,
+        clips: need.clips,
+        clipWildcard: need.clipWildcard || undefined,
         exclude: kept.filter((c): c is RecommendCard => !!c).map(toRef),
       });
       const wait = lead - (performance.now() - t0);
       if (wait > 0) await sleep(wait);
-      const next = placeCards(kept, res.cards);
+      const next = placeCards(kept, res.cards, filters.mix);
       setHand(next);
       setPhase(next.some(Boolean) ? "dealt" : "idle");
       if (!res.cards.length) showToast(t("toastEmpty"), false);
       else if (res.cards.length < free) showToast(t("toastPartial", { count: res.cards.length }), false);
       else if (res.repeatsAllowed) showToast(t("toastRepeats"));
-      const firstMovie = res.cards.find((c) => c.type === "movie");
+      const firstMovie = res.cards.find((c) => c.type === "movie" || c.type === "bookmark");
       if (firstMovie) setTimeout(() => showAmbient(fanartOf(firstMovie)), 500);
       finish(reducedMotion ? 300 : scene.dealMs);
     } catch {
@@ -439,15 +497,28 @@ export function RecommendPage() {
         return n;
       });
 
-      // refill that slot with one card of the kind the mix wants there
+      // refill that slot with one card of the kind the mix wants there (in a
+      // mixed hand a clip held a movie slot: refill it as one, wildcard allowed)
       const m = filters.mix ?? "mixed";
-      const kind = m === "actors" ? "person" : m === "movies" ? "movie" : card.type;
+      const kind =
+        m === "actors"
+          ? "person"
+          : m === "movies"
+            ? "movie"
+            : m === "clips"
+              ? "bookmark"
+              : card.type === "person"
+                ? "person"
+                : "movie";
+      const wildcard = m === "mixed" && kind === "movie" && !remaining.some((c) => c?.type === "bookmark");
       const t0 = performance.now();
       try {
         const res = await postDraw({
           filters,
           movies: kind === "movie" ? 1 : 0,
           actors: kind === "person" ? 1 : 0,
+          clips: kind === "bookmark" ? 1 : 0,
+          clipWildcard: wildcard || undefined,
           exclude: [...remaining.filter((c): c is RecommendCard => !!c).map(toRef), toRef(card)],
         });
         const wait = REFILL_MIN_MS - (performance.now() - t0);
@@ -492,6 +563,13 @@ export function RecommendPage() {
     },
     [router]
   );
+  const onPlayClip = useCallback(
+    (card: ClipCardData) => {
+      markRecommendReturn();
+      router.push(clipPlayHref(card));
+    },
+    [router]
+  );
 
   // ── filters ──
   const onPreset = useCallback((p: RecommendPreset) => {
@@ -499,6 +577,11 @@ export function RecommendPage() {
     setFilters((f) => ({ ...(f.preset === p ? DEFAULT_FILTERS : RECOMMEND_PRESETS[p]), libraryId: f.libraryId }));
   }, []);
   const onReset = useCallback(() => setFilters(DEFAULT_FILTERS), []);
+  // clips deck: drop the narrowing filters but stay on clips
+  const onRelaxClips = useCallback(
+    () => setFilters((f) => ({ watched: f.watched, mix: f.mix, preset: f.preset })),
+    []
+  );
 
   // ── keyboard: Space / Enter draw ──
   const drawRef = useRef(draw);
@@ -543,6 +626,8 @@ export function RecommendPage() {
   }, [hasLibrary]);
 
   const hasHand = hand.some(Boolean);
+  // clips deck with nothing even before the filters narrow it: no bookmarks yet
+  const noClips = mix === "clips" && poolEmpty && !isNarrowed(filters);
   const hasDrawn = drawToken > 0 || hasHand;
   const SceneComponent = scene.Component;
 
@@ -582,6 +667,7 @@ export function RecommendPage() {
           onToggleLock={onToggleLock}
           onDismiss={onDismiss}
           onOpenPerson={onOpenPerson}
+          onPlayClip={onPlayClip}
           onHover={onHover}
         />
       )}
@@ -596,22 +682,31 @@ export function RecommendPage() {
       >
         <h1 className="rc-intro-title">{t("introTitle")}</h1>
         <p className="mt-2.5 text-sm tracking-wide text-[#a3a3bb]">
-          {pool ? t(theme === "tabletop" ? "introSubTable" : "introSub", { count: pool.movieCount }) : " "}
+          {pool
+            ? mix === "clips"
+              ? t(theme === "tabletop" ? "introSubTableClips" : "introSubClips", { count: clipCount })
+              : t(theme === "tabletop" ? "introSubTable" : "introSub", { count: pool.movieCount })
+            : " "}
         </p>
       </div>
 
       {/* empty pool */}
       {poolEmpty && !hasHand && (
         <div className="absolute left-1/2 top-1/2 z-[6] w-[min(90%,28rem)] -translate-x-1/2 -translate-y-1/2 text-center">
-          <h2 className="text-2xl font-bold text-white/90">{t("emptyTitle")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{t("emptyHint")}</p>
-          <button
-            type="button"
-            onClick={onReset}
-            className="focus-ring mt-5 inline-flex h-10 cursor-pointer items-center rounded-full border border-white/20 bg-white/5 px-6 text-sm font-medium text-white/90 transition-fluid hover:bg-white/15 active:scale-95"
-          >
-            {t("relax")}
-          </button>
+          <h2 className="text-2xl font-bold text-white/90">
+            {noClips ? t("clipsEmptyTitle") : t("emptyTitle")}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">{noClips ? t("clipsEmptyHint") : t("emptyHint")}</p>
+          {/* no bookmarks at all: loosening filters wouldn't help */}
+          {!noClips && (
+            <button
+              type="button"
+              onClick={mix === "clips" ? onRelaxClips : onReset}
+              className="focus-ring mt-5 inline-flex h-10 cursor-pointer items-center rounded-full border border-white/20 bg-white/5 px-6 text-sm font-medium text-white/90 transition-fluid hover:bg-white/15 active:scale-95"
+            >
+              {t("relax")}
+            </button>
+          )}
         </div>
       )}
 
@@ -627,6 +722,7 @@ export function RecommendPage() {
           tags={facetOptions.tags}
           movieCount={pool?.movieCount ?? null}
           actorCount={pool?.actorCount ?? null}
+          clipCount={pool ? clipCount : null}
           theme={theme}
           onTheme={onTheme}
         />

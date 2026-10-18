@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type {
   ActorCardData,
+  ClipCardData,
   MovieCardData,
   PoolItem,
   RecommendCard,
@@ -25,7 +26,9 @@ import type {
  *
  * Card clicks: a movie card calls `onOpenMovie` (the shell runs the poster
  * morph to /movies/{id}); an actor card calls `onOpenPerson` (straight to
- * /people/{id}). Only cards that have finished dealing (resting) are clickable.
+ * /people/{id}); a clip (video bookmark) card calls `onPlayClip` (the player
+ * from the bookmark). Only cards that have finished dealing (resting) are
+ * clickable.
  *
  * Draw protocol (one full draw):
  *  1. page bumps `drawToken`, sets `phase: "drawing"` and nulls every unlocked
@@ -81,6 +84,8 @@ export interface RecommendSceneProps {
   onDismiss: (card: RecommendCard) => void;
   /** Actor card clicked — navigates to the person detail page. */
   onOpenPerson: (card: ActorCardData) => void;
+  /** Clip card (or its "Play clip" pill) clicked — plays the movie from the bookmark. */
+  onPlayClip: (card: ClipCardData) => void;
   /** Hover/focus changes — drives the ambient fanart backdrop. */
   onHover: (card: RecommendCard | null) => void;
 }

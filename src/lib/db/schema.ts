@@ -218,7 +218,7 @@ export const userPreferences = sqliteTable("user_preferences", {
 export const recommendationHistory = sqliteTable("recommendation_history", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  itemType: text("item_type", { enum: ["movie", "person"] }).notNull(),
+  itemType: text("item_type", { enum: ["movie", "person", "bookmark"] }).notNull(),
   itemId: text("item_id").notNull(),
   action: text("action", { enum: ["shown", "dismissed"] }).notNull(),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
