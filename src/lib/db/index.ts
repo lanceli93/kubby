@@ -635,6 +635,21 @@ function initDb(): BetterSQLite3Database<typeof schema> {
     // 0042: Demo Mode — flag libraries seeded by the demo, so clear/reset can
     // allowlist them without guessing from the folder path.
     "ALTER TABLE `media_libraries` ADD `is_demo` integer NOT NULL DEFAULT 0",
+    // 0043: 今晚看什么 recommendations — per-user shown/dismissed history (drives
+    // the 30-day de-dup + dismiss penalty) and the per-user scene theme.
+    // item_id is deliberately NOT a foreign key (movie OR person id); rows for
+    // deleted items are ignored by the engine and pruned after 120 days.
+    `CREATE TABLE IF NOT EXISTS \`recommendation_history\` (
+    \`id\` text PRIMARY KEY NOT NULL,
+    \`user_id\` text NOT NULL REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+    \`item_type\` text NOT NULL,
+    \`item_id\` text NOT NULL,
+    \`action\` text NOT NULL,
+    \`created_at\` text NOT NULL DEFAULT (datetime('now'))
+  )`,
+    "CREATE INDEX IF NOT EXISTS `idx_rh_user_created` ON `recommendation_history` (`user_id`, `created_at`)",
+    "CREATE INDEX IF NOT EXISTS `idx_rh_user_item` ON `recommendation_history` (`user_id`, `item_type`, `item_id`)",
+    "ALTER TABLE `user_preferences` ADD `recommend_theme` text DEFAULT 'vortex'",
   ];
   for (const stmt of pending) {
     try {
