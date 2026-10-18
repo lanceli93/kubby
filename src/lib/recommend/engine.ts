@@ -58,7 +58,10 @@ const HIGH_RATING = 8;
 const HIGH_COMMUNITY = 7.5;
 const MAX_PER_PRIMARY_GENRE = 2;
 const LEAD_CAST = 2;
-const ACTOR_FILMS = 3;
+/** Billing positions that count as main cast for actor-card eligibility. */
+const MAIN_CAST = 6;
+/** Films attached to an actor card (only used for its fanart backdrop now). */
+const ACTOR_FILMS = 2;
 
 // ─── helpers ────────────────────────────────────────────────────
 
@@ -165,6 +168,8 @@ interface CastEntry {
   name: string;
   photoPath: string | null; // stamped
   photoBlur: string | null;
+  /** among the first MAIN_CAST billed (NULL sortOrder = not main, unless the movie has no order data at all) */
+  main: boolean;
 }
 
 interface PersonSignal {
@@ -267,14 +272,17 @@ function loadCast(movieIds: string[]): Map<string, CastEntry[]> {
       photo_path: string | null;
       photo_mtime: number | null;
       photo_blur: string | null;
+      sort_order: number | null;
     }>(sql`
-      SELECT mp.movie_id, mp.person_id, p.name, p.photo_path, p.photo_mtime, p.photo_blur
+      SELECT mp.movie_id, mp.person_id, p.name, p.photo_path, p.photo_mtime, p.photo_blur, mp.sort_order
       FROM movie_people mp
       INNER JOIN people p ON p.id = mp.person_id AND p.type = 'actor'
       WHERE mp.movie_id IN (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
       ORDER BY mp.movie_id, COALESCE(mp.sort_order, 999999), mp.id
     `);
+    const hasOrder = new Set<string>();
     for (const r of rows) {
+      if (r.sort_order != null) hasOrder.add(r.movie_id);
       let list = out.get(r.movie_id);
       if (!list) out.set(r.movie_id, (list = []));
       if (list.some((e) => e.personId === r.person_id)) continue; // same actor, two roles
@@ -283,7 +291,13 @@ function loadCast(movieIds: string[]): Map<string, CastEntry[]> {
         name: r.name,
         photoPath: stampPath(r.photo_path ? resolveDataPath(r.photo_path) : null, r.photo_mtime),
         photoBlur: r.photo_blur,
+        // Rows are billing-ordered with NULLs last, so the list index is the billing rank.
+        main: list.length < MAIN_CAST && r.sort_order != null,
       });
+    }
+    // A movie with no sortOrder data at all: we can't tell who's main → everyone counts.
+    for (const id of ids) {
+      if (!hasOrder.has(id)) for (const e of out.get(id) ?? []) e.main = true;
     }
   }
   return out;
@@ -581,7 +595,10 @@ interface ActorAgg {
 }
 
 /**
- * Actors eligible iff they have a photo and ≥ 1 film in the filtered set.
+ * Actors eligible iff they have a photo and ≥ 1 film in the filtered set where
+ * they're main cast (first MAIN_CAST billed) — otherwise every bit part in the
+ * library qualifies. People the user favorited / rated qualify via any credit.
+ * matchingCount / unwatchedCount count only those qualifying films.
  * Score = 1 + 0.9·log2(1 + billing-weighted film count) + 0.4·log2(1 + unwatched)
  *         + favorite 1.2 + rated ≥ bar 0.4–0.8. Blind: 1 + 0.3·log2(1 + count).
  */
@@ -591,6 +608,7 @@ function buildActors(scored: ScoredMovie[], castMap: Map<string, CastEntry[]>, s
     const cast = castMap.get(m.c.id) ?? [];
     cast.forEach((e, i) => {
       if (!e.photoPath) return;
+      if (!e.main && !sig.people.has(e.personId)) return;
       let a = byId.get(e.personId);
       if (!a) {
         a = {
