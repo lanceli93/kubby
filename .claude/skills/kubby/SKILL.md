@@ -140,7 +140,9 @@ These hold across the whole codebase — know them before changing anything.
 
 > **Tag push builds ALL platforms.** To test a single platform, use
 > `gh workflow run release.yml --field platform=win-x64` (or
-> `darwin-arm64`/`darwin-x64`). Only push a `v*` tag for a full release.
+> `darwin-arm64`). Only push a `v*` tag for a full release. **macOS Intel
+> (`darwin-x64`) is no longer built or shipped (dropped after v0.8.0)** — CI builds
+> only darwin-arm64 + win-x64; don't add an Intel row to release notes.
 
 ## Common Commands
 

@@ -13,7 +13,6 @@ on:
         options:
           - all
           - darwin-arm64
-          - darwin-x64
           - win-x64
 
 env:
@@ -31,13 +30,13 @@ jobs:
       - id: set-matrix
         run: |
           PLATFORM="${{ github.event.inputs.platform }}"
-          ALL='{"include":[{"os":"macos-latest","platform":"darwin-arm64","artifact_name":"Kubby-arm64.dmg"},{"os":"macos-latest","platform":"darwin-x64","artifact_name":"Kubby-x64.dmg"},{"os":"windows-latest","platform":"win-x64","artifact_name":"KubbySetup.exe"}]}'
+          # macOS Intel (darwin-x64) is no longer built since v0.8.0 —
+          # scripts/package.ts still supports it for a manual local build.
+          ALL='{"include":[{"os":"macos-latest","platform":"darwin-arm64","artifact_name":"Kubby-arm64.dmg"},{"os":"windows-latest","platform":"win-x64","artifact_name":"KubbySetup.exe"}]}'
           if [ -z "$PLATFORM" ] || [ "$PLATFORM" = "all" ]; then
             echo "matrix=$ALL" >> $GITHUB_OUTPUT
           elif [ "$PLATFORM" = "darwin-arm64" ]; then
             echo 'matrix={"include":[{"os":"macos-latest","platform":"darwin-arm64","artifact_name":"Kubby-arm64.dmg"}]}' >> $GITHUB_OUTPUT
-          elif [ "$PLATFORM" = "darwin-x64" ]; then
-            echo 'matrix={"include":[{"os":"macos-latest","platform":"darwin-x64","artifact_name":"Kubby-x64.dmg"}]}' >> $GITHUB_OUTPUT
           elif [ "$PLATFORM" = "win-x64" ]; then
             echo 'matrix={"include":[{"os":"windows-latest","platform":"win-x64","artifact_name":"KubbySetup.exe"}]}' >> $GITHUB_OUTPUT
           fi
@@ -88,12 +87,7 @@ jobs:
 
       - name: Rename DMG with arch suffix (macOS)
         if: runner.os == 'macOS'
-        run: |
-          if [ "${{ matrix.platform }}" = "darwin-arm64" ]; then
-            mv dist/Kubby.dmg dist/Kubby-arm64.dmg
-          else
-            mv dist/Kubby.dmg dist/Kubby-x64.dmg
-          fi
+        run: mv dist/Kubby.dmg dist/Kubby-arm64.dmg
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
@@ -121,5 +115,4 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/Kubby-arm64.dmg/Kubby-arm64.dmg
-            artifacts/Kubby-x64.dmg/Kubby-x64.dmg
             artifacts/KubbySetup.exe/KubbySetup.exe

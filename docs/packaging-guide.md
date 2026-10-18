@@ -327,7 +327,7 @@ volumes:
 
 ### 桌面安装包
 
-`.github/workflows/release.yml` 在 `v*` tag push 时自动构建三个平台（darwin-arm64, darwin-x64, win-x64），产出 GitHub Release（draft）。支持 `workflow_dispatch` 手动触发测试构建。
+`.github/workflows/release.yml` 在 `v*` tag push 时自动构建两个平台（darwin-arm64, win-x64；macOS Intel 自 v0.8.0 之后不再构建，`scripts/package.ts` 仍可本地手动打包 darwin-x64），产出 GitHub Release（draft）。支持 `workflow_dispatch` 手动触发测试构建。
 
 **Node.js 版本**：CI runner 的 Node.js 版本必须与本地开发环境一致（当前为 Node 25），否则 `npm ci` 会因 `package-lock.json` 与 `package.json` 依赖解析不匹配而失败。
 

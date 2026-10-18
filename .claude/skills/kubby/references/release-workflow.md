@@ -6,7 +6,7 @@ Step-by-step process for packaging, testing, and publishing a new Kubby release.
 
 | Workflow | File | Trigger | Output |
 |----------|------|---------|--------|
-| Release | `.github/workflows/release.yml` | `v*` tag push or `workflow_dispatch` | macOS DMGs (arm64 + x64) + Windows exe → GitHub Release (draft) |
+| Release | `.github/workflows/release.yml` | `v*` tag push or `workflow_dispatch` | macOS DMG (Apple Silicon arm64 only — Intel x64 dropped after v0.8.0) + Windows exe → GitHub Release (draft) |
 | Docker | `.github/workflows/docker.yml` | `v*` tag push or `workflow_dispatch` | `ghcr.io/lanceli93/kubby:{version}` (amd64) |
 
 ## Release Steps
@@ -17,7 +17,7 @@ Step-by-step process for packaging, testing, and publishing a new Kubby release.
 gh workflow run release.yml --field platform=all
 ```
 
-Wait for all 3 jobs to pass (darwin-arm64, darwin-x64, win-x64). Monitor:
+Wait for both jobs to pass (darwin-arm64, win-x64). Monitor:
 
 ```bash
 gh run list --workflow=release.yml --limit 1
@@ -90,7 +90,6 @@ Description of the feature.
 | Platform | File |
 |----------|------|
 | macOS (Apple Silicon) | `Kubby-arm64.dmg` |
-| macOS (Intel) | `Kubby-x64.dmg` |
 | Windows | `KubbySetup.exe` |
 | Docker | `ghcr.io/lanceli93/kubby:{x.y.z}` |
 
@@ -118,7 +117,7 @@ landed alongside the platform installers:
 
 ```bash
 gh api repos/lanceli93/kubby/releases/<RELEASE_ID> --jq '[.assets[].name]'
-# expect: demo-assets.tar.gz + the 3 platform files
+# expect: demo-assets.tar.gz + the 2 platform files (arm64 DMG + Windows exe)
 ```
 
 ### 6. Publish
@@ -163,7 +162,6 @@ The Docker image is tagged as both `{version}` and `latest` on tag pushes.
 | Platform | Build runner | Artifact | Notes |
 |----------|-------------|----------|-------|
 | darwin-arm64 | macos-latest | Kubby-arm64.dmg | Apple Silicon |
-| darwin-x64 | macos-latest | Kubby-x64.dmg | Intel Mac |
 | win-x64 | windows-latest | KubbySetup.exe | NSIS installer, needs `choco install nsis` |
 
 ## Package Contents (~80-110 MB per platform)
