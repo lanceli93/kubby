@@ -66,7 +66,6 @@ interface FilterBarProps {
   movieCount: number | null;
   actorCount: number | null;
   theme: RecommendTheme;
-  availableThemes: readonly RecommendTheme[];
   onTheme: (theme: RecommendTheme) => void;
 }
 
@@ -80,7 +79,6 @@ export function FilterBar({
   movieCount,
   actorCount,
   theme,
-  availableThemes,
   onTheme,
 }: FilterBarProps) {
   const t = useTranslations("recommend");
@@ -118,28 +116,22 @@ export function FilterBar({
     value: T,
     text: (v: T) => string,
     onPick: (v: T) => void,
-    className = "",
-    isDisabled?: (v: T) => boolean
+    className = ""
   ) => (
     <div className={`rc-seg ${className}`} role="radiogroup" aria-label={label}>
-      {options.map((o) => {
-        const disabled = isDisabled?.(o) ?? false;
-        return (
-          <button
-            key={o}
-            type="button"
-            role="radio"
-            aria-checked={value === o}
-            className="focus-ring"
-            data-on={value === o}
-            disabled={disabled}
-            title={disabled ? t("themeSoon") : undefined}
-            onClick={() => onPick(o)}
-          >
-            {text(o)}
-          </button>
-        );
-      })}
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          role="radio"
+          aria-checked={value === o}
+          className="focus-ring"
+          data-on={value === o}
+          onClick={() => onPick(o)}
+        >
+          {text(o)}
+        </button>
+      ))}
     </div>
   );
 
@@ -161,8 +153,7 @@ export function FilterBar({
       theme,
       (th) => t(`themes.${th}`),
       onTheme,
-      cls,
-      (th) => !availableThemes.includes(th)
+      cls
     );
 
   const count = (

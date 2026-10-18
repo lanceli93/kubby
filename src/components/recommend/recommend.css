@@ -604,6 +604,140 @@
   filter: drop-shadow(0 4px 30px rgba(99, 102, 241, 0.45));
 }
 
+/* ---------- tabletop: tilted felt table (tabletop-scene.tsx) ----------
+   Two sibling layers with identical perspective: the pile (felt + pile cards,
+   imperative DOM) and the hand (React wrappers) — the hand layer always stacks
+   above the pile. Each card is its own flattened 3D element (no preserve-3d on
+   the layers, so z-index orders cards); only the per-card flip is preserve-3d.
+   No pseudo-elements on pile cards (style recalc cost, see .rc-nc) and no
+   filters: shadows are baked radial gradients, the back is one shared image. */
+.rc-tt-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 1500px;
+}
+.rc-tt-lamp {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 70% at 50% -5%, rgba(129, 140, 248, 0.13), rgba(129, 140, 248, 0.04) 45%, transparent 70%);
+}
+.rc-tt-felt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1000px;
+  height: 1000px;
+  margin: -500px 0 0 -500px;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0;
+  will-change: transform, opacity;
+  background: radial-gradient(closest-side, #1d1d36 0%, #17172c 55%, rgba(18, 18, 34, 0.85) 80%, rgba(14, 14, 26, 0) 100%);
+}
+.rc-tt-felt-ring {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  border: 1px dashed rgba(202, 138, 4, 0.22);
+  box-shadow: 0 0 0 6px rgba(202, 138, 4, 0.03);
+}
+.rc-tt-felt-glow {
+  position: absolute;
+  inset: 3%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(129, 140, 248, 0.1), transparent 70%);
+}
+.rc-tt-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--tw, 120px);
+  height: var(--th, 180px);
+  margin: calc(var(--th, 180px) * -0.5) 0 0 calc(var(--tw, 120px) * -0.5);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+.rc-tt-hand {
+  width: var(--hw, 150px);
+  height: var(--hh, 225px);
+  margin: calc(var(--hh, 225px) * -0.5) 0 0 calc(var(--hw, 150px) * -0.5);
+  pointer-events: auto;
+}
+.rc-tt-shade {
+  position: absolute;
+  inset: 2% -4% -6% -4%;
+  border-radius: 18px;
+  pointer-events: none;
+  opacity: 0.55;
+  will-change: transform, opacity;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.45) 60%, rgba(0, 0, 0, 0));
+}
+.rc-tt-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.rc-tt-face {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--tw, 120px) * 0.065);
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: #151524 center / cover;
+  outline: 1px solid rgba(255, 255, 255, 0.1);
+  outline-offset: -1px;
+}
+.rc-tt-face > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rc-tt-face.actor {
+  outline: 2px solid rgba(250, 204, 21, 0.75);
+  outline-offset: -2px;
+}
+.rc-tt-back {
+  transform: rotateY(180deg);
+  background: var(--rc-tt-back, linear-gradient(160deg, #23234a, #141428 60%, #101020)) center / 100% 100% no-repeat, #141428;
+  outline-color: rgba(255, 255, 255, 0.12);
+}
+.rc-tt-hand .rc-tt-back {
+  border-radius: 14px;
+}
+.rc-tt-front {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rc-tt-sweepbox {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  border-radius: 14px;
+  pointer-events: none;
+}
+.rc-tt-sweep {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -60%;
+  width: 60%;
+  opacity: 0;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80%, transparent);
+}
+/* a hand card tossed back onto the pile sheds its info layer so it lands as a
+   plain pile card (the engine swaps it for one) */
+.rc-tt-hand[data-returning="true"] :is(.rc-meta, .rc-shade, .rc-btn, .rc-play, .rc-badge, .rc-holo, .rc-stale-tag, .rc-glare) {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rc-rim::before {
     animation: none;

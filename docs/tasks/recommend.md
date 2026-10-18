@@ -31,7 +31,7 @@ before changing it). Visual references (local only, gitignored):
 
 ## Wave 2
 
-- [ ] **R4 — Tabletop scene** ported from demo A, behind the same scene
+- [x] **R4 — Tabletop scene** ported from demo A, behind the same scene
   interface; theme switch persists per user.
   *Accept:* switching themes keeps filters + hand; tsc clean.
 - [ ] **R5 — Docs.** Kubby skill (SKILL.md table count, architecture.md

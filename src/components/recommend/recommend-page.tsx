@@ -6,10 +6,11 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dices } from "lucide-react";
 import { GlassToast } from "@/components/ui/glass-toast";
 import { useNavDrawer } from "@/components/layout/nav-drawer";
+import { useUserPreferences, type UserPreferences } from "@/hooks/use-user-preferences";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { startPosterViewTransition } from "@/lib/view-transition";
 import {
@@ -31,6 +32,7 @@ import { AmbientBackdrop, type AmbientBackdropHandle } from "./ambient-backdrop"
 import { FilterBar } from "./filter-bar";
 import { fetchPool, poolQueryString, postDraw, postHistory } from "./recommend-api";
 import { cardKey, type DrawPhase, type HandSlot, type RecommendSceneDef } from "./scene-types";
+import { TABLETOP_SCENE } from "./tabletop-scene";
 import { VORTEX_SCENE } from "./vortex-scene";
 
 /**
@@ -42,10 +44,12 @@ import { VORTEX_SCENE } from "./vortex-scene";
  * finds the same hand on the table.
  */
 
-const SCENES: Partial<Record<RecommendTheme, RecommendSceneDef>> = {
+const SCENES: Record<RecommendTheme, RecommendSceneDef> = {
   vortex: VORTEX_SCENE,
+  tabletop: TABLETOP_SCENE,
 };
-const AVAILABLE_THEMES = Object.keys(SCENES) as RecommendTheme[];
+/** How long the scene waits for the saved theme before falling back to Vortex. */
+const THEME_WAIT_MS = 800;
 
 const STORAGE_KEY = "kubby-recommend";
 const POOL_DEBOUNCE_MS = 300;
@@ -160,8 +164,36 @@ export function RecommendPage() {
   const [saved] = useState(loadSaved);
   const [filters, setFilters] = useState<RecommendFilters>(saved?.filters ?? DEFAULT_FILTERS);
   const debouncedFilters = useDebounced(filters, POOL_DEBOUNCE_MS);
-  const [theme, setTheme] = useState<RecommendTheme>("vortex");
-  const scene = SCENES[theme] ?? VORTEX_SCENE;
+  // Theme = the per-user preference (user_preferences.recommend_theme). The
+  // scene mounts only once that is known (or after a short wait), so a
+  // Tabletop user never sees a Vortex flash; a switch applies locally at once
+  // and is written optimistically.
+  const queryClient = useQueryClient();
+  const { data: prefs, isPending: prefsPending } = useUserPreferences();
+  const [themeOverride, setThemeOverride] = useState<RecommendTheme | null>(null);
+  const [themeWaitOver, setThemeWaitOver] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setThemeWaitOver(true), THEME_WAIT_MS);
+    return () => clearTimeout(id);
+  }, []);
+  const prefTheme = prefs?.recommendTheme;
+  const theme: RecommendTheme = themeOverride ?? (prefTheme && prefTheme in SCENES ? prefTheme : "vortex");
+  const sceneReady = themeOverride != null || !prefsPending || themeWaitOver;
+  const scene = SCENES[theme];
+  const onTheme = useCallback(
+    (next: RecommendTheme) => {
+      setThemeOverride(next);
+      queryClient.setQueryData<UserPreferences>(["userPreferences"], (old) =>
+        old ? { ...old, recommendTheme: next } : old
+      );
+      fetch("/api/settings/personal-metadata", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recommendTheme: next }),
+      }).catch(() => {});
+    },
+    [queryClient]
+  );
   const [hand, setHand] = useState<HandSlot[]>(saved?.hand ?? emptyHand);
   const [lockedKeys, setLockedKeys] = useState<ReadonlySet<string>>(() => new Set(saved?.locked ?? []));
   const [phase, setPhase] = useState<DrawPhase>(saved?.hand.some(Boolean) ? "dealt" : "idle");
@@ -466,22 +498,24 @@ export function RecommendPage() {
     <div ref={rootRef} className="relative h-full w-full select-none overflow-hidden bg-[#0a0a0f] text-foreground">
       <AmbientBackdrop ref={ambientRef} />
 
-      <SceneComponent
-        pool={poolItems}
-        hand={hand}
-        phase={phase}
-        drawToken={drawToken}
-        lockedKeys={lockedKeys}
-        staleKeys={staleKeys}
-        reducedMotion={reducedMotion}
-        insets={insets}
-        onOpenMovie={onOpenMovie}
-        onPlay={onPlay}
-        onToggleLock={onToggleLock}
-        onDismiss={onDismiss}
-        onOpenPerson={onOpenPerson}
-        onHover={onHover}
-      />
+      {sceneReady && (
+        <SceneComponent
+          pool={poolItems}
+          hand={hand}
+          phase={phase}
+          drawToken={drawToken}
+          lockedKeys={lockedKeys}
+          staleKeys={staleKeys}
+          reducedMotion={reducedMotion}
+          insets={insets}
+          onOpenMovie={onOpenMovie}
+          onPlay={onPlay}
+          onToggleLock={onToggleLock}
+          onDismiss={onDismiss}
+          onOpenPerson={onOpenPerson}
+          onHover={onHover}
+        />
+      )}
 
       {/* top scrim keeps the transparent header legible over the nebula */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-24 bg-gradient-to-b from-black/60 to-transparent" />
@@ -493,7 +527,7 @@ export function RecommendPage() {
       >
         <h1 className="rc-intro-title">{t("introTitle")}</h1>
         <p className="mt-2.5 text-sm tracking-wide text-[#a3a3bb]">
-          {pool ? t("introSub", { count: pool.movieCount }) : " "}
+          {pool ? t(theme === "tabletop" ? "introSubTable" : "introSub", { count: pool.movieCount }) : " "}
         </p>
       </div>
 
@@ -524,8 +558,7 @@ export function RecommendPage() {
           movieCount={pool?.movieCount ?? null}
           actorCount={pool?.actorCount ?? null}
           theme={theme}
-          availableThemes={AVAILABLE_THEMES}
-          onTheme={setTheme}
+          onTheme={onTheme}
         />
       </div>
 

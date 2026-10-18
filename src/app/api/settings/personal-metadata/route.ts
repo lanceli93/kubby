@@ -7,6 +7,12 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { DEFAULT_HERO_MOSAIC_CONFIG, normalizeHeroMosaicConfig } from "@/lib/hero-mosaic-config";
 import { DEFAULT_PEOPLE_MOSAIC_CONFIG, normalizePeopleMosaicConfig } from "@/lib/people-mosaic-config";
+import type { RecommendTheme } from "@/lib/recommend/types";
+
+// 今晚看什么 scene themes (user_preferences.recommend_theme).
+const RECOMMEND_THEMES: readonly RecommendTheme[] = ["vortex", "tabletop"];
+const isRecommendTheme = (v: unknown): v is RecommendTheme =>
+  typeof v === "string" && (RECOMMEND_THEMES as readonly string[]).includes(v);
 
 // Parses a stored JSON column, degrading to null on corrupt data instead of throwing.
 function parseJsonSafe(value: string | null): unknown {
@@ -59,6 +65,7 @@ export async function GET() {
         showTvShowRatingBadge: true,
         showTvResolutionBadge: true,
         tvHeroMosaicConfig: DEFAULT_HERO_MOSAIC_CONFIG,
+        recommendTheme: "vortex",
         serverPlatform,
       });
     }
@@ -103,6 +110,7 @@ export async function GET() {
       showTvShowRatingBadge: row.showTvShowRatingBadge,
       showTvResolutionBadge: row.showTvResolutionBadge,
       tvHeroMosaicConfig: normalizeHeroMosaicConfig(parseJsonSafe(row.tvHeroMosaicConfig)),
+      recommendTheme: isRecommendTheme(row.recommendTheme) ? row.recommendTheme : "vortex",
       serverPlatform,
     });
   } catch (error) {
@@ -151,12 +159,32 @@ export async function PUT(request: NextRequest) {
     if (body.tvShowRatingDimensions?.some((d: string) => typeof d !== "string" || d.length > MAX_DIM_LENGTH)) {
       return NextResponse.json({ error: `Dimension name must be at most ${MAX_DIM_LENGTH} characters` }, { status: 400 });
     }
+    if (body.recommendTheme !== undefined && !isRecommendTheme(body.recommendTheme)) {
+      return NextResponse.json({ error: "recommendTheme must be 'vortex' or 'tabletop'" }, { status: 400 });
+    }
 
     const existing = db
       .select()
       .from(userPreferences)
       .where(eq(userPreferences.userId, userId))
       .get();
+
+    // Theme-only write (the 今晚看什么 theme switch): touch just that column and
+    // skip the dimension rename / personalRating recalculation passes below.
+    const keys = Object.keys(body);
+    if (keys.length === 1 && keys[0] === "recommendTheme") {
+      if (existing) {
+        db.update(userPreferences)
+          .set({ recommendTheme: body.recommendTheme })
+          .where(eq(userPreferences.id, existing.id))
+          .run();
+      } else {
+        db.insert(userPreferences)
+          .values({ id: uuidv4(), userId, recommendTheme: body.recommendTheme })
+          .run();
+      }
+      return NextResponse.json({ success: true });
+    }
 
     const data = {
       movieRatingDimensions: body.movieRatingDimensions !== undefined
@@ -228,6 +256,9 @@ export async function PUT(request: NextRequest) {
       tvHeroMosaicConfig: body.tvHeroMosaicConfig !== undefined
         ? JSON.stringify(normalizeHeroMosaicConfig(body.tvHeroMosaicConfig))
         : existing?.tvHeroMosaicConfig ?? null,
+      recommendTheme: body.recommendTheme !== undefined
+        ? body.recommendTheme
+        : existing?.recommendTheme ?? "vortex",
     };
 
     if (existing) {

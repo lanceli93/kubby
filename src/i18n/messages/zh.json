@@ -1030,6 +1030,7 @@
     "title": "今晚看什么",
     "introTitle": "今晚看什么？",
     "introSub": "星云里漂着 {count} 部候选 · 抽一手看看",
+    "introSubTable": "牌桌上摊着 {count} 部候选 · 洗牌抽一手",
     "draw": "抽",
     "redraw": "再抽",
     "hint": "<k>空格</k> 抽牌 · 悬停卡片点 <k>🔒</k> 锁定保留",
@@ -1066,7 +1067,6 @@
       "vortex": "星云漩涡",
       "tabletop": "牌桌洗牌"
     },
-    "themeSoon": "即将推出",
     "filters": "筛选",
     "reset": "重置筛选",
     "lock": "锁定 · 重抽时保留",

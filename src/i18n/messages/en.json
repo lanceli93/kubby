@@ -1030,6 +1030,7 @@
     "title": "Tonight's pick",
     "introTitle": "What to watch tonight?",
     "introSub": "{count, plural, one {# candidate drifts} other {# candidates drift}} in the nebula · draw a hand",
+    "introSubTable": "{count, plural, one {# candidate lies} other {# candidates lie}} on the table · draw a hand",
     "draw": "Draw",
     "redraw": "Draw again",
     "hint": "<k>Space</k> to draw · hover a card and <k>🔒</k> to keep it",
@@ -1066,7 +1067,6 @@
       "vortex": "Nebula vortex",
       "tabletop": "Card table"
     },
-    "themeSoon": "Coming soon",
     "filters": "Filters",
     "reset": "Reset filters",
     "lock": "Lock — keep on redraw",
