@@ -322,6 +322,7 @@ users ──1:N──> tv_episode_bookmarks ──N:1──> tv_episodes
 ### Authenticated
 - `GET /api/movies` — List (params: libraryId, search, sort, limit, exclude, filter, genre, includeGenres, ratingDimension, offset)
 - `GET /api/movies/genres` — Genre list by library
+- `GET /api/domains/preview` — Up to 3 preview image URLs per domain (`cinema`/`tv`/`photos`/`music`, key omitted when empty) for the domain-switcher `DomainCard`s; each domain reads only its own table inner-joined to an allowlisted `media_libraries.type`. Note `movies`/`tv_shows` `posterPath` is relative to the item's `folderPath` — `path.join` before `resolveImageSrc`.
 - `GET /api/movies/hero-wall` — Home hero mosaic pool (reads/overrides `hero_mosaic_config`)
 - `GET /api/people/hero-wall` — Home People-tab mosaic pool (reads/overrides `people_mosaic_config`; flattens photo+fanart+gallery entries)
 - `GET /api/tv/hero-wall` — `/tv` home hero mosaic pool (random-samples shows with a poster/fanart). Honors `libraryId`/`genre`/`studio`/`tag` so the wall follows the page's active filter, and now honors the saved `tv_hero_mosaic_config` (peer of the movie wall config).

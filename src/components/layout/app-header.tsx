@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Search, ArrowLeft, House, Menu, User, ChevronDown, Check, Clapperboard, Images, Music, Tv } from "lucide-react";
+import { Search, ArrowLeft, House, Menu, User, ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { NavSidebar } from "@/components/layout/nav-sidebar";
+import { useNavDrawer } from "@/components/layout/nav-drawer";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,6 +18,8 @@ import { useHasPhotoLibrary } from "@/hooks/use-has-photo-library";
 import { useHasMusicLibrary } from "@/hooks/use-has-music-library";
 import { useHasTvLibrary } from "@/hooks/use-has-tv-library";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useDomainItems, useDomainSwitch } from "@/hooks/use-domain-items";
+import { DomainCard } from "@/components/layout/domain-card";
 
 function KubbyLogo({ className }: { className?: string }) {
   return (
@@ -47,7 +49,7 @@ interface Library {
 }
 
 export function AppHeader() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { setOpen: setDrawerOpen } = useNavDrawer();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -57,8 +59,12 @@ export function AppHeader() {
   const hasMusicLibrary = useHasMusicLibrary();
   const hasTvLibrary = useHasTvLibrary();
   const isAdmin = useIsAdmin();
-  const isPhotoDomain = pathname.startsWith("/photos");
-  const isMusicDomain = pathname.startsWith("/music");
+  const domainItems = useDomainItems();
+  const switchDomain = useDomainSwitch("menu");
+  // Controlled so a plain click can close it: the card's onClick prevents
+  // default (we navigate through the domain View Transition), which also stops
+  // Radix's own select-to-close.
+  const [domainMenuOpen, setDomainMenuOpen] = useState(false);
   const isTvDomain = pathname.startsWith("/tv");
 
   const isLibraryPage = pathname === "/movies" && searchParams.get("libraryId");
@@ -142,7 +148,7 @@ export function AppHeader() {
 
   return (
     <header
-      className={`flex h-12 w-full items-center justify-between px-3 md:px-8 ${
+      className={`app-header flex h-12 w-full items-center justify-between px-3 md:px-8 ${
         isTransparent
           ? "pointer-events-none absolute top-0 left-0 z-30 bg-transparent"
           : "bg-[var(--header)]"
@@ -150,7 +156,7 @@ export function AppHeader() {
     >
       <div className="pointer-events-auto flex items-center gap-4">
         <button
-          onClick={() => setSidebarOpen(true)}
+          onClick={() => setDrawerOpen(true)}
           className={`transition-colors ${
             isTransparent
               ? "text-white/80 hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
@@ -218,7 +224,7 @@ export function AppHeader() {
               // Domain switcher lives on the brand as a low-frequency dropdown,
               // so the header keeps a single row of primary navigation instead
               // of two competing pill groups (see the home Tabs island).
-              <DropdownMenu>
+              <DropdownMenu open={domainMenuOpen} onOpenChange={setDomainMenuOpen}>
                 <DropdownMenuTrigger
                   className={`flex items-center gap-1.5 rounded-lg px-1 text-[1.375rem] font-bold outline-none transition-colors ${
                     isTransparent
@@ -236,42 +242,30 @@ export function AppHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-44 border-white/10 bg-black/70 backdrop-blur-xl"
+                  // Kept mounted by Radix through its exit animation; hidden
+                  // from the domain transition's NEW snapshot (globals.css).
+                  data-vt-exit=""
+                  className="flex w-64 flex-col gap-0.5 border-white/10 bg-black/70 p-1.5 backdrop-blur-xl"
                 >
-                  <DropdownMenuItem asChild>
-                    <Link href="/" className="cursor-pointer">
-                      <Clapperboard className="h-4 w-4" />
-                      <span className="flex-1">{tNav("cinema")}</span>
-                      {!isPhotoDomain && !isMusicDomain && !isTvDomain && <Check className="h-4 w-4 text-primary" />}
-                    </Link>
-                  </DropdownMenuItem>
-                  {hasTvLibrary && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/tv" className="cursor-pointer">
-                        <Tv className="h-4 w-4" />
-                        <span className="flex-1">{tNav("tv")}</span>
-                        {isTvDomain && <Check className="h-4 w-4 text-primary" />}
-                      </Link>
+                  {domainItems.map((item) => (
+                    // The card owns its look (hover/active/check); neutralize the
+                    // item's own accent highlight + padding so Radix's
+                    // focus-on-hover lands on the same tone as the card hover.
+                    <DropdownMenuItem
+                      key={item.domain}
+                      asChild
+                      className="cursor-pointer gap-3 rounded-lg px-3 py-0 focus:bg-white/[0.08] focus:text-foreground"
+                    >
+                      <DomainCard
+                        size="menu"
+                        {...item}
+                        onClick={(e) => {
+                          switchDomain(e, item);
+                          setDomainMenuOpen(false);
+                        }}
+                      />
                     </DropdownMenuItem>
-                  )}
-                  {hasPhotoLibrary && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/photos" className="cursor-pointer">
-                        <Images className="h-4 w-4" />
-                        <span className="flex-1">{tNav("photos")}</span>
-                        {isPhotoDomain && <Check className="h-4 w-4 text-primary" />}
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  {hasMusicLibrary && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/music" className="cursor-pointer">
-                        <Music className="h-4 w-4" />
-                        <span className="flex-1">{tNav("music")}</span>
-                        {isMusicDomain && <Check className="h-4 w-4 text-primary" />}
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -321,13 +315,6 @@ export function AppHeader() {
         >
           <User className="h-5 w-5" />
         </Link>
-      </div>
-      {/* NavSidebar renders fixed overlays; wrap so they still receive pointer
-          events when the header itself is pointer-events-none (transparent `/`).
-          `absolute` keeps the zero-size wrapper out of the flex flow — as a
-          third flex item it would push the icon group into the center. */}
-      <div className="pointer-events-auto absolute">
-        <NavSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
     </header>
   );

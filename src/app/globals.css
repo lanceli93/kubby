@@ -682,3 +682,258 @@ button:active:not(:disabled) {
     animation: none !important;
   }
 }
+
+/* ── Push-back nav drawer (PageShell + NavSidebar) ───── */
+
+/* Opening the left drawer sends the whole app shell back into depth to the
+   right (iOS/Vaul style) instead of blurring a backdrop over it. The drawer is
+   rendered OUTSIDE the shell (see components/layout/nav-drawer.tsx) so it is
+   never transformed. When `data-drawer="closed"` the shell carries NO
+   transform / clip / will-change — a lingering transform would trap every
+   `position: fixed` descendant and break backdrop-filter. Transform + opacity
+   only; same fluid curve as `.transition-fluid`. */
+.page-shell {
+  --drawer-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 500ms var(--drawer-ease);
+}
+.page-shell:not([data-drawer="closed"]) {
+  /* Contain the shell's own z-index scale so the dim layer covers its fixed
+     bars, while the drawer (z-50, outside) still sits above everything. */
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--background);
+  transform-origin: 0% 50%;
+  will-change: transform;
+  box-shadow:
+    0 2.5rem 6rem -1rem rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+/* Origin on the left edge: translate clears the 16rem drawer at any viewport
+   width, and the negative rotateY swings the right side toward the viewer so
+   the edge nearest the drawer reads as the farthest one. Perspective is in vw
+   so the tilt reads the same on a laptop and a 4K screen (a fixed px depth
+   over-magnifies the far side on wide viewports). */
+.page-shell[data-drawer="open"] {
+  transform: perspective(150vw) translateX(17.5rem) scale(0.86) rotateY(-4deg);
+}
+
+/* Dim layer on the receded page — also the click-to-close target. Lives inside
+   the shell so it recedes with it. */
+.page-shell-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms var(--drawer-ease);
+}
+.page-shell[data-drawer="closed"] > .page-shell-dim {
+  visibility: hidden;
+}
+.page-shell[data-drawer="open"] > .page-shell-dim {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* The deeper room behind the receded shell: darker than --background with a
+   faint indigo glow under the drawer. Only mounted while the shell is away. */
+.page-shell-room {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(48rem 36rem at 0% 45%, rgba(99, 102, 241, 0.09), transparent 70%),
+    #040406;
+}
+
+/* Drawer panel — sits on the dark room, so it needs no heavy glass. Enters
+   with a short parallax slide + fade rather than a full-width slide;
+   visibility flips after the close so it leaves the tab order. */
+.nav-drawer-panel {
+  transform: translateX(-30%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 500ms;
+}
+.nav-drawer-panel[data-open="true"] {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1) 40ms,
+    opacity 450ms cubic-bezier(0.22, 1, 0.36, 1) 40ms,
+    visibility 0s;
+}
+
+/* Mobile: the drawer covers most of the screen, so the page just slides clear
+   of it with a gentler scale (no rotate) and peeks out on the right. */
+@media (max-width: 767px) {
+  .page-shell[data-drawer="open"] {
+    transform: translateX(16.75rem) scale(0.9);
+  }
+}
+
+/* Reduced motion: the shell stays put — just the dim fade + drawer appearing. */
+@media (prefers-reduced-motion: reduce) {
+  .page-shell:not([data-drawer="closed"]) {
+    transform: none;
+    border-radius: 0;
+    box-shadow: none;
+    will-change: auto;
+  }
+  /* …and since the page no longer moves out from under the drawer, the panel
+     needs its own opaque surface again. */
+  .nav-drawer-panel,
+  .nav-drawer-panel[data-open="true"] {
+    transform: none;
+    background: rgba(8, 8, 12, 0.96);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* ── View Transitions: domain switch (drawer / brand dropdown) ───── */
+
+/* `startDomainTransition` (lib/view-transition.ts) sets html[data-vt="domain"]
+   + data-vt-from="drawer|menu" for the transition's lifetime only, so every
+   rule here — the static view-transition-names included — exists just during a
+   domain switch; the poster morph keeps the default root crossfade and never
+   sees a duplicate name. "Next room" choreography: the old page recedes + fades
+   fast, the new domain home comes forward out of the depth.
+   Knobs: --vt-domain-pose (start pose), durations on the root rules below. */
+html[data-vt="domain"] {
+  --vt-domain-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Exactly the open drawer's `.page-shell` pose, so from the drawer the new
+     page starts in the slot the old one occupied. */
+  --vt-domain-pose: perspective(150vw) translateX(17.5rem) scale(0.86) rotateY(-4deg);
+}
+@media (max-width: 767px) {
+  html[data-vt="domain"] {
+    --vt-domain-pose: translateX(16.75rem) scale(0.9);
+  }
+}
+
+/* The NEW snapshot is live: if the shell / dim / drawer ran their own 500ms
+   close transitions they would double up with the VT animation (and the shell
+   would keep its radius + compositing hint). Snap them to closed instead. */
+html[data-vt="domain"] .page-shell,
+html[data-vt="domain"] .page-shell-dim,
+html[data-vt="domain"] .nav-drawer-panel {
+  transition: none !important;
+}
+html[data-vt="domain"] .page-shell[data-drawer="closing"] {
+  border-radius: 0;
+  box-shadow: none;
+  will-change: auto;
+}
+
+/* Stable groups. The drawer is named only while OPEN, so it's an exit-only
+   group (no new snapshot) that we slide out like B1's close. The now-playing
+   bar keeps playback UI steady; the header stays put on menu switches (from
+   the drawer it rides with the receded page instead — a named header would
+   fly out of the tilted shell on its own). */
+html[data-vt="domain"] .nav-drawer-panel[data-open="true"] {
+  view-transition-name: nav-drawer;
+}
+html[data-vt="domain"] .now-playing-bar {
+  view-transition-name: now-playing-bar;
+}
+html[data-vt="domain"][data-vt-from="menu"] .app-header {
+  view-transition-name: app-header;
+}
+/* A detail page's large poster carries `movie-poster` statically (inline); on
+   a domain switch away from it, let it ride with the receding page instead of
+   lingering flat on top as its own group. */
+html[data-vt="domain"] [data-vt-poster] {
+  view-transition-name: none !important;
+}
+/* Overlays Radix keeps mounted through their exit animation (brand dropdown). */
+html[data-vt-stage="new"] [data-vt-exit] {
+  visibility: hidden !important;
+}
+
+html[data-vt="domain"]::view-transition-group(*) {
+  animation-duration: 500ms;
+  animation-timing-function: var(--vt-domain-ease);
+}
+html[data-vt="domain"]::view-transition-old(root),
+html[data-vt="domain"]::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
+/* From the drawer: backdrop = the deeper room (`.page-shell-room`). */
+html[data-vt="domain"][data-vt-from="drawer"]::view-transition {
+  background:
+    radial-gradient(48rem 36rem at 0% 45%, rgba(99, 102, 241, 0.09), transparent 70%),
+    #040406;
+}
+html[data-vt="domain"][data-vt-from="drawer"]::view-transition-old(root) {
+  transform-origin: 75% 50%;
+  animation: vt-domain-recede 150ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+/* The fluid curve front-loads ~80% of the travel into the first ~100ms, which
+   read as a double exposure rather than a room sliding forward; the iOS sheet
+   curve spreads the approach out and still lands softly. */
+html[data-vt="domain"][data-vt-from="drawer"]::view-transition-new(root) {
+  transform-origin: 0% 50%;
+  animation:
+    vt-domain-forward 600ms cubic-bezier(0.32, 0.72, 0, 1) both,
+    vt-domain-fade-in 200ms ease-out both;
+}
+html[data-vt="domain"]::view-transition-old(nav-drawer) {
+  animation: vt-domain-drawer-out 400ms var(--vt-domain-ease) both;
+}
+
+/* From the header dropdown (drawer closed): a subtle recede / come-forward. */
+html[data-vt="domain"][data-vt-from="menu"]::view-transition {
+  background: var(--background);
+}
+html[data-vt="domain"][data-vt-from="menu"]::view-transition-old(root) {
+  animation: vt-domain-recede-subtle 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+html[data-vt="domain"][data-vt-from="menu"]::view-transition-new(root) {
+  animation:
+    vt-domain-forward-subtle 450ms var(--vt-domain-ease) both,
+    vt-domain-fade-in 300ms ease-out both;
+}
+
+@keyframes vt-domain-recede {
+  to { transform: scale(0.94); opacity: 0; }
+}
+/* Starts dimmed + rounded like the receded shell, lands flat. */
+@keyframes vt-domain-forward {
+  from {
+    transform: var(--vt-domain-pose);
+    border-radius: 1rem;
+    filter: brightness(0.62);
+  }
+}
+@keyframes vt-domain-fade-in {
+  from { opacity: 0; }
+}
+@keyframes vt-domain-drawer-out {
+  to { transform: translateX(-30%); opacity: 0; }
+}
+@keyframes vt-domain-recede-subtle {
+  to { transform: scale(0.96); opacity: 0; }
+}
+@keyframes vt-domain-forward-subtle {
+  from { transform: scale(0.96); }
+}
+
+/* The helper already bails to plain navigation under reduced motion; this
+   covers a transition begun before the media query flips. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-vt="domain"]::view-transition-group(*),
+  html[data-vt="domain"]::view-transition-old(*),
+  html[data-vt="domain"]::view-transition-new(*) {
+    animation: none !important;
+  }
+}

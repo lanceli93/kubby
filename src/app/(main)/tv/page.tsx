@@ -11,6 +11,7 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import {
   AmbientProvider,
   AmbientField,
+  AmbientHoverZone,
 } from "@/components/home/ambient-field";
 import { type MosaicMovie } from "@/components/home/hero-mosaic";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -163,7 +164,9 @@ function TvHomeContent() {
 
   return (
     <AmbientProvider>
-      <div className="relative flex h-full flex-col">
+      {/* data-domain-home: destination marker for the domain-switch View
+          Transition (lib/view-transition.ts) — present from the first render. */}
+      <div data-domain-home="tv" className="relative flex h-full flex-col">
         <AmbientField />
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
@@ -221,8 +224,12 @@ function TvHomeContent() {
               <section className="pt-4">
                 <ScrollRow title={t("continueWatching")}>
                   {nextUp.map((item) => (
-                    <NextUpCard
+                    <AmbientHoverZone
                       key={item.episodeId}
+                      posterBlur={item.stillBlur}
+                      className="flex-shrink-0"
+                    >
+                    <NextUpCard
                       showTitle={item.showTitle}
                       episodeId={item.episodeId}
                       seasonNumber={item.seasonNumber}
@@ -233,6 +240,7 @@ function TvHomeContent() {
                       showPosterPath={item.showPosterPath}
                       progress={item.progress}
                     />
+                    </AmbientHoverZone>
                   ))}
                 </ScrollRow>
               </section>
@@ -243,8 +251,12 @@ function TvHomeContent() {
               <section className="pt-4 pb-8">
                 <ScrollRow title={t("recentlyAdded")}>
                   {recentlyAdded.map((show) => (
-                    <ShowCard
+                    <AmbientHoverZone
                       key={show.id}
+                      posterBlur={show.posterBlur}
+                      className="flex-shrink-0"
+                    >
+                    <ShowCard
                       id={show.id}
                       title={show.title}
                       year={show.year}
@@ -252,6 +264,7 @@ function TvHomeContent() {
                       posterBlur={show.posterBlur}
                       personalRating={show.personalRating}
                     />
+                    </AmbientHoverZone>
                   ))}
                 </ScrollRow>
               </section>

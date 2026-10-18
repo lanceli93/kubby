@@ -62,7 +62,7 @@ sub-pages (Overview, Scraper, Networking) use `(system)` route group with
 **Domain-following (Plan A).** The chrome is organized by media domain so the
 photos/music domains don't inherit cinema-only entries:
 - `NavSidebar`'s top "MEDIA" group is the domain switcher itself (see Domain switcher
-  below) — one row per existing domain (Cinema always; TV/Photos/Music gated on the
+  below) — one `DomainCard` per existing domain (Cinema always; TV/Photos/Music gated on the
   library-presence hooks), the active one highlighted + checked via
   `useCurrentDomain()`. It replaced the old cinema-only `Home` item + the single "All
   X" media entry (those were redundant with a domain list). The Metadata group
@@ -103,6 +103,44 @@ active domain with a Check:
    single-entry Media group (which duplicated what a domain list already conveys). It
    reuses the `nav.media` label + the same `useHas*Library()` hooks as the header
    dropdown — no new i18n keys.
+
+**Both switchers render `DomainCard`s** (`components/layout/domain-card.tsx`, fed by
+`useDomainItems()` in `hooks/use-domain-items.ts`, which owns the gating/order and
+fetches `GET /api/domains/preview` under `["domain-previews"]`): icon + label + a
+fanned stack of 3 thumbs of that domain's own art that spreads on hover. Clicks go
+through `useDomainSwitch(from)` → `startDomainTransition()` (modifier/middle clicks
+fall through to the Link; clicking the current domain home just closes the drawer).
+
+### Push-back drawer (`components/layout/nav-drawer.tsx`)
+
+The drawer's open state lives in `NavDrawerProvider` (layout level); `AppHeader`'s menu
+button calls `setOpen(true)`. `PageShell` wraps header/main/fixed bars and `NavSidebar`
+is its **sibling** (never inside it). Opening sets `data-drawer="open"` → the shell
+recedes: `perspective(150vw) translateX(17.5rem) scale(0.86) rotateY(-4deg)`, origin
+`0% 50%` (mobile `translateX(16.75rem) scale(0.9)`), 500ms fluid curve, rounded +
+shadow + `.page-shell-dim` overlay (click-to-close) over a darker `.page-shell-room`.
+`closing` holds the transform for 560ms, then `closed` = **no transform / overflow /
+will-change at all** — a lingering transform would trap fixed descendants and break
+backdrop-filter. Perspective is in vw on purpose (a px depth over-magnifies the far
+side on wide screens). Reduced motion: dim only + opaque panel.
+
+### Domain-switch View Transition (`startDomainTransition`, `lib/view-transition.ts`)
+
+Whole-page VT, scoped by `html[data-vt="domain"]` + `data-vt-from="drawer|menu"` (set
+for the transition's lifetime only, so the poster morph keeps the default root
+crossfade). Callback: `data-vt-stage="new"` (hides `[data-vt-exit]`, i.e. the Radix
+dropdown that stays mounted through its exit) → `flushSync(closeDrawer)` →
+`router.push` → MutationObserver wait for `[data-domain-home="<domain>"]` (on each
+domain home's root, present on first render), 600ms cap. **From the drawer**: old root
+fades in 150ms; new root animates from the exact push-back pose (dimmed, rounded) to
+flat over 600ms on `cubic-bezier(0.32,0.72,0,1)` — the fluid curve front-loaded the
+travel and read as a double exposure; the drawer is its own `nav-drawer` group that
+slides out. **From the menu**: subtle 0.96 recede / come-forward and the header keeps
+an `app-header` group (only in this case — named during a drawer switch it sat bright
+above the dimmed page). `now-playing-bar` is named in both so playback UI stays put.
+During a switch the shell/dim/drawer CSS transitions are disabled (they would replay
+inside the live new snapshot) and the detail poster's `movie-poster` name is forced
+to `none`. Named groups lose their backdrop-filter while animating (VT limitation).
 
 `BottomTabs` still shows only the *current* domain's entry (see Navigation structure →
 Domain-following), not one per existing library.
@@ -844,7 +882,9 @@ movies + ScrollRows for libraries/continue-watching/favorites), Favorites
   (horizontal ScrollRows are skipped by a min-overflow check), otherwise the glow
   hangs behind the rows after the hero is gone; (4) blob opacities
   ≈0.20/0.16/0.13/0.10. Tune intensity with these knobs, and don't add more
-  full-viewport blobs.
+  full-viewport blobs. Row cards (MovieRow, Continue Watching, TV Next Up / Recently
+  Added) sit in `AmbientHoverZone`s that retarget the glow on hover; `setBase` (hero
+  rotation) is ignored while a hover owns the glow and picked up on leave.
 - **Preferences UI**: `/preferences/hero-mosaic/page.tsx` — two sections (Movie
   wall / Actor wall) separated by a divider, each with live preview. Single Save
   button PUTs both configs in one request and invalidates both hero-wall queries.

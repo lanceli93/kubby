@@ -336,7 +336,9 @@ export default function HomePage() {
 
   return (
     <AmbientProvider>
-    <div className="relative flex h-full flex-col">
+    {/* data-domain-home: destination marker for the domain-switch View
+        Transition (lib/view-transition.ts) — present from the first render. */}
+    <div data-domain-home="cinema" className="relative flex h-full flex-col">
       {/* Ambilight: soft color field behind all home content. Root-level (the
           root div doesn't scroll — the inner div does), so the glow stays put
           while rows scroll through it. */}
@@ -433,8 +435,12 @@ export default function HomePage() {
             {continueWatching.length > 0 && (
               <ScrollRow title={t("continueWatching")}>
                 {continueWatching.map((movie) => (
-                  <ContinueWatchingCard
+                  <AmbientHoverZone
                     key={movie.discLabel ? `${movie.id}-disc${movie.currentDisc}` : movie.id}
+                    posterBlur={movie.posterBlur}
+                    className="flex-shrink-0"
+                  >
+                  <ContinueWatchingCard
                     id={movie.id}
                     title={movie.title}
                     year={movie.year}
@@ -446,6 +452,7 @@ export default function HomePage() {
                     currentDisc={movie.currentDisc}
                     onDismiss={() => dismissContinueWatching.mutate(movie.id)}
                   />
+                  </AmbientHoverZone>
                 ))}
               </ScrollRow>
             )}

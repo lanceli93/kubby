@@ -110,7 +110,9 @@ export default function PhotosPage() {
   );
 
   return (
-    <div className="flex h-full flex-col">
+    // data-domain-home: destination marker for the domain-switch View
+    // Transition (lib/view-transition.ts) — present from the first render.
+    <div data-domain-home="photos" className="flex h-full flex-col">
       {/* Title bar: title + segmented control + library filter / selection */}
       <div className="flex items-center gap-3 border-b border-white/[0.06] bg-[var(--header)] px-4 py-3 md:px-6">
         {selectionMode ? (

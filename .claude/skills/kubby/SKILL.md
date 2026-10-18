@@ -29,8 +29,9 @@ but shares infra: library management, image serving, the playback pipeline
 exist, both gated on the same library-presence hooks (`useHasPhotoLibrary()` /
 `useHasMusicLibrary()` / `useHasTvLibrary()`) and both ordered Cinema → TV → Photos →
 Music: (1) a dropdown on the Kubby brand in `AppHeader`, and (2) the **left drawer's
-top "MEDIA" group** (`NavSidebar`), which lists the domains as rows with the active
-one highlighted + checked (`useCurrentDomain()`) — this is the always-available
+top "MEDIA" group** (`NavSidebar`), which lists the domains as `DomainCard`s (fanned
+preview art from `/api/domains/preview`) with the active one highlighted + checked
+(`useCurrentDomain()`); both switch via the spatial `startDomainTransition` — this is the always-available
 switcher, present even on the detail/library/search pages where the header collapses
 the brand dropdown into back-nav. The drawer group replaced the old cinema-only
 `Home` item + the redundant single-entry Media group. `DomainCookieSync` persists the last domain

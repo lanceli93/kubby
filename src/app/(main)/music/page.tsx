@@ -99,7 +99,9 @@ function MusicBrowseContent() {
   );
 
   return (
-    <div className="flex h-full flex-col">
+    // data-domain-home: destination marker for the domain-switch View
+    // Transition (lib/view-transition.ts) — present from the first render.
+    <div data-domain-home="music" className="flex h-full flex-col">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-full flex-col">
         <div className="relative flex justify-center border-b border-white/[0.06] bg-[var(--header)]">
           <TabsList variant="line">

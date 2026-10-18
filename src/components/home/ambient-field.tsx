@@ -89,6 +89,9 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
   const reduceRef = useRef(false);
+  // True while a hovered card owns the glow — the hero's rotation must not yank
+  // it back to the hero tint mid-hover (it resumes the base on pointer leave).
+  const hoverActiveRef = useRef(false);
 
   const write = useCallback(() => {
     const el = fieldRef.current;
@@ -144,6 +147,7 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
 
   const setTarget = useCallback(
     (rgb: RGB | null) => {
+      hoverActiveRef.current = rgb != null;
       targetRef.current = rgb ? ([...rgb] as RGB) : ([...baseRef.current] as RGB);
       startLoop();
     },
@@ -153,9 +157,9 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
   const setBase = useCallback(
     (rgb: RGB) => {
       baseRef.current = [...rgb] as RGB;
-      // If we're currently resting at the base (no poster hovered), drift to the
-      // new base too. Heuristic: only chase if the target still equals the old
-      // base — i.e. nothing is actively hovered.
+      // Only drift to the new base while resting — a hovered card keeps the
+      // glow; setTarget(null) on leave picks up this base.
+      if (hoverActiveRef.current) return;
       targetRef.current = [...rgb] as RGB;
       startLoop();
     },

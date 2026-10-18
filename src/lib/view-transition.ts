@@ -27,7 +27,22 @@
  * resolves after the detail poster has mounted AND painted, so the browser reads
  * geometry from the fully-rendered new poster — not the empty intermediate DOM.
  * A timeout guarantees the promise always settles (mobile, fetch errors, etc.).
+ *
+ * ── Domain switch (`startDomainTransition`) ───────────────
+ * Switching Cinema / TV / Photos / Music from the left drawer or the header
+ * brand dropdown is a whole-page transition, not a shared element: the old page
+ * recedes and fades while the new domain home comes FORWARD out of the depth.
+ * From the open drawer it starts at the exact push-back pose of the receded
+ * shell (see `.page-shell` in globals.css), so it reads as "the next room slides
+ * into the slot the old one occupied"; the drawer panel gets its own group and
+ * slides out. All of it is scoped by `html[data-vt="domain"]` (+ `data-vt-from`)
+ * so the poster morph above keeps the default root crossfade and no static
+ * `view-transition-name` leaks into it. Same timing rules as the poster morph:
+ * the update callback waits (MutationObserver, never rAF) for the destination's
+ * `data-domain-home` marker, capped by a timeout.
  */
+
+import { flushSync } from "react-dom";
 
 const POSTER_VT_NAME = "movie-poster";
 
@@ -311,6 +326,136 @@ function waitForDetailPoster(timeoutMs = 600, ignoreSrc?: string): Promise<void>
       attributeFilter: ["src"],
     });
 
+    const timer = setTimeout(finish, timeoutMs);
+  });
+}
+
+// ── Domain switch ─────────────────────────────────────────
+
+export type DomainTransitionSource = "drawer" | "menu";
+
+/** Marks a domain home page's root (value = the domain, e.g. `cinema`). */
+export const DOMAIN_HOME_ATTR = "data-domain-home";
+
+// Our own in-flight flag, for browsers without `document.activeViewTransition`.
+let domainTransitionRunning = false;
+
+/** Should this click on a domain link be left to the browser / next/link
+ *  (new tab, new window, download…)? Only plain primary clicks are ours. */
+export function isModifiedClick(e: {
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+}): boolean {
+  return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+}
+
+/**
+ * Navigate to another media domain's home with the spatial "next room" View
+ * Transition.
+ *
+ *   drawer — the OLD snapshot is the receded page + open drawer. The callback
+ *            closes the drawer synchronously (`flushSync`, so the panel loses
+ *            its name before the NEW capture → an exit-only `nav-drawer` group
+ *            that slides out) and navigates. Old root fades with a slight
+ *            further recede; new root animates from the push-back pose to flat.
+ *   menu   — drawer closed: old root recedes slightly + fades, new root comes
+ *            forward from the same small scale. The header keeps its own group
+ *            so it stays put (see `app-header` in globals.css).
+ *
+ * Falls back to close-drawer + plain navigation when the API is missing,
+ * reduced motion is requested, or another View Transition is already running
+ * (stacking them aborts the first one).
+ *
+ * @param href        Destination domain home, e.g. `/photos`.
+ * @param domain      Its `data-domain-home` value, to know when it has mounted.
+ * @param from        Which switcher was used (drives the choreography).
+ * @param navigate    Router push.
+ * @param closeDrawer Closes the left drawer (a no-op for the menu is fine).
+ */
+export function startDomainTransition({
+  href,
+  domain,
+  from,
+  navigate,
+  closeDrawer,
+}: {
+  href: string;
+  domain: string;
+  from: DomainTransitionSource;
+  navigate: (href: string) => void;
+  closeDrawer: () => void;
+}): void {
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const busy =
+    domainTransitionRunning ||
+    (typeof document !== "undefined" &&
+      !!(document as Document & { activeViewTransition?: unknown }).activeViewTransition);
+
+  if (
+    reduceMotion ||
+    busy ||
+    typeof document === "undefined" ||
+    !("startViewTransition" in document)
+  ) {
+    closeDrawer();
+    navigate(href);
+    return;
+  }
+
+  const root = document.documentElement;
+  root.dataset.vt = "domain";
+  root.dataset.vtFrom = from;
+  domainTransitionRunning = true;
+
+  const transition = document.startViewTransition(async () => {
+    // From here on we're building the NEW state. `data-vt-stage` hides
+    // `[data-vt-exit]` overlays (the brand dropdown, which Radix keeps mounted
+    // through its exit animation — and animation events don't fire while
+    // rendering is suppressed, so it would ride into the new page); the drawer
+    // closes in the same breath so neither shows up in the new snapshot.
+    root.dataset.vtStage = "new";
+    flushSync(closeDrawer);
+    navigate(href);
+    await waitForDomainHome(domain);
+  });
+
+  transition.finished.finally(() => {
+    delete root.dataset.vt;
+    delete root.dataset.vtFrom;
+    delete root.dataset.vtStage;
+    domainTransitionRunning = false;
+  });
+}
+
+/**
+ * Resolve once the destination domain home (`[data-domain-home="<domain>"]`)
+ * has mounted, or after `timeoutMs` (a cold dev compile can exceed it — the
+ * transition then animates whatever is on screen, usually the loading state).
+ * Same CAUTION as `waitForDetailPoster`: no rAF while the update callback is
+ * pending. The old page can never carry the marker — a switch to the domain
+ * home you're already on is short-circuited by the callers.
+ */
+function waitForDomainHome(domain: string, timeoutMs = 600): Promise<void> {
+  return new Promise((resolve) => {
+    const selector = `[${DOMAIN_HOME_ATTR}="${domain}"]`;
+    if (document.querySelector(selector)) {
+      resolve();
+      return;
+    }
+    const finish = () => {
+      observer.disconnect();
+      clearTimeout(timer);
+      resolve();
+    };
+    const observer = new MutationObserver(() => {
+      if (document.querySelector(selector)) finish();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
     const timer = setTimeout(finish, timeoutMs);
   });
 }

@@ -117,8 +117,9 @@ export function NowPlayingBar() {
 
   return (
     <>
-      {/* ── Docked bar ── */}
-      <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-white/[0.08] bg-[#0a0a0f]/80 backdrop-blur-2xl md:bottom-0">
+      {/* ── Docked bar ── (`now-playing-bar` gets its own View Transition
+          group during a domain switch so playback UI stays put — globals.css) */}
+      <div className="now-playing-bar fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 border-t border-white/[0.08] bg-[#0a0a0f]/80 backdrop-blur-2xl md:bottom-0">
         {/* Mobile-only thin progress line at the very top of the bar */}
         <div className="absolute inset-x-0 top-0 h-0.5 bg-white/10 md:hidden">
           <div
