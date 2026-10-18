@@ -58,7 +58,7 @@ export function cardKey(ref: RecommendItemRef): string {
 }
 
 export interface RecommendSceneProps {
-  /** Candidate-pool sample (≤ 120). Diffs animate in/out of the pile. */
+  /** Candidate-pool sample (≤ 64, stable per page seed). Diffs animate in/out of the pile. */
   pool: PoolItem[];
   /** Exactly HAND_SIZE slots; null = empty. Index = visual position. */
   hand: HandSlot[];

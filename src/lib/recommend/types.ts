@@ -50,7 +50,8 @@ export interface PoolItem extends RecommendItemRef {
 export interface PoolResponse {
   movieCount: number;
   actorCount: number;
-  /** random sample of the pool, capped (≤ 120); actors only when mix !== "movies" */
+  /** sample of the pool, capped (≤ 64); actors only when mix !== "movies". Random,
+   *  or — with the request's optional `seed` query param — deterministic per seed. */
   items: PoolItem[];
 }
 

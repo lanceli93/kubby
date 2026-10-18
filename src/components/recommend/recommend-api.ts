@@ -9,8 +9,9 @@ import type {
 // Client fetchers for /api/movies/recommend/*. Cinema-only by construction:
 // the server allowlists movie libraries.
 
-/** Stable query string for the pool request (also the React Query key). */
-export function poolQueryString(f: RecommendFilters): string {
+/** Stable query string for the pool request (also the React Query key).
+ *  `seed` makes the server's pile sample deterministic (see getPool). */
+export function poolQueryString(f: RecommendFilters, seed?: string): string {
   const p = new URLSearchParams();
   if (f.genres?.length) p.set("genres", [...f.genres].sort().join(","));
   if (f.tags?.length) p.set("tags", [...f.tags].sort().join(","));
@@ -22,6 +23,7 @@ export function poolQueryString(f: RecommendFilters): string {
   if (f.libraryId) p.set("libraryId", f.libraryId);
   if (f.preset) p.set("preset", f.preset);
   if (f.mix) p.set("mix", f.mix);
+  if (seed) p.set("seed", seed);
   return p.toString();
 }
 

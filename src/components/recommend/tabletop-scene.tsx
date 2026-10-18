@@ -607,6 +607,7 @@ class TabletopEngine {
     if (image) {
       const img = document.createElement("img");
       img.decoding = "async";
+      img.fetchPriority = "low"; // hand + ambient backdrop images load first
       img.draggable = false;
       img.alt = "";
       img.src = resolveImageSrc(image, 200);

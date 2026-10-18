@@ -98,6 +98,13 @@ export function parseFiltersFromSearchParams(sp: URLSearchParams): RecommendFilt
   return sanitizeFilters(obj);
 }
 
+/** GET /api/movies/recommend/pool `seed` param (opaque client token; kept out of
+ *  RecommendFilters since it shapes the sample, not the pool). Invalid → none. */
+export function parsePoolSeed(sp: URLSearchParams): string | undefined {
+  const seed = sp.get("seed")?.trim();
+  return seed && seed.length <= 64 ? seed : undefined;
+}
+
 function parseRef(v: unknown): RecommendItemRef | null {
   if (!v || typeof v !== "object") return null;
   const r = v as Record<string, unknown>;

@@ -239,14 +239,51 @@ async function main() {
   process.env.KUBBY_DATA_DIR = tmpDir;
   appLoaded = true;
   const engine = await import("@/lib/recommend/engine");
-  const { GET: filtersGET } = await import("@/app/api/filters/route");
-  const { NextRequest } = await import("next/server");
+  const { getFilterOptionsBody } = await import("@/lib/filter-options");
   const { db } = await import("@/lib/db");
   const { sql } = await import("drizzle-orm");
 
   const f = (raw: Record<string, unknown>) => engine.sanitizeFilters(raw);
   const pool = engine.getPool(userId, f({}));
-  console.log(`Pool (no filters): movieCount=${pool.movieCount} actorCount=${pool.actorCount} items=${pool.items.length}\n`);
+  console.log(`Pool (no filters): movieCount=${pool.movieCount} actorCount=${pool.actorCount} items=${pool.items.length}`);
+  checkSeededPool();
+  console.log("");
+
+  /**
+   * Seeded pile stability: same seed, genre filter widened g0 → g0∪g1 and back.
+   * Every card of the wide pile that still matches g0 must stay when narrowing
+   * (top-N of a subset ⊇ top-N of the superset ∩ subset) — only real
+   * leavers/newcomers change. Unseeded piles are printed for contrast.
+   */
+  function checkSeededPool() {
+    const seed = "bench-seed";
+    const [g0, g1] = [genres[0], genres[1 % genres.length]];
+    const narrow = f({ genres: [g0], mix: "movies" });
+    const wide = f({ genres: [g0, g1], mix: "movies" });
+    const key = (p: { type: string; id: string }) => `${p.type}:${p.id}`;
+    const g0Ids = new Set(
+      (db.all(sql`SELECT id FROM movies WHERE genres LIKE ${`%"${g0}"%`}`) as { id: string }[]).map((r) => r.id)
+    );
+    const kept = (from: { items: { type: string; id: string }[] }, to: { items: { type: string; id: string }[] }) => {
+      const toKeys = new Set(to.items.map(key));
+      const overlap = from.items.filter((p) => g0Ids.has(p.id)); // cards that match both filters
+      return { kept: overlap.filter((p) => toKeys.has(key(p))).length, overlap: overlap.length };
+    };
+
+    const a = engine.getPool(userId, narrow, { seed });
+    const a2 = engine.getPool(userId, narrow, { seed });
+    if (a.items.map(key).join() !== a2.items.map(key).join()) throw new Error("seeded pool is not deterministic");
+    const b = engine.getPool(userId, wide, { seed });
+    const seeded = kept(b, a);
+    const unseeded = kept(engine.getPool(userId, wide), engine.getPool(userId, narrow));
+    console.log(
+      `Seeded pile (${g0}∪${g1} → ${g0}, ${a.items.length}/${b.items.length} items): kept ${seeded.kept}/${seeded.overlap}` +
+        ` still-matching cards (unseeded: ${unseeded.kept}/${unseeded.overlap})`
+    );
+    if (seeded.overlap > 0 && seeded.kept < seeded.overlap * 0.9) {
+      throw new Error(`seeded pool churned: kept only ${seeded.kept}/${seeded.overlap} overlapping items`);
+    }
+  }
 
   // Simulates "the user just rated something" — the first request after a write.
   let bump = 0;
@@ -269,6 +306,7 @@ async function main() {
   await time("pool  (watched=any, mixed)", () => engine.getPool(userId, f({ watched: "any" })));
   await time(`pool  (genre ${genres[0]})`, () => engine.getPool(userId, f({ genres: [genres[0]] })));
   await time("pool  (movies only)", () => engine.getPool(userId, f({ mix: "movies" })));
+  await time("pool  (no filters, mixed, seeded)", () => engine.getPool(userId, f({}), { seed: "bench-seed" }));
   await time("draw  (mixed 4+1)", () => engine.drawHand(userId, { filters: f({}), movies: 4, actors: 1, exclude: [] }));
   await time("draw  (mixed 4+1) after user write", () => engine.drawHand(userId, { filters: f({}), movies: 4, actors: 1, exclude: [] }), touchUserData);
   await time("draw  (movies 5)", () => engine.drawHand(userId, { filters: f({ mix: "movies" }), movies: 5, actors: 0, exclude: [] }));
@@ -279,10 +317,7 @@ async function main() {
     engine.drawHand(userId, { filters: f({}), movies: 1, actors: 0, exclude: hand.cards.map((c) => ({ type: c.type, id: c.id })) });
     return performance.now() - t1;
   });
-  const filtersCall = async () => {
-    const res = await filtersGET(new NextRequest("http://localhost/api/filters"));
-    await res.text();
-  };
+  const filtersCall = () => getFilterOptionsBody(null);
   await time("/api/filters (all libraries)", filtersCall);
   await time("/api/filters after library write", filtersCall, touchLibrary);
 }

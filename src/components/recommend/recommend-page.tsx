@@ -65,7 +65,12 @@ interface Saved {
   filters: RecommendFilters;
   hand: HandSlot[];
   locked: string[];
+  /** pool sample seed — keeps the pile stable across filter changes (see getPool) */
+  seed?: string;
 }
+
+/** Not crypto.randomUUID: that is missing on plain-http LAN origins. */
+const newSeed = () => Math.random().toString(36).slice(2, 12);
 
 function loadSaved(): Saved | null {
   try {
@@ -74,9 +79,14 @@ function loadSaved(): Saved | null {
     const s = JSON.parse(raw) as Saved;
     if (!s || typeof s !== "object" || !Array.isArray(s.hand) || s.hand.length !== HAND_SIZE) return null;
     const filters = s.filters ?? DEFAULT_FILTERS;
-    // Filters always survive; the hand only on a return trip from a card.
-    if (!isRecommendReturn()) return { filters, hand: emptyHand(), locked: [] };
-    return { filters, hand: s.hand, locked: Array.isArray(s.locked) ? s.locked : [] };
+    // Filters always survive; the hand (and the pile's seed) only on a return trip from a card.
+    if (!isRecommendReturn()) return { filters, hand: emptyHand(), locked: [], seed: newSeed() };
+    return {
+      filters,
+      hand: s.hand,
+      locked: Array.isArray(s.locked) ? s.locked : [],
+      seed: typeof s.seed === "string" && s.seed ? s.seed : newSeed(),
+    };
   } catch {
     return null;
   }
@@ -167,6 +177,8 @@ export function RecommendPage() {
   const { open: drawerOpen } = useNavDrawer();
 
   const [saved] = useState(loadSaved);
+  // one pool seed per visit: the pile only changes by real leavers/newcomers
+  const [seed] = useState(() => saved?.seed ?? newSeed());
   // consume the return-trip flag (read by loadSaved) once mounted — not in the
   // initializer, which StrictMode runs twice
   useEffect(() => clearRecommendReturn(), []);
@@ -264,14 +276,16 @@ export function RecommendPage() {
   }, [filterOptions]);
 
   const qs = poolQueryString(
-    isStaleLibrary(debouncedFilters.libraryId) ? { ...debouncedFilters, libraryId: undefined } : debouncedFilters
+    isStaleLibrary(debouncedFilters.libraryId) ? { ...debouncedFilters, libraryId: undefined } : debouncedFilters,
+    seed
   );
   const { data: pool } = useQuery({
     queryKey: ["recommend-pool", qs],
     queryFn: ({ signal }) => fetchPool(qs, signal),
     enabled: hasLibrary === true,
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60_000,
+    // short: counts move as the user rates / plays (the seed keeps a refetch's pile the same)
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
   const poolItems = useMemo(() => pool?.items ?? [], [pool]);
@@ -288,12 +302,12 @@ export function RecommendPage() {
   useEffect(() => {
     if (phase === "drawing") return;
     try {
-      const data: Saved = { filters, hand, locked: [...lockedKeys] };
+      const data: Saved = { filters, hand, locked: [...lockedKeys], seed };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
       // storage full / disabled — non-essential
     }
-  }, [filters, hand, lockedKeys, phase]);
+  }, [filters, hand, lockedKeys, phase, seed]);
 
   // ── toasts ──
   const showToast = useCallback((msg: string, ok = true) => {
@@ -413,7 +427,9 @@ export function RecommendPage() {
       const slot = hand.findIndex((c) => c && cardKey(c) === key);
       if (slot < 0) return;
       const gen = genRef.current;
-      postHistory({ type: card.type, id: card.id, action: "dismissed" }).catch(() => {});
+      postHistory({ type: card.type, id: card.id, action: "dismissed" })
+        .then(() => queryClient.invalidateQueries({ queryKey: ["recommend-pool"] }))
+        .catch(() => {});
       const remaining = hand.map((c, i) => (i === slot ? null : c));
       setHand(remaining);
       setLockedKeys((s) => {
@@ -452,7 +468,7 @@ export function RecommendPage() {
         showToast(t("toastError"), false);
       }
     },
-    [hand, filters, showToast, t]
+    [hand, filters, queryClient, showToast, t]
   );
 
   const onOpenMovie = useCallback(

@@ -43,7 +43,7 @@ import type {
   RecommendReason,
 } from "./types";
 
-export { parseFiltersFromSearchParams, parseDrawRequest, parseHistoryRequest, sanitizeFilters } from "./parse";
+export { parseFiltersFromSearchParams, parseDrawRequest, parseHistoryRequest, parsePoolSeed, sanitizeFilters } from "./parse";
 
 type Rng = () => number;
 
@@ -54,7 +54,9 @@ export const SHOWN_COOLDOWN_DAYS = 30;
 export const DISMISS_COOLDOWN_DAYS = 90;
 /** History rows older than this are pruned on draw. */
 export const HISTORY_RETENTION_DAYS = 120;
-const POOL_CAP = 120;
+/** = the scenes' real-card caps (vortex CLOUD_CAP, tabletop PILE_CAP): anything
+ *  more is never shown, and vortex ghost copies reuse only shown images. */
+const POOL_CAP = 64;
 const RECENT_PLAY_DAYS = 60;
 const NEW_DAYS = 30;
 const GEM_AGE_DAYS = 90;
@@ -136,6 +138,22 @@ function shuffle<T>(arr: T[], rng: Rng): T[] {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+/** Stable 32-bit rank of `key` under `seed` (FNV-1a + murmur3 finalizer). */
+function seedRank(seed: string, key: string): number {
+  const s = `${seed}|${key}`;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return h >>> 0;
 }
 
 /** Efraimidis–Spirakis key in log space: log(u)/w, larger = drawn earlier. */
@@ -823,14 +841,33 @@ function buildContext(userId: string, filters: RecommendFilters, withActors: boo
 
 // ─── pool ───────────────────────────────────────────────────────
 
+export interface PoolOptions {
+  /** Deterministic sample: the top-N items by seedRank(seed, item) instead of a
+   *  random N. The top-N of a narrower filter keeps every still-matching item
+   *  of the wider one, so a filter change only swaps real leavers/newcomers. */
+  seed?: string;
+  rng?: Rng;
+}
+
+/** `n` items of `items` — seeded top-n by rank (rank kept for ordering), else a random n. */
+function samplePool<T>(items: T[], n: number, key: (t: T) => string, opts: PoolOptions): { item: T; rank: number }[] {
+  const { seed, rng = Math.random } = opts;
+  if (seed === undefined) return shuffle([...items], rng).slice(0, n).map((item) => ({ item, rank: 0 }));
+  return items
+    .map((item) => ({ item, rank: seedRank(seed, key(item)) }))
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, n);
+}
+
 /**
- * The visual pile: uniform random sample of the filtered pool (no de-dup).
+ * The visual pile: uniform sample of the filtered pool (no de-dup) — random, or
+ * deterministic per `opts.seed` (see PoolOptions).
  * Mixed piles keep roughly the hand's 4:1 movie:actor ratio (at least a few
  * actors) — proportional to raw counts would bury the movies, since every film
  * contributes a dozen cast members. Actor piles top up with movies when there
  * are fewer than POOL_CAP actors (the hand falls back to movies the same way).
  */
-export function getPool(userId: string, filters: RecommendFilters, rng: Rng = Math.random): PoolResponse {
+export function getPool(userId: string, filters: RecommendFilters, opts: PoolOptions = {}): PoolResponse {
   const ctx = buildContext(userId, filters, (filters.mix ?? "mixed") !== "movies", false);
   const M = ctx.scored.length;
   const A = ctx.actors.length;
@@ -841,28 +878,38 @@ export function getPool(userId: string, filters: RecommendFilters, rng: Rng = Ma
   else if (mix === "mixed") actorSlots = Math.min(A, Math.max(6, Math.round(Math.min(POOL_CAP, M + A) * 0.2)));
   const movieSlots = Math.min(M, POOL_CAP - actorSlots);
 
-  const movies = shuffle([...ctx.scored], rng).slice(0, movieSlots);
-  const actors = shuffle([...ctx.actors], rng).slice(0, actorSlots);
+  const movies = samplePool(ctx.scored, movieSlots, (m) => `movie:${m.c.id}`, opts);
+  const actors = samplePool(ctx.actors, actorSlots, (a) => `person:${a.personId}`, opts);
   const { movieBlur, personBlur } = loadBlurs(
-    movies.map((m) => m.c.id),
-    actors.map((a) => a.personId)
+    movies.map(({ item: m }) => m.c.id),
+    actors.map(({ item: a }) => a.personId)
   );
-  const movieItems: PoolItem[] = movies.map((m) => ({
-    type: "movie",
-    id: m.c.id,
-    title: m.c.title,
-    image: posterOf(m.c),
-    blur: movieBlur.get(m.c.id) ?? null,
-  }));
-  const actorItems: PoolItem[] = actors.map((a) => ({
-    type: "person",
-    id: a.personId,
-    title: a.name,
-    image: photoOf(a.actor),
-    blur: personBlur.get(a.personId) ?? null,
-  }));
-
-  return { movieCount: M, actorCount: A, items: shuffle([...movieItems, ...actorItems], rng) };
+  const items: { item: PoolItem; rank: number }[] = [
+    ...movies.map(({ item: m, rank }) => ({
+      rank,
+      item: {
+        type: "movie" as const,
+        id: m.c.id,
+        title: m.c.title,
+        image: posterOf(m.c),
+        blur: movieBlur.get(m.c.id) ?? null,
+      },
+    })),
+    ...actors.map(({ item: a, rank }) => ({
+      rank,
+      item: {
+        type: "person" as const,
+        id: a.personId,
+        title: a.name,
+        image: photoOf(a.actor),
+        blur: personBlur.get(a.personId) ?? null,
+      },
+    })),
+  ];
+  // seeded: interleave by rank, so the order is stable too (vortex fills its caps in pool order)
+  const ordered =
+    opts.seed === undefined ? shuffle(items, opts.rng ?? Math.random) : items.sort((a, b) => a.rank - b.rank);
+  return { movieCount: M, actorCount: A, items: ordered.map((x) => x.item) };
 }
 
 // ─── history ────────────────────────────────────────────────────

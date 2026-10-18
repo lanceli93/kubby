@@ -18,6 +18,8 @@ export interface FacetOption {
 }
 
 const RENDER_CAP = 150;
+/** Same ordering as `a.localeCompare(b)`, without re-resolving the locale per call (10k-tag libraries). */
+const collator = new Intl.Collator();
 
 interface FacetPickerProps {
   icon: ReactNode;
@@ -50,7 +52,7 @@ export function FacetPicker({
   const sorted = useMemo(
     () =>
       [...options]
-        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+        .sort((a, b) => b.count - a.count || collator.compare(a.name, b.name))
         .map((o) => ({ ...o, key: o.name.toLowerCase() })),
     [options]
   );
