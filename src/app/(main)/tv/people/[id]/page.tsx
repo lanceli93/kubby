@@ -11,6 +11,8 @@ import { resolveImageSrc } from "@/lib/image-utils";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
+import { useHeroParallax } from "@/hooks/use-hero-parallax";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useLocale, useTranslations } from "next-intl";
 import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
@@ -28,6 +30,7 @@ interface TvPersonShow {
   role?: string | null;
   posterPath?: string | null;
   posterBlur?: string | null;
+  personalRating?: number | null;
 }
 
 interface TvPersonDetail {
@@ -83,6 +86,8 @@ export default function TvPersonDetailPage() {
     queryKey: ["tv-person", personId],
     queryFn: () => fetch(`/api/tv/people/${personId}`).then((r) => r.json()),
   });
+  // Same hero depth as the show/movie detail (fanart + poster parallax).
+  const { scrollRef, heroRef, fanartRef, posterRef } = useHeroParallax({ ready: !!person?.name });
 
   // Favorite / personal rating live in a dedicated TV endpoint, not on the
   // person payload above.
@@ -129,12 +134,13 @@ export default function TvPersonDetailPage() {
   }
 
   return (
-    <div className="h-full overflow-y-scroll scrollbar-hide animate-fade-in">
+    <div ref={scrollRef} className="h-full overflow-y-scroll scrollbar-hide animate-fade-in">
       <div className="flex flex-col">
         {/* Hero Section with Fanart */}
-        <div className="relative md:min-h-[46.875rem] w-full overflow-hidden">
+        <div ref={heroRef} className="relative md:min-h-[46.875rem] w-full overflow-hidden">
+          {/* Fanart — parallax layer, overscaled so the drift never shows edges. */}
           {person.fanartPath && !fanartError && (
-            <div className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto">
+            <div ref={fanartRef} className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform">
               <Image
                 src={resolveImageSrc(person.fanartPath)}
                 alt=""
@@ -151,7 +157,7 @@ export default function TvPersonDetailPage() {
 
           <div className="relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24">
             {/* Poster — 350×525 (2:3): mild 3D tilt + tier rarity frame, like the show/movie heroes */}
-            <div className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0">
+            <div ref={posterRef} className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0 will-change-transform">
               <TiltCard maxTilt={4} rounded="rounded-2xl" shadow={false} className="h-full w-full">
                 <TierFx rating={userData?.personalRating} enabled={showTierFx} seed={person.id} radius="1rem" />
                 <div className="relative h-full w-full overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
@@ -281,7 +287,8 @@ export default function TvPersonDetailPage() {
           </div>
 
           {person.shows.length > 0 ? (
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            // ScrollRow's padded bleed box keeps the hover glow / tier FX unclipped.
+            <ScrollRow>
               {person.shows.map((show) => (
                 <ShowCard
                   key={show.id}
@@ -290,10 +297,11 @@ export default function TvPersonDetailPage() {
                   year={show.year}
                   posterPath={show.posterPath}
                   posterBlur={show.posterBlur}
+                  personalRating={show.personalRating}
                   subtitle={show.role ?? undefined}
                 />
               ))}
-            </div>
+            </ScrollRow>
           ) : (
             <div className="flex h-40 items-center justify-center gap-2 text-muted-foreground">
               <Tv className="h-5 w-5" /> {tMovies("cast")}

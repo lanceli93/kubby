@@ -3,7 +3,7 @@ import nodePath from "path";
 import fs from "fs";
 import fsPromises from "fs/promises";
 import { db } from "@/lib/db";
-import { people, moviePeople, movies, userPersonData } from "@/lib/db/schema";
+import { people, moviePeople, movies, userPersonData, userMovieData } from "@/lib/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { computeAgeAtRelease } from "@/lib/scanner";
 import { auth } from "@/lib/auth";
@@ -137,7 +137,10 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Get filmography
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    // Get filmography (with the viewer's own movie rating, for the card tier FX)
     const filmography = db
       .select({
         id: movies.id,
@@ -154,9 +157,17 @@ export async function GET(
         videoHeight: movies.videoHeight,
         role: moviePeople.role,
         ageAtRelease: moviePeople.ageAtRelease,
+        personalRating: userMovieData.personalRating,
       })
       .from(moviePeople)
       .innerJoin(movies, eq(moviePeople.movieId, movies.id))
+      .leftJoin(
+        userMovieData,
+        and(
+          eq(userMovieData.movieId, movies.id),
+          userId ? eq(userMovieData.userId, userId) : sql`0`
+        )
+      )
       .where(eq(moviePeople.personId, id))
       .orderBy(desc(movies.year))
       .all();
@@ -192,14 +203,13 @@ export async function GET(
 
     // Get user data if authenticated
     let userData = null;
-    const session = await auth();
-    if (session?.user?.id) {
+    if (userId) {
       userData = db
         .select()
         .from(userPersonData)
         .where(
           and(
-            eq(userPersonData.userId, session.user.id),
+            eq(userPersonData.userId, userId),
             eq(userPersonData.personId, id)
           )
         )

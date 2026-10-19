@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodePath from "path";
 import { db } from "@/lib/db";
-import { tvPeople, tvShowPeople, tvShows } from "@/lib/db/schema";
-import { eq, desc, asc } from "drizzle-orm";
+import { tvPeople, tvShowPeople, tvShows, userTvShowData } from "@/lib/db/schema";
+import { eq, desc, asc, and, sql } from "drizzle-orm";
 import { resolveDataPath } from "@/lib/paths";
+import { auth } from "@/lib/auth";
 
 /** Build a cache-bust stamped path using a pre-stored mtime value (no filesystem I/O). */
 const stampPath = (p: string | null, mtime?: number | null) => {
@@ -16,13 +17,16 @@ const stampPath = (p: string | null, mtime?: number | null) => {
 // Isolated TV-domain person detail — queries tv_people / tv_show_people only,
 // NEVER the cinema people tables. TV people are read-only (no user-data /
 // gallery / metadata-editor tables exist for them), so this returns the bio +
-// the shows the person appears in, with no userData block.
+// the shows the person appears in (each with the viewer's own show rating, for
+// the card tier FX), with no person userData block.
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
     const person = db.select().from(tvPeople).where(eq(tvPeople.id, id)).get();
     if (!person) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -42,9 +46,17 @@ export async function GET(
         folderPath: tvShows.folderPath,
         communityRating: tvShows.communityRating,
         role: tvShowPeople.role,
+        personalRating: userTvShowData.personalRating,
       })
       .from(tvShowPeople)
       .innerJoin(tvShows, eq(tvShowPeople.showId, tvShows.id))
+      .leftJoin(
+        userTvShowData,
+        and(
+          eq(userTvShowData.showId, tvShows.id),
+          userId ? eq(userTvShowData.userId, userId) : sql`0`
+        )
+      )
       .where(eq(tvShowPeople.personId, id))
       .orderBy(desc(tvShows.year), asc(tvShows.title))
       .all();
@@ -55,6 +67,7 @@ export async function GET(
       year: s.year,
       role: s.role,
       communityRating: s.communityRating,
+      personalRating: s.personalRating,
       posterPath: stampPath(
         s.posterPath ? nodePath.join(s.folderPath, s.posterPath) : null,
         s.posterMtime

@@ -176,7 +176,10 @@ app. On hover the card composes several affordances at once:
   `maxTilt={4} shadow={false}` because they already have a static shadow — movie +
   show detail `rounded="rounded-lg"`, cinema + TV person detail `rounded="rounded-2xl"`;
   the `overflow-hidden`/ring/shadow live on the inner media box, never on the
-  TiltCard's parent, or the tier glow gets clipped). Dimming the other cards in a row was tried and rejected: the user found
+  TiltCard's parent, or the tier glow gets clipped). All four detail heroes also run
+  `useHeroParallax` (`hooks/use-hero-parallax.ts`): `scrollRef` on the page's scroll
+  div, `heroRef` on the hero, `fanartRef` on the fanart wrapper (`md:scale-105`),
+  `posterRef` on the poster wrapper — never on an ancestor of the glass info panel. Dimming the other cards in a row was tried and rejected: the user found
   it stiff.
 - **Ambient glow, tilt-reactive** — rendered BY `TiltCard` via its `glow` prop
   (image URL, usually `posterBlur`; `glowActive` pins it lit, e.g. LibraryCard's
@@ -1111,6 +1114,11 @@ children), so it paints behind the opaque media, shows only around the edge, and
 rides the tilt; `<TierFxSurface>` (SSS inner-edge flow; null for other tiers) inside
 the media box after the image, below the badges. Hover is read off the parent (`:hover > .tfx`), so it works
 in any host. `tierFxOf(rating, enabled)` tells a host whether a tier applies.
+
+Card rows on detail pages must use `ScrollRow` (its padded bleed box), never a
+bare `overflow-hidden`/`overflow-x-auto` flex row, or the glow + FX clip; and the
+row's API must return the viewer's per-item `personalRating` (left-join the user
+data table — `/api/people/[id]` filmography and `/api/tv/people/[id]` shows do).
 
 **Where**: `MovieCard`, `PersonCard` (cinema + TV cast), `ShowCard`, the four
 detail-page hero posters (movie / show / cinema person / TV person — inside their

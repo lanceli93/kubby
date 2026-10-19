@@ -31,6 +31,8 @@ import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
+import { useHeroParallax } from "@/hooks/use-hero-parallax";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
@@ -109,6 +111,9 @@ export default function PersonDetailPage() {
     queryKey: ["person", personId],
     queryFn: () => fetch(`/api/people/${personId}`).then((r) => r.json()),
   });
+  // Same hero depth as the movie detail: fanart sinks on scroll + drifts against
+  // the pointer, the poster drifts with it.
+  const { scrollRef, heroRef, fanartRef, posterRef } = useHeroParallax({ disabled: fanartMode, ready: !!person?.name });
 
   const { data: galleryData } = useQuery<{ images: { filename: string; path: string }[] }>({
     queryKey: ["person-gallery", personId],
@@ -172,13 +177,14 @@ export default function PersonDetailPage() {
     // below) gives the person page an entrance beat. Movie cards fly their
     // poster in via a shared-element View Transition on click; person cards are
     // plain links with no such transition, so without this the page hard-cut.
-    <div className="h-full overflow-y-scroll scrollbar-hide animate-fade-in">
+    <div ref={scrollRef} className="h-full overflow-y-scroll scrollbar-hide animate-fade-in">
     <div className="flex flex-col">
       {/* Hero Section with Fanart — matches movie detail layout */}
-      <div className="relative md:min-h-[46.875rem] w-full overflow-hidden">
-        {/* Fanart Background */}
+      <div ref={heroRef} className="relative md:min-h-[46.875rem] w-full overflow-hidden">
+        {/* Fanart Background — parallax layer, overscaled so the drift never
+            reveals empty edges (holds ONLY the image, never the glass panel). */}
         {person.fanartPath && !fanartError && (
-          <div className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto">
+          <div ref={fanartRef} className="relative h-[13.75rem] w-full md:absolute md:inset-0 md:h-auto md:scale-105 will-change-transform">
             <Image
               src={resolveImageSrc(person.fanartPath)}
               alt=""
@@ -207,7 +213,7 @@ export default function PersonDetailPage() {
         {/* Content row: poster + person info */}
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
           {/* Poster — 350×525 (2:3), same as movie detail: mild 3D tilt + tier rarity frame */}
-          <div className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0">
+          <div ref={posterRef} className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0 will-change-transform">
             <TiltCard maxTilt={4} rounded="rounded-2xl" shadow={false} className="h-full w-full">
               <TierFx rating={person.userData?.personalRating} enabled={showTierFx} seed={person.id} radius="1rem" />
               <div className="relative h-full w-full overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
@@ -438,24 +444,25 @@ export default function PersonDetailPage() {
           </Link>
         </div>
 
-        <div className="flex gap-4 overflow-hidden pb-0.5">
+        {/* ScrollRow, like the movie detail rows: its padded bleed box keeps the
+            hover glow / tier FX from clipping against the row. */}
+        <ScrollRow>
           {person.movies.map((movie) => (
-            <div key={movie.id} className="flex-shrink-0" style={{ width: "11.25rem" }}>
-              <MovieCard
-                id={movie.id}
-                title={movie.title}
-                year={movie.year}
-                posterPath={movie.posterPath}
-                posterBlur={movie.posterBlur}
-                rating={movie.communityRating}
-                personalRating={movie.personalRating}
-                videoWidth={movie.videoWidth}
-                videoHeight={movie.videoHeight}
-                subtitle={movie.ageAtRelease != null ? tPerson("filmedAtAge", { age: movie.ageAtRelease }) : undefined}
-              />
-            </div>
+            <MovieCard
+              key={movie.id}
+              id={movie.id}
+              title={movie.title}
+              year={movie.year}
+              posterPath={movie.posterPath}
+              posterBlur={movie.posterBlur}
+              rating={movie.communityRating}
+              personalRating={movie.personalRating}
+              videoWidth={movie.videoWidth}
+              videoHeight={movie.videoHeight}
+              subtitle={movie.ageAtRelease != null ? tPerson("filmedAtAge", { age: movie.ageAtRelease }) : undefined}
+            />
           ))}
-        </div>
+        </ScrollRow>
       </section>
 
       </div>
