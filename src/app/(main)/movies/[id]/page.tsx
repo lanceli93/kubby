@@ -14,6 +14,7 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { POSTER_VT_ATTR } from "@/lib/view-transition";
 import { TiltCard } from "@/components/ui/tilt-card";
+import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
 import { useHeroParallax } from "@/hooks/use-hero-parallax";
 import { useTranslations } from "next-intl";
 import {
@@ -176,6 +177,7 @@ export default function MovieDetailPage() {
   const { showError, errorToast } = useErrorToast();
   const { data: prefs } = useUserPreferences();
   const movieDimensions = prefs?.movieRatingDimensions ?? [];
+  const showTierFx = prefs?.showTierEffects !== false;
   const SUPPORTED_PLAYERS = ["IINA", "PotPlayer"];
   const externalPlayerName = SUPPORTED_PLAYERS.includes(prefs?.externalPlayerName || "") ? prefs!.externalPlayerName : null;
   const externalEnabled = prefs?.externalPlayerEnabled && !!externalPlayerName;
@@ -432,6 +434,8 @@ export default function MovieDetailPage() {
               />
             )}
             <TiltCard maxTilt={4} rounded="rounded-lg" shadow={false} className="h-full w-full">
+              {/* Tier rarity frame — same treatment as the grid cards (rides the tilt). */}
+              <TierFx rating={movie.userData?.personalRating} enabled={showTierFx} seed={movie.id} radius="0.5rem" />
               <div
                 {...{ [POSTER_VT_ATTR]: "" }}
                 className="relative h-full w-full overflow-hidden rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10"
@@ -451,6 +455,7 @@ export default function MovieDetailPage() {
                     {tMeta("noImage")}
                   </div>
                 )}
+                <TierFxSurface rating={movie.userData?.personalRating} enabled={showTierFx} seed={movie.id} radius="0.5rem" />
               </div>
             </TiltCard>
           </div>

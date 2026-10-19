@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/dialog";
 import { StarRatingDialog } from "@/components/movie/star-rating-dialog";
 import { getTier, getTierColor, getTierBorderColor, getTierGlow } from "@/lib/tier";
+import { TiltCard } from "@/components/ui/tilt-card";
+import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { fetchOk, useErrorToast } from "@/components/shared/use-error-toast";
@@ -97,6 +99,7 @@ export default function PersonDetailPage() {
   const [deletePersonFiles, setDeletePersonFiles] = useState(false);
   const { data: prefs } = useUserPreferences();
   const personDimensions = prefs?.personRatingDimensions ?? [];
+  const showTierFx = prefs?.showTierEffects !== false;
 
   const [fanartMode, setFanartMode] = useState(false);
   const [fanartError, setFanartError] = useState(false);
@@ -203,22 +206,28 @@ export default function PersonDetailPage() {
 
         {/* Content row: poster + person info */}
         <div className={`relative md:absolute md:inset-x-0 md:bottom-0 flex gap-8 pt-3 md:pt-0 px-4 pb-6 md:px-20 md:pb-24 transition-all duration-300 ${fanartMode ? "opacity-0 pointer-events-none invisible transition-[opacity] duration-300" : ""}`}>
-          {/* Poster — 350×525 (2:3), same as movie detail */}
-          <div className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0 overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
-            {person.photoPath && !photoError ? (
-              <Image
-                src={resolveImageSrc(person.photoPath)}
-                alt={person.name}
-                fill
-                className="object-cover"
-                sizes="350px"
-                onError={() => setPhotoError(true)}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center bg-white/[0.05] text-4xl text-muted-foreground">
-                {person.name[0]?.toUpperCase()}
+          {/* Poster — 350×525 (2:3), same as movie detail: mild 3D tilt + tier rarity frame */}
+          <div className="hidden md:block relative h-[32.8125rem] w-[21.875rem] flex-shrink-0">
+            <TiltCard maxTilt={4} rounded="rounded-2xl" shadow={false} className="h-full w-full">
+              <TierFx rating={person.userData?.personalRating} enabled={showTierFx} seed={person.id} radius="1rem" />
+              <div className="relative h-full w-full overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+                {person.photoPath && !photoError ? (
+                  <Image
+                    src={resolveImageSrc(person.photoPath)}
+                    alt={person.name}
+                    fill
+                    className="object-cover"
+                    sizes="350px"
+                    onError={() => setPhotoError(true)}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-white/[0.05] text-4xl text-muted-foreground">
+                    {person.name[0]?.toUpperCase()}
+                  </div>
+                )}
+                <TierFxSurface rating={person.userData?.personalRating} enabled={showTierFx} seed={person.id} radius="1rem" />
               </div>
-            )}
+            </TiltCard>
           </div>
 
           <div className="backdrop-blur-[20px] bg-[rgba(10,10,15,0.45)] border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_0.5px_0_rgba(255,255,255,0.1)] flex min-w-0 flex-1 flex-col gap-3 rounded-2xl p-4 md:p-6">

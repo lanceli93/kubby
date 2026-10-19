@@ -172,9 +172,11 @@ app. On hover the card composes several affordances at once:
   sibling, stacked box-shadows) fades in and slides opposite the tilt, and the glow
   eases up with the individual `scale` property (safe to transition, unlike the
   per-frame `transform`). Props: `rounded` (default `rounded-md`, so
-  glare/rim/shadow match the frame) and `shadow` (detail-page posters pass
-  `rounded="rounded-lg" shadow={false}` because they already have a static
-  shadow). Dimming the other cards in a row was tried and rejected: the user found
+  glare/rim/shadow match the frame) and `shadow` (detail-page hero posters pass
+  `maxTilt={4} shadow={false}` because they already have a static shadow — movie +
+  show detail `rounded="rounded-lg"`, cinema + TV person detail `rounded="rounded-2xl"`;
+  the `overflow-hidden`/ring/shadow live on the inner media box, never on the
+  TiltCard's parent, or the tier glow gets clipped). Dimming the other cards in a row was tried and rejected: the user found
   it stiff.
 - **Ambient glow, tilt-reactive** — rendered BY `TiltCard` via its `glow` prop
   (image URL, usually `posterBlur`; `glowActive` pins it lit, e.g. LibraryCard's
@@ -1110,7 +1112,10 @@ rides the tilt; `<TierFxSurface>` (SSS inner-edge flow; null for other tiers) in
 the media box after the image, below the badges. Hover is read off the parent (`:hover > .tfx`), so it works
 in any host. `tierFxOf(rating, enabled)` tells a host whether a tier applies.
 
-**Where**: `MovieCard`, `PersonCard` (cinema + TV cast), `ShowCard`, and the
+**Where**: `MovieCard`, `PersonCard` (cinema + TV cast), `ShowCard`, the four
+detail-page hero posters (movie / show / cinema person / TV person — inside their
+TiltCard, `radius` 0.5rem or 1rem to match the frame, rating from the page's own
+`userData.personalRating`), and the
 今晚看什么 **hand** cards (`card-faces.tsx`; on actor cards a tier rim replaces the
 default gold `.rc-rim`) — never on pile/nebula cards. Not on album/artist/bookmark
 cards. The TV detail cast row needed the glow-clipping fix (`overflow-x` forces

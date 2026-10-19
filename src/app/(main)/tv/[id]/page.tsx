@@ -13,6 +13,7 @@ import { ShowCard } from "@/components/tv/show-card";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { resolveImageSrc } from "@/lib/image-utils";
 import { TiltCard } from "@/components/ui/tilt-card";
+import { TierFx, TierFxSurface } from "@/components/ui/tier-fx";
 import { POSTER_VT_ATTR } from "@/lib/view-transition";
 import { useHeroParallax } from "@/hooks/use-hero-parallax";
 import { useTranslations } from "next-intl";
@@ -179,6 +180,7 @@ export default function ShowDetailPage() {
   const { showError, errorToast } = useErrorToast();
   const { data: prefs } = useUserPreferences();
   const tvShowDimensions = prefs?.tvShowRatingDimensions ?? [];
+  const showTierFx = prefs?.showTierEffects !== false;
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set());
   const onImgError = (path: string) => setImgErrors((prev) => new Set(prev).add(path));
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
@@ -451,6 +453,8 @@ export default function ShowDetailPage() {
                 />
               )}
               <TiltCard maxTilt={4} rounded="rounded-lg" shadow={false} className="h-full w-full">
+                {/* Tier rarity frame — same treatment as the grid cards (rides the tilt). */}
+                <TierFx rating={show.userData?.personalRating} enabled={showTierFx} seed={show.id} radius="0.5rem" />
                 <div
                   {...{ [POSTER_VT_ATTR]: "" }}
                   style={{ viewTransitionName: "movie-poster" }}
@@ -470,6 +474,7 @@ export default function ShowDetailPage() {
                       <Tv className="h-10 w-10" />
                     </div>
                   )}
+                  <TierFxSurface rating={show.userData?.personalRating} enabled={showTierFx} seed={show.id} radius="0.5rem" />
                 </div>
               </TiltCard>
             </div>
