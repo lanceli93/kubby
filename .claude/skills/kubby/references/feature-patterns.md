@@ -1097,14 +1097,17 @@ prototype `data/demos/tier-fx/index.html` (local) at intensity 标准:
   6 sparkles **on hover only** (so touch never shows them). No rainbow foil.
 - **SS** orange: one-comet flowing rim + half bloom + soft glow.
 - **S** red: static metallic rim + glow.
-- **A** purple / **B** blue: 1px hairline, brighter + small glow on hover.
+- **A** purple: static metallic rim (1.75px, same gradient as S) + faint glow.
+- **B** blue: static rim (1.5px, no white sheen) + fainter glow. Both were 1px
+  box-shadow hairlines originally — invisible on dark posters (user feedback); keep
+  them as real rims stepped down from S so the ladder still reads S > A > B.
 - C and below, unrated, or pref off → renders nothing.
 - **Kept quiet at rest** (user feedback: the resting halo read as too loud in a
   grid): bloom/glow opacities are low at rest and reach full strength on hover
   (SSS switches to a stronger `tfx-breath-hover`). The prototype's diagonal light
   sweep was dropped entirely (too glaring) — don't re-add it.
-- **Slow motion on purpose** (user feedback): SSS rim (two comets) spins once per 14s
-  (a pass every ~7s; SS is one comet per 7s), sparkles twinkle on a 7s
+- **Slow motion on purpose** (user feedback): SSS rim (two comets) spins once per 11s
+  (a pass every ~5.5s — sped up from 14s on feedback; SS is one comet per 7s), sparkles twinkle on a 7s
   cycle with their delays spread across it (`SPARK_TIME` in tier-fx.tsx).
 
 **Two parts per card**, same `seed` (item id → stable spin phase so a grid doesn't

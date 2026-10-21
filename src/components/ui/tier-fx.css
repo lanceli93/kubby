@@ -5,8 +5,8 @@
  * glow, all softened at rest; sparkles only while hovered — so touch devices
  * never show them; no foil). The prototype's diagonal light sweep was dropped
  * on user feedback (too glaring).
- * SS/S/A/B = scheme 2's tier colours (orange flowing rim / red static rim /
- * purple + blue hairlines).
+ * SS/S = scheme 2's tier colours (orange flowing rim / red static rim);
+ * A/B = purple / blue static rims, thinner + dimmer than S.
  * Colours follow the tier badge palette in lib/tier.ts.
  *
  * Compositor-only motion: the rim is an overflow:hidden ring behind the
@@ -44,7 +44,7 @@
   --cb: rgba(202, 138, 4, 0.42);
   --gl: rgba(252, 211, 77, 0.55);
   --rw: 3px; /* 2px × 1.5 */
-  --rs: 14s;
+  --rs: 11s;
   --bo: 0.5;
   --bo-h: 0.85;
 }
@@ -68,26 +68,26 @@
   --rw: 2.25px;
   --ro: 0.85;
 }
+/* A/B: static rims like S, stepped down in width / sheen / glow so the
+   ladder still reads S > A > B (they were 1px box-shadow hairlines, which
+   vanished on dark posters — user feedback). */
 .tfx-a {
-  --hair: rgba(192, 132, 252, 0.55);
-  --hair-h: rgba(192, 132, 252, 0.9);
-  --hair-g: rgba(192, 132, 252, 0.3);
+  --c1: #7e22ce;
+  --c2: #c084fc;
+  --c3: #f3e8ff;
+  --gl: rgba(192, 132, 252, 0.4);
+  --rw: 1.75px;
+  --ro: 0.8;
+  --go: 0.3;
 }
 .tfx-b {
-  --hair: rgba(96, 165, 250, 0.45);
-  --hair-h: rgba(96, 165, 250, 0.85);
-  --hair-g: rgba(96, 165, 250, 0.25);
-}
-
-/* ── hairline tiers: one ring on the frame, nothing else ── */
-.tfx-a,
-.tfx-b {
-  box-shadow: 0 0 0 1px var(--hair);
-  transition: box-shadow 0.35s ease;
-}
-:hover > .tfx-a,
-:hover > .tfx-b {
-  box-shadow: 0 0 0 1px var(--hair-h), 0 0 14px var(--hair-g);
+  --c1: #1d4ed8;
+  --c2: #60a5fa;
+  --c3: #dbeafe;
+  --gl: rgba(96, 165, 250, 0.34);
+  --rw: 1.5px;
+  --ro: 0.75;
+  --go: 0.18;
 }
 
 /* ── rim + bloom ── */
@@ -107,6 +107,10 @@
 }
 .tfx-rim-static {
   background: linear-gradient(135deg, var(--c3), var(--c2) 16%, var(--c1) 38%, var(--c2) 52%, #fffdf5 60%, var(--c2) 68%, var(--c1) 86%, var(--c3));
+}
+/* B: same rim without the white sheen — plainer than A's metal */
+.tfx-b .tfx-rim-static {
+  background: linear-gradient(135deg, var(--c3), var(--c2) 22%, var(--c1) 50%, var(--c2) 78%, var(--c3));
 }
 :hover > .tfx .tfx-rim {
   opacity: 1;
@@ -195,6 +199,11 @@
 .tfx-s .tfx-glow {
   box-shadow: 0 0 20px 1.25px var(--gl);
   opacity: 0.4;
+}
+.tfx-a .tfx-glow,
+.tfx-b .tfx-glow {
+  box-shadow: 0 0 16px 1px var(--gl);
+  opacity: var(--go);
 }
 :hover > .tfx .tfx-glow {
   opacity: 1;

@@ -12,7 +12,8 @@ import "./tier-fx.css";
  *        (animated, glow kept soft at rest); 6 sparkles on hover only
  *   SS   orange one-comet rim + half bloom + soft glow   (animated)
  *   S    red static rim + glow
- *   A/B  purple / blue hairline
+ *   A    purple static metallic rim (thinner) + faint glow
+ *   B    blue static rim (thinner, no sheen) + fainter glow
  *   C and below, unrated, or `enabled === false` → renders nothing at all.
  *
  * Two parts, mounted by the card:
@@ -113,7 +114,7 @@ interface TierFxProps {
   radius?: string;
 }
 
-/** Frame layers (glow, bloom, rim, sparkles / hairline) — sibling before the media. */
+/** Frame layers (glow, bloom, rim, sparkles) — sibling before the media. */
 export function TierFx({ rating, enabled, seed = "", radius }: TierFxProps) {
   const tier = tierFxOf(rating, enabled);
   const ref = useRef<HTMLDivElement>(null);
@@ -129,9 +130,7 @@ export function TierFx({ rating, enabled, seed = "", radius }: TierFxProps) {
   const cls = `tfx ${TIER_CLASS[tier]}`;
   const style = phaseVars(seed, radius);
 
-  if (tier === "A" || tier === "B") return <div aria-hidden className={cls} style={style} />;
-
-  if (tier === "S") {
+  if (tier === "S" || tier === "A" || tier === "B") {
     return (
       <div aria-hidden className={cls} style={style}>
         <div className="tfx-glow" />
