@@ -1096,9 +1096,10 @@ prototype `data/demos/tier-fx/index.html` (local) at intensity 标准:
   flow (screened) **on hover only** — at rest it read as a stray glow on dark posters;
   6 sparkles **on hover only** (so touch never shows them). No rainbow foil.
 - **SS** orange: one-comet flowing rim + half bloom + soft glow.
-- **S** red: static metallic rim + glow.
-- **A** purple: static metallic rim (1.75px, same gradient as S) + faint glow.
-- **B** blue: static rim (1.5px, no white sheen) + fainter glow. Both were 1px
+- **S** red: static metallic rim + glow. S/A/B rims are all 1.75px (user pick); the
+  ladder comes from sheen + glow strength, not width.
+- **A** purple: static metallic rim (same gradient as S) + faint glow.
+- **B** blue: static rim (no white sheen) + fainter glow. Both were 1px
   box-shadow hairlines originally — invisible on dark posters (user feedback); keep
   them as real rims stepped down from S so the ladder still reads S > A > B.
 - C and below, unrated, or pref off → renders nothing.
